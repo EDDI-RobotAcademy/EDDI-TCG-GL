@@ -18,6 +18,7 @@
     "dev": "webpack serve --config ./src/client/webpack.dev.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "cube-test": "webpack serve --config ./test/cube/config/webpack.dev.js",
+    "shop-test": "webpack serve --config ./test/shop_test/config/webpack.dev.js",
     "shop-draw-background": "webpack serve --config ./test/shop_draw_background/config/webpack.dev.js",
     "rectangle-test": "webpack serve --config ./test/rectangle/config/webpack.dev.js",
     "rectangle-image-test": "webpack serve --config ./test/rectangle_image/config/webpack.dev.js",
