@@ -27,6 +27,8 @@ export class TCGMainLobbyView implements Component {
     private initialized = false;
     private isAnimating = false;
 
+    private isMusicPlaying = false; // 음악이 재생 중인지 상태를 저장
+
     constructor(lobbyContainer: HTMLElement, routeMap: RouteMap) {
         this.lobbyContainer = lobbyContainer;
         this.scene = new THREE.Scene();
@@ -56,6 +58,8 @@ export class TCGMainLobbyView implements Component {
         this.routeMap = routeMap;
 
         window.addEventListener('click', () => this.initializeAudio(), { once: true });
+
+        window.addEventListener('keydown', this.onKeyDown.bind(this)); // 키 이벤트 리스너 추가
     }
 
     public static getInstance(lobbyContainer: HTMLElement, routeMap: RouteMap): TCGMainLobbyView {
@@ -68,9 +72,25 @@ export class TCGMainLobbyView implements Component {
     private async initializeAudio(): Promise<void> {
         try {
             await this.audioController.playMusic();
+            this.isMusicPlaying = true; // 음악이 재생 중임을 표시
         } catch (error) {
             console.error('Initial audio play failed:', error);
         }
+    }
+
+    private onKeyDown(event: KeyboardEvent): void {
+        if (event.key === 'F4') {
+            this.toggleMusic();
+        }
+    }
+
+    private toggleMusic(): void {
+        if (this.isMusicPlaying) {
+            this.audioController.pauseMusic();
+        } else {
+            this.audioController.playMusic();
+        }
+        this.isMusicPlaying = !this.isMusicPlaying;
     }
 
     public async initialize(): Promise<void> {
