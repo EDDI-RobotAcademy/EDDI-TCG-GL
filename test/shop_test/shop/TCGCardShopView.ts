@@ -25,6 +25,9 @@ export class TCGCardShopView implements Component {
     private mouseController: MouseController;
     private routeMap: RouteMap;
 
+    private point: number = 100; // 포인트 값을 저장할 변수
+    private pointTextElement: HTMLDivElement | null = null; // 포인트 텍스트 요소
+
     private initialized = false;
     private isAnimating = false;
 
@@ -92,6 +95,7 @@ export class TCGCardShopView implements Component {
 
         this.addBackground();
         this.addButtons();
+        this.addPointText();
         this.initialized = true;
         this.isAnimating = true;
 
@@ -117,6 +121,12 @@ export class TCGCardShopView implements Component {
         this.renderer.domElement.style.display = 'block';
         this.shopContainer.style.display = 'block';
         this.isAnimating = true;
+
+        // 포인트 텍스트 표시
+        if (this.pointTextElement) {
+            this.pointTextElement.style.display = 'block';
+        }
+    
         if (!this.initialized) {
             this.initialize(); // 초기화되지 않은 경우 초기화 호출
         } else {
@@ -129,6 +139,11 @@ export class TCGCardShopView implements Component {
         this.isAnimating = false;
         this.renderer.domElement.style.display = 'none';
         this.shopContainer.style.display = 'none';
+
+        // 포인트 텍스트 숨기기
+        if (this.pointTextElement) {
+            this.pointTextElement.style.display = 'none';
+        }
 
         // this.mouseController.clearButtons();
     }
@@ -185,6 +200,33 @@ export class TCGCardShopView implements Component {
                 console.error("Button texture not found.");
             }
         });
+    }
+
+    private addPointText(): void {
+        // 텍스트 요소 생성
+        this.pointTextElement = document.createElement('div');
+        this.pointTextElement.style.position = 'absolute';
+        this.pointTextElement.style.top = '10px';  // 화면 위에서 10px 아래
+        this.pointTextElement.style.right = '10px'; // 화면 오른쪽에서 10px 왼쪽
+        this.pointTextElement.style.color = '#000'; // 텍스트 생상
+        this.pointTextElement.style.fontSize = '20px'; // 텍스트 크기
+        this.pointTextElement.style.fontFamily = 'Arial, Sans-serif'; // 폰트 스타일
+        this.pointTextElement.style.backgroundColor = `#fff`; // 텍스트 배경색
+        this.pointTextElement.style.padding = `5px`; // 텍스트 주위에 여백 추가
+        this.pointTextElement.style.borderRadius = `5px`; // 배경에 약간의 둥근 모서리 추가
+        this.updatePointText(); // 초기 텍스트 설정
+        document.body.appendChild(this.pointTextElement); // DOM에 추가
+    }
+
+    private updatePointText(): void {
+        if (this.pointTextElement) {
+            this.pointTextElement.textContent = `point: ${this.point}`; // 포인트 텍스트 업데이트
+        }
+    }
+
+    public setPoint(newPoint: number): void {
+        this.point = newPoint;
+        this.updatePointText(); // 포인트 값이 변경될 때마다 텍스트 업데이트
     }
 
     // private addTransparentRectangle(position: THREE.Vector2, width: number, height: number): void {
