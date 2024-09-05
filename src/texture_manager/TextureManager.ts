@@ -10,7 +10,7 @@ export class TextureManager {
     private isTexturesPreloaded: boolean = false
 
     private battleFieldUnitCardTextureList: { [id: number]: THREE.Texture } = {};
-    private battleFieldUnitWeaponTextureList: { [id: number]: THREE.Texture } = {};
+    private battleFieldUnitSwordPowerTextureList: { [id: number]: THREE.Texture } = {};
     private battleFieldUnitHpTextureList: { [id: number]: THREE.Texture } = {};
     private battleFieldUnitEnergyTextureList: { [id: number]: THREE.Texture } = {};
     private battleFieldUnitRaceTextureList: { [id: number]: THREE.Texture } = {};
@@ -20,6 +20,7 @@ export class TextureManager {
     private shopButtonsTextureList: { [id: number]: THREE.Texture } = {};
     private battleFieldBackgroundTextureList: { [id: number]: THREE.Texture } = {};
     private myCardBackgroundTextureList: { [id: number]: THREE.Texture } = {};
+    private cardKindsTextureList: { [id: number]: THREE.Texture } = {};
 
     private constructor() {}
 
@@ -43,7 +44,7 @@ export class TextureManager {
 
             await Promise.all([
                 this.loadTextures(imageData.card, this.battleFieldUnitCardTextureList),
-                this.loadTextures(imageData.weapon, this.battleFieldUnitWeaponTextureList),
+                this.loadTextures(imageData.sword_power, this.battleFieldUnitSwordPowerTextureList),
                 this.loadTextures(imageData.hp, this.battleFieldUnitHpTextureList),
                 this.loadTextures(imageData.energy, this.battleFieldUnitEnergyTextureList),
                 this.loadTextures(imageData.race, this.battleFieldUnitRaceTextureList),
@@ -53,6 +54,7 @@ export class TextureManager {
                 this.loadTextures(imageData.shop_buttons, this.shopButtonsTextureList),
                 this.loadTextures(imageData.battle_field_background, this.battleFieldBackgroundTextureList),
                 this.loadTextures(imageData.my_card_background, this.myCardBackgroundTextureList),
+                this.loadTextures(imageData.card_kinds, this.cardKindsTextureList),
             ]);
 
             console.log('All textures preloaded from TextureManager.ts');
@@ -67,34 +69,56 @@ export class TextureManager {
         return window.location.origin; // 현재 작업 디렉토리 경로를 반환
     }
 
-    private loadTextures(images: string[], textureList: { [id: number]: THREE.Texture }): Promise<void> {
-        const promises = images.map((imagePath, index) => {
+    private loadTextures(images: string[], textureList: { [id: number]: THREE.Texture | undefined }): Promise<void> {
+        const textureIdMap: Map<number, string> = new Map(); // ID와 경로 매핑
+        let currentIndex = 1;
+
+        // 이미지 경로에서 ID를 추출하고 ID와 경로를 매핑합니다.
+        images.forEach((imagePath) => {
+            const id = this.extractIdFromPath(imagePath);
+            if (id !== null) {
+                textureIdMap.set(id, imagePath);
+            } else {
+                // 이름 기반 텍스처 처리
+                if (this.isNameBasedTexture(imagePath)) {
+                    textureIdMap.set(currentIndex, imagePath);
+                    currentIndex++;
+                }
+            }
+        });
+
+        // 텍스처를 ID 순서에 맞게 로드합니다.
+        const texturePromises = Array.from(textureIdMap.keys()).sort((a, b) => a - b).map((id) => {
             return new Promise<void>((resolve, reject) => {
                 const textureLoader = new THREE.TextureLoader();
-                const fullPath = imagePath;
-                // console.log('Loading texture:', fullPath);
+                const imagePath = textureIdMap.get(id)!;
+
                 textureLoader.load(
-                    fullPath,
+                    imagePath,
                     (texture) => {
-                        texture.colorSpace = THREE.SRGBColorSpace; // 색 공간 설정
-                        texture.magFilter = THREE.LinearFilter; // 확대 필터
-                        texture.minFilter = THREE.LinearFilter; // 축소 필터
+                        texture.colorSpace = THREE.SRGBColorSpace;
+                        texture.magFilter = THREE.LinearFilter;
+                        texture.minFilter = THREE.LinearFilter;
                         texture.generateMipmaps = false;
-                        textureList[index + 1] = texture;
-                        // console.log(`Loaded texture: ${fullPath} with id: ${index + 1}`);
+                        textureList[id] = texture;
                         resolve();
                     },
                     undefined,
                     (error) => {
-                        // console.error(`An error occurred loading the texture ${fullPath}:`, error);
+                        console.error(`Error loading texture for path: ${imagePath}`, error);
                         reject(error);
                     }
                 );
             });
         });
-        return Promise.all(promises).then(() => {
+        return Promise.all(texturePromises).then(() => {
             console.log(`Loaded textures: ${Object.keys(textureList).length}`);
         });
+    }
+
+    private isNameBasedTexture(path: string): boolean {
+        // 여기에 이름 기반 텍스처의 패턴을 정의합니다.
+        return /\.(png|jpg)$/i.test(path) && !this.extractIdFromPath(path);
     }
 
     private extractIdFromPath(path: string): number | null {
@@ -112,8 +136,8 @@ export class TextureManager {
         switch (category) {
             case 'card':
                 return this.battleFieldUnitCardTextureList[id];
-            case 'weapon':
-                return this.battleFieldUnitWeaponTextureList[id];
+            case 'sword_power':
+                return this.battleFieldUnitSwordPowerTextureList[id];
             case 'hp':
                 return this.battleFieldUnitHpTextureList[id];
             case 'energy':
@@ -132,6 +156,8 @@ export class TextureManager {
                 return this.battleFieldBackgroundTextureList[id]
             case 'my_card_background':
                 return this.myCardBackgroundTextureList[id]
+            case 'card_kinds':
+                return this.cardKindsTextureList[id]
             default:
                 return undefined;
         }

@@ -36,6 +36,7 @@
     "draw-main-lobby": "webpack serve --config ./test/draw_main_lobby/config/webpack.dev.js",
     "mouse-click-detect": "webpack serve --config ./test/mouse_click_detect/config/webpack.dev.js",
     "draw-battle-field": "webpack serve --config ./test/draw_battle_field/config/webpack.dev.js",
-    "read-csv-to-find-card": "webpack serve --config ./test/read_csv_to_find_card/config/webpack.dev.js"
+    "read-csv-to-find-card": "webpack serve --config ./test/read_csv_to_find_card/config/webpack.dev.js",
+    "make-card-with-csv": "webpack serve --config ./test/make_card_with_csv/config/webpack.dev.js"
   }
 }
