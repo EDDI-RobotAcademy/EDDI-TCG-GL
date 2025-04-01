@@ -10,27 +10,27 @@ export class GlobalNavigationBarConfigList {
     public buttonConfigs: ButtonConfig[] = [
         {
             id: 1,
-            position: new Vector2d(-0.241, 0.421)
+            position: new Vector2d(-0.24, 0.4273)
         },
         {
             id: 2,
-            position: new Vector2d(-0.139, 0.425)
+            position: new Vector2d(-0.14, 0.4273)
         },
          {
              id: 3,
-             position: new Vector2d(-0.042, 0.425)
+             position: new Vector2d(-0.041, 0.4273)
          },
          {
              id: 4,
-             position: new Vector2d(0.0532, 0.425)
+             position: new Vector2d(0.0535, 0.4273)
          },
          {
              id: 5,
-             position: new Vector2d(0.1495, 0.421)
+             position: new Vector2d(0.15, 0.4273)
          },
          {
              id: 6,
-             position: new Vector2d(0.245, 0.425)
+             position: new Vector2d(0.244, 0.4273)
          }
     ];
 }
