@@ -94,8 +94,8 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
                 continue;
             }
 
-            const buttonWidth = (350 / 1920) * window.innerWidth;
-            const buttonHeight = (90 / 1080) * window.innerHeight;
+            const buttonWidth = 0.257 * window.innerWidth;
+            const buttonHeight = buttonWidth * 0.3;
 
             const newPositionX = initialPosition.position.getX() * window.innerWidth;
             const newPositionY = initialPosition.position.getY() * window.innerHeight;
@@ -121,7 +121,8 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
         if (buttonMeshList) {
             buttonMeshList.forEach((button, index) => {
 //                 button.getMesh().visible = index < 6;
-                button.getMesh().visible = index > 0 && index < 6;
+//                 button.getMesh().visible = index > 0 && index < 6;
+                button.getMesh().visible = index > 0;
                 const firstButton = buttonIdList[0];
                 this.saveCurrentClickDeckButtonId(firstButton);
             });

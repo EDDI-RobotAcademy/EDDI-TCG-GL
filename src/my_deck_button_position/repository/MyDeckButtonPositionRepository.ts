@@ -2,9 +2,10 @@ import { MyDeckButtonPosition } from "../entity/MyDeckButtonPosition";
 
 export interface MyDeckButtonPositionRepository {
     save(deckId: number, position: MyDeckButtonPosition): void;
-    findById(id: number): MyDeckButtonPosition | undefined;
+    findById(positionId: number): MyDeckButtonPosition | undefined;
     findAll(): MyDeckButtonPosition[];
-    deleteById(id: number): boolean;
+    findPositionByDeckId(deckId: number): MyDeckButtonPosition | null;
+    deleteById(positionId: number): void;
     deleteAll(): void;
     count(): number;
 }

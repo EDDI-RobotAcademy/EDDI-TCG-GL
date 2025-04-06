@@ -84,8 +84,8 @@ export class MyDeckButtonEffectServiceImpl implements MyDeckButtonEffectService 
                 continue;
             }
 
-            const buttonWidth = (350 / 1920) * window.innerWidth;
-            const buttonHeight = (90 / 1080) * window.innerHeight;
+            const buttonWidth = 0.257 * window.innerWidth;
+            const buttonHeight = buttonWidth * 0.3;
 
             const newPositionX = initialPosition.position.getX() * window.innerWidth;
             const newPositionY = initialPosition.position.getY() * window.innerHeight;

@@ -24,7 +24,7 @@ export class MyDeckNameTextRepositoryImpl implements MyDeckNameTextRepository {
 
     public async createMyDeckNameText(deckId: number, deckName: string, position: Vector2d): Promise<MyDeckNameText> {
         // To-do pont 종류, 색상 변경 필요
-        const texture = TextGenerator.createText(deckName, 15, 'CustomFont', '#191007');
+        const texture = TextGenerator.createText(deckName, 12, 'CustomFont', '#FFFFFF');
 
         if (!texture) {
             throw new Error('MyDeckButton Name not found.');
