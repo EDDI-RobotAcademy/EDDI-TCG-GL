@@ -28,8 +28,10 @@ class WillBeReferenceImageLocation(Enum):
     BATTLE_FIELD_BACKGROUND = "resource/battle_field/background/"
     MY_CARD_BACKGROUND = "resource/my_card/background/"
     MY_CARD_PAGE_MOVEMENT_BUTTON = "resource/my_card/page_movement_button"
-    MY_DECK_BACKGROUND = "resource/my_deck/"
-    MY_DECK_BUTTONS = "resource/my_deck/my_deck_buttons/"
+    MY_DECK_BACKGROUND = "resource/my_deck/background/"
+    MY_DECK_BUTTONS = "resource/my_deck/deck_button/"
+    CREATE_NEW_DECK_BUTTON = "resource/my_deck/create_deck_button/"
+    MY_DECK_PAGE_MOVEMENT_BUTTON = "resource/my_deck/page_movement_button/"
     DECK_PAGE_MOVEMENT_BUTTONS = "resource/my_deck/deck_page_movement_button/"
     DECK_CARD_PAGE_MOVEMENT_BUTTONS = "resource/my_deck/card_page_movement_button/"
     CARD_KINDS = "resource/card_kinds/"
@@ -77,8 +79,10 @@ class RelativeImageLocation(Enum):
     BATTLE_FIELD_BACKGROUND = "../../resource/battle_field/background/"
     MY_CARD_BACKGROUND = "../../resource/my_card/background/"
     MY_CARD_PAGE_MOVEMENT_BUTTON = "../../resource/my_card/page_movement_button"
-    MY_DECK_BACKGROUND = "../../resource/my_deck/"
-    MY_DECK_BUTTONS = "../../resource/my_deck/my_deck_buttons/"
+    MY_DECK_BACKGROUND = "../../resource/my_deck/background/"
+    MY_DECK_BUTTONS = "../../resource/my_deck/deck_button/"
+    CREATE_NEW_DECK_BUTTON = "../../resource/my_deck/create_deck_button/"
+    MY_DECK_PAGE_MOVEMENT_BUTTON = "../../resource/my_deck/page_movement_button/"
     DECK_PAGE_MOVEMENT_BUTTONS = "../../resource/my_deck/deck_page_movement_button/"
     DECK_CARD_PAGE_MOVEMENT_BUTTONS = "../../resource/my_deck/card_page_movement_button/"
     CARD_KINDS = "../../resource/card_kinds/"
@@ -129,6 +133,8 @@ relative_paths = {
     RelativeImageLocation.MY_CARD_PAGE_MOVEMENT_BUTTON: RelativeImageLocation.MY_CARD_PAGE_MOVEMENT_BUTTON.value,
     RelativeImageLocation.MY_DECK_BACKGROUND: RelativeImageLocation.MY_DECK_BACKGROUND.value,
     RelativeImageLocation.MY_DECK_BUTTONS: RelativeImageLocation.MY_DECK_BUTTONS.value,
+    RelativeImageLocation.CREATE_NEW_DECK_BUTTON: RelativeImageLocation.CREATE_NEW_DECK_BUTTON.value,
+    RelativeImageLocation.MY_DECK_PAGE_MOVEMENT_BUTTON: RelativeImageLocation.MY_DECK_PAGE_MOVEMENT_BUTTON.value,
     RelativeImageLocation.DECK_PAGE_MOVEMENT_BUTTONS: RelativeImageLocation.DECK_PAGE_MOVEMENT_BUTTONS.value,
     RelativeImageLocation.DECK_CARD_PAGE_MOVEMENT_BUTTONS: RelativeImageLocation.DECK_CARD_PAGE_MOVEMENT_BUTTONS.value,
     RelativeImageLocation.CARD_KINDS: RelativeImageLocation.CARD_KINDS.value,
@@ -179,6 +185,8 @@ reference_paths = {
     WillBeReferenceImageLocation.MY_CARD_PAGE_MOVEMENT_BUTTON: WillBeReferenceImageLocation.MY_CARD_PAGE_MOVEMENT_BUTTON.value,
     WillBeReferenceImageLocation.MY_DECK_BACKGROUND: WillBeReferenceImageLocation.MY_DECK_BACKGROUND.value,
     WillBeReferenceImageLocation.MY_DECK_BUTTONS: WillBeReferenceImageLocation.MY_DECK_BUTTONS.value,
+    WillBeReferenceImageLocation.CREATE_NEW_DECK_BUTTON: WillBeReferenceImageLocation.CREATE_NEW_DECK_BUTTON.value,
+    WillBeReferenceImageLocation.MY_DECK_PAGE_MOVEMENT_BUTTON: WillBeReferenceImageLocation.MY_DECK_PAGE_MOVEMENT_BUTTON.value,
     WillBeReferenceImageLocation.DECK_PAGE_MOVEMENT_BUTTONS: WillBeReferenceImageLocation.DECK_PAGE_MOVEMENT_BUTTONS.value,
     WillBeReferenceImageLocation.DECK_CARD_PAGE_MOVEMENT_BUTTONS: WillBeReferenceImageLocation.DECK_CARD_PAGE_MOVEMENT_BUTTONS.value,
     WillBeReferenceImageLocation.CARD_KINDS: WillBeReferenceImageLocation.CARD_KINDS.value,
@@ -229,6 +237,8 @@ image_paths = {
     "my_card_page_movement_button": [],
     "my_deck_background": [],
     "my_deck_buttons": [],
+    "create_new_deck_button": [],
+    "my_deck_page_movement_button": [],
     "deck_page_movement_buttons": [],
     "deck_card_page_movement_buttons": [],
     "card_kinds": [],

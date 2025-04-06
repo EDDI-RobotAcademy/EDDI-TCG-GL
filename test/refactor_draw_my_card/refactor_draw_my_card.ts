@@ -149,8 +149,10 @@ export class TCGJustTestMyCardView {
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
             const buttonClickState = this.gnbButtonClickDetectService.getButtonClickDetectState();
             if (buttonClickState == true) {
-                this.myCardScreenCardClickDetectService.setMouseDown(false);
-                this.gnbButtonClickDetectService.onMouseDown(e);
+                const gnbButtonClick = await this.gnbButtonClickDetectService.onMouseDown(e);
+                if (gnbButtonClick) {
+                    this.myCardScreenCardClickDetectService.setMouseDown(false);
+                }
             }
         }, false);
 

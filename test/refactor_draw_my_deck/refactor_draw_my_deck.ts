@@ -88,9 +88,9 @@ export class TCGJustTestMyDeckView {
     private readonly cameraService = CameraServiceImpl.getInstance(this.cameraRepository);
 
     private myDeckButtonClickDetectService: MyDeckButtonClickDetectService;
-    private deckPageMovementButtonClickDetectService: DeckPageMovementButtonClickDetectService;
+//     private deckPageMovementButtonClickDetectService: DeckPageMovementButtonClickDetectService;
     private deckCardPageMoveButtonClickDetectService: DeckCardPageMoveButtonClickDetectService;
-    private deckMakeButtonClickDetectService: DeckMakeButtonClickDetectService;
+//     private deckMakeButtonClickDetectService: DeckMakeButtonClickDetectService;
     private deckMakePopupButtonsClickDetectService: DeckMakePopupButtonsClickDetectService;
 
     private initialized = false;
@@ -138,13 +138,13 @@ export class TCGJustTestMyDeckView {
             }
         }, false);
 
-        this.deckPageMovementButtonClickDetectService = DeckPageMovementButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
-//         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckPageMovementButtonClickDetectService.onMouseDown(e), false);
-        this.renderer.domElement.addEventListener('mousedown', (e) => {
-            if (this.isDeckPageMovementButtonEnabled) {
-                this.deckPageMovementButtonClickDetectService.onMouseDown(e);
-            }
-        }, false);
+//         this.deckPageMovementButtonClickDetectService = DeckPageMovementButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+// //         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckPageMovementButtonClickDetectService.onMouseDown(e), false);
+//         this.renderer.domElement.addEventListener('mousedown', (e) => {
+//             if (this.isDeckPageMovementButtonEnabled) {
+//                 this.deckPageMovementButtonClickDetectService.onMouseDown(e);
+//             }
+//         }, false);
 
         this.deckCardPageMoveButtonClickDetectService = DeckCardPageMoveButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
 //         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckCardPageMoveButtonClickDetectService.onMouseDown(e), false);
@@ -154,20 +154,20 @@ export class TCGJustTestMyDeckView {
             }
         }, false);
 
-        this.deckMakeButtonClickDetectService = DeckMakeButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
-//         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckMakeButtonClickDetectService.onMouseDown(e), false);
-        this.renderer.domElement.addEventListener('mousedown', (e) => {
-            if (this.isDeckMakeButtonEnabled) {
-                this.deckMakeButtonClickDetectService.onMouseDown(e);
-                const currentButtonClickState = this.deckMakeButtonClickDetectService.getCurrentButtonClickState();
-                if (currentButtonClickState) {
-                    this.isMyDeckButtonEnabled = false;
-                    this.isDeckPageMovementButtonEnabled = false;
-                    this.isDeckCardPageMovementButtonEnabled = false;
-                    this.isDeckMakeButtonEnabled = false;
-                }
-            }
-        }, false);
+//         this.deckMakeButtonClickDetectService = DeckMakeButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+// //         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckMakeButtonClickDetectService.onMouseDown(e), false);
+//         this.renderer.domElement.addEventListener('mousedown', (e) => {
+//             if (this.isDeckMakeButtonEnabled) {
+//                 this.deckMakeButtonClickDetectService.onMouseDown(e);
+//                 const currentButtonClickState = this.deckMakeButtonClickDetectService.getCurrentButtonClickState();
+//                 if (currentButtonClickState) {
+//                     this.isMyDeckButtonEnabled = false;
+//                     this.isDeckPageMovementButtonEnabled = false;
+//                     this.isDeckCardPageMovementButtonEnabled = false;
+//                     this.isDeckMakeButtonEnabled = false;
+//                 }
+//             }
+//         }, false);
 
         this.deckMakePopupButtonsClickDetectService = DeckMakePopupButtonsClickDetectServiceImpl.getInstance(this.camera, this.scene);
 //         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckMakePopupButtonsClickDetectService.onMouseDown(e), false);
@@ -214,13 +214,13 @@ export class TCGJustTestMyDeckView {
         await TextGenerator.loadFont('../../resource/font/HeirofLightOTFRegular.otf');
 
         await this.addBackground();
-        await this.addMyDeckButtonPageMovementButton();
-        await this.saveMyDeckCard();
+//         await this.addMyDeckButtonPageMovementButton();
+//         await this.saveMyDeckCard();
         await this.addMyDeckCardPageMovementButton();
         await this.addMyDeckButton();
         await this.addMyDeckButtonEffect();
         this.addMyDeckNameText();
-        this.addDeckMakeButton();
+//         this.addDeckMakeButton();
         this.addTransparentBackground();
         this.addDeckMakePopupBackground();
         this.addDeckMakePopupButtons();
@@ -383,7 +383,7 @@ export class TCGJustTestMyDeckView {
                 const textGroup = await this.myDeckNameTextService.createMyDeckNameTextWithPosition(deckId, deckName);
 
                 if (textGroup) {
-                    this.myDeckNameTextService.initializeDeckNameText();
+//                     this.myDeckNameTextService.initializeDeckNameText();
                     this.scene.add(textGroup);
                 } else {
                     console.warn(`No deckId found for index ${index}`);
@@ -491,7 +491,7 @@ export class TCGJustTestMyDeckView {
             this.myDeckButtonEffectService.adjustMyDeckButtonEffectPosition();
             this.myDeckCardService.adjustMyDeckCardPosition();
             this.myDeckNameTextService.adjustMyDeckNameTextPosition();
-            this.deckMakeButtonService.adjustDeckMakeButtonPosition();
+//             this.deckMakeButtonService.adjustDeckMakeButtonPosition();
             this.transparentBackgroundService.adjustTransparentBackgroundPosition();
             this.decKMakePopupBackgroundService.adjustDeckMakePopupBackgroundPosition();
             this.deckMakePopupButtonsService.adjustDeckMakePopupButtonsPosition();

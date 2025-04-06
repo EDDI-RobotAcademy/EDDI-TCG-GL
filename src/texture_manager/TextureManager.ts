@@ -33,6 +33,8 @@ export class TextureManager {
     private myCardPageMovementTextureList: { [id: number]: THREE.Texture } = {};
     private myDeckBackgroundTextureList: { [id: number]: THREE.Texture } = {};
     private myDeckButtonsTextureList: { [id: number]: THREE.Texture } = {};
+    private createNewDeckButtonTextureList: { [id: number]: THREE.Texture } = {};
+    private myDeckPageMovementButtonTextureList: { [id: number]: THREE.Texture } = {};
     private deckPageMovementButtonsTextureList : { [id: number]: THREE.Texture } = {};
     private myDeckCardPageMovementButtonTextureList : { [id: number]: THREE.Texture } = {};
     private cardKindsTextureList: { [id: number]: THREE.Texture } = {};
@@ -102,6 +104,8 @@ export class TextureManager {
                 this.loadTextures(imageData.my_card_page_movement_button, this.myCardPageMovementTextureList),
                 this.loadTextures(imageData.my_deck_background, this.myDeckBackgroundTextureList),
                 this.loadTextures(imageData.my_deck_buttons, this.myDeckButtonsTextureList),
+                this.loadTextures(imageData.create_new_deck_button, this.createNewDeckButtonTextureList),
+                this.loadTextures(imageData.my_deck_page_movement_button, this.myDeckPageMovementButtonTextureList),
                 this.loadTextures(imageData.deck_page_movement_buttons, this.deckPageMovementButtonsTextureList),
                 this.loadTextures(imageData.deck_card_page_movement_buttons, this.myDeckCardPageMovementButtonTextureList),
                 this.loadTextures(imageData.card_kinds, this.cardKindsTextureList),
@@ -248,6 +252,10 @@ export class TextureManager {
                 return this.myDeckBackgroundTextureList[id]
             case 'my_deck_buttons':
                 return this.myDeckButtonsTextureList[id]
+            case 'create_new_deck_button':
+                return this.createNewDeckButtonTextureList[id]
+            case 'my_deck_page_movement_button':
+                return this.myDeckPageMovementButtonTextureList[id]
             case 'deck_page_movement_buttons':
                 return this.deckPageMovementButtonsTextureList[id]
             case 'deck_card_page_movement_buttons':

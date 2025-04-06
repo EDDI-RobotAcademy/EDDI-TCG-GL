@@ -60,9 +60,9 @@ export class TextGenerator {
             context.scale(devicePixelRatio, devicePixelRatio);
             context.fillText(text, 0, canvas.height / (2 * devicePixelRatio));
 
-            context.strokeStyle = textColor;
-            context.lineWidth = 0.6; //외곽선 두께
-            context.strokeText(text, 0, canvas.height / (2 * devicePixelRatio));
+//             context.strokeStyle = textColor;
+//             context.lineWidth = 0.001; //외곽선 두께
+//             context.strokeText(text, 0, canvas.height / (2 * devicePixelRatio));
 
             const texture = new THREE.CanvasTexture(canvas);
             texture.needsUpdate = true;

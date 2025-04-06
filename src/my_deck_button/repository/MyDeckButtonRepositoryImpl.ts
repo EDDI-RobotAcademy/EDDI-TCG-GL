@@ -12,7 +12,7 @@ export class MyDeckButtonRepositoryImpl implements MyDeckButtonRepository {
     private deckToButtonMap: Map<number, number> = new Map();
     private textureManager: TextureManager;
 
-    private readonly BUTTON_WIDTH: number = 350 / 1920
+    private readonly BUTTON_WIDTH: number = 0.257
     private readonly BUTTON_HEIGHT: number = 90 / 1080
 
     private constructor(textureManager: TextureManager) {
@@ -28,14 +28,15 @@ export class MyDeckButtonRepositoryImpl implements MyDeckButtonRepository {
     }
 
     public async createMyDeckButton(deckId: number, position: Vector2d): Promise<MyDeckButton> {
-        const texture = await this.textureManager.getTexture('my_deck_buttons', 2);
+        const texture = await this.textureManager.getTexture('my_deck_buttons', 0);
 
         if (!texture) {
             throw new Error('MyDeckButton texture not found.');
         }
 
         const buttonWidth = this.BUTTON_WIDTH * window.innerWidth;
-        const buttonHeight = this.BUTTON_HEIGHT * window.innerHeight;
+//         const buttonHeight = this.BUTTON_HEIGHT * window.innerHeight;
+        const buttonHeight = buttonWidth * 0.3;
 
         const buttonPositionX = position.getX() * window.innerWidth;
         const buttonPositionY = position.getY() * window.innerHeight;
