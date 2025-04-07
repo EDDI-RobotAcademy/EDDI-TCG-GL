@@ -1,13 +1,18 @@
 import { MyDeckButton } from "../my_deck_button/entity/MyDeckButton";
+import {MyDeckButtonRepositoryImpl} from "../my_deck_button/repository/MyDeckButtonRepositoryImpl";
+import {MyDeckButtonClickDetectRepositoryImpl} from "../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 
 export class ButtonStateManager {
     private static instance: ButtonStateManager | null = null;
-    private buttonVisibilityState: Map<number, boolean>;  // 버튼의 visibility 상태를 저장하는 Map
+    private buttonVisibilityState: Map<number, boolean> = new Map(); // 버튼의 visibility 상태를 저장하는 Map
     private buttonClickCount: number;
+    private myDeckButtonRepository: MyDeckButtonRepositoryImpl;
+    private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
 
     constructor() {
-        this.buttonVisibilityState = new Map();
         this.buttonClickCount = 0;
+        this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance();
+        this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
     }
 
     public static getInstance(): ButtonStateManager {
@@ -17,22 +22,33 @@ export class ButtonStateManager {
         return ButtonStateManager.instance;
     }
 
-    // 첫 화면에서는 최대 6개의 덱이 배치됨
-    public initializeButtonState(buttonIdList: number[]): void {
-        buttonIdList.forEach((buttonId, index) => {
-//             this.buttonVisibilityState.set(buttonId, index < 6);
-            this.buttonVisibilityState.set(buttonId, index > 0 && index < 6);
+    public initializeButtonState(): void {
+        const deckIdList = this.myDeckButtonRepository.findButtonDeckIdList();
+        const allButtonMesh = this.myDeckButtonRepository.findAll();
+        const firstButtonDeckId = deckIdList[0];
+
+        deckIdList.forEach((deckId, index) => {
+            this.buttonVisibilityState.set(deckId, index > 0);
         });
+
+        allButtonMesh.forEach((button, index) => {
+            button.getMesh().visible = index > 0;
+        });
+
+        this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(firstButtonDeckId);
     }
 
-    // 특정 버튼의 visibility 상태를 설정
-    public setVisibility(buttonId: number, isVisible: boolean): void {
-        this.buttonVisibilityState.set(buttonId, isVisible);
+    public setButtonVisibility(deckId: number, isVisible: boolean): void {
+        this.buttonVisibilityState.set(deckId, isVisible);
+        if (isVisible == true) {
+            this.myDeckButtonRepository.showButton(deckId);
+        } else {
+            this.myDeckButtonRepository.hideButton(deckId);
+        }
     }
 
-    // 버튼의 visibility 상태를 가져옴
-    public findVisibility(buttonId: number): boolean {
-        return this.buttonVisibilityState.get(buttonId) || false;
+    public findButtonVisibility(deckId: number): boolean {
+        return this.buttonVisibilityState.get(deckId) || false;
     }
 
     // 모든 버튼의 상태를 초기화
