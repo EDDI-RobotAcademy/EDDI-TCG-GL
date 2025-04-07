@@ -7,8 +7,8 @@ import {Vector2d} from "../../common/math/Vector2d";
 
 export class MyDeckButtonEffectRepositoryImpl implements MyDeckButtonEffectRepository {
     private static instance: MyDeckButtonEffectRepositoryImpl;
-    private effectMap: Map<number, MyDeckButtonEffect> = new Map();
-    private deckToEffectMap: Map<number, number> = new Map();
+    private deckButtonEffectMap: Map<number, { deckId: number, effectMesh: MyDeckButtonEffect }> = new Map(); // effect unique id: {deck id: button mesh}
+    private deckButtonEffectGroup: THREE.Group | null = null;
     private textureManager: TextureManager;
 
     private readonly BUTTON_WIDTH: number = 0.257
@@ -44,64 +44,70 @@ export class MyDeckButtonEffectRepositoryImpl implements MyDeckButtonEffectRepos
         buttonMesh.position.set(buttonPositionX, buttonPositionY, 0);
 
         const newButtonEffect = new MyDeckButtonEffect(buttonWidth, buttonHeight, buttonMesh, position);
-        this.effectMap.set(newButtonEffect.id, newButtonEffect);
-        this.deckToEffectMap.set(deckId, newButtonEffect.id);
+        this.deckButtonEffectMap.set(newButtonEffect.id, { deckId, effectMesh: newButtonEffect });
 
         return newButtonEffect;
     }
 
-    public getAllMyDeckButtonEffect(): Map<number, MyDeckButtonEffect> {
-        return this.effectMap;
-    }
-
-    public findById(id: number): MyDeckButtonEffect | null {
-        return this.effectMap.get(id) || null;
+    public findById(effectId: number): MyDeckButtonEffect | null {
+        const effect = this.deckButtonEffectMap.get(effectId);
+        if (effect) {
+            return effect.effectMesh;
+        } else {
+            return null;
+        }
     }
 
     public findAll(): MyDeckButtonEffect[] {
-        return Array.from(this.effectMap.values());
+        return Array.from(this.deckButtonEffectMap.values()).map(({ effectMesh }) => effectMesh);
     }
 
     public findEffectByDeckId(deckId: number): MyDeckButtonEffect | null {
-        const effectId = this.deckToEffectMap.get(deckId);
-        if (effectId === undefined) {
-            return null;
+        for (const { deckId: storedDeckId, effectMesh } of this.deckButtonEffectMap.values()) {
+            if (storedDeckId === deckId) {
+                return effectMesh;
+            }
         }
-        return this.effectMap.get(effectId) || null;
+        return null;
+    }
+
+    public findEffectIdByDeckId(deckId: number): number | null {
+        for (const [effectId, { deckId: storedDeckId }] of this.deckButtonEffectMap.entries()) {
+            if (storedDeckId === deckId) {
+                console.log(`Match found! Returning effect ID: ${effectId}`);
+                return effectId;
+            }
+        }
+        return null;
+    }
+
+    public findAllEffectIds(): number[] {
+        return Array.from(this.deckButtonEffectMap.keys());
+    }
+
+    public findEffectDeckIdList(): number[] {
+        return Array.from(this.deckButtonEffectMap.values()).map(({ deckId }) => deckId);
+    }
+
+    public deleteById(effectId: number): void {
+        this.deckButtonEffectMap.delete(effectId);
     }
 
     public deleteEffectByDeckId(deckId: number): void {
-        const effectId = this.deckToEffectMap.get(deckId);
-        if (effectId !== undefined) {
-            this.effectMap.delete(effectId);
-            this.deckToEffectMap.delete(deckId);
+        const effectId = this.findEffectIdByDeckId(deckId);
+        if (effectId) {
+            this.deckButtonEffectMap.delete(effectId);
         }
-    }
-
-    public findEffectIdByDeckId(deckId: number): number {
-        const effectId = this.deckToEffectMap.get(deckId);
-        if (effectId === undefined) {
-            throw new Error(`Button not found for deckId: ${deckId}`);
-        }
-        return effectId
-    }
-
-    public findAllEffectIds(): number[]{
-        return Array.from(this.deckToEffectMap.values());
-    }
-
-    public deleteById(id: number): void {
-        this.effectMap.delete(id);
     }
 
     public deleteAll(): void {
-        this.effectMap.clear();
+        this.deckButtonEffectMap.clear();
     }
 
     hideById(id: number): boolean {
-        const button = this.findById(id);
-        if (button) {
-            button.getMesh().visible = false;
+        const effect = this.findById(id);
+        if (effect) {
+            effect.getMesh().visible = false;
             return true;
         }
         return false;
@@ -115,4 +121,33 @@ export class MyDeckButtonEffectRepositoryImpl implements MyDeckButtonEffectRepos
         }
         return false;
     }
+
+    public findAllEffectGroups(): THREE.Group {
+        if (!this.deckButtonEffectGroup) {
+            this.deckButtonEffectGroup = new THREE.Group();
+            for (const { effectMesh } of this.deckButtonEffectMap.values()) {
+                this.deckButtonEffectGroup.add(effectMesh.getMesh());
+            }
+        }
+        return this.deckButtonEffectGroup;
+    }
+
+    public resetEffectGroups(): void {
+        this.deckButtonEffectGroup = null;
+    }
+
+    public hideEffect(deckId: number): void {
+        const effect = this.findEffectByDeckId(deckId);
+        if (effect) {
+            effect.getMesh().visible = false;
+        }
+    }
+
+    public showEffect(deckId: number): void {
+        const effect = this.findEffectByDeckId(deckId);
+        if (effect) {
+            effect.getMesh().visible = true;
+        }
+    }
+
 }

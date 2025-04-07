@@ -114,19 +114,7 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
     }
 
     public initializeDeckButton(): void {
-        const buttonIdList = this.getAllDeckButtonId();
-        this.initializeButtonState(buttonIdList);
-
-        const buttonMeshList = this.getAllMyDeckButton();
-        if (buttonMeshList) {
-            buttonMeshList.forEach((button, index) => {
-//                 button.getMesh().visible = index < 6;
-//                 button.getMesh().visible = index > 0 && index < 6;
-                button.getMesh().visible = index > 0;
-                const firstButton = buttonIdList[0];
-                this.saveCurrentClickDeckButtonId(firstButton);
-            });
-        }
+        this.buttonStateManager.initializeButtonState();
     }
 
     public getMyDeckButtonByDeckId(deckId: number): MyDeckButton | null {
@@ -137,7 +125,7 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
         return this.myDeckButtonRepository.findAll();
     }
 
-    public getDeckButtonIdByDeckId(deckId: number): number {
+    public getDeckButtonIdByDeckId(deckId: number): number | null {
         return this.myDeckButtonRepository.findButtonIdByDeckId(deckId);
     }
 
@@ -152,15 +140,6 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
      public deleteAllMyDeckButton(): void {
          this.myDeckButtonRepository.deleteAll();
      }
-
-    private setButtonVisibility(deckId: number, isVisible: boolean): void {
-        const buttonId = this.getDeckButtonIdByDeckId(deckId);
-        this.buttonStateManager.setVisibility(buttonId, isVisible);
-    }
-
-    private initializeButtonState(buttonIdList: number[]): void {
-        this.buttonStateManager.initializeButtonState(buttonIdList);
-    }
 
     private saveCurrentClickDeckButtonId(buttonId: number): void {
         this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(buttonId);
