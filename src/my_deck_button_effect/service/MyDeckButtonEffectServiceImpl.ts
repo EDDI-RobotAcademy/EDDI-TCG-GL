@@ -104,22 +104,7 @@ export class MyDeckButtonEffectServiceImpl implements MyDeckButtonEffectService 
     }
 
     public initializeDeckButtonEffect(): void {
-        const effectIdList = this.getAllDeckButtonEffectId();
-        this.initializeButtonEffectState(effectIdList);
-
-        const effectMeshList = this.getAllMyButtonEffect();
-        if (effectMeshList) {
-//             effectMeshList.forEach((effect) => {
-//                 effect.getMesh().visible = false;
-//             });
-            effectMeshList.forEach((effect, index) => {
-                if (index === 0) {
-                    effect.getMesh().visible = true;
-                } else {
-                    effect.getMesh().visible = false;
-                }
-            });
-        }
+        this.buttonEffectManger.initializeEffectState();
     }
 
     public getMyDeckButtonEffectByDeckId(deckId: number): MyDeckButtonEffect | null {
@@ -130,21 +115,12 @@ export class MyDeckButtonEffectServiceImpl implements MyDeckButtonEffectService 
         return this.myDeckButtonEffectRepository.findAll();
     }
 
-    public getDeckButtonEffectIdByDeckId(deckId: number): number {
+    public getDeckButtonEffectIdByDeckId(deckId: number): number | null {
         return this.myDeckButtonEffectRepository.findEffectIdByDeckId(deckId);
     }
 
     public getAllDeckButtonEffectId(): number[] {
         return this.myDeckButtonEffectRepository.findAllEffectIds();
-    }
-
-    private setButtonEffectVisibility(deckId: number, isVisible: boolean): void {
-        const effectId = this.getDeckButtonEffectIdByDeckId(deckId);
-        this.buttonEffectManger.setVisibility(effectId, isVisible);
-    }
-
-    private initializeButtonEffectState(effectIdList: number[]): void {
-        this.buttonEffectManger.initializeEffectState(effectIdList);
     }
 
 }

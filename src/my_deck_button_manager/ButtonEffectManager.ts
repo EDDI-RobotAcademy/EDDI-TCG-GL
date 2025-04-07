@@ -3,10 +3,11 @@ import {MyDeckButtonEffectRepositoryImpl} from "../my_deck_button_effect/reposit
 
 export class ButtonEffectManager {
     private static instance: ButtonEffectManager | null = null;
-    private buttonEffectState: Map<number, boolean>;
+    private buttonEffectState: Map<number, boolean> = new Map();
+    private myDeckButtonEffectRepository: MyDeckButtonEffectRepositoryImpl;
 
     constructor() {
-        this.buttonEffectState = new Map();
+        this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance();
     }
 
     public static getInstance(): ButtonEffectManager {
@@ -16,36 +17,33 @@ export class ButtonEffectManager {
         return ButtonEffectManager.instance;
     }
 
-    // 처음에는 effect가 나타나면 안 됨.
-//     public initializeEffectState(effectIdList: number[]): void {
-//         effectIdList.forEach((effectId) => {
-//             this.buttonEffectState.set(effectId, false); // 기본값을 false로 설정
-//         });
-//     }
-
-    public initializeEffectState(effectIdList: number[]): void {
-        effectIdList.forEach((effectId, index) => {
+    public initializeEffectState(): void {
+        const deckIdList = this.myDeckButtonEffectRepository.findEffectDeckIdList();
+        deckIdList.forEach((deckId, index) => {
             if (index === 0) {
-                this.buttonEffectState.set(effectId, true); // 첫 번째 요소는 true
+                this.setEffectVisibility(deckId, true);
             } else {
-                this.buttonEffectState.set(effectId, false); // 나머지는 false
+                this.setEffectVisibility(deckId, false);
             }
         });
     }
 
-
-    public setVisibility(effectId: number, isVisible: boolean): void {
-        this.buttonEffectState.set(effectId, isVisible);
-        console.log(`[DEBUG] Set Effect ${effectId} visibility to ${isVisible}`);
+    public setEffectVisibility(deckId: number, isVisible: boolean): void {
+        this.buttonEffectState.set(deckId, isVisible);
+        if (isVisible == true) {
+            this.myDeckButtonEffectRepository.showEffect(deckId);
+        } else {
+            this.myDeckButtonEffectRepository.hideEffect(deckId);
+        }
     }
 
-    public findVisibility(effectId: number): boolean {
-        return this.buttonEffectState.get(effectId) ?? false;
+    public findVisibility(deckId: number): boolean {
+        return this.buttonEffectState.get(deckId) ?? false;
     }
 
     public resetVisibility(): void {
         this.buttonEffectState.clear();
-        console.log(`[DEBUG] Reset all button visibility.`);
+//         console.log(`[DEBUG] Reset all button visibility.`);
     }
 
 }

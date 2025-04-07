@@ -70,37 +70,36 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
 
     async handleLeftClick(clickPoint: { x: number; y: number }): Promise<MyDeckButton | null> {
         const { x, y } = clickPoint;
-        const buttonIdList = this.getAllDeckButtonId();
-        const currentPageIds = this.getMyDeckButtonsIdForPage(this.getCurrentPage(), buttonIdList);
-        const deckButtonList = this.myDeckButtonRepository.findAll().filter(button =>
-                currentPageIds.includes(button.id)
-        );
+        const deckIdList = this.getDeckIdList();
+        const allButton = this.myDeckButtonRepository.findAll();
         const clickedDeckButton = this.myDeckButtonClickDetectRepository.isMyDeckButtonClicked(
             { x, y },
-            deckButtonList,
+            allButton,
             this.camera
         );
 
         if (clickedDeckButton) {
-            console.log(`Clicked Deck Button ID: ${clickedDeckButton.id}`);
-            this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(clickedDeckButton.id);
-            const currentClickDeckButtonId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+            const buttonId = clickedDeckButton.id;
+            const buttonDeckId = this.getDeckIdByButtonId(buttonId);
+            console.log(`Clicked Deck Button ID: ${buttonId}, Deck ID: ${buttonDeckId}`);
+            this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(buttonDeckId);
 
-            const hiddenButton = deckButtonList.find(
-                (button) => !this.getButtonVisibility(button.id)
+            const currentClickDeckButtonId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+            const hiddenButtonId = deckIdList.find(
+                (deckId) => this.getButtonVisibility(deckId) == false
             );
 
-            if (hiddenButton && hiddenButton.id !== currentClickDeckButtonId) {
-                this.showDeckButton(hiddenButton.id);
-                this.hideDeckButtonEffect(hiddenButton.id);
-                this.setDeckCardVisibility(hiddenButton.id, false);
+            if (hiddenButtonId && hiddenButtonId !== currentClickDeckButtonId) {
+                this.setButtonVisibility(hiddenButtonId, true);
+                this.setEffectVisibility(hiddenButtonId, false);
+                this.setDeckCardVisibility(hiddenButtonId, false);
                 this.resetCurrentCardPage();
-                console.log(`Deck Button ID ${hiddenButton.id} is now shown.`);
+                console.log(`Deck Button ID ${hiddenButtonId} is now shown.`);
             }
 
             if (currentClickDeckButtonId !== null){
-                this.hideDeckButton(currentClickDeckButtonId);
-                this.showDeckButtonEffect(currentClickDeckButtonId);
+                this.setButtonVisibility(currentClickDeckButtonId, false);
+                this.setEffectVisibility(currentClickDeckButtonId, true);
                 this.showDeckCard(currentClickDeckButtonId);
                 console.log(`Deck Button ID ${currentClickDeckButtonId} is now hidden.`);
             }
@@ -111,13 +110,6 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         return null;
     }
 
-//     public async onMouseDown(event: MouseEvent): Promise<void> {
-//         if (event.button === 0) {
-//             const clickPoint = { x: event.clientX, y: event.clientY };
-//             await this.handleLeftClick(clickPoint);
-//         }
-//     }
-
     public async onMouseDown(event: MouseEvent): Promise<MyDeckButton | null> {
         if (event.button === 0) {
             const clickPoint = { x: event.clientX, y: event.clientY };
@@ -126,80 +118,32 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         return null;
     }
 
-    private getButtonClickCount(): number {
-        return this.buttonStateManager.getButtonClickCount();
+    public getDeckIdByButtonId(buttonId: number): number {
+        return this.myDeckButtonRepository.findDeckIdByButtonId(buttonId) ?? -1;
     }
 
-    private setButtonClickCount(clickCount: number): void {
-        this.buttonStateManager.setButtonClickCount(clickCount);
+    public getDeckIdList(): number[] {
+        return this.myDeckButtonRepository.findButtonDeckIdList();
     }
 
-    private resetButtonClickCount(): void {
-        this.buttonStateManager.resetButtonClickCount();
+    public getButtonVisibility(deckId: number): boolean {
+        return this.buttonStateManager.findButtonVisibility(deckId);
     }
 
-    public getButtonVisibility(buttonId: number): boolean {
-        return this.buttonStateManager.findVisibility(buttonId);
+    public setButtonVisibility(deckId: number, isVisible: boolean): void {
+        this.buttonStateManager.setButtonVisibility(deckId, isVisible);
     }
 
-    public setButtonVisibility(buttonId: number, isVisible: boolean): void {
-       this.buttonStateManager.setVisibility(buttonId, isVisible);
+    public getEffectVisibility(deckId: number): boolean {
+        return this.buttonEffectManager.findVisibility(deckId);
     }
 
-    public getEffectVisibility(effectId: number): boolean {
-        return this.buttonEffectManager.findVisibility(effectId);
-    }
-
-    public setEffectVisibility(effectId: number, isVisible: boolean): void {
-        this.buttonEffectManager.setVisibility(effectId, isVisible);
-    }
-
-    private showDeckButton(buttonId: number): void {
-        this.setButtonVisibility(buttonId, true);
-        const button = this.getDeckButtonById(buttonId);
-        if (button) {
-            button.getMesh().visible = true;
-        }
-    }
-
-    private hideDeckButton(buttonId: number): void {
-        this.setButtonVisibility(buttonId, false);
-        const button = this.getDeckButtonById(buttonId);
-        if (button) {
-            button.getMesh().visible = false;
-        }
-    }
-
-    private showDeckButtonEffect(effectId: number): void {
-        this.setEffectVisibility(effectId, true);
-        const buttonEffect = this.getDeckButtonEffectById(effectId);
-         if (buttonEffect) {
-             buttonEffect.getMesh().visible = true;
-         }
-    }
-
-    private hideDeckButtonEffect(effectId: number): void {
-        this.setEffectVisibility(effectId, false);
-        const buttonEffect = this.getDeckButtonEffectById(effectId);
-        if (buttonEffect) {
-            buttonEffect.getMesh().visible = false;
-        }
-    }
-
-    private getCurrentPage(): number {
-        return this.buttonPageManager.getCurrentPage();
-    }
-
-    private getMyDeckButtonsIdForPage(page: number, buttonIdList: number[]): number[] {
-        return this.buttonPageManager.findButtonIdsForPage(page, buttonIdList);
+    public setEffectVisibility(deckId: number, isVisible: boolean): void {
+        this.buttonEffectManager.setEffectVisibility(deckId, isVisible);
     }
 
     private getDeckButtonById(buttonId: number): MyDeckButton | null {
         return this.myDeckButtonRepository.findById(buttonId);
-    }
-
-    public getAllDeckButtonId(): number[] {
-        return this.myDeckButtonRepository.findAllButtonIds();
     }
 
     private getDeckButtonEffectById(buttonId: number): MyDeckButtonEffect | null {
@@ -207,8 +151,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     }
 
     // 덱 버튼 클릭 시 이전에 클릭한 덱 카드 visible false
-    private setDeckCardVisibility(buttonId: number, isVisible: boolean): void {
-        const deckId = buttonId + 1;
+    private setDeckCardVisibility(deckId: number, isVisible: boolean): void {
         this.cardStateManager.setAllCardVisibility(deckId, isVisible);
 
         const cardMeshList = this.getCardMeshesByDeckId(deckId);
@@ -254,8 +197,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         }
     }
 
-    private showDeckCard(buttonId: number): void {
-        const deckId = buttonId + 1;
+    private showDeckCard(deckId: number): void {
         const cardPage = this.getCurrentCardPage();
         const cardIdList = this.getCardIdListByDeckId(deckId);
         const currentPageCardId = this.getCardIdsForPage(cardPage, cardIdList);
