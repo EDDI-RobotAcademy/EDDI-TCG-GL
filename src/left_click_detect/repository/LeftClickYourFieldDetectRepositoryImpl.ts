@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 import {LeftClickYourFieldDetectRepository} from "./LeftClickYourFieldDetectRepository";
-import {OpponentFieldCardScene} from "../../opponent_field_card_scene/entity/OpponentFieldCardScene";
+import {YourFieldCardScene} from "../../your_field_card_scene/entity/YourFieldCardScene";
 
 export class LeftClickYourFieldDetectRepositoryImpl implements LeftClickYourFieldDetectRepository {
     private static instance: LeftClickYourFieldDetectRepositoryImpl;
@@ -15,7 +15,7 @@ export class LeftClickYourFieldDetectRepositoryImpl implements LeftClickYourFiel
     }
 
     isYourFieldAreaClicked(clickPoint: { x: number; y: number },
-                           cardSceneList: OpponentFieldCardScene[],
+                           cardSceneList: YourFieldCardScene[],
                            camera: THREE.Camera): any | null {
         const { x, y } = clickPoint;
 

@@ -42,6 +42,7 @@ import {ClickableCard} from "./ClickableCard";
 import {YourFieldAttributeMarkManager} from "../handler/your_field/YourFieldAttributeMarkManager";
 import {YourFieldRepository} from "../../your_field/repository/YourFieldRepository";
 import {YourFieldRepositoryImpl} from "../../your_field/repository/YourFieldRepositoryImpl";
+import {YourFieldCardScene} from "../../your_field_card_scene/entity/YourFieldCardScene";
 
 export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private static instance: LeftClickDetectServiceImpl | null = null;
@@ -164,9 +165,9 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         const { x, y } = clickPoint;
 
         // 선택 상태 초기화
-        await this.dragMoveRepository.deleteSelectedObject();
-        await this.dragMoveRepository.deleteSelectedGroup();
-        await this.dragMoveRepository.deleteSelectedArea()
+        // await this.dragMoveRepository.deleteSelectedObject();
+        // await this.dragMoveRepository.deleteSelectedGroup();
+        // await this.dragMoveRepository.deleteSelectedArea()
 
         const detectedArea = this.mouseCursorDetectRepository.detectArea(x, y);
 
@@ -365,6 +366,14 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         const yourFieldSceneList = this.yourFieldCardSceneRepository.findAll();
         const clickedYourFieldCard = this.leftClickHandDetectRepository.isYourHandAreaClicked({ x, y }, yourFieldSceneList, this.camera);
         if (clickedYourFieldCard === null) {
+            return;
+        }
+
+        // TODO: 이전 선택 카드가 현재 선택 카드와 같은지 판별해야함
+        const prevYourFieldCard = this.dragMoveRepository.getSelectedObject() as unknown as YourFieldCardScene;
+
+        if (prevYourFieldCard && prevYourFieldCard.getId() === clickedYourFieldCard.getId()) {
+            console.log('같은 카드를 선택하였습니다!')
             return;
         }
 

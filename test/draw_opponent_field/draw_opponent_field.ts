@@ -87,6 +87,7 @@ export class TCGJustTestBattleFieldView {
 
     private initialized = false;
     private isAnimating = false;
+    private isDragging = false;
 
     private userWindowSize: UserWindowSize;
 
@@ -131,6 +132,7 @@ export class TCGJustTestBattleFieldView {
                 const result = await this.leftClickDetectService.handleLeftClick(e);
                 // console.log(`result: ${JSON.stringify(result, null, 2)}`)
                 if (result !== null) {
+                    this.isDragging = false;
                     this.leftClickDetectService.setLeftMouseDown(true);
                 }
             } else if (e.button === 2) { // 우클릭 처리
@@ -164,6 +166,7 @@ export class TCGJustTestBattleFieldView {
 
         this.renderer.domElement.addEventListener('mousemove', (e) => {
             if (this.dragMoveService.getLeftClickedArea() === LeftClickedArea.YOUR_HAND && this.leftClickDetectService.isLeftMouseDown()) {
+                this.isDragging = true;
                 this.dragMoveService.onMouseMove(e);
             }
         });
@@ -174,6 +177,13 @@ export class TCGJustTestBattleFieldView {
                 this.leftClickDetectService.setLeftMouseDown(false); // 드롭 후 상태 초기화
             }
         }, false);
+
+        this.renderer.domElement.addEventListener('click', (e) => {
+            if (this.isDragging) {
+                e.stopPropagation();  // 드래그 후 발생하는 클릭 이벤트 차단
+                this.isDragging = false; // 다시 초기화
+            }
+        }, true);
 
         this.keyboardService = KeyboardServiceImpl.getInstance()
 
