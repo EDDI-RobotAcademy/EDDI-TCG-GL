@@ -48,8 +48,8 @@ export class MyDeckCardPageMovementButtonServiceImpl implements MyDeckCardPageMo
             const buttonMesh = button.getMesh();
             const initialPosition = button.position;
 
-            const buttonWidth = (73 / 1920) * windowWidth;
-            const buttonHeight = (46 / 1080) * windowHeight;
+            const buttonWidth = 0.05 * windowWidth;
+            const buttonHeight = buttonWidth * 1.66;
 
             const newPositionX = initialPosition.getX() * windowWidth;
             const newPositionY = initialPosition.getY() * windowHeight;

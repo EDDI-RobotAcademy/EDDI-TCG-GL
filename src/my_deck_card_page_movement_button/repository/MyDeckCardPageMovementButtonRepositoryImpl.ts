@@ -11,7 +11,7 @@ export class MyDeckCardPageMovementButtonRepositoryImpl implements MyDeckCardPag
     private buttonMap: Map<number, MyDeckCardPageMovementButton> = new Map();
     private textureManager: TextureManager;
 
-    private readonly BUTTON_WIDTH: number = 73 / 1920
+    private readonly BUTTON_WIDTH: number = 0.05
     private readonly BUTTON_HEIGHT: number = 46 / 1080
 
     private constructor(textureManager: TextureManager) {
@@ -30,7 +30,7 @@ export class MyDeckCardPageMovementButtonRepositoryImpl implements MyDeckCardPag
         type: MyDeckCardPageMovementButtonType,
         position: Vector2d
     ): Promise<MyDeckCardPageMovementButton> {
-        const texture = await this.textureManager.getTexture('deck_card_page_movement_buttons', type);
+        const texture = await this.textureManager.getTexture('my_deck_page_movement_button', type);
 
         if (!texture) {
             console.error('Failed to load texture for type:', type);
@@ -38,7 +38,7 @@ export class MyDeckCardPageMovementButtonRepositoryImpl implements MyDeckCardPag
         }
 
         const buttonWidth = this.BUTTON_WIDTH * window.innerWidth;
-        const buttonHeight = this.BUTTON_HEIGHT * window.innerHeight;
+        const buttonHeight = buttonWidth * 1.66;
 
         const buttonPositionX = position.getX() * window.innerWidth;
         const buttonPositionY = position.getY() * window.innerHeight;

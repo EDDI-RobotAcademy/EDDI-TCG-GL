@@ -9,12 +9,12 @@ export interface ButtonConfig {
 export class MyDeckCardPageMovementButtonConfigList {
     public buttonConfigs: ButtonConfig[] = [
         {
-            id: 1,
-            position: new Vector2d(-395 / 1920, -487 / 1080)
+            id: 0,
+            position: new Vector2d(-0.21, -0.045)
         },
         {
-            id: 2,
-            position: new Vector2d(-169 / 1920, -487 / 1080)
+            id: 1,
+            position: new Vector2d(0.476, -0.045)
         },
     ];
 }
