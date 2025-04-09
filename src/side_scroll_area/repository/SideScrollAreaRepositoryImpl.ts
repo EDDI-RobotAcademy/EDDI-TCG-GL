@@ -34,7 +34,7 @@ export class SideScrollAreaRepositoryImpl implements SideScrollAreaRepository {
         const areaPositionY = positionY * window.innerHeight;
         const position = new THREE.Vector2(areaPositionX, areaPositionY);
 
-        const area = new TransparentRectangle(position, areaWidth, areaHeight, 0xffffff, 0, id);
+        const area = new TransparentRectangle(position, areaWidth, areaHeight, 0xffffff, 0.5, id);
         const areaMesh = area.getMesh();
 
         const newArea = new SideScrollArea(type, areaMesh, position, areaWidth, areaHeight);

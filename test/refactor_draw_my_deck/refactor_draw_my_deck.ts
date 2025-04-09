@@ -34,6 +34,7 @@ import {TransparentBackgroundServiceImpl} from "../../src/transparent_background
 import {DeckMakePopupBackgroundServiceImpl} from "../../src/deck_make_pop_up_background/service/DeckMakePopupBackgroundServiceImpl";
 import {DeckMakePopupButtonsServiceImpl} from "../../src/deck_make_pop_up_buttons/service/DeckMakePopupButtonsServiceImpl";
 import {DeckMakePopupInputContainerServiceImpl} from "../../src/deck_make_pop_up_input_container/service/DeckMakePopupInputContainerServiceImpl";
+import {SideScrollAreaServiceImpl} from "../../src/side_scroll_area/service/SideScrollAreaServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -70,6 +71,7 @@ export class TCGJustTestMyDeckView {
     private decKMakePopupBackgroundService = DeckMakePopupBackgroundServiceImpl.getInstance();
     private deckMakePopupButtonsService = DeckMakePopupButtonsServiceImpl.getInstance();
     private deckMakePopupInputContainerService = DeckMakePopupInputContainerServiceImpl.getInstance();
+    private sideScrollAreaService = SideScrollAreaServiceImpl.getInstance();
 
     private myDeckButtonMapRepository = MyDeckButtonMapRepositoryImpl.getInstance();
     private myDeckCardMapRepository = MyDeckCardMapRepositoryImpl.getInstance();
@@ -199,6 +201,7 @@ export class TCGJustTestMyDeckView {
         await TextGenerator.loadFont('../../resource/font/HeirofLightOTFRegular.otf');
 
         await this.addBackground();
+        await this.addScrollArea();
         await this.addMyDeckCard();
         await this.addMyDeckCardPageMovementButton();
         await this.addMyDeckButton();
@@ -270,6 +273,20 @@ export class TCGJustTestMyDeckView {
             );
         } catch (error) {
             console.error('Failed to add my deck card page movement button:', error);
+        }
+    }
+
+    private async addScrollArea(): Promise<void> {
+        try{
+            const areaMesh = await this.sideScrollAreaService.createSideScrollArea('myDeckScrollArea', 3, 0.24, 0.775, -0.36, -0.035);
+            if (areaMesh) {
+                this.scene.add(areaMesh);
+            } else {
+                console.warn(`No Side Scroll Area Mesh found`);
+            }
+
+        } catch (error) {
+            console.error('Failed to add Side Scroll Area:', error);
         }
     }
 
@@ -443,6 +460,7 @@ export class TCGJustTestMyDeckView {
 
             this.userWindowSize.calculateScaleFactors(newWidth, newHeight);
             const { scaleX, scaleY } = this.userWindowSize.getScaleFactors();
+            this.sideScrollAreaService.adjustMyDeckSideScrollAreaPosition();
             this.myDeckCardPageMovementButtonService.adjustMyDeckCardPageMovementButtonPosition();
             this.myDeckButtonService.adjustMyDeckButtonPosition();
             this.myDeckButtonEffectService.adjustMyDeckButtonEffectPosition();
