@@ -35,34 +35,20 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
         return MyDeckCardServiceImpl.instance;
     }
 
-    public async createMyDeckCardSceneWithPosition(deckId: number, cardIdList: number[]): Promise<THREE.Group | null> {
+    public async createMyDeckCardWithPosition(deckId: number, cardIdList: number[]): Promise<THREE.Group | null> {
         const cardGroup = new THREE.Group();
-        const cardList = Array.from(new Set(cardIdList));
-        const cardMeshMap: Map<number, THREE.Mesh> = new Map();
-        const positionMap: Map<number, MyDeckCardPosition> = new Map();
-
         try {
-            // deck 마다 card 의 위치가 다름. cardMesh Map 초기화 필요.
-            // 예) 0번 덱의 카드1과 3번 덱의 카드1의 위치가 다름.
-            this.initialCardMap();
-            this.initialPositionMap();
-            const deckCards = await Promise.all(
-                cardList.map(async (cardId, index) => {
-                    const position = this.myDeckCardPosition(cardId, index + 1);
+            await Promise.all(
+                cardIdList.map(async (cardId, index) => {
+                    const position = this.myDeckCardPosition(deckId, index);
                     console.log(`[DEBUG] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
 
-                    const deckCard = await this.createMyDeckCard(cardId, position.position);
-                    cardMeshMap.set(cardId, deckCard.getMesh());
-                    positionMap.set(cardId, position);
-                    cardGroup.add(deckCard.getMesh());
+                    const myDeckCard = await this.createMyDeckCard(deckId, cardId, position.position);
+                    cardGroup.add(myDeckCard.getMesh());
                 })
             );
-
-            this.saveMyDeckCardSceneInfo(deckId, cardMeshMap);
-            this.saveCardPositionInfo(deckId, positionMap);
-            console.log(`[DEBUG] cardGroup?: ${cardGroup.children}`);
         } catch (error) {
-            console.error(`[Error] Failed to create MyDeckCardScene: ${error}`);
+            console.error(`[Error] Failed to create MyDeckCard: ${error}`);
             return null;
         }
         return cardGroup;
@@ -75,39 +61,36 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
             return;
         }
 
-        const deckIdList = this.getAllDeckIds();
+        const deckIdList = this.getAllDeckIdList();
         const windowWidth = window.innerWidth;
         const windowHeight = window.innerHeight;
 
         for (const deckId of deckIdList) {
-            const carIdList = this.getCardIdsByDeckId(deckId);
-            const positionList = this.myDeckCardPositionRepository.findCardPositionByDeckId(deckId);
-
+            const cardUniqueIdList = this.getCardUniqueIdListByDeckId(deckId);
             console.log(`[DEBUG] (adjust) Processing deckId: ${deckId}`);
-            console.log(`[DEBUG] (adjust) positionList: ${positionList}`);
 
-            for (const cardId of carIdList) {
-                console.log(`[DEBUG] (adjust) Card ID: ${cardId}`);
-                const cardMesh = this.getCardMeshIdByDeckIdAndCardId(deckId, cardId);
+            for (const cardUniqueId of cardUniqueIdList) {
+                console.log(`[DEBUG] (adjust) Card Unique ID: ${cardUniqueId}`);
+                const cardMesh = this.getCardByCardUniqueId(cardUniqueId);
                 if (!cardMesh) {
-                    console.warn(`[WARN] cardMesh with card ID ${cardId} not found`);
+                    console.warn(`[WARN] cardMesh with card Unique ID ${cardUniqueId} not found`);
                     continue;
                 }
 
-                const initialPosition = this.getCardPositionByDeckIdAndCardId(deckId, cardId);
+                const initialPosition = this.getPositionByCardUniqueId(cardUniqueId);
                 console.log(`[DEBUG] (adjust) InitialPosition: ${initialPosition}`);
 
                 if (!initialPosition) {
-                    console.error(`[DEBUG] (adjust) No position found for card id: ${cardId}`);
+                    console.error(`[DEBUG] (adjust) No position found for card id: ${cardUniqueId}`);
                     continue;
                 }
 
-                const cardWidth = 0.126 * window.innerWidth;
-                const cardHeight = 0.365 * window.innerHeight;
+                const cardWidth = 0.115 * window.innerWidth;
+                const cardHeight = cardWidth * 1.6176;
 
                 const newPositionX = initialPosition.getX() * windowWidth;
                 const newPositionY = initialPosition.getY() * windowHeight;
-                console.log(`[DEBUG] (adjust) Card ${cardId}:`, {
+                console.log(`[DEBUG] (adjust) Card ${cardUniqueId}:`, {
                     initialPosition: initialPosition,
                     newPositionX,
                     newPositionY,
@@ -120,90 +103,56 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
         }
     }
 
-
-    private async createMyDeckCard(cardId: number, position: Vector2d): Promise<MyDeckCard> {
-        return await this.myDeckCardRepository.createMyDeckCardScene(cardId, position);
+    private async createMyDeckCard(deckId: number, cardId: number, position: Vector2d): Promise<MyDeckCard> {
+        return await this.myDeckCardRepository.createMyDeckCard(deckId, cardId, position);
     }
 
-    private myDeckCardPosition(cardId: number, cardIndex: number): MyDeckCardPosition {
-        const position = this.myDeckCardPositionRepository.addMyDeckCardPosition(cardIndex);
-        this.myDeckCardPositionRepository.save(cardId, position);
-        return position;
+    private myDeckCardPosition(deckId: number, cardIndex: number): MyDeckCardPosition {
+        return this.myDeckCardPositionRepository.addMyDeckCardPosition(deckId, cardIndex);
     }
 
-    private saveMyDeckCardSceneInfo(deckId: number, cardMeshMap: Map<number, THREE.Mesh>): void {
-        return this.myDeckCardRepository.saveMyDeckCardSceneInfo(deckId, cardMeshMap);
+    public getAllDeckIdList(): number[] {
+        return this.myDeckCardRepository.findDeckIdList();
     }
 
-    private saveCardPositionInfo(deckId: number, positionInfoMap: Map<number, MyDeckCardPosition>): void {
-        return this.myDeckCardPositionRepository.savePositionInfo(deckId, positionInfoMap);
+    public getCardUniqueIdListByDeckId(deckId: number): number[] {
+        return this.myDeckCardRepository.findCardUniqueIdListByDeckId(deckId);
     }
 
-    public getPositionByCardId(cardId: number): MyDeckCardPosition | null{
-        return this.myDeckCardPositionRepository.findPositionByCardId(cardId);
-    }
-
-    public getCardMeshesByDeckId(deckId: number): THREE.Mesh[] {
-        return this.myDeckCardRepository.findCardMeshesByDeckId(deckId);
-    }
-
-    public getCardPositionByDeckId(deckId: number): MyDeckCardPosition[] {
-        return this.myDeckCardPositionRepository.findCardPositionByDeckId(deckId);
-    }
-
-    public getCardPositionByDeckIdAndCardId(deckId: number, cardId: number): MyDeckCardPosition | null {
-        return this.myDeckCardPositionRepository.findPositionByDeckIdAndCardId(deckId, cardId);
-    }
-
-    public initialCardMap(): void {
-        this.myDeckCardRepository.initialCardMap();
-    }
-
-    public initialPositionMap(): void {
-        this.myDeckCardPositionRepository.initialPositionMap();
-    }
-
-    public initializeCardState(deckId: number, cardIdList: number[]): void {
-        const uniqueCardIds = Array.from(new Set(cardIdList));
-        this.cardStateManager.initializeCardState(deckId, uniqueCardIds);
-        const cardMeshList = this.getCardMeshesByDeckId(deckId); // 버튼 찾기
-        if (cardMeshList) {
-            cardMeshList.forEach((mesh, index) => {
-                mesh.visible = index < 8;
-            });
+    private getCardByCardUniqueId(cardUniqueId: number): THREE.Mesh | null {
+        const card = this.myDeckCardRepository.findCardByCardUniqueId(cardUniqueId);
+        if (!card) {
+            console.warn(`[WARN] Card with Unique ID ${cardUniqueId} not found`);
+            return null;
         }
+        const cardMesh = card.getMesh();
+        return cardMesh;
     }
 
-    public setCardState(deckId: number, cardIdList: number[]): void {
-        const uniqueCardIds = Array.from(new Set(cardIdList));
-        this.cardStateManager.setAllCardVisibility(deckId, false);
-        const cardMeshList = this.getCardMeshesByDeckId(deckId);
-        if (cardMeshList){
-            cardMeshList.forEach((mesh) => {
-                mesh.visible = false;
-            });
+    private getPositionByCardUniqueId(cardUniqueId: number): MyDeckCardPosition | null {
+        return this.myDeckCardPositionRepository.findPositionByPositionId(cardUniqueId);
+    }
+
+    // 이름 변경 필요
+    public initializeCardVisibility(deckId: number): void {
+        this.cardStateManager.initializeCardVisibility(deckId);
+    }
+
+    // 이름 변경 필요
+    public setAllCardVisibilityByDeckId(deckId: number, isVisible: boolean): void {
+        this.cardStateManager.setAllCardVisibility(deckId, isVisible);
+    }
+
+    public getCardListByDeckId(deckId: number): THREE.Mesh[] {
+        const cardList = this.myDeckCardRepository.findCardListByDeckId(deckId);
+        if (!cardList) {
+            return [];
         }
+        return cardList.map((card) => card.getMesh());
     }
 
     public getCurrentClickDeckButton(): number | null {
         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
-    }
-
-    public getCardIdsByDeckId(deckId: number): number[] {
-        return this.myDeckCardRepository.findCardIdsByDeckId(deckId);
-    }
-
-    public getAllDeckIds(): number[] {
-        return this.myDeckCardRepository.findDeckIds();
-    }
-
-    private getCardIdsForPage(cardIdList: number[]): number[] {
-        const currentCardPage = this.cardPageManager.getCurrentPage();
-        return this.cardPageManager.findCardIdsForPage(currentCardPage, cardIdList);
-    }
-
-    private getCardMeshIdByDeckIdAndCardId(deckId: number, cardId: number): THREE.Mesh | null {
-        return this.myDeckCardRepository.findCardMeshByDeckIdAndCardId(deckId, cardId);
     }
 
 }

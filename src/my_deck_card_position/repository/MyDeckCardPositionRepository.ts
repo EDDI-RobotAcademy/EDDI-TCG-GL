@@ -1,9 +1,8 @@
 import {MyDeckCardPosition} from "../entity/MyDeckCardPosition";
 
 export interface MyDeckCardPositionRepository {
-    save(cardId: number, position: MyDeckCardPosition): void;
-    findById(positionId: number): MyDeckCardPosition | undefined;
-    findAll(): MyDeckCardPosition[];
+    findPositionByPositionId(positionId: number): MyDeckCardPosition | null;
+    findPositionIdListByDeckId(deckId: number): number[];
     deleteById(positionId: number): boolean;
     deleteAll(): void;
     count(): number;

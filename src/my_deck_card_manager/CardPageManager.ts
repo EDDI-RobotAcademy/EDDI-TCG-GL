@@ -1,16 +1,13 @@
 import {MyDeckCard} from "../my_deck_card/entity/MyDeckCard";
-import {CardStateManager} from "./CardStateManager";
 
 export class CardPageManager {
     private static instance: CardPageManager | null = null;
     private currentPage: number;
     private cardsPerPage: number;
-    private cardStateManager: CardStateManager;
 
     private constructor(cardsPerPage: number = 8) {
         this.currentPage = 1;
         this.cardsPerPage = cardsPerPage;
-        this.cardStateManager = CardStateManager.getInstance();
     }
 
     static getInstance(): CardPageManager {
@@ -28,20 +25,20 @@ export class CardPageManager {
         this.currentPage = page;
     }
 
-    public getTotalPages(cardIdList: number[]): number {
-        return Math.ceil(cardIdList.length / this.cardsPerPage);
+    public getTotalPages(cardUniqueIdList: number[]): number {
+        return Math.ceil(cardUniqueIdList.length / this.cardsPerPage);
     }
 
     public resetCurrentPage(): void {
         this.currentPage = 1;
     }
 
-    public findCardIdsForPage(page: number, cardIdList: number[]): number[] {
+    public findCardIdsForPage(page: number, cardUniqueIdList: number[]): number[] {
         const startIndex = (page - 1) * this.cardsPerPage;
-        const endIndex = Math.min(startIndex + this.cardsPerPage, cardIdList.length);
-        const cardIdsInRange = cardIdList.slice(startIndex, endIndex);
+        const endIndex = Math.min(startIndex + this.cardsPerPage, cardUniqueIdList.length);
+        const cardIdsInRange = cardUniqueIdList.slice(startIndex, endIndex);
 
-        console.log(`[DEBUG]Current Page: ${page}, CardId: ${cardIdsInRange}`);
+        console.log(`[DEBUG]Current Page: ${page}, Card Unique Id: ${cardIdsInRange}`);
         return cardIdsInRange;
 
     }

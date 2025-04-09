@@ -8,14 +8,14 @@ import {getCardById} from "../../card/utility";
 
 export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
     private static instance: MyDeckCardRepositoryImpl;
-    private cardMap: Map<number, MyDeckCard> = new Map();
+    private cardMap: Map<number, { cardId: number, cardMesh: MyDeckCard }> = new Map(); // card Unique ID: [card ID: card mesh]
+    private deckMap: Map<number, number[]> = new Map(); // deckId: card Unique ID List
 
-    // Todo: 나중에 기능 분리 필요
-    private deckToCardMap: Map<number, Map<number, THREE.Mesh>> = new Map(); // dekId: [cardId: mesh] 형태로 관리
+    // To-do: 별도로 관리할 필요 있음. 카드 개수 객체 repository 에서 관리 필요
     private cardCountMap: Map<number, number> = new Map(); // Todo: deck id: [ card id: count] 형태로 변경 필요
     private textureManager: TextureManager;
 
-    private readonly CARD_WIDTH: number = 0.126
+    private readonly CARD_WIDTH: number = 0.115
     private readonly CARD_HEIGHT: number = 0.365
 
     private constructor(textureManager: TextureManager) {
@@ -30,19 +30,19 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
         return MyDeckCardRepositoryImpl.instance;
     }
 
-    public async createMyDeckCardScene(cardId: number, position: Vector2d): Promise<MyDeckCard> {
+    public async createMyDeckCard(deckId: number, cardId: number, position: Vector2d): Promise<MyDeckCard> {
         const card = getCardById(cardId);
         if (!card) {
             throw new Error(`Card with ID ${cardId} not found`);
         }
 
-        const texture = await this.textureManager.getTexture('card', card.카드번호);
+        const texture = await this.textureManager.getTexture('owned_card', card.카드번호);
         if (!texture) {
             throw new Error(`Texture for card ${cardId} not found`);
         }
 
         const cardWidth = this.CARD_WIDTH * window.innerWidth;
-        const cardHeight = this.CARD_HEIGHT * window.innerHeight;
+        const cardHeight = cardWidth * 1.6176;
 
         const cardPositionX = position.getX() * window.innerWidth;
         const cardPositionY = position.getY() * window.innerHeight;
@@ -51,99 +51,116 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
         cardMesh.position.set(cardPositionX, cardPositionY, 0);
 
         const newCard = new MyDeckCard(cardMesh, position);
-        this.cardMap.set(newCard.id, newCard);
+        this.cardMap.set(newCard.id, { cardId: cardId, cardMesh: newCard });
 
-        return newCard;
-    }
-
-    public saveMyDeckCardSceneInfo(deckId: number, cardMeshMap: Map<number, THREE.Mesh>): void {
-        if (!this.deckToCardMap.has(deckId)) {
-            this.deckToCardMap.set(deckId, new Map());
+        if (!this.deckMap.has(deckId)) {
+            this.deckMap.set(deckId, []);
         }
+        const cardIdList = this.deckMap.get(deckId)!;
+        cardIdList.push(newCard.id);
+        this.deckMap.set(deckId, cardIdList);
 
-        const deckCardMap = this.deckToCardMap.get(deckId)!;
-        cardMeshMap.forEach((mesh, cardId) => {
-            deckCardMap.set(cardId, mesh);
-        });
-    }
-
-    public saveNumberOfCards(cardIdList: number[]): Map<number, number> {
-        const cardCountMap = new Map<number, number>();
-        cardIdList.forEach(cardId => {
-            const currentCount = cardCountMap.get(cardId) || 0;
-            cardCountMap.set(cardId, currentCount + 1);
-        });
-
-        return cardCountMap;
+        return newCard
     }
 
     public findCardByCardId(cardId: number): MyDeckCard | null {
-        return this.cardMap.get(cardId) || null;
+        for (const { cardId: storedCardId, cardMesh } of this.cardMap.values()) {
+            if (storedCardId === cardId) {
+                return cardMesh;
+            }
+        }
+        return null;
     }
 
-    public findAllCard(): MyDeckCard[] {
-        return Array.from(this.cardMap.values());
+    public findCardByCardUniqueId(cardUniqueId: number): MyDeckCard | null {
+        const card = this.cardMap.get(cardUniqueId);
+        if (card) {
+            return card.cardMesh;
+        } else {
+            return null;
+        }
     }
 
-    // 덱 id에 해당되는 모든 card 객체 불러오기
-    public findCardMeshesByDeckId(deckId: number): THREE.Mesh[] {
-        const deckCardMap = this.deckToCardMap.get(deckId);
-        if (!deckCardMap) return [];
-
-        return Array.from(deckCardMap.values());
+    public findCardIdByCardUniqueId(cardUniqueId: number): number | null {
+        const card = this.cardMap.get(cardUniqueId);
+        if (card) {
+            return card.cardId;
+        } else {
+            return null;
+        }
     }
 
-    public findCardIdsByDeckId(deckId: number): number[] {
-        const deckCardMap = this.deckToCardMap.get(deckId);
-        if (!deckCardMap) return [];
-
-        // 카드 ID만 추출하여 배열로 반환
-        console.log(`[DEBUG]Find CardIds By DeckId!: ${Array.from(deckCardMap.keys())}`);
-        return Array.from(deckCardMap.keys());
-    }
-
-    // 특정 덱 id에 해당되는 특정 card 객체 불러오기
-    // 예) 0번 덱의 카드 리스트중 3번 카드 불러오기
-    public findCardMeshByDeckIdAndCardId(deckId: number, cardId: number): THREE.Mesh | null {
-        const deckCardMap = this.deckToCardMap.get(deckId);
-        if (!deckCardMap) {
-            console.warn(`[WARN] Deck with ID ${deckId} not found`);
+    public findCardListByDeckId(deckId: number): MyDeckCard[] | null {
+        const cardUniqueIdList = this.deckMap.get(deckId);
+        if (cardUniqueIdList === undefined) {
             return null;
         }
 
-        const cardMesh = deckCardMap.get(cardId);
-        if (!cardMesh) {
-            console.warn(`[WARN] Card with ID ${cardId} not found in deck ${deckId}`);
-            return null;
+        const cardMeshList: MyDeckCard[] = [];
+        cardUniqueIdList.forEach((uniqueId) => {
+            const cardMesh = this.findCardByCardUniqueId(uniqueId);
+            if (cardMesh) {
+                cardMeshList.push(cardMesh);
+            } else {
+                console.warn(`[WARN] Card with Unique ID ${uniqueId} not found in cardMap`);
+            }
+        });
+
+        return cardMeshList;
+    }
+
+    public findCardUniqueIdListByDeckId(deckId: number): number[] {
+        return this.deckMap.get(deckId) || [];
+    }
+
+    public findDeckIdList(): number[] {
+        return Array.from(this.deckMap.keys());
+    }
+
+    // 특정 덱의 특정 카드 삭제
+    public deleteCardByDeckIdAndCardUniqueId(deckId: number, cardUniqueId: number): void {
+        this.cardMap.delete(cardUniqueId);
+
+        const cardIdList = this.deckMap.get(deckId);
+        if (cardIdList) {
+            const updatedList = cardIdList.filter(id => id !== cardUniqueId);
+            this.deckMap.set(deckId, updatedList);
+
+//             if (updatedList.length === 0) {
+//                 this.deckMap.delete(deckId);
+//             }
         }
-
-        return cardMesh;
     }
 
-    // 덱 만든 후 cardMap은 초기화 필요. 위치 정보 새로 저장을 위해
-    public initialCardMap(): void {
-        this.cardMap.clear();
-    }
-
-    public deleteCardByCardId(cardId: number): void {
-        this.cardMap.delete(cardId);
-    }
-
-    // 사용자가 모든 덱을 삭제할 경우
+    // 모든 정보 삭제(덱, 카드 모두)
     public deleteAllCard(): void {
+        this.deckMap.clear();
         this.cardMap.clear();
-        this.deckToCardMap.clear();
-        this.cardCountMap.clear();
     }
 
-    // 특정 덱을 삭제할 경우
-    public deleteCardsByDeckId(deckId: number): void {
-        this.deckToCardMap.delete(deckId);
+    // 특정 덱 삭제
+    public deleteDeckByDeckId(deckId: number): void {
+        const cardUniqueIdList = this.findCardUniqueIdListByDeckId(deckId);
+        if (cardUniqueIdList) {
+            cardUniqueIdList.forEach((cardId) => {
+                this.cardMap.delete(cardId);
+            });
+        }
+        this.deckMap.delete(deckId);
     }
 
-    public findDeckIds(): number[]{
-        const deckIdList = Array.from(this.deckToCardMap.keys());
-        return deckIdList
+    public showCard(cardUniqueId: number): void {
+        const card = this.findCardByCardUniqueId(cardUniqueId);
+        if (card) {
+            card.getMesh().visible = true;
+        }
+    }
+
+    public hideCard(cardUniqueId: number): void {
+        const card = this.findCardByCardUniqueId(cardUniqueId);
+        if (card) {
+            card.getMesh().visible = false;
+        }
     }
 
 }
