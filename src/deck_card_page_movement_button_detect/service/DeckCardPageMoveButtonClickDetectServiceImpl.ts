@@ -63,45 +63,40 @@ export class DeckCardPageMoveButtonClickDetectServiceImpl implements DeckCardPag
         const { x, y } = clickPoint;
 
         const deckCardPageMoveButtonList = this.getAllMovementButton();
-        const deckButtonId = this.getCurrentClickDeckButton();
-        if (deckButtonId === null) {
+        const deckId = this.getCurrentClickDeckButton();
+        if (deckId === null) {
             console.error("No deck button clicked");
             return null;
         }
 
-        const deckId = deckButtonId + 1;
-        const cardIdList = this.getCardIdListByDeckId(deckId);
+        console.log(`!!!!!!!!!Current DeckId?: ${deckId}`);
+        const cardUniqueIdList = this.getCardUniqueIdListByDeckId(deckId);
         const clickedDeckCardPageMovementButton = this.deckCardPageMoveButtonClickDetectRepository.isDeckCardPageMoveButtonClicked(
             { x, y },
             deckCardPageMoveButtonList,
             this.camera
         );
+
         if (clickedDeckCardPageMovementButton) {
             console.log(`Clicked Deck Page Movement Button ID: ${clickedDeckCardPageMovementButton.id}`);
 
             if (clickedDeckCardPageMovementButton.id === 0) {
                 console.log(`Clicked Pre Page Button!`);
                 if (this.getCurrentPage() > 1) {
-                    this.restCardMeshVisible(deckId, cardIdList);
+                    this.setCurrentPageCardVisibility(this.getCurrentPage(), deckId, false);
                     this.setCurrentPage(this.getCurrentPage() - 1);
                     console.log(`[DEBUG]Current Card Page?: ${this.getCurrentPage()}`);
-                    const currentCard = this.getCardIdsForPage(this.getCurrentPage(), cardIdList);
-                    currentCard.forEach((cardId) => {
-                        this.showCardMesh(deckId, cardId);
-                    });
+                    this.setCurrentPageCardVisibility(this.getCurrentPage(), deckId, true);
                 }
             }
 
             if (clickedDeckCardPageMovementButton.id === 1) {
                 console.log(`Clicked Next Page Button!`);
-                if (this.getCurrentPage() < this.getTotalPages(cardIdList)) {
-                    this.restCardMeshVisible(deckId, cardIdList);
+                if (this.getCurrentPage() < this.getTotalPages(cardUniqueIdList)) {
+                    this.setCurrentPageCardVisibility(this.getCurrentPage(), deckId, false);
                     this.setCurrentPage(this.getCurrentPage() + 1);
                     console.log(`[DEBUG]Current Card Page?: ${this.getCurrentPage()}`);
-                    const currentCard= this.getCardIdsForPage(this.getCurrentPage(), cardIdList);
-                    currentCard.forEach((cardId) => {
-                        this.showCardMesh(deckId, cardId);
-                    });
+                    this.setCurrentPageCardVisibility(this.getCurrentPage(), deckId, true);
                 }
             }
             return clickedDeckCardPageMovementButton;
@@ -121,6 +116,10 @@ export class DeckCardPageMoveButtonClickDetectServiceImpl implements DeckCardPag
         return this.myDeckCardPageMovementButtonRepository.findAll();
     }
 
+    private getCurrentClickDeckButton(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    }
+
     private getCurrentPage(): number {
         return this.cardPageManager.getCurrentPage();
     }
@@ -129,53 +128,32 @@ export class DeckCardPageMoveButtonClickDetectServiceImpl implements DeckCardPag
         this.cardPageManager.setCurrentPage(page);
     }
 
-    private getTotalPages(cardIdList: number[]): number {
-        return this.cardPageManager.getTotalPages(cardIdList);
+    private getTotalPages(cardUniqueIdList: number[]): number {
+        return this.cardPageManager.getTotalPages(cardUniqueIdList);
     }
 
-    private getCardIdListByDeckId(deckId: number): number[]{
-        return this.myDeckCardRepository.findCardIdsByDeckId(deckId);
+    private getCardUniqueIdListByDeckId(deckId: number): number[] {
+        return this.myDeckCardRepository.findCardUniqueIdListByDeckId(deckId);
     }
 
     // 특정 페이지에 해당하는 카드 id 가져오기
-    private getCardIdsForPage(page: number, cardIdList: number[]): number[] {
-        return this.cardPageManager.findCardIdsForPage(page, cardIdList);
+    private getCardIdListForPage(page: number, cardUniqueIdList: number[]): number[] {
+        return this.cardPageManager.findCardIdsForPage(page, cardUniqueIdList);
     }
 
-    // 특정 덱의 특정 카드 mesh 가져오기
-    private getCardMeshIdByDeckIdAndCardId(deckId: number, cardId: number): THREE.Mesh | null {
-        return this.myDeckCardRepository.findCardMeshByDeckIdAndCardId(deckId, cardId);
+    // 특정 덱의 특정 카드 visible 설정
+    private setCardVisibility(deckId: number, cardUniqueId: number, isVisible: boolean): void {
+        this.cardStateManager.setCardVisibility(deckId, cardUniqueId, isVisible);
     }
 
-    private setCardVisibility(deckId: number, cardId: number, isVisible: boolean): void {
-        this.cardStateManager.setCardVisibility(deckId, cardId, isVisible);
-    }
+    // 특정 덱의 현재 페이지에 해당되는 카드 visible 설정
+    private setCurrentPageCardVisibility(page: number, deckId: number, isVisible: boolean): void {
+        const cardUniqueIdList = this.getCardUniqueIdListByDeckId(deckId);
+        const currentPageCardId = this.getCardIdListForPage(page, cardUniqueIdList);
 
-    private showCardMesh(deckId: number, cardId: number): void{
-        this.setCardVisibility(deckId, cardId, true);
-        const cardMesh = this.getCardMeshIdByDeckIdAndCardId(deckId, cardId);
-        if (cardMesh) {
-            cardMesh.visible = true;
-        }
-    }
-
-    private hideCardMesh(deckId: number, cardId: number): void {
-        this.setCardVisibility(deckId, cardId, false);
-        const cardMesh = this.getCardMeshIdByDeckIdAndCardId(deckId, cardId);
-        if (cardMesh) {
-            cardMesh.visible = false;
-        }
-    }
-
-    // 카드 visible 상태 초기화 (모두 false)
-    private restCardMeshVisible(deckId: number, cardIdList: number[]): void {
-        cardIdList.forEach((cardId) => {
-            this.hideCardMesh(deckId, cardId);
+        currentPageCardId.forEach((cardUniqueId) => {
+            this.setCardVisibility(deckId, cardUniqueId, isVisible);
         });
-    }
-
-    private getCurrentClickDeckButton(): number | null {
-        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
     }
 
 }

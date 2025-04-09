@@ -199,8 +199,7 @@ export class TCGJustTestMyDeckView {
         await TextGenerator.loadFont('../../resource/font/HeirofLightOTFRegular.otf');
 
         await this.addBackground();
-//         await this.addMyDeckButtonPageMovementButton();
-//         await this.saveMyDeckCard();
+        await this.addMyDeckCard();
         await this.addMyDeckCardPageMovementButton();
         await this.addMyDeckButton();
         await this.addMyDeckButtonEffect();
@@ -309,31 +308,26 @@ export class TCGJustTestMyDeckView {
         }
     }
 
-    private async saveMyDeckCard(): Promise<void> {
-        try{
-            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndCardLists();
-
+    private async addMyDeckCard(): Promise<void> {
+        try {
+            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardListsNew();
             for (const [deckId, cardIdList] of myDeckCardList) {
-                await this.myDeckCardService.createMyDeckCardSceneWithPosition(deckId, cardIdList);
+                await this.myDeckCardService.createMyDeckCardWithPosition(deckId, cardIdList);
             }
 
-            const deckIdList = this.myDeckCardService.getAllDeckIds();
+            const deckIdList = this.myDeckCardService.getAllDeckIdList();
             deckIdList.forEach((deckId, index) => {
-                const cardIds = this.myDeckCardService.getCardIdsByDeckId(deckId);
-                const cardMeshes = this.myDeckCardService.getCardMeshesByDeckId(deckId);
-                if (cardMeshes) {
-                    if (index === 0) {
-                        this.myDeckCardService.initializeCardState(deckId, cardIds);
-                    } else {
-                        this.myDeckCardService.setCardState(deckId, cardIds);
-                    }
-                    cardMeshes.forEach((mesh) => {
-                        this.scene.add(mesh);
-                    });
+                if (index === 0) {
+                    this.myDeckButtonClickDetectService.saveCurrentClickDeckButtonId(deckId);
+                    this.myDeckCardService.initializeCardVisibility(deckId);
+                } else {
+                    this.myDeckCardService.setAllCardVisibilityByDeckId(deckId, false);
                 }
+                const cardList = this.myDeckCardService.getCardListByDeckId(deckId);
+                cardList.forEach((cardMesh) => this.scene.add(cardMesh));
             });
         } catch (error) {
-            console.error('Failed to save my deck cards:', error);
+            console.error('Failed to add my deck cards:', error);
         }
     }
 
