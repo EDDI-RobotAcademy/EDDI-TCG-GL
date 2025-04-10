@@ -46,6 +46,8 @@ import {DeckMakePopupButtonsClickDetectServiceImpl} from "../../src/deck_make_po
 import {DeckMakePopupButtonsClickDetectService} from "../../src/deck_make_pop_up_buttons_click_detect/service/DeckMakePopupButtonsClickDetectService";
 import {MyDeckScrollService} from "../../src/my_deck_scroll/service/MyDeckScrollService";
 import {MyDeckScrollServiceImpl} from "../../src/my_deck_scroll/service/MyDeckScrollServiceImpl";
+import {SideScrollAreaDetectService} from "../../src/side_scroll_area_detect/service/SideScrollAreaDetectService";
+import {SideScrollAreaDetectServiceImpl} from "../../src/side_scroll_area_detect/service/SideScrollAreaDetectServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 
@@ -94,6 +96,7 @@ export class TCGJustTestMyDeckView {
 //     private deckMakeButtonClickDetectService: DeckMakeButtonClickDetectService;
     private deckMakePopupButtonsClickDetectService: DeckMakePopupButtonsClickDetectService;
     private myDeckScrollService: MyDeckScrollService;
+    private sideScrollAreaDetectService: SideScrollAreaDetectService;
 
     private initialized = false;
     private isAnimating = false;
@@ -149,9 +152,18 @@ export class TCGJustTestMyDeckView {
             }
         }, false);
 
+        this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.renderer.domElement.addEventListener('mousemove', async (e) => {
+            const scrollAreaDetectState = this.sideScrollAreaDetectService.getMyDeckScrollAreaDetectState();
+            if (scrollAreaDetectState == true) {
+                this.sideScrollAreaDetectService.onMouseMoveMyDeck(e);
+            }
+        }, false);
+
         this.myDeckScrollService = MyDeckScrollServiceImpl.getInstance(this.camera, this.scene, this.renderer);
         this.renderer.domElement.addEventListener('wheel', async (e) => {
-            if (this.myDeckScrollService.getDeckCount() > 7) {
+            const scrollAreaDetect = this.sideScrollAreaDetectService.getMyDeckScrollEnabled();
+            if (scrollAreaDetect == true && this.myDeckScrollService.getDeckCount() > 7) {
                 const scrollState = this.myDeckScrollService.getScrollState();
                 if (scrollState == true) {
                     this.myDeckScrollService.onWheelScroll(e);

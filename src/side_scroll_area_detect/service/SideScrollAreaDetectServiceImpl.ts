@@ -21,6 +21,7 @@ export class SideScrollAreaDetectServiceImpl implements SideScrollAreaDetectServ
     private cameraRepository: CameraRepository;
     private leftMouseDown: boolean = false;
     private myCardScrollAreaDetectState: boolean = true;
+    private myDeckScrollAreaDetectState: boolean = true;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.sideScrollAreaDetectRepository = SideScrollAreaDetectRepositoryImpl.getInstance();
@@ -51,6 +52,14 @@ export class SideScrollAreaDetectServiceImpl implements SideScrollAreaDetectServ
 
     getMyCardScrollAreaDetectState(): boolean {
         return this.myCardScrollAreaDetectState;
+    }
+
+    setMyDeckScrollAreaDetectState(state: boolean): void {
+        this.myDeckScrollAreaDetectState = state;
+    }
+
+    getMyDeckScrollAreaDetectState(): boolean {
+        return this.myDeckScrollAreaDetectState;
     }
 
     async detectMakeDeckSideScrollArea(detectPoint: { x: number; y: number }): Promise<SideScrollArea | null> {
@@ -111,6 +120,30 @@ export class SideScrollAreaDetectServiceImpl implements SideScrollAreaDetectServ
         return null;
     }
 
+    async detectMyDeckSideScrollArea(detectPoint: { x: number; y: number }): Promise<SideScrollArea | null> {
+        const { x, y } = detectPoint;
+        const sideScrollArea = this.getSideScrollAreasByType(3);
+        if (sideScrollArea == null) {
+            console.error("My Deck Side Scroll Area is null.");
+            return null;
+        }
+        const detectSideScrollArea = this.sideScrollAreaDetectRepository.isSideScrollAreaDetect(
+            { x, y },
+            sideScrollArea,
+            this.camera
+        );
+
+        if (detectSideScrollArea) {
+            console.log(`%c[DEBUG] Detected My Deck Side Scroll Area`, 'color: #2E9AFE; font-weight: bold;');
+            this.setMyDeckScrollEnabled(true);
+
+        } else {
+            console.log(`%c[DEBUG] No Detected My Deck Side Scroll Area`, 'color: #F78181; font-weight: bold;');
+            this.setMyDeckScrollEnabled(false);
+        }
+        return null;
+    }
+
     // To-do: 메서드명 변경 필요
     public async onMouseMove(event: MouseEvent): Promise<void> {
         if (event.button === 0) {
@@ -124,6 +157,13 @@ export class SideScrollAreaDetectServiceImpl implements SideScrollAreaDetectServ
         if (event.button === 0) {
             const detectPoint = { x: event.clientX, y: event.clientY };
             await this.detectMyCardSideScrollArea(detectPoint);
+        }
+    }
+
+    public async onMouseMoveMyDeck(event: MouseEvent): Promise<void> {
+        if (event.button === 0) {
+            const detectPoint = { x: event.clientX, y: event.clientY };
+            await this.detectMyDeckSideScrollArea(detectPoint);
         }
     }
 
@@ -153,6 +193,14 @@ export class SideScrollAreaDetectServiceImpl implements SideScrollAreaDetectServ
 
     public getMyCardScrollEnabled(): boolean {
         return this.sideScrollAreaDetectRepository.findMyCardScrollEnabled();
+    }
+
+    public setMyDeckScrollEnabled(enable: boolean): void {
+        this.sideScrollAreaDetectRepository.setMyDeckScrollEnabled(enable);
+    }
+
+    public getMyDeckScrollEnabled(): boolean {
+        return this.sideScrollAreaDetectRepository.findMyDeckScrollEnabled();
     }
 
     private setMyCardScrollBarVisibility(isVisible: boolean): void {
