@@ -342,11 +342,43 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         });
     }
 
+    private deactivateExistNeonBorder(clickedCard: ClickableCard): void {
+        const prevYourFieldSceneId = clickedCard.getId();
+        console.log(`activateExistNeonBorder() yourFieldSceneId: ${prevYourFieldSceneId}`)
+        const yourField = this.yourFieldRepository.findByCardSceneId(prevYourFieldSceneId)
+        console.log("activateExistNeonBorder() yourField (JSON):", JSON.stringify(yourField, null, 2));
+        const existingNeonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(prevYourFieldSceneId, NeonBorderSceneType.FIELD);
+
+        if (!existingNeonBorder) {
+            console.warn(`No existing NeonBorder found for cardSceneId: ${prevYourFieldSceneId}`);
+            return;
+        }
+
+        console.log(`Deactivating existing NeonBorder for cardSceneId: ${prevYourFieldSceneId}`);
+
+        existingNeonBorder.getNeonBorderLineSceneIdList().forEach((lineSceneId) => {
+            const lineScene = this.neonBorderLineSceneRepository.findById(lineSceneId);
+            if (lineScene) {
+                const lineMesh = lineScene.getLine();
+                if (lineMesh) {
+                    lineMesh.visible = false;
+                }
+            }
+        });
+    }
+
     private async handleYourHandClick(x: number, y: number): Promise<void> {
         const handSceneList = this.battleFieldCardSceneRepository.findAll();
         const clickedHandCard = this.leftClickHandDetectRepository.isYourHandAreaClicked({ x, y }, handSceneList, this.camera);
         if (clickedHandCard === null) {
             return;
+        }
+
+        const prevYourFieldCard = this.dragMoveRepository.getSelectedObject() as unknown as YourFieldCardScene;
+        console.log(`prevYourFieldCard: ${prevYourFieldCard}`)
+
+        if (prevYourFieldCard !== null) {
+            this.deactivateExistNeonBorder(prevYourFieldCard)
         }
 
         this.dragMoveRepository.setSelectedObject(clickedHandCard);
@@ -371,10 +403,15 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
         // TODO: 이전 선택 카드가 현재 선택 카드와 같은지 판별해야함
         const prevYourFieldCard = this.dragMoveRepository.getSelectedObject() as unknown as YourFieldCardScene;
+        console.log(`prevYourFieldCard: ${prevYourFieldCard}`)
 
         if (prevYourFieldCard && prevYourFieldCard.getId() === clickedYourFieldCard.getId()) {
             console.log('같은 카드를 선택하였습니다!')
             return;
+        }
+
+        if (prevYourFieldCard !== null) {
+            this.deactivateExistNeonBorder(prevYourFieldCard)
         }
 
         this.dragMoveRepository.setSelectedObject(clickedYourFieldCard);
