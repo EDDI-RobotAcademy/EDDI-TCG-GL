@@ -20,6 +20,7 @@ import {MyDeckCardPageMovementButtonServiceImpl} from "../../src/my_deck_card_pa
 import {MyDeckCardPageMovementButtonRepositoryImpl} from "../../src/my_deck_card_page_movement_button/repository/MyDeckCardPageMovementButtonRepositoryImpl";
 import {MyDeckCardPageMovementButtonConfigList} from "../../src/my_deck_card_page_movement_button/entity/MyDeckCardPageMovementButtonConfigList";
 import {DeckMakePopupButtonsConfigList} from "../../src/deck_make_pop_up_buttons/entity/DeckMakePopupButtonsConfigList";
+import {BuildDeckButtonConfigList} from "../../src/build_deck_button/entity/BuildDeckButtonConfigList";
 
 import {MyDeckButtonServiceImpl} from "../../src/my_deck_button/service/MyDeckButtonServiceImpl";
 import {MyDeckButtonEffectServiceImpl} from "../../src/my_deck_button_effect/service/MyDeckButtonEffectServiceImpl";
@@ -29,12 +30,13 @@ import {MyDeckCardMapRepositoryImpl} from "../../src/my_deck_card/repository/MyD
 
 import {MyDeckNameTextServiceImpl} from "../../src/my_deck_name_text/service/MyDeckNameTextServiceImpl";
 import {MyDeckNameTextMapRepositoryImpl} from "../../src/my_deck_name_text/repository/MyDeckNameTextMapRepositoryImpl";
-import {DeckMakeButtonServiceImpl} from "../../src/deck_make_button/service/DeckMakeButtonServiceImpl";
+// import {DeckMakeButtonServiceImpl} from "../../src/deck_make_button/service/DeckMakeButtonServiceImpl";
 import {TransparentBackgroundServiceImpl} from "../../src/transparent_background/service/TransparentBackgroundServiceImpl";
 import {DeckMakePopupBackgroundServiceImpl} from "../../src/deck_make_pop_up_background/service/DeckMakePopupBackgroundServiceImpl";
 import {DeckMakePopupButtonsServiceImpl} from "../../src/deck_make_pop_up_buttons/service/DeckMakePopupButtonsServiceImpl";
 import {DeckMakePopupInputContainerServiceImpl} from "../../src/deck_make_pop_up_input_container/service/DeckMakePopupInputContainerServiceImpl";
 import {SideScrollAreaServiceImpl} from "../../src/side_scroll_area/service/SideScrollAreaServiceImpl";
+import {BuildDeckButtonServiceImpl} from "../../src/build_deck_button/service/BuildDeckButtonServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -72,12 +74,13 @@ export class TCGJustTestMyDeckView {
     private myDeckButtonEffectService = MyDeckButtonEffectServiceImpl.getInstance();
     private myDeckCardService = MyDeckCardServiceImpl.getInstance();
     private myDeckNameTextService = MyDeckNameTextServiceImpl.getInstance();
-    private deckMakeButtonService = DeckMakeButtonServiceImpl.getInstance();
+//     private deckMakeButtonService = DeckMakeButtonServiceImpl.getInstance();
     private transparentBackgroundService = TransparentBackgroundServiceImpl.getInstance();
     private decKMakePopupBackgroundService = DeckMakePopupBackgroundServiceImpl.getInstance();
     private deckMakePopupButtonsService = DeckMakePopupButtonsServiceImpl.getInstance();
     private deckMakePopupInputContainerService = DeckMakePopupInputContainerServiceImpl.getInstance();
     private sideScrollAreaService = SideScrollAreaServiceImpl.getInstance();
+    private buildDeckButtonService = BuildDeckButtonServiceImpl.getInstance();
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -238,6 +241,7 @@ export class TCGJustTestMyDeckView {
         await this.addMyDeckCardPageMovementButton();
         await this.addMyDeckButton();
         await this.addMyDeckButtonEffect();
+        await this.addBuildDeckButton();
         this.addMyDeckNameText();
 //         this.addDeckMakeButton();
         this.addTransparentBackground();
@@ -475,17 +479,37 @@ export class TCGJustTestMyDeckView {
         }
     }
 
-    private async addDeckMakeButton(): Promise<void> {
-        try{
-            const deckMakeButtonMesh = await this.deckMakeButtonService.createDeckMakeButton();
-            if (deckMakeButtonMesh) {
-                this.scene.add(deckMakeButtonMesh);
-            } else {
-                console.warn(`No deckMakeButtonMesh found`);
-                }
+//     private async addDeckMakeButton(): Promise<void> {
+//         try{
+//             const deckMakeButtonMesh = await this.deckMakeButtonService.createDeckMakeButton();
+//             if (deckMakeButtonMesh) {
+//                 this.scene.add(deckMakeButtonMesh);
+//             } else {
+//                 console.warn(`No deckMakeButtonMesh found`);
+//                 }
+//
+//         } catch (error) {
+//            console.error('Failed to add DeckMakeButton:', error);
+//         }
+//     }
 
+    private async addBuildDeckButton(): Promise<void> {
+        try {
+            const configList = new BuildDeckButtonConfigList();
+            await Promise.all(configList.buttonConfigs.map(async (config) =>{
+                const button = await this.buildDeckButtonService.createBuildDeckButton(
+                    config.id,
+                    config.position
+                );
+
+                if (button) {
+                    this.buildDeckButtonService.initializeRaceButtonVisible();
+                    this.scene.add(button);
+                    console.log(`Draw Build Deck Button ${config.id}`);
+                }
+            }));
         } catch (error) {
-           console.error('Failed to add DeckMakeButton:', error);
+            console.error('Failed to add Build Deck Button:', error);
         }
     }
 
@@ -572,6 +596,7 @@ export class TCGJustTestMyDeckView {
             this.myDeckButtonEffectService.adjustMyDeckButtonEffectPosition();
             this.myDeckCardService.adjustMyDeckCardPosition();
             this.myDeckNameTextService.adjustMyDeckNameTextPosition();
+            this.buildDeckButtonService.adjustBuildDeckButtonPosition();
 //             this.deckMakeButtonService.adjustDeckMakeButtonPosition();
             this.transparentBackgroundService.adjustTransparentBackgroundPosition();
             this.decKMakePopupBackgroundService.adjustDeckMakePopupBackgroundPosition();
