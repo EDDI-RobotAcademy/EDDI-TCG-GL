@@ -50,6 +50,8 @@ import {MyDeckScrollService} from "../../src/my_deck_scroll/service/MyDeckScroll
 import {MyDeckScrollServiceImpl} from "../../src/my_deck_scroll/service/MyDeckScrollServiceImpl";
 import {SideScrollAreaDetectService} from "../../src/side_scroll_area_detect/service/SideScrollAreaDetectService";
 import {SideScrollAreaDetectServiceImpl} from "../../src/side_scroll_area_detect/service/SideScrollAreaDetectServiceImpl";
+import {BuildDeckButtonHoverDetectService} from "../../src/build_deck_button_hover_detect/service/BuildDeckButtonHoverDetectService";
+import {BuildDeckButtonHoverDetectServiceImpl} from "../../src/build_deck_button_hover_detect/service/BuildDeckButtonHoverDetectServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 
@@ -100,6 +102,7 @@ export class TCGJustTestMyDeckView {
     private deckMakePopupButtonsClickDetectService: DeckMakePopupButtonsClickDetectService;
     private myDeckScrollService: MyDeckScrollService;
     private sideScrollAreaDetectService: SideScrollAreaDetectService;
+    private buildDeckButtonHoverDetectService: BuildDeckButtonHoverDetectService;
 
     private initialized = false;
     private isAnimating = false;
@@ -160,6 +163,14 @@ export class TCGJustTestMyDeckView {
             const scrollAreaDetectState = this.sideScrollAreaDetectService.getMyDeckScrollAreaDetectState();
             if (scrollAreaDetectState == true) {
                 this.sideScrollAreaDetectService.onMouseMoveMyDeck(e);
+            }
+        }, false);
+
+        this.buildDeckButtonHoverDetectService = BuildDeckButtonHoverDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.renderer.domElement.addEventListener('mousemove', async (e) => {
+            const buildDeckButtonDetectState = this.buildDeckButtonHoverDetectService.getButtonDetectState();
+            if (buildDeckButtonDetectState == true) {
+                this.buildDeckButtonHoverDetectService.onMouseMove(e);
             }
         }, false);
 
