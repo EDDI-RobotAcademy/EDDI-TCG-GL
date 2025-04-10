@@ -4,7 +4,6 @@ import {Vector2d} from "../../common/math/Vector2d";
 
 export interface MyDeckNameTextRepository {
     createMyDeckNameText(deckId: number, deckName: string, position: Vector2d): Promise<MyDeckNameText>;
-    getAllMyDeckNameText(): Map<number, MyDeckNameText>;
     findById(id: number): MyDeckNameText | null;
     findAll(): MyDeckNameText[];
     deleteById(id: number): void;

@@ -2,26 +2,33 @@ import * as THREE from 'three';
 import {Vector2d} from "../../common/math/Vector2d";
 
 import {MyDeckNameTextService} from './MyDeckNameTextService';
-
 import {MyDeckNameText} from "../entity/MyDeckNameText";
 import {MyDeckNameTextRepository} from "../repository/MyDeckNameTextRepository";
 import {MyDeckNameTextRepositoryImpl} from "../repository/MyDeckNameTextRepositoryImpl";
-
 import {MyDeckNameTextPosition} from "../../my_deck_name_text_position/entity/MyDeckNameTextPosition";
 import {MyDeckNameTextPositionRepositoryImpl} from "../../my_deck_name_text_position/repository/MyDeckNameTextPositionRepositoryImpl";
+import {SideScrollArea} from "../../side_scroll_area/entity/SideScrollArea";
+import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
 
 import {NameTextStateManager} from "../../my_deck_name_text_manager/NameTextStateManager";
+import {ClippingMaskManager} from "../../clipping_mask_manager/ClippingMaskManager";
 
 export class MyDeckNameTextServiceImpl implements MyDeckNameTextService {
     private static instance: MyDeckNameTextServiceImpl;
     private myDeckNameTextRepository: MyDeckNameTextRepositoryImpl;
     private myDeckNameTextPositionRepository: MyDeckNameTextPositionRepositoryImpl;
+    private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
+
     private nameTextStateManager: NameTextStateManager;
+    private clippingMaskManager: ClippingMaskManager;
 
     private constructor(myDeckNameTextRepository: MyDeckNameTextRepository) {
         this.myDeckNameTextRepository = MyDeckNameTextRepositoryImpl.getInstance();
         this.myDeckNameTextPositionRepository = MyDeckNameTextPositionRepositoryImpl.getInstance();
+        this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
+
         this.nameTextStateManager = NameTextStateManager.getInstance();
+        this.clippingMaskManager = ClippingMaskManager.getInstance();
     }
 
     public static getInstance(): MyDeckNameTextServiceImpl {
@@ -97,20 +104,17 @@ export class MyDeckNameTextServiceImpl implements MyDeckNameTextService {
             textMesh.geometry.dispose();
             textMesh.geometry = new THREE.PlaneGeometry(textWidth, textHeight);
             textMesh.position.set(newPositionX, newPositionY, 0);
+
+            const scrollArea = this.getScrollArea();
+            if (scrollArea) {
+                scrollArea.width = 0.24 * windowWidth;
+                scrollArea.height = 0.61 * windowHeight;
+                scrollArea.position.set(-0.36 * window.innerWidth, -0.1167 * window.innerHeight);
+                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+                this.applyClippingPlanesToMesh(textMesh, clippingPlanes);
+            }
         }
 
-    }
-
-    public initializeDeckNameText(): void {
-        const textIdList = this.getAllDeckNameTextId();
-        this.initializeButtonState(textIdList);
-
-        const textMeshList = this.getAllMyDeckNameText();
-        if (textMeshList) {
-            textMeshList.forEach((text, index) => {
-                text.getMesh().visible = index < 6;
-            });
-        }
     }
 
     public getMyDeckNameTextByDeckId(deckId: number): MyDeckNameText | null {
@@ -121,29 +125,32 @@ export class MyDeckNameTextServiceImpl implements MyDeckNameTextService {
         return this.myDeckNameTextRepository.findAll();
     }
 
-    public getDeckNameTextIdByDeckId(deckId: number): number {
+    public getDeckNameTextIdByDeckId(deckId: number): number | null {
         return this.myDeckNameTextRepository.findNameTextIdByDeckId(deckId);
     }
 
-    public getAllDeckNameTextId(): number[] {
-        return this.myDeckNameTextRepository.findAllNameTextIds();
+    public getAllDeckNameTextIdList(): number[] {
+        return this.myDeckNameTextRepository.findAllNameTextIdList();
     }
 
-    public deleteMyDeckNameTextByDeckId(deckId: number): void {
-        this.myDeckNameTextRepository.deleteNameTextByDeckId(deckId);
+    public deleteDeckNameTextByDeckId(deckId: number): void {
+        this.myDeckNameTextRepository.deleteTextByDeckId(deckId);
     }
 
-     public deleteAllMyDeckNameText(): void {
-         this.myDeckNameTextRepository.deleteAll();
-     }
-
-    private setNameTextVisibility(deckId: number, isVisible: boolean): void {
-        const textId = this.getDeckNameTextIdByDeckId(deckId);
-        this.nameTextStateManager.setVisibility(textId, isVisible);
+    public deleteAllDeckNameText(): void {
+        this.myDeckNameTextRepository.deleteAll();
     }
 
-    private initializeButtonState(nameTextIdList: number[]): void {
-        this.nameTextStateManager.initializeNameTextState(nameTextIdList);
+    public getMyDeckTextGroups(): THREE.Group {
+        return this.myDeckNameTextRepository.findAllTextGroups();
+    }
+
+    private getScrollArea(): SideScrollArea | null {
+        return this.sideScrollAreaRepository.findAreaByTypeAndId(3, 0);
+    }
+
+    private applyClippingPlanesToMesh(mesh: THREE.Mesh, clippingPlanes: THREE.Plane[]): void {
+        this.clippingMaskManager.applyClippingPlanesToMesh(mesh, clippingPlanes);
     }
 
 }

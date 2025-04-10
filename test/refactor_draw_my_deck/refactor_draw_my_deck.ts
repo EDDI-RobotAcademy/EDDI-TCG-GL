@@ -203,7 +203,8 @@ export class TCGJustTestMyDeckView {
         console.log('TCGJustTestMyDeckView initialize() operate!!!');
         await this.textureManager.preloadTextures("image-paths.json");
         console.log("Textures preloaded. Adding background and buttons...");
-        await TextGenerator.loadFont('../../resource/font/HeirofLightOTFRegular.otf');
+//         await TextGenerator.loadFont('../../resource/font/HeirofLightOTFRegular.otf');
+        await TextGenerator.loadFont('../../resource/font/GowunBatang-Regular.ttf');
 
         await this.addBackground();
         await this.addScrollArea();
@@ -407,17 +408,42 @@ export class TCGJustTestMyDeckView {
             const deckIdList = this.myDeckNameTextMapRepository.getDeckIds();
             const myDeckNameList = this.myDeckNameTextMapRepository.getMyDeckNameTextList();
 
-            myDeckNameList.forEach(async (deckName, index) => {
-                const deckId = deckIdList[index];
-                const textGroup = await this.myDeckNameTextService.createMyDeckNameTextWithPosition(deckId, deckName);
+//             myDeckNameList.forEach(async (deckName, index) => {
+//                 const deckId = deckIdList[index];
+//                 const textGroup = await this.myDeckNameTextService.createMyDeckNameTextWithPosition(deckId, deckName);
+//
+//                 if (textGroup) {
+//                     this.scene.add(textGroup);
+//                 } else {
+//                     console.warn(`No deckId found for index ${index}`);
+//                 }
+//             });
 
-                if (textGroup) {
-//                     this.myDeckNameTextService.initializeDeckNameText();
-                    this.scene.add(textGroup);
-                } else {
-                    console.warn(`No deckId found for index ${index}`);
-                }
-            });
+            for (const [index, deckName] of myDeckNameList.entries()) {
+                const deckId = deckIdList[index];
+                await this.myDeckNameTextService.createMyDeckNameTextWithPosition(deckId, deckName);
+            }
+
+            const textGroup = this.myDeckNameTextService.getMyDeckTextGroups();
+            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 0);
+            let clippingPlanes: THREE.Plane[] = [];
+
+            if (scrollArea) {
+                clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+                textGroup.children.forEach((textObject) => {
+                    if (textObject instanceof THREE.Mesh) {
+                        this.clippingMaskManager.applyClippingPlanesToMesh(textObject, clippingPlanes);
+                    } else {
+                        console.warn("[WARN] Skipping non-mesh object in text Group:", textObject);
+                    }
+                });
+            }
+
+            if (!this.scene.children.includes(textGroup)) {
+                this.scene.add(textGroup);
+            }
+            textGroup.position.y = 0;
+
         } catch (error){
              console.error('Failed to add test text:', error);
         }
