@@ -7,8 +7,8 @@ import {Vector2d} from "../../common/math/Vector2d";
 
 export class MyDeckNameTextRepositoryImpl implements MyDeckNameTextRepository {
     private static instance: MyDeckNameTextRepositoryImpl;
-    private nameTextMap: Map<number, MyDeckNameText> = new Map();
-    private deckToNameTextMap: Map<number, number> = new Map();
+    private deckNameTextMap: Map<number, { deckId: number, textMesh: MyDeckNameText }> = new Map(); // text unique id: {deck id: text mesh}
+    private deckNameTextGroup: THREE.Group | null = null;
 
     private readonly NAME_WIDTH: number = 180 / 1920
     private readonly NAME_HEIGHT: number = 50 / 1080
@@ -44,58 +44,101 @@ export class MyDeckNameTextRepositoryImpl implements MyDeckNameTextRepository {
         nameTextMesh.position.set(namePositionX, namePositionY, 0);
 
         const newNameTextScene = new MyDeckNameText(nameTextMesh, position, nameWidth, nameHeight);
-        this.nameTextMap.set(newNameTextScene.id, newNameTextScene);
-        this.deckToNameTextMap.set(deckId, newNameTextScene.id);
+        this.deckNameTextMap.set(newNameTextScene.id, { deckId, textMesh: newNameTextScene });
 
         return newNameTextScene;
     }
 
-    public getAllMyDeckNameText(): Map<number, MyDeckNameText> {
-        return this.nameTextMap;
-    }
-
-    public findById(id: number): MyDeckNameText | null {
-        return this.nameTextMap.get(id) || null;
+    public findById(textUniqueId: number): MyDeckNameText | null {
+        const text = this.deckNameTextMap.get(textUniqueId);
+        if (text) {
+            return text.textMesh;
+        } else {
+            return null;
+        }
     }
 
     public findAll(): MyDeckNameText[] {
-        return Array.from(this.nameTextMap.values());
+        return Array.from(this.deckNameTextMap.values()).map(({ textMesh }) => textMesh);
     }
 
     public findNameTextByDeckId(deckId: number): MyDeckNameText | null {
-        const nameTextId = this.deckToNameTextMap.get(deckId);
-        if (nameTextId === undefined) {
+        for (const { deckId: storedDeckId, textMesh } of this.deckNameTextMap.values()) {
+            if (storedDeckId === deckId) {
+                return textMesh;
+            }
+        }
+        return null;
+    }
+
+    public findNameTextIdByDeckId(deckId: number): number | null {
+        for (const [textId, { deckId: storedDeckId }] of this.deckNameTextMap.entries()) {
+            if (storedDeckId === deckId) {
+                console.log(`Match found! Returning textId: ${textId}`);
+                return textId;
+            }
+        }
+        return null;
+    }
+
+    public findAllNameTextIdList(): number[]{
+        return Array.from(this.deckNameTextMap.keys());
+    }
+
+    public findTextDeckIdList(): number[] {
+        return Array.from(this.deckNameTextMap.values()).map(({ deckId }) => deckId);
+    }
+
+    public findDeckIdByTextId(textUniqueId: number): number | null {
+        const text = this.deckNameTextMap.get(textUniqueId);
+        if (text) {
+            return text.deckId;
+        } else {
             return null;
         }
-        return this.nameTextMap.get(nameTextId) || null;
     }
 
-    public findNameTextIdByDeckId(deckId: number): number {
-        const nameTextId = this.deckToNameTextMap.get(deckId);
-        if (nameTextId === undefined) {
-            throw new Error(`Button not found for deckId: ${deckId}`);
+    public deleteById(textUniqueId: number): void {
+        this.deckNameTextMap.delete(textUniqueId);
+    }
+
+    public deleteTextByDeckId(deckId: number): void {
+        const textId = this.findNameTextIdByDeckId(deckId);
+        if (textId) {
+            this.deckNameTextMap.delete(textId);
         }
-        return nameTextId;
-    }
-
-    public findAllNameTextIds(): number[]{
-        return Array.from(this.deckToNameTextMap.values());
-    }
-
-    public deleteById(id: number): void {
-        this.nameTextMap.delete(id);
     }
 
     public deleteAll(): void {
-        this.nameTextMap.clear();
-        this.deckToNameTextMap.clear();
+        this.deckNameTextMap.clear();
     }
 
-    public deleteNameTextByDeckId(deckId: number): void {
-        const nameTextId = this.deckToNameTextMap.get(deckId);
-        if (nameTextId !== undefined) {
-            this.nameTextMap.delete(nameTextId);
-            this.deckToNameTextMap.delete(deckId);
+    public findAllTextGroups(): THREE.Group {
+        if (!this.deckNameTextGroup) {
+            this.deckNameTextGroup = new THREE.Group();
+            for (const { textMesh } of this.deckNameTextMap.values()) {
+                this.deckNameTextGroup.add(textMesh.getMesh());
+            }
+        }
+        console.log(`%c[DEBUG] deckNameTextGroup 생성됨 ${this.deckNameTextGroup.children}`, 'color: #00FFBF; font-weight: bold;');
+        return this.deckNameTextGroup;
+    }
+
+    public resetTextGroups(): void {
+        this.deckNameTextGroup = null;
+    }
+
+    public hideText(deckId: number): void {
+        const text = this.findNameTextByDeckId(deckId);
+        if (text) {
+            text.getMesh().visible = false;
+        }
+    }
+
+    public showText(deckId: number): void {
+        const text = this.findNameTextByDeckId(deckId);
+        if (text) {
+            text.getMesh().visible = true;
         }
     }
 

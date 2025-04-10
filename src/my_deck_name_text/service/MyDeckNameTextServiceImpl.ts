@@ -2,14 +2,11 @@ import * as THREE from 'three';
 import {Vector2d} from "../../common/math/Vector2d";
 
 import {MyDeckNameTextService} from './MyDeckNameTextService';
-
 import {MyDeckNameText} from "../entity/MyDeckNameText";
 import {MyDeckNameTextRepository} from "../repository/MyDeckNameTextRepository";
 import {MyDeckNameTextRepositoryImpl} from "../repository/MyDeckNameTextRepositoryImpl";
-
 import {MyDeckNameTextPosition} from "../../my_deck_name_text_position/entity/MyDeckNameTextPosition";
 import {MyDeckNameTextPositionRepositoryImpl} from "../../my_deck_name_text_position/repository/MyDeckNameTextPositionRepositoryImpl";
-
 import {NameTextStateManager} from "../../my_deck_name_text_manager/NameTextStateManager";
 
 export class MyDeckNameTextServiceImpl implements MyDeckNameTextService {
@@ -101,18 +98,6 @@ export class MyDeckNameTextServiceImpl implements MyDeckNameTextService {
 
     }
 
-    public initializeDeckNameText(): void {
-        const textIdList = this.getAllDeckNameTextId();
-        this.initializeButtonState(textIdList);
-
-        const textMeshList = this.getAllMyDeckNameText();
-        if (textMeshList) {
-            textMeshList.forEach((text, index) => {
-                text.getMesh().visible = index < 6;
-            });
-        }
-    }
-
     public getMyDeckNameTextByDeckId(deckId: number): MyDeckNameText | null {
         return this.myDeckNameTextRepository.findNameTextByDeckId(deckId);
     }
@@ -121,29 +106,20 @@ export class MyDeckNameTextServiceImpl implements MyDeckNameTextService {
         return this.myDeckNameTextRepository.findAll();
     }
 
-    public getDeckNameTextIdByDeckId(deckId: number): number {
+    public getDeckNameTextIdByDeckId(deckId: number): number | null {
         return this.myDeckNameTextRepository.findNameTextIdByDeckId(deckId);
     }
 
-    public getAllDeckNameTextId(): number[] {
-        return this.myDeckNameTextRepository.findAllNameTextIds();
+    public getAllDeckNameTextIdList(): number[] {
+        return this.myDeckNameTextRepository.findAllNameTextIdList();
     }
 
-    public deleteMyDeckNameTextByDeckId(deckId: number): void {
-        this.myDeckNameTextRepository.deleteNameTextByDeckId(deckId);
+    public deleteDeckNameTextByDeckId(deckId: number): void {
+        this.myDeckNameTextRepository.deleteTextByDeckId(deckId);
     }
 
-     public deleteAllMyDeckNameText(): void {
+     public deleteAllDeckNameText(): void {
          this.myDeckNameTextRepository.deleteAll();
      }
-
-    private setNameTextVisibility(deckId: number, isVisible: boolean): void {
-        const textId = this.getDeckNameTextIdByDeckId(deckId);
-        this.nameTextStateManager.setVisibility(textId, isVisible);
-    }
-
-    private initializeButtonState(nameTextIdList: number[]): void {
-        this.nameTextStateManager.initializeNameTextState(nameTextIdList);
-    }
 
 }

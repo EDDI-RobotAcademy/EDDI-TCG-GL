@@ -6,6 +6,6 @@ import {MyDeckNameText} from "../entity/MyDeckNameText";
 export interface MyDeckNameTextService {
     getMyDeckNameTextByDeckId(deckId: number): MyDeckNameText | null;
     getAllMyDeckNameText(): MyDeckNameText[];
-    deleteMyDeckNameTextByDeckId(deckId: number): void;
-    deleteAllMyDeckNameText(): void;
+    deleteDeckNameTextByDeckId(deckId: number): void;
+    deleteAllDeckNameText(): void;
 }

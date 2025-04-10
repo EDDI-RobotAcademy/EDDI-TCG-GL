@@ -203,7 +203,8 @@ export class TCGJustTestMyDeckView {
         console.log('TCGJustTestMyDeckView initialize() operate!!!');
         await this.textureManager.preloadTextures("image-paths.json");
         console.log("Textures preloaded. Adding background and buttons...");
-        await TextGenerator.loadFont('../../resource/font/HeirofLightOTFRegular.otf');
+//         await TextGenerator.loadFont('../../resource/font/HeirofLightOTFRegular.otf');
+        await TextGenerator.loadFont('../../resource/font/GowunBatang-Regular.ttf');
 
         await this.addBackground();
         await this.addScrollArea();
@@ -412,7 +413,6 @@ export class TCGJustTestMyDeckView {
                 const textGroup = await this.myDeckNameTextService.createMyDeckNameTextWithPosition(deckId, deckName);
 
                 if (textGroup) {
-//                     this.myDeckNameTextService.initializeDeckNameText();
                     this.scene.add(textGroup);
                 } else {
                     console.warn(`No deckId found for index ${index}`);
