@@ -101,10 +101,10 @@ export class SideScrollAreaServiceImpl implements SideScrollAreaService {
             const initialPosition = area.position;
 
             const areaWidth = 0.24 * windowWidth;
-            const areaHeight = 0.775 * windowHeight;
+            const areaHeight = 0.61 * windowHeight;
 
             const newPositionX = -0.36 * windowWidth;
-            const newPositionY = -0.035 * windowHeight;
+            const newPositionY = -0.1167 * windowHeight;
 
             areaMesh.geometry.dispose();
             areaMesh.geometry = new THREE.PlaneGeometry(areaWidth, areaHeight);
