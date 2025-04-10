@@ -342,13 +342,37 @@ export class TCGJustTestMyDeckView {
         try {
             const myDeckButtonList = this.myDeckButtonMapRepository.getMyDeckList();
 
-            myDeckButtonList.forEach(async (deckId, index) => {
-                const buttonEffectGroup = await this.myDeckButtonEffectService.createDeckButtonEffectWithPosition(deckId);
-                if (buttonEffectGroup) {
-                    this.myDeckButtonEffectService.initializeDeckButtonEffect();
-                    this.scene.add(buttonEffectGroup);
-                }
-            });
+//             myDeckButtonList.forEach(async (deckId, index) => {
+//                 const buttonEffectGroup = await this.myDeckButtonEffectService.createDeckButtonEffectWithPosition(deckId);
+//                 if (buttonEffectGroup) {
+//                     this.myDeckButtonEffectService.initializeDeckButtonEffect();
+//                     this.scene.add(buttonEffectGroup);
+//                 }
+//             });
+
+            for (const [index, deckId] of myDeckButtonList.entries()) {
+                await this.myDeckButtonEffectService.createDeckButtonEffectWithPosition(deckId);
+            }
+            this.myDeckButtonEffectService.initializeDeckButtonEffect();
+            const deckButtonEffectGroup = this.myDeckButtonEffectService.getMyDeckButtonEffectGroups();
+            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 0);
+            let clippingPlanes: THREE.Plane[] = [];
+
+            if (scrollArea) {
+                clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+                deckButtonEffectGroup.children.forEach((effectObject) => {
+                    if (effectObject instanceof THREE.Mesh) {
+                        this.clippingMaskManager.applyClippingPlanesToMesh(effectObject, clippingPlanes);
+                    } else {
+                        console.warn("[WARN] Skipping non-mesh object in button effect Group:", effectObject);
+                    }
+                });
+            }
+
+            if (!this.scene.children.includes(deckButtonEffectGroup)) {
+                this.scene.add(deckButtonEffectGroup);
+            }
+            deckButtonEffectGroup.position.y = 0;
 
         } catch (error) {
             console.error('Failed to add my deck button effects:', error);
