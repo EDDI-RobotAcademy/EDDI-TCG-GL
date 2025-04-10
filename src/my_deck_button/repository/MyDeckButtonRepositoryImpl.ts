@@ -142,4 +142,8 @@ export class MyDeckButtonRepositoryImpl implements MyDeckButtonRepository {
             button.getMesh().visible = true;
         }
     }
+
+    public findDeckCount(): number {
+        return this.deckButtonMap.size;
+    }
 }
