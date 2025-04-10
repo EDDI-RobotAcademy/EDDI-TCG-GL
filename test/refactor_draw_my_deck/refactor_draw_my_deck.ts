@@ -45,6 +45,8 @@ import {DeckMakeButtonClickDetectService} from "../../src/deck_make_button_click
 import {DeckMakePopupButtonsClickDetectServiceImpl} from "../../src/deck_make_pop_up_buttons_click_detect/service/DeckMakePopupButtonsClickDetectServiceImpl";
 import {DeckMakePopupButtonsClickDetectService} from "../../src/deck_make_pop_up_buttons_click_detect/service/DeckMakePopupButtonsClickDetectService";
 
+import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
+
 export class TCGJustTestMyDeckView {
     private static instance: TCGJustTestMyDeckView | null = null;
 
@@ -72,6 +74,8 @@ export class TCGJustTestMyDeckView {
     private deckMakePopupButtonsService = DeckMakePopupButtonsServiceImpl.getInstance();
     private deckMakePopupInputContainerService = DeckMakePopupInputContainerServiceImpl.getInstance();
     private sideScrollAreaService = SideScrollAreaServiceImpl.getInstance();
+
+    private clippingMaskManager = ClippingMaskManager.getInstance();
 
     private myDeckButtonMapRepository = MyDeckButtonMapRepositoryImpl.getInstance();
     private myDeckCardMapRepository = MyDeckCardMapRepositoryImpl.getInstance();
@@ -105,6 +109,7 @@ export class TCGJustTestMyDeckView {
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.simulationMyDeckContainer.appendChild(this.renderer.domElement);
+        this.clippingMaskManager.setRenderer(this.renderer);
 
         this.userWindowSize = UserWindowSize.getInstance()
 
@@ -278,7 +283,7 @@ export class TCGJustTestMyDeckView {
 
     private async addScrollArea(): Promise<void> {
         try{
-            const areaMesh = await this.sideScrollAreaService.createSideScrollArea('myDeckScrollArea', 3, 0.24, 0.775, -0.36, -0.035);
+            const areaMesh = await this.sideScrollAreaService.createSideScrollArea('myDeckScrollArea', 3, 0.24, 0.61, -0.36, -0.1167);
             if (areaMesh) {
                 this.scene.add(areaMesh);
             } else {
@@ -294,14 +299,39 @@ export class TCGJustTestMyDeckView {
         try {
             const myDeckButtonList = this.myDeckButtonMapRepository.getMyDeckList();
 
-            myDeckButtonList.forEach(async (deckId, index) => {
-                const buttonGroup = await this.myDeckButtonService.createMyDeckButtonWithPosition(deckId);
+//             myDeckButtonList.forEach(async (deckId, index) => {
+//                 const buttonGroup = await this.myDeckButtonService.createMyDeckButtonWithPosition(deckId);
+//
+//                 if (buttonGroup) {
+//                     this.myDeckButtonService.initializeDeckButton(); // 처음 6개만 visible
+//                     this.scene.add(buttonGroup);
+//                 }
+//             });
 
-                if (buttonGroup) {
-                    this.myDeckButtonService.initializeDeckButton(); // 처음 6개만 visible
-                    this.scene.add(buttonGroup);
-                }
-            });
+            for (const [index, deckId] of myDeckButtonList.entries()) {
+                await this.myDeckButtonService.createMyDeckButtonWithPosition(deckId);
+            }
+
+            this.myDeckButtonService.initializeDeckButton();
+            const deckButtonGroup = this.myDeckButtonService.getMyDeckButtonGroups();
+            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 0);
+            let clippingPlanes: THREE.Plane[] = [];
+
+            if (scrollArea) {
+                clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+                deckButtonGroup.children.forEach((buttonObject) => {
+                    if (buttonObject instanceof THREE.Mesh) {
+                        this.clippingMaskManager.applyClippingPlanesToMesh(buttonObject, clippingPlanes);
+                    } else {
+                        console.warn("[WARN] Skipping non-mesh object in buttonGroup:", buttonObject);
+                    }
+                });
+            }
+
+            if (!this.scene.children.includes(deckButtonGroup)) {
+                this.scene.add(deckButtonGroup);
+            }
+            deckButtonGroup.position.y = 0;
 
         } catch (error) {
             console.error('Failed to add my deck buttons:', error);
@@ -312,13 +342,37 @@ export class TCGJustTestMyDeckView {
         try {
             const myDeckButtonList = this.myDeckButtonMapRepository.getMyDeckList();
 
-            myDeckButtonList.forEach(async (deckId, index) => {
-                const buttonEffectGroup = await this.myDeckButtonEffectService.createDeckButtonEffectWithPosition(deckId);
-                if (buttonEffectGroup) {
-                    this.myDeckButtonEffectService.initializeDeckButtonEffect();
-                    this.scene.add(buttonEffectGroup);
-                }
-            });
+//             myDeckButtonList.forEach(async (deckId, index) => {
+//                 const buttonEffectGroup = await this.myDeckButtonEffectService.createDeckButtonEffectWithPosition(deckId);
+//                 if (buttonEffectGroup) {
+//                     this.myDeckButtonEffectService.initializeDeckButtonEffect();
+//                     this.scene.add(buttonEffectGroup);
+//                 }
+//             });
+
+            for (const [index, deckId] of myDeckButtonList.entries()) {
+                await this.myDeckButtonEffectService.createDeckButtonEffectWithPosition(deckId);
+            }
+            this.myDeckButtonEffectService.initializeDeckButtonEffect();
+            const deckButtonEffectGroup = this.myDeckButtonEffectService.getMyDeckButtonEffectGroups();
+            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 0);
+            let clippingPlanes: THREE.Plane[] = [];
+
+            if (scrollArea) {
+                clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+                deckButtonEffectGroup.children.forEach((effectObject) => {
+                    if (effectObject instanceof THREE.Mesh) {
+                        this.clippingMaskManager.applyClippingPlanesToMesh(effectObject, clippingPlanes);
+                    } else {
+                        console.warn("[WARN] Skipping non-mesh object in button effect Group:", effectObject);
+                    }
+                });
+            }
+
+            if (!this.scene.children.includes(deckButtonEffectGroup)) {
+                this.scene.add(deckButtonEffectGroup);
+            }
+            deckButtonEffectGroup.position.y = 0;
 
         } catch (error) {
             console.error('Failed to add my deck button effects:', error);

@@ -9,19 +9,28 @@ import {MyDeckButtonEffectRepositoryImpl} from "../repository/MyDeckButtonEffect
 
 import {MyDeckButtonPosition} from "../../my_deck_button_position/entity/MyDeckButtonPosition";
 import {MyDeckButtonPositionRepositoryImpl} from "../../my_deck_button_position/repository/MyDeckButtonPositionRepositoryImpl";
+import {SideScrollArea} from "../../side_scroll_area/entity/SideScrollArea";
+import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
 
 import {ButtonEffectManager} from "../../my_deck_button_manager/ButtonEffectManager";
+import {ClippingMaskManager} from "../../clipping_mask_manager/ClippingMaskManager";
 
 export class MyDeckButtonEffectServiceImpl implements MyDeckButtonEffectService {
     private static instance: MyDeckButtonEffectServiceImpl;
     private myDeckButtonPositionRepository: MyDeckButtonPositionRepositoryImpl;
     private myDeckButtonEffectRepository: MyDeckButtonEffectRepositoryImpl;
+    private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
+
     private buttonEffectManger: ButtonEffectManager;
+    private clippingMaskManager: ClippingMaskManager;
 
     private constructor(myDeckButtonEffectRepository: MyDeckButtonEffectRepository) {
         this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance();
         this.myDeckButtonPositionRepository = MyDeckButtonPositionRepositoryImpl.getInstance();
-        this.buttonEffectManger = new ButtonEffectManager();
+        this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
+
+        this.buttonEffectManger = ButtonEffectManager.getInstance();
+        this.clippingMaskManager = ClippingMaskManager.getInstance();
     }
 
     public static getInstance(): MyDeckButtonEffectServiceImpl {
@@ -99,6 +108,15 @@ export class MyDeckButtonEffectServiceImpl implements MyDeckButtonEffectService 
             buttonEffectMesh.geometry = new THREE.PlaneGeometry(buttonWidth, buttonHeight);
 
             buttonEffectMesh.position.set(newPositionX, newPositionY, 0);
+
+            const scrollArea = this.getScrollArea();
+            if (scrollArea) {
+                scrollArea.width = 0.24 * windowWidth;
+                scrollArea.height = 0.61 * windowHeight;
+                scrollArea.position.set(-0.36 * window.innerWidth, -0.1167 * window.innerHeight);
+                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+                this.applyClippingPlanesToMesh(buttonEffectMesh, clippingPlanes);
+            }
         }
 
     }
@@ -121,6 +139,18 @@ export class MyDeckButtonEffectServiceImpl implements MyDeckButtonEffectService 
 
     public getAllDeckButtonEffectId(): number[] {
         return this.myDeckButtonEffectRepository.findAllEffectIds();
+    }
+
+    public getMyDeckButtonEffectGroups(): THREE.Group {
+        return this.myDeckButtonEffectRepository.findAllEffectGroups();
+    }
+
+    private getScrollArea(): SideScrollArea | null {
+        return this.sideScrollAreaRepository.findAreaByTypeAndId(3, 0);
+    }
+
+    private applyClippingPlanesToMesh(mesh: THREE.Mesh, clippingPlanes: THREE.Plane[]): void {
+        this.clippingMaskManager.applyClippingPlanesToMesh(mesh, clippingPlanes);
     }
 
 }

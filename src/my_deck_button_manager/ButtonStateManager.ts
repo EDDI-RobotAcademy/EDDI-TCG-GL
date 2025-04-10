@@ -28,11 +28,19 @@ export class ButtonStateManager {
         const firstButtonDeckId = deckIdList[0];
 
         deckIdList.forEach((deckId, index) => {
-            this.buttonVisibilityState.set(deckId, index > 0);
+            if (index > 0) {
+                this.buttonVisibilityState.set(deckId, true);
+            } else {
+                this.buttonVisibilityState.set(deckId, false);
+            }
         });
 
         allButtonMesh.forEach((button, index) => {
-            button.getMesh().visible = index > 0;
+            if (index > 0) {
+                button.getMesh().visible = true;
+            } else {
+                button.getMesh().visible = false;
+            }
         });
 
         this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(firstButtonDeckId);

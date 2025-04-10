@@ -121,6 +121,7 @@ export class MyDeckButtonRepositoryImpl implements MyDeckButtonRepository {
                 this.deckButtonGroup.add(buttonMesh.getMesh());
             }
         }
+        console.log(`%c[DEBUG] deckButtonGroup 생성됨 ${this.deckButtonGroup}`, 'color: #00FFBF; font-weight: bold;');
         return this.deckButtonGroup;
     }
 
