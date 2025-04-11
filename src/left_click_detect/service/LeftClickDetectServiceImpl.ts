@@ -43,6 +43,8 @@ import {YourFieldAttributeMarkManager} from "../handler/your_field/YourFieldAttr
 import {YourFieldRepository} from "../../your_field/repository/YourFieldRepository";
 import {YourFieldRepositoryImpl} from "../../your_field/repository/YourFieldRepositoryImpl";
 import {YourFieldCardScene} from "../../your_field_card_scene/entity/YourFieldCardScene";
+import {ActivePanelAreaRepository} from "../../active_panel_area/repository/ActivePanelAreaRepository";
+import {ActivePanelAreaRepositoryImpl} from "../../active_panel_area/repository/ActivePanelAreaRepositoryImpl";
 
 export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private static instance: LeftClickDetectServiceImpl | null = null;
@@ -83,6 +85,8 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
     private yourHandAttributeMarkManager: YourHandAttributeMarkManager
     private yourFieldAttributeMarkManager: YourFieldAttributeMarkManager
+
+    private activePanelAreaRepository: ActivePanelAreaRepository
 
     private leftMouseDown: boolean = false;
 
@@ -128,6 +132,8 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
         this.yourHandAttributeMarkManager = YourHandAttributeMarkManager.getInstance();
         this.yourFieldAttributeMarkManager = YourFieldAttributeMarkManager.getInstance()
+
+        this.activePanelAreaRepository = ActivePanelAreaRepositoryImpl.getInstance(camera, scene)
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): LeftClickDetectServiceImpl {
@@ -379,6 +385,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
         if (prevYourFieldCard !== null) {
             this.deactivateExistNeonBorder(prevYourFieldCard)
+            this.activePanelAreaRepository.delete();
         }
 
         this.dragMoveRepository.setSelectedObject(clickedHandCard);
@@ -412,6 +419,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
         if (prevYourFieldCard !== null) {
             this.deactivateExistNeonBorder(prevYourFieldCard)
+            this.activePanelAreaRepository.delete();
         }
 
         this.dragMoveRepository.setSelectedObject(clickedYourFieldCard);
