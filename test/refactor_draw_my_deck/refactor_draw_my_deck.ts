@@ -52,6 +52,8 @@ import {SideScrollAreaDetectService} from "../../src/side_scroll_area_detect/ser
 import {SideScrollAreaDetectServiceImpl} from "../../src/side_scroll_area_detect/service/SideScrollAreaDetectServiceImpl";
 import {BuildDeckButtonHoverDetectService} from "../../src/build_deck_button_hover_detect/service/BuildDeckButtonHoverDetectService";
 import {BuildDeckButtonHoverDetectServiceImpl} from "../../src/build_deck_button_hover_detect/service/BuildDeckButtonHoverDetectServiceImpl";
+import {BuildDeckButtonClickDetectService} from "../../src/build_deck_button_click_detect/service/BuildDeckButtonClickDetectService";
+import {BuildDeckButtonClickDetectServiceImpl} from "../../src/build_deck_button_click_detect/service/BuildDeckButtonClickDetectServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 
@@ -103,6 +105,7 @@ export class TCGJustTestMyDeckView {
     private myDeckScrollService: MyDeckScrollService;
     private sideScrollAreaDetectService: SideScrollAreaDetectService;
     private buildDeckButtonHoverDetectService: BuildDeckButtonHoverDetectService;
+    private buildDeckButtonClickDetectService: BuildDeckButtonClickDetectService;
 
     private initialized = false;
     private isAnimating = false;
@@ -184,6 +187,15 @@ export class TCGJustTestMyDeckView {
                 }
             }
 
+        }, false);
+
+        this.buildDeckButtonClickDetectService = BuildDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.renderer.domElement.addEventListener('mousedown', async (e) => {
+            const buildDeckButtonClickState = this.buildDeckButtonClickDetectService.getButtonClickState();
+            if (buildDeckButtonClickState == true) {
+                // To-do: 덱 생성 버튼 클릭 했을 때 덱 버튼은 클릭 안 되게 해야 함.
+                const buildDeckButtonClick = await this.buildDeckButtonClickDetectService.onMouseDown(e);
+            }
         }, false);
 
 //         this.deckMakeButtonClickDetectService = DeckMakeButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
