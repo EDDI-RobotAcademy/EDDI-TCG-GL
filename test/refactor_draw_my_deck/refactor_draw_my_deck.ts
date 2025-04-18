@@ -37,6 +37,7 @@ import {DeckMakePopupButtonsServiceImpl} from "../../src/deck_make_pop_up_button
 import {DeckMakePopupInputContainerServiceImpl} from "../../src/deck_make_pop_up_input_container/service/DeckMakePopupInputContainerServiceImpl";
 import {SideScrollAreaServiceImpl} from "../../src/side_scroll_area/service/SideScrollAreaServiceImpl";
 import {BuildDeckButtonServiceImpl} from "../../src/build_deck_button/service/BuildDeckButtonServiceImpl";
+import {DeckEditButtonServiceImpl} from "../../src/deck_edit_button/service/DeckEditButtonServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -85,6 +86,7 @@ export class TCGJustTestMyDeckView {
     private deckMakePopupInputContainerService = DeckMakePopupInputContainerServiceImpl.getInstance();
     private sideScrollAreaService = SideScrollAreaServiceImpl.getInstance();
     private buildDeckButtonService = BuildDeckButtonServiceImpl.getInstance();
+    private deckEditButtonService = DeckEditButtonServiceImpl.getInstance();
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -265,7 +267,8 @@ export class TCGJustTestMyDeckView {
         await this.addMyDeckButton();
         await this.addMyDeckButtonEffect();
         await this.addBuildDeckButton();
-        this.addMyDeckNameText();
+        await this.addMyDeckNameText();
+        await this.addDeckEditButton();
 //         this.addDeckMakeButton();
         this.addTransparentBackground();
         this.addDeckMakePopupBackground();
@@ -430,6 +433,39 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add my deck button effects:', error);
+        }
+    }
+
+    private async addDeckEditButton(): Promise<void> {
+        try {
+            const myDeckButtonList = this.myDeckButtonMapRepository.getMyDeckList();
+
+            for (const [index, deckId] of myDeckButtonList.entries()) {
+                await this.deckEditButtonService.createDeckEditButtonWithPosition(deckId);
+            }
+
+            const buttonGroup = this.deckEditButtonService.getButtonGroup();
+            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 0);
+            let clippingPlanes: THREE.Plane[] = [];
+
+            if (scrollArea) {
+                clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+                buttonGroup.children.forEach((buttonObject) => {
+                    if (buttonObject instanceof THREE.Mesh) {
+                        this.clippingMaskManager.applyClippingPlanesToMesh(buttonObject, clippingPlanes);
+                    } else {
+                        console.warn("[WARN] Skipping non-mesh object in buttonGroup:", buttonObject);
+                    }
+                });
+            }
+
+            if (!this.scene.children.includes(buttonGroup)) {
+                this.scene.add(buttonGroup);
+            }
+            buttonGroup.position.y = 0;
+
+        } catch (error) {
+            console.error('Failed to add Deck Edit Buttons:', error);
         }
     }
 
@@ -617,6 +653,7 @@ export class TCGJustTestMyDeckView {
             this.myDeckCardPageMovementButtonService.adjustMyDeckCardPageMovementButtonPosition();
             this.myDeckButtonService.adjustMyDeckButtonPosition();
             this.myDeckButtonEffectService.adjustMyDeckButtonEffectPosition();
+            this.deckEditButtonService.adjustDeckEditButtonPosition();
             this.myDeckCardService.adjustMyDeckCardPosition();
             this.myDeckNameTextService.adjustMyDeckNameTextPosition();
             this.buildDeckButtonService.adjustBuildDeckButtonPosition();

@@ -34,6 +34,7 @@ class WillBeReferenceImageLocation(Enum):
     MY_DECK_PAGE_MOVEMENT_BUTTON = "resource/my_deck/page_movement_button/"
     DECK_PAGE_MOVEMENT_BUTTONS = "resource/my_deck/deck_page_movement_button/"
     DECK_CARD_PAGE_MOVEMENT_BUTTONS = "resource/my_deck/card_page_movement_button/"
+    DECK_EDIT_REMOVE_BUTTON = "resource/my_deck/deck_edit_remove_button/"
     CARD_KINDS = "resource/card_kinds/"
     DECK_MAKING_POP_UP_BACKGROUND = "resource/deck_making_pop_up/background/"
     DECK_MAKING_POP_UP_BUTTONS = "resource/deck_making_pop_up/buttons/"
@@ -85,6 +86,7 @@ class RelativeImageLocation(Enum):
     MY_DECK_PAGE_MOVEMENT_BUTTON = "../../resource/my_deck/page_movement_button/"
     DECK_PAGE_MOVEMENT_BUTTONS = "../../resource/my_deck/deck_page_movement_button/"
     DECK_CARD_PAGE_MOVEMENT_BUTTONS = "../../resource/my_deck/card_page_movement_button/"
+    DECK_EDIT_REMOVE_BUTTON = "../../resource/my_deck/deck_edit_remove_button/"
     CARD_KINDS = "../../resource/card_kinds/"
     DECK_MAKING_POP_UP_BACKGROUND = "../../resource/deck_making_pop_up/background/"
     DECK_MAKING_POP_UP_BUTTONS = "../../resource/deck_making_pop_up/buttons/"
@@ -137,6 +139,7 @@ relative_paths = {
     RelativeImageLocation.MY_DECK_PAGE_MOVEMENT_BUTTON: RelativeImageLocation.MY_DECK_PAGE_MOVEMENT_BUTTON.value,
     RelativeImageLocation.DECK_PAGE_MOVEMENT_BUTTONS: RelativeImageLocation.DECK_PAGE_MOVEMENT_BUTTONS.value,
     RelativeImageLocation.DECK_CARD_PAGE_MOVEMENT_BUTTONS: RelativeImageLocation.DECK_CARD_PAGE_MOVEMENT_BUTTONS.value,
+    RelativeImageLocation.DECK_EDIT_REMOVE_BUTTON: RelativeImageLocation.DECK_EDIT_REMOVE_BUTTON.value,
     RelativeImageLocation.CARD_KINDS: RelativeImageLocation.CARD_KINDS.value,
     RelativeImageLocation.DECK_MAKING_POP_UP_BACKGROUND: RelativeImageLocation.DECK_MAKING_POP_UP_BACKGROUND.value,
     RelativeImageLocation.DECK_MAKING_POP_UP_BUTTONS: RelativeImageLocation.DECK_MAKING_POP_UP_BUTTONS.value,
@@ -189,6 +192,7 @@ reference_paths = {
     WillBeReferenceImageLocation.MY_DECK_PAGE_MOVEMENT_BUTTON: WillBeReferenceImageLocation.MY_DECK_PAGE_MOVEMENT_BUTTON.value,
     WillBeReferenceImageLocation.DECK_PAGE_MOVEMENT_BUTTONS: WillBeReferenceImageLocation.DECK_PAGE_MOVEMENT_BUTTONS.value,
     WillBeReferenceImageLocation.DECK_CARD_PAGE_MOVEMENT_BUTTONS: WillBeReferenceImageLocation.DECK_CARD_PAGE_MOVEMENT_BUTTONS.value,
+    WillBeReferenceImageLocation.DECK_EDIT_REMOVE_BUTTON: WillBeReferenceImageLocation.DECK_EDIT_REMOVE_BUTTON.value,
     WillBeReferenceImageLocation.CARD_KINDS: WillBeReferenceImageLocation.CARD_KINDS.value,
     WillBeReferenceImageLocation.DECK_MAKING_POP_UP_BACKGROUND: WillBeReferenceImageLocation.DECK_MAKING_POP_UP_BACKGROUND.value,
     WillBeReferenceImageLocation.DECK_MAKING_POP_UP_BUTTONS: WillBeReferenceImageLocation.DECK_MAKING_POP_UP_BUTTONS.value,
@@ -241,6 +245,7 @@ image_paths = {
     "my_deck_page_movement_button": [],
     "deck_page_movement_buttons": [],
     "deck_card_page_movement_buttons": [],
+    "deck_edit_remove_button": [],
     "card_kinds": [],
     "deck_making_pop_up_background": [],
     "deck_making_pop_up_buttons": [],
