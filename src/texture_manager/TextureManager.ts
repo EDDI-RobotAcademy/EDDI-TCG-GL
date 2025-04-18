@@ -116,7 +116,7 @@ export class TextureManager {
                 this.loadTextures(imageData.deck_making_pop_up_background, this.deckMakingPopupBackgroundTextureList),
                 this.loadTextures(imageData.deck_making_pop_up_buttons, this.deckMakingPopupButtonsTextureList),
                 this.loadTextures(imageData.delete_deck_popup_window, this.deleteDeckPopupWindowTextureList),
-                this.loadTextures(imageData.delete_deck_popup_button, this.deckEditRemoveButtonTextureList),
+                this.loadTextures(imageData.delete_deck_popup_button, this.deleteDeckPopupButtonTextureList),
                 this.loadTextures(imageData.make_deck_background, this.makeDeckBackgroundTextureList),
                 this.loadTextures(imageData.owned_card, this.ownedCardTextureList),
                 this.loadTextures(imageData.race_button, this.raceButtonTextureList),
