@@ -21,6 +21,7 @@ import {MyDeckCardPageMovementButtonRepositoryImpl} from "../../src/my_deck_card
 import {MyDeckCardPageMovementButtonConfigList} from "../../src/my_deck_card_page_movement_button/entity/MyDeckCardPageMovementButtonConfigList";
 import {DeckMakePopupButtonsConfigList} from "../../src/deck_make_pop_up_buttons/entity/DeckMakePopupButtonsConfigList";
 import {BuildDeckButtonConfigList} from "../../src/build_deck_button/entity/BuildDeckButtonConfigList";
+import {DeleteDeckPopupButtonConfigList} from "../../src/delete_deck_popup_button/entity/DeleteDeckPopupButtonConfigList";
 
 import {MyDeckButtonServiceImpl} from "../../src/my_deck_button/service/MyDeckButtonServiceImpl";
 import {MyDeckButtonEffectServiceImpl} from "../../src/my_deck_button_effect/service/MyDeckButtonEffectServiceImpl";
@@ -40,6 +41,7 @@ import {BuildDeckButtonServiceImpl} from "../../src/build_deck_button/service/Bu
 import {DeckEditButtonServiceImpl} from "../../src/deck_edit_button/service/DeckEditButtonServiceImpl";
 import {DeckDeleteButtonServiceImpl} from "../../src/deck_delete_button/service/DeckDeleteButtonServiceImpl";
 import {DeleteDeckPopupWindowServiceImpl} from "../../src/delete_deck_popup_window/service/DeleteDeckPopupWindowServiceImpl";
+import {DeleteDeckPopupButtonServiceImpl} from "../../src/delete_deck_popup_button/service/DeleteDeckPopupButtonServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -93,6 +95,7 @@ export class TCGJustTestMyDeckView {
     private deckEditButtonService = DeckEditButtonServiceImpl.getInstance();
     private deckDeleteButtonService = DeckDeleteButtonServiceImpl.getInstance();
     private deleteDeckPopupWindowService = DeleteDeckPopupWindowServiceImpl.getInstance();
+    private deleteDeckPopupButtonService = DeleteDeckPopupButtonServiceImpl.getInstance();
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -291,6 +294,7 @@ export class TCGJustTestMyDeckView {
         this.addDeckMakePopupButtons();
         this.addDeckMakePopupInputContainer();
         this.addDeleteDeckPopupWindow();
+        this.addDeleteDeckPopupButton();
 
         this.initialized = true;
         this.isAnimating = true;
@@ -650,6 +654,25 @@ export class TCGJustTestMyDeckView {
         }
     }
 
+    private async addDeleteDeckPopupButton(): Promise<void> {
+        try {
+            const configList = new DeleteDeckPopupButtonConfigList();
+            await Promise.all(configList.buttonConfigs.map(async (config) => {
+                const button = await this.deleteDeckPopupButtonService.createDeleteDeckPopupButton(
+                    config.id,
+                    config.position
+                );
+
+                if (button) {
+                    this.scene.add(button);
+                    console.log(`Draw Delete Deck Popup Button ${config.id}`);
+                }
+            }));
+        } catch (error) {
+            console.error('Failed to add Delete Deck Popup Button:', error);
+        }
+    }
+
     private async addDeckMakePopupBackground(): Promise<void> {
         try {
             const deckMakePopupBackground = await this.decKMakePopupBackgroundService.createDeckMakePopupBackground();
@@ -728,6 +751,7 @@ export class TCGJustTestMyDeckView {
             this.deckMakePopupButtonsService.adjustDeckMakePopupButtonsPosition();
             this.deckMakePopupInputContainerService.adjustDeckMakePopupInputContainerPosition();
             this.deleteDeckPopupWindowService.adjustDeckMakePopupBackgroundPosition();
+            this.deleteDeckPopupButtonService.adjustDeleteDeckPopupButtonPosition();
         }
     }
 
