@@ -56,6 +56,8 @@ import {BuildDeckButtonHoverDetectService} from "../../src/build_deck_button_hov
 import {BuildDeckButtonHoverDetectServiceImpl} from "../../src/build_deck_button_hover_detect/service/BuildDeckButtonHoverDetectServiceImpl";
 import {BuildDeckButtonClickDetectService} from "../../src/build_deck_button_click_detect/service/BuildDeckButtonClickDetectService";
 import {BuildDeckButtonClickDetectServiceImpl} from "../../src/build_deck_button_click_detect/service/BuildDeckButtonClickDetectServiceImpl";
+import {MyDeckButtonEffectHoverDetectService} from "../../src/my_deck_button_effect_hover_detect/service/MyDeckButtonEffectHoverDetectService";
+import {MyDeckButtonEffectHoverDetectServiceImpl} from "../../src/my_deck_button_effect_hover_detect/service/MyDeckButtonEffectHoverDetectServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 
@@ -110,6 +112,7 @@ export class TCGJustTestMyDeckView {
     private sideScrollAreaDetectService: SideScrollAreaDetectService;
     private buildDeckButtonHoverDetectService: BuildDeckButtonHoverDetectService;
     private buildDeckButtonClickDetectService: BuildDeckButtonClickDetectService;
+    private myDeckButtonEffectHoverDetectService: MyDeckButtonEffectHoverDetectService;
 
     private initialized = false;
     private isAnimating = false;
@@ -199,6 +202,14 @@ export class TCGJustTestMyDeckView {
             if (buildDeckButtonClickState == true) {
                 // To-do: 덱 생성 버튼 클릭 했을 때 덱 버튼은 클릭 안 되게 해야 함.
                 const buildDeckButtonClick = await this.buildDeckButtonClickDetectService.onMouseDown(e);
+            }
+        }, false);
+
+        this.myDeckButtonEffectHoverDetectService = MyDeckButtonEffectHoverDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.renderer.domElement.addEventListener('mousemove', async (e) => {
+            const effectDetectState = this.myDeckButtonEffectHoverDetectService.getEffectDetectState();
+            if (effectDetectState == true) {
+                this.myDeckButtonEffectHoverDetectService.onMouseMove(e);
             }
         }, false);
 
@@ -373,6 +384,7 @@ export class TCGJustTestMyDeckView {
             }
 
             this.myDeckButtonService.initializeDeckButton();
+            this.myDeckButtonService.saveCurrentClickDeckButtonId(1);
             const deckButtonGroup = this.myDeckButtonService.getMyDeckButtonGroups();
             const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 0);
             let clippingPlanes: THREE.Plane[] = [];

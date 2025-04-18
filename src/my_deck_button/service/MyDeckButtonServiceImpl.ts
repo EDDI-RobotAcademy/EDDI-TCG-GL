@@ -159,7 +159,7 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
          this.myDeckButtonRepository.deleteAll();
      }
 
-    private saveCurrentClickDeckButtonId(buttonId: number): void {
+    public saveCurrentClickDeckButtonId(buttonId: number): void {
         this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(buttonId);
     }
 
