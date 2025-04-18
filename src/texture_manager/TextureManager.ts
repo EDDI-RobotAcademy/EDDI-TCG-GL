@@ -41,6 +41,8 @@ export class TextureManager {
     private cardKindsTextureList: { [id: number]: THREE.Texture } = {};
     private deckMakingPopupBackgroundTextureList: { [id: number]: THREE.Texture } = {};
     private deckMakingPopupButtonsTextureList: { [id: number]: THREE.Texture } = {};
+    private deleteDeckPopupWindowTextureList: { [id: number]: THREE.Texture } = {};
+    private deleteDeckPopupButtonTextureList: { [id: number]: THREE.Texture } = {};
     private makeDeckBackgroundTextureList: { [id: number]: THREE.Texture } = {};
     private ownedCardTextureList: { [id: number]: THREE.Texture } = {};
     private raceButtonTextureList: { [id: number]: THREE.Texture } = {};
@@ -113,6 +115,8 @@ export class TextureManager {
                 this.loadTextures(imageData.card_kinds, this.cardKindsTextureList),
                 this.loadTextures(imageData.deck_making_pop_up_background, this.deckMakingPopupBackgroundTextureList),
                 this.loadTextures(imageData.deck_making_pop_up_buttons, this.deckMakingPopupButtonsTextureList),
+                this.loadTextures(imageData.delete_deck_popup_window, this.deleteDeckPopupWindowTextureList),
+                this.loadTextures(imageData.delete_deck_popup_button, this.deckEditRemoveButtonTextureList),
                 this.loadTextures(imageData.make_deck_background, this.makeDeckBackgroundTextureList),
                 this.loadTextures(imageData.owned_card, this.ownedCardTextureList),
                 this.loadTextures(imageData.race_button, this.raceButtonTextureList),
@@ -270,6 +274,10 @@ export class TextureManager {
                 return this.deckMakingPopupBackgroundTextureList[id]
             case 'deck_making_pop_up_buttons':
                 return this.deckMakingPopupButtonsTextureList[id]
+            case 'delete_deck_popup_window':
+                return this.deleteDeckPopupWindowTextureList[id]
+            case 'delete_deck_popup_button':
+                return this.deleteDeckPopupButtonTextureList[id]
             case 'make_deck_background':
                 return this.makeDeckBackgroundTextureList[id];
             case 'owned_card':

@@ -39,6 +39,7 @@ import {SideScrollAreaServiceImpl} from "../../src/side_scroll_area/service/Side
 import {BuildDeckButtonServiceImpl} from "../../src/build_deck_button/service/BuildDeckButtonServiceImpl";
 import {DeckEditButtonServiceImpl} from "../../src/deck_edit_button/service/DeckEditButtonServiceImpl";
 import {DeckDeleteButtonServiceImpl} from "../../src/deck_delete_button/service/DeckDeleteButtonServiceImpl";
+import {DeleteDeckPopupWindowServiceImpl} from "../../src/delete_deck_popup_window/service/DeleteDeckPopupWindowServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -91,6 +92,7 @@ export class TCGJustTestMyDeckView {
     private buildDeckButtonService = BuildDeckButtonServiceImpl.getInstance();
     private deckEditButtonService = DeckEditButtonServiceImpl.getInstance();
     private deckDeleteButtonService = DeckDeleteButtonServiceImpl.getInstance();
+    private deleteDeckPopupWindowService = DeleteDeckPopupWindowServiceImpl.getInstance();
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -288,6 +290,7 @@ export class TCGJustTestMyDeckView {
         this.addDeckMakePopupBackground();
         this.addDeckMakePopupButtons();
         this.addDeckMakePopupInputContainer();
+        this.addDeleteDeckPopupWindow();
 
         this.initialized = true;
         this.isAnimating = true;
@@ -634,6 +637,19 @@ export class TCGJustTestMyDeckView {
         }
     }
 
+    private async addDeleteDeckPopupWindow(): Promise<void> {
+        try {
+            const popupWindow = await this.deleteDeckPopupWindowService.createDeleteDeckPopupWindow();
+            if (popupWindow) {
+                this.scene.add(popupWindow);
+            } else {
+                console.warn(`Not found Delete Deck Popup Window`);
+            }
+        }catch (error) {
+            console.error('Failed to add Delete Deck Popup Window`:', error);
+        }
+    }
+
     private async addDeckMakePopupBackground(): Promise<void> {
         try {
             const deckMakePopupBackground = await this.decKMakePopupBackgroundService.createDeckMakePopupBackground();
@@ -711,6 +727,7 @@ export class TCGJustTestMyDeckView {
             this.decKMakePopupBackgroundService.adjustDeckMakePopupBackgroundPosition();
             this.deckMakePopupButtonsService.adjustDeckMakePopupButtonsPosition();
             this.deckMakePopupInputContainerService.adjustDeckMakePopupInputContainerPosition();
+            this.deleteDeckPopupWindowService.adjustDeckMakePopupBackgroundPosition();
         }
     }
 

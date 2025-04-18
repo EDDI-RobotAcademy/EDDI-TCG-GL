@@ -38,6 +38,8 @@ class WillBeReferenceImageLocation(Enum):
     CARD_KINDS = "resource/card_kinds/"
     DECK_MAKING_POP_UP_BACKGROUND = "resource/deck_making_pop_up/background/"
     DECK_MAKING_POP_UP_BUTTONS = "resource/deck_making_pop_up/buttons/"
+    DELETE_DECK_POPUP_WINDOW = "resource/my_deck/delete_deck_popup/popup_window/"
+    DELETE_DECK_POPUP_BUTTON = "resource/my_deck/delete_deck_popup/button/"
     MAKE_DECK_BACKGROUND = "resource/make_deck/background/"
     OWNED_CARD = "resource/my_card/card/"
     RACE_BUTTON = "resource/make_deck/race_button/"
@@ -90,6 +92,8 @@ class RelativeImageLocation(Enum):
     CARD_KINDS = "../../resource/card_kinds/"
     DECK_MAKING_POP_UP_BACKGROUND = "../../resource/deck_making_pop_up/background/"
     DECK_MAKING_POP_UP_BUTTONS = "../../resource/deck_making_pop_up/buttons/"
+    DELETE_DECK_POPUP_WINDOW = "../../resource/my_deck/delete_deck_popup/popup_window/"
+    DELETE_DECK_POPUP_BUTTON = "../../resource/my_deck/delete_deck_popup/button/"
     MAKE_DECK_BACKGROUND = "../../resource/make_deck/background/"
     OWNED_CARD = "../../resource/my_card/card/"
     RACE_BUTTON = "../../resource/make_deck/race_button/"
@@ -143,6 +147,8 @@ relative_paths = {
     RelativeImageLocation.CARD_KINDS: RelativeImageLocation.CARD_KINDS.value,
     RelativeImageLocation.DECK_MAKING_POP_UP_BACKGROUND: RelativeImageLocation.DECK_MAKING_POP_UP_BACKGROUND.value,
     RelativeImageLocation.DECK_MAKING_POP_UP_BUTTONS: RelativeImageLocation.DECK_MAKING_POP_UP_BUTTONS.value,
+    RelativeImageLocation.DELETE_DECK_POPUP_WINDOW: RelativeImageLocation.DELETE_DECK_POPUP_WINDOW.value,
+    RelativeImageLocation.DELETE_DECK_POPUP_BUTTON: RelativeImageLocation.DELETE_DECK_POPUP_BUTTON.value,
     RelativeImageLocation.MAKE_DECK_BACKGROUND: RelativeImageLocation.MAKE_DECK_BACKGROUND.value,
     RelativeImageLocation.OWNED_CARD: RelativeImageLocation.OWNED_CARD.value,
     RelativeImageLocation.RACE_BUTTON: RelativeImageLocation.RACE_BUTTON.value,
@@ -196,6 +202,8 @@ reference_paths = {
     WillBeReferenceImageLocation.CARD_KINDS: WillBeReferenceImageLocation.CARD_KINDS.value,
     WillBeReferenceImageLocation.DECK_MAKING_POP_UP_BACKGROUND: WillBeReferenceImageLocation.DECK_MAKING_POP_UP_BACKGROUND.value,
     WillBeReferenceImageLocation.DECK_MAKING_POP_UP_BUTTONS: WillBeReferenceImageLocation.DECK_MAKING_POP_UP_BUTTONS.value,
+    WillBeReferenceImageLocation.DELETE_DECK_POPUP_WINDOW: WillBeReferenceImageLocation.DELETE_DECK_POPUP_WINDOW.value,
+    WillBeReferenceImageLocation.DELETE_DECK_POPUP_BUTTON: WillBeReferenceImageLocation.DELETE_DECK_POPUP_BUTTON.value,
     WillBeReferenceImageLocation.MAKE_DECK_BACKGROUND: WillBeReferenceImageLocation.MAKE_DECK_BACKGROUND.value,
     WillBeReferenceImageLocation.OWNED_CARD: WillBeReferenceImageLocation.OWNED_CARD.value,
     WillBeReferenceImageLocation.RACE_BUTTON: WillBeReferenceImageLocation.RACE_BUTTON.value,
@@ -249,6 +257,8 @@ image_paths = {
     "card_kinds": [],
     "deck_making_pop_up_background": [],
     "deck_making_pop_up_buttons": [],
+    "delete_deck_popup_window": [],
+    "delete_deck_popup_button": [],
     "make_deck_background": [],
     "owned_card": [],
     "race_button": [],
