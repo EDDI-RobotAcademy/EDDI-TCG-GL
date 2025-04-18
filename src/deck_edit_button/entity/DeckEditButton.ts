@@ -10,10 +10,10 @@ export class DeckEditButton {
 
     constructor(mesh: THREE.Mesh, position: Vector2d) {
         this.id = IdGenerator.generateId("DeckEditButton");
-        this.isVisible = true;
+        this.isVisible = false;
         this.mesh = mesh;
         this.position = position;
-        this.mesh.visible = true;
+        this.mesh.visible = false;
     }
 
     public getMesh(): THREE.Mesh {
