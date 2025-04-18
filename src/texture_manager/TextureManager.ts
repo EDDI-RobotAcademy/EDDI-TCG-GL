@@ -37,6 +37,7 @@ export class TextureManager {
     private myDeckPageMovementButtonTextureList: { [id: number]: THREE.Texture } = {};
     private deckPageMovementButtonsTextureList : { [id: number]: THREE.Texture } = {};
     private myDeckCardPageMovementButtonTextureList : { [id: number]: THREE.Texture } = {};
+    private deckEditRemoveButtonTextureList: { [id: number]: THREE.Texture } = {};
     private cardKindsTextureList: { [id: number]: THREE.Texture } = {};
     private deckMakingPopupBackgroundTextureList: { [id: number]: THREE.Texture } = {};
     private deckMakingPopupButtonsTextureList: { [id: number]: THREE.Texture } = {};
@@ -108,6 +109,7 @@ export class TextureManager {
                 this.loadTextures(imageData.my_deck_page_movement_button, this.myDeckPageMovementButtonTextureList),
                 this.loadTextures(imageData.deck_page_movement_buttons, this.deckPageMovementButtonsTextureList),
                 this.loadTextures(imageData.deck_card_page_movement_buttons, this.myDeckCardPageMovementButtonTextureList),
+                this.loadTextures(imageData.deck_edit_remove_button, this.deckEditRemoveButtonTextureList),
                 this.loadTextures(imageData.card_kinds, this.cardKindsTextureList),
                 this.loadTextures(imageData.deck_making_pop_up_background, this.deckMakingPopupBackgroundTextureList),
                 this.loadTextures(imageData.deck_making_pop_up_buttons, this.deckMakingPopupButtonsTextureList),
@@ -260,6 +262,8 @@ export class TextureManager {
                 return this.deckPageMovementButtonsTextureList[id]
             case 'deck_card_page_movement_buttons':
                 return this.myDeckCardPageMovementButtonTextureList[id]
+            case 'deck_edit_remove_button':
+                return this.deckEditRemoveButtonTextureList[id]
             case 'card_kinds':
                 return this.cardKindsTextureList[id]
             case 'deck_making_pop_up_background':
