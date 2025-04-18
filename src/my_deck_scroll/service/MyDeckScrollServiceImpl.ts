@@ -5,6 +5,7 @@ import {MyDeckButtonRepositoryImpl} from "../../my_deck_button/repository/MyDeck
 import {MyDeckButtonEffectRepositoryImpl} from "../../my_deck_button_effect/repository/MyDeckButtonEffectRepositoryImpl";
 import {MyDeckNameTextRepositoryImpl} from "../../my_deck_name_text/repository/MyDeckNameTextRepositoryImpl";
 import {DeckEditButtonRepositoryImpl} from "../../deck_edit_button/repository/DeckEditButtonRepositoryImpl";
+import {DeckDeleteButtonRepositoryImpl} from "../../deck_delete_button/repository/DeckDeleteButtonRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -17,6 +18,7 @@ export class MyDeckScrollServiceImpl implements MyDeckScrollService {
     private myDeckButtonEffectRepository: MyDeckButtonEffectRepositoryImpl;
     private myDeckNameTextRepository : MyDeckNameTextRepositoryImpl;
     private deckEditButtonRepository: DeckEditButtonRepositoryImpl;
+    private deckDeleteButtonRepository: DeckDeleteButtonRepositoryImpl;
 
     private scrollState: boolean = true;
 
@@ -27,6 +29,7 @@ export class MyDeckScrollServiceImpl implements MyDeckScrollService {
         this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance();
         this.myDeckNameTextRepository = MyDeckNameTextRepositoryImpl.getInstance();
         this.deckEditButtonRepository = DeckEditButtonRepositoryImpl.getInstance();
+        this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer): MyDeckScrollServiceImpl {
@@ -49,7 +52,8 @@ export class MyDeckScrollServiceImpl implements MyDeckScrollService {
             this.getDeckButtonGroup(),         // scrollTargetDeckButton
             this.getDeckButtonEffectGroup(),  // scrollTargetDeckButtonEffect
             this.getDeckNameTextGroup(),      // scrollTargetDeckNameText
-            this.getDeckEditButtonGroup()     // scrollTargetDeckEditButton
+            this.getDeckEditButtonGroup(),     // scrollTargetDeckEditButton
+            this.getDeckDeleteButtonGroup()
         ];
 
         if (scrollTargets.every(target => !target)) return;
@@ -93,6 +97,10 @@ export class MyDeckScrollServiceImpl implements MyDeckScrollService {
 
     private getDeckEditButtonGroup(): THREE.Group {
         return this.deckEditButtonRepository.findAllButtonGroups();
+    }
+
+    private getDeckDeleteButtonGroup(): THREE.Group {
+        return this.deckDeleteButtonRepository.findAllButtonGroups();
     }
 
     public getDeckCount(): number {
