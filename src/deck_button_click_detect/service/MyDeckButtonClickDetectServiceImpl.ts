@@ -38,7 +38,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private cardPageManager: CardPageManager;
 
     private cameraRepository: CameraRepository
-    private leftMouseDown: boolean = false;
+    private buttonClickState: boolean = true;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance();
@@ -61,12 +61,12 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         return MyDeckButtonClickDetectServiceImpl.instance;
     }
 
-    setLeftMouseDown(state: boolean): void {
-        this.leftMouseDown = state;
+    setButtonClickState(state: boolean): void {
+        this.buttonClickState = state;
     }
 
-    isLeftMouseDown(): boolean {
-        return this.leftMouseDown;
+    getButtonClickState(): boolean {
+        return this.buttonClickState;
     }
 
     async handleLeftClick(clickPoint: { x: number; y: number }): Promise<MyDeckButton | null> {

@@ -1,0 +1,77 @@
+import * as THREE from "three";
+import {getCardById} from "../../card/utility";
+
+import {DeckDeleteButtonClickDetectService} from "./DeckDeleteButtonClickDetectService";
+import {DeckDeleteButtonClickDetectRepositoryImpl} from "../repository/DeckDeleteButtonClickDetectRepositoryImpl";
+import {DeckDeleteButton} from "../../deck_delete_button/entity/DeckDeleteButton";
+import {DeckDeleteButtonRepositoryImpl} from "../../deck_delete_button/repository/DeckDeleteButtonRepositoryImpl";
+
+import {CameraRepository} from "../../camera/repository/CameraRepository";
+import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
+
+
+export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonClickDetectService {
+    private static instance: DeckDeleteButtonClickDetectServiceImpl | null = null;
+    private deckDeleteButtonClickDetectRepository: DeckDeleteButtonClickDetectRepositoryImpl;
+    private deckDeleteButtonRepository: DeckDeleteButtonRepositoryImpl;
+    private cameraRepository: CameraRepository;
+
+    private buttonClickState: boolean = false;
+
+    private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
+        this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
+        this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance();
+        this.cameraRepository = CameraRepositoryImpl.getInstance();
+    }
+
+    static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckDeleteButtonClickDetectServiceImpl {
+        if (!DeckDeleteButtonClickDetectServiceImpl.instance) {
+            DeckDeleteButtonClickDetectServiceImpl.instance = new DeckDeleteButtonClickDetectServiceImpl(camera, scene);
+        }
+        return DeckDeleteButtonClickDetectServiceImpl.instance;
+    }
+
+    public setButtonClickState(state: boolean): void {
+        this.buttonClickState = state;
+    }
+
+    public getButtonClickState(): boolean {
+        return this.buttonClickState;
+    }
+
+    public async handleButtonClick(clickPoint: { x: number; y: number }): Promise<DeckDeleteButton | null> {
+        const { x, y } = clickPoint;
+        const buttonList = this.getAllButtons();
+        const clickedButton = this.deckDeleteButtonClickDetectRepository.isButtonClicked(
+            { x, y },
+            buttonList,
+            this.camera
+        );
+
+        if (clickedButton) {
+            const buttonId = clickedButton.id;
+            console.log(`[DEBUG] Clicked Deck Delete Button ID: ${buttonId}`);
+            this.saveCurrentClickedButtonId(buttonId);
+
+            return clickedButton;
+        }
+        return null;
+    }
+
+    public async onMouseDown(event: MouseEvent): Promise<DeckDeleteButton | null> {
+        if (event.button === 0) {
+            const clickPoint = { x: event.clientX, y: event.clientY };
+            return await this.handleButtonClick(clickPoint);
+        }
+        return null;
+    }
+
+    public getAllButtons(): DeckDeleteButton[] {
+        return this.deckDeleteButtonRepository.findAll();
+    }
+
+    private saveCurrentClickedButtonId(buttonId: number): void {
+        this.deckDeleteButtonClickDetectRepository.saveCurrentClickedButtonId(buttonId);
+    }
+
+}
