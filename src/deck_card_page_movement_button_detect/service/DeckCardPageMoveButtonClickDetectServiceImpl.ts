@@ -28,7 +28,7 @@ export class DeckCardPageMoveButtonClickDetectServiceImpl implements DeckCardPag
     private cardStateManager: CardStateManager;
 
     private cameraRepository: CameraRepository
-    private leftMouseDown: boolean = false;
+    private leftMouseDown: boolean = true;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.myDeckCardPageMovementButtonRepository = MyDeckCardPageMovementButtonRepositoryImpl.getInstance();
@@ -48,11 +48,11 @@ export class DeckCardPageMoveButtonClickDetectServiceImpl implements DeckCardPag
         return DeckCardPageMoveButtonClickDetectServiceImpl.instance;
     }
 
-    setLeftMouseDown(state: boolean): void {
+    setButtonClickState(state: boolean): void {
         this.leftMouseDown = state;
     }
 
-    isLeftMouseDown(): boolean {
+    getButtonClickState(): boolean {
         return this.leftMouseDown;
     }
 
