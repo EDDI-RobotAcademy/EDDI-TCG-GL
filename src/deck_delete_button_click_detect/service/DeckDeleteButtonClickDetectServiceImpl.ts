@@ -9,11 +9,18 @@ import {DeckDeleteButtonRepositoryImpl} from "../../deck_delete_button/repositor
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
 
+import {TransparentBackgroundRepositoryImpl} from "../../transparent_background/repository/TransparentBackgroundRepositoryImpl";
+import {DeleteDeckPopupWindowRepositoryImpl} from "../../delete_deck_popup_window/repository/DeleteDeckPopupWindowRepositoryImpl";
+import {DeleteDeckPopupButtonRepositoryImpl} from "../../delete_deck_popup_button/repository/DeleteDeckPopupButtonRepositoryImpl";
+
 
 export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonClickDetectService {
     private static instance: DeckDeleteButtonClickDetectServiceImpl | null = null;
     private deckDeleteButtonClickDetectRepository: DeckDeleteButtonClickDetectRepositoryImpl;
     private deckDeleteButtonRepository: DeckDeleteButtonRepositoryImpl;
+    private transparentBackgroundRepository: TransparentBackgroundRepositoryImpl;
+    private deleteDeckPopupWindowRepository: DeleteDeckPopupWindowRepositoryImpl;
+    private deleteDeckPopupButtonRepository: DeleteDeckPopupButtonRepositoryImpl;
     private cameraRepository: CameraRepository;
 
     private buttonClickState: boolean = false;
@@ -21,6 +28,9 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
         this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance();
+        this.transparentBackgroundRepository = TransparentBackgroundRepositoryImpl.getInstance();
+        this.deleteDeckPopupWindowRepository = DeleteDeckPopupWindowRepositoryImpl.getInstance();
+        this.deleteDeckPopupButtonRepository = DeleteDeckPopupButtonRepositoryImpl.getInstance();
         this.cameraRepository = CameraRepositoryImpl.getInstance();
     }
 
@@ -53,7 +63,12 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
             console.log(`[DEBUG] Clicked Deck Delete Button ID: ${buttonId}`);
             this.saveCurrentClickedButtonId(buttonId);
 
+            this.setTransparentBackgroundVisibility(true);
+            this.setPopupWindowVisibility(true);
+            this.setPopupButtonsVisibility(true);
+
             return clickedButton;
+
         }
         return null;
     }
@@ -72,6 +87,26 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
 
     private saveCurrentClickedButtonId(buttonId: number): void {
         this.deckDeleteButtonClickDetectRepository.saveCurrentClickedButtonId(buttonId);
+    }
+
+    private setTransparentBackgroundVisibility(isVisible: boolean): void {
+        if (isVisible == true) {
+            this.transparentBackgroundRepository.showTransparentBackground();
+        } else {
+            this.transparentBackgroundRepository.hideTransparentBackground();
+        }
+    }
+
+    private setPopupWindowVisibility(isVisible: boolean): void {
+        const popupWindow = this.deleteDeckPopupWindowRepository.findPopupWindow();
+        if (popupWindow !== null) {
+            popupWindow.setVisibility(isVisible);
+        }
+    }
+
+    private setPopupButtonsVisibility(isVisible: boolean): void {
+        const popupButtons = this.deleteDeckPopupButtonRepository.findAllButton();
+        popupButtons.forEach((button) => button.setVisibility(isVisible));
     }
 
 }

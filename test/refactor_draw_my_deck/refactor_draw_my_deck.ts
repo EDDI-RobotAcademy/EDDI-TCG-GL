@@ -171,9 +171,9 @@ export class TCGJustTestMyDeckView {
         }, false);
 
         this.deckCardPageMoveButtonClickDetectService = DeckCardPageMoveButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
-//         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckCardPageMoveButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => {
-            if (this.isDeckCardPageMovementButtonEnabled) {
+            const buttonClickState = this.deckCardPageMoveButtonClickDetectService.getButtonClickState();
+            if (buttonClickState == true) {
                 this.deckCardPageMoveButtonClickDetectService.onMouseDown(e);
             }
         }, false);
@@ -232,11 +232,16 @@ export class TCGJustTestMyDeckView {
                     this.deckDeleteButtonClickDetectService.setButtonClickState(true);
                 }
             }
+
+            // 덱 삭제 버튼 클릭시 덱 버튼이 클릭되면 안 됨
+            this.myDeckButtonClickDetectService.setButtonClickState(false);
+
             const buttonClickState = this.deckDeleteButtonClickDetectService.getButtonClickState();
             if (buttonClickState == true) {
                 const buttonClick = await this.deckDeleteButtonClickDetectService.onMouseDown(e);
                 if (buttonClick) {
                     this.deckDeleteButtonClickDetectService.setButtonClickState(false);
+                    this.myDeckButtonClickDetectService.setButtonClickState(true);
                 }
             }
         }, false);

@@ -1,6 +1,6 @@
 export interface DeckCardPageMoveButtonClickDetectService {
-    setLeftMouseDown(state: boolean): void
-    isLeftMouseDown(): boolean
+    setButtonClickState(state: boolean): void
+    getButtonClickState(): boolean
     handleLeftClick(
         clickPoint: { x: number; y: number },
     ): any | null;
