@@ -166,10 +166,7 @@ export class TCGJustTestMyDeckView {
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
             const buttonClickState = this.myDeckButtonClickDetectService.getButtonClickState();
             if (buttonClickState == true) {
-                const buttonClick = await this.myDeckButtonClickDetectService.onMouseDown(e);
-                if (buttonClick) {
-                    this.deckDeleteButtonClickDetectService.setButtonClickState(true);
-                }
+                this.myDeckButtonClickDetectService.onMouseDown(e);
             }
         }, false);
 
@@ -226,8 +223,15 @@ export class TCGJustTestMyDeckView {
             }
         }, false);
 
-        // To-do: 덱 버튼 클릭 했을 때 
+        // 덱 버튼 클릭되고 덱 삭제 버튼이 나타날 때만 삭제 버튼 클릭 가능해야 함
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
+            const currentHoveredEffectId = this.myDeckButtonEffectHoverDetectService.getCurrentHoveredEffectId();
+            if (currentHoveredEffectId !== null) {
+                const deleteButtonVisibleState = this.myDeckButtonEffectHoverDetectService.getDeckDeleteButtonVisibility(currentHoveredEffectId);
+                if (deleteButtonVisibleState == true) {
+                    this.deckDeleteButtonClickDetectService.setButtonClickState(true);
+                }
+            }
             const buttonClickState = this.deckDeleteButtonClickDetectService.getButtonClickState();
             if (buttonClickState == true) {
                 const buttonClick = await this.deckDeleteButtonClickDetectService.onMouseDown(e);
