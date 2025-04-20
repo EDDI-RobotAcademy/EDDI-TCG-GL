@@ -146,7 +146,7 @@ export class MyDeckButtonEffectHoverDetectServiceImpl implements MyDeckButtonEff
         return undefined;
     }
 
-    private getDeckDeleteButtonVisibility(buttonId: number): boolean | undefined {
+    public getDeckDeleteButtonVisibility(buttonId: number): boolean | undefined {
         const button = this.deckDeleteButtonRepository.findButtonByButtonUniqueId(buttonId);
         if (button !== null) {
             return button.getVisibility();
