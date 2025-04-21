@@ -22,6 +22,7 @@ class WillBeReferenceImageLocation(Enum):
     SHOP_BUTTONS = "resource/shop/buttons/"
     SHOP_SELECT_SCREENS = "resource/shop/select_screen/"
     SHOP_YES_OR_NO_BUTTON = "resource/shop/yes_or_no/"
+    SHOP_GACHA_BUTTON = "resource/shop/gacha_button/"
     SELECT_CARD_SCREEN = "resource/shop/background/"
     TRY_AGAIN_SCREEN = "resource/select_card_result_screen/try_again_screen/"
     TRY_AGAIN_BUTTONS = "resource/select_card_result_screen/try_again_buttons"
@@ -76,6 +77,7 @@ class RelativeImageLocation(Enum):
     SHOP_BUTTONS = "../../resource/shop/buttons/"
     SHOP_SELECT_SCREENS = "../../resource/shop/select_screen/"
     SHOP_YES_OR_NO_BUTTON = "../../resource/shop/yes_or_no/"
+    SHOP_GACHA_BUTTON = "../../resource/shop/gacha_button/"
     SELECT_CARD_SCREEN = "../../resource/shop/background/"
     TRY_AGAIN_SCREEN = "../../resource/select_card_result_screen/try_again_screen"
     TRY_AGAIN_BUTTONS = "../../resource/select_card_result_screen/try_again_buttons"
@@ -131,6 +133,7 @@ relative_paths = {
     RelativeImageLocation.SHOP_BUTTONS: RelativeImageLocation.SHOP_BUTTONS.value,
     RelativeImageLocation.SHOP_SELECT_SCREENS: RelativeImageLocation.SHOP_SELECT_SCREENS.value,
     RelativeImageLocation.SHOP_YES_OR_NO_BUTTON: RelativeImageLocation.SHOP_YES_OR_NO_BUTTON.value,
+    RelativeImageLocation.SHOP_GACHA_BUTTON: RelativeImageLocation.SHOP_GACHA_BUTTON.value,
     RelativeImageLocation.SELECT_CARD_SCREEN: RelativeImageLocation.SELECT_CARD_SCREEN.value,
     RelativeImageLocation.TRY_AGAIN_SCREEN: RelativeImageLocation.TRY_AGAIN_SCREEN.value,
     RelativeImageLocation.TRY_AGAIN_BUTTONS: RelativeImageLocation.TRY_AGAIN_BUTTONS.value,
@@ -186,6 +189,7 @@ reference_paths = {
     WillBeReferenceImageLocation.SHOP_BUTTONS: WillBeReferenceImageLocation.SHOP_BUTTONS.value,
     WillBeReferenceImageLocation.SHOP_SELECT_SCREENS: WillBeReferenceImageLocation.SHOP_SELECT_SCREENS.value,
     WillBeReferenceImageLocation.SHOP_YES_OR_NO_BUTTON: WillBeReferenceImageLocation.SHOP_YES_OR_NO_BUTTON.value,
+    WillBeReferenceImageLocation.SHOP_GACHA_BUTTON: WillBeReferenceImageLocation.SHOP_GACHA_BUTTON.value,
     WillBeReferenceImageLocation.SELECT_CARD_SCREEN: WillBeReferenceImageLocation.SELECT_CARD_SCREEN.value,
     WillBeReferenceImageLocation.TRY_AGAIN_SCREEN: WillBeReferenceImageLocation.TRY_AGAIN_SCREEN.value,
     WillBeReferenceImageLocation.TRY_AGAIN_BUTTONS: WillBeReferenceImageLocation.TRY_AGAIN_BUTTONS.value,
@@ -241,6 +245,7 @@ image_paths = {
     "shop_buttons": [],
     "shop_select_screens": [],
     "shop_yes_or_no_button": [],
+    "shop_gacha_button": [],
     "select_card_screen": [],
     "try_again_screen": [],
     "try_again_buttons": [],
