@@ -237,10 +237,9 @@ export class TCGJustTestMyDeckView {
             }
 
             // 덱 삭제 버튼 클릭시 덱 버튼이 클릭되면 안 됨
-            this.myDeckButtonClickDetectService.setButtonClickState(false);
-
             const buttonClickState = this.deckDeleteButtonClickDetectService.getButtonClickState();
             if (buttonClickState == true) {
+                this.myDeckButtonClickDetectService.setButtonClickState(false);
                 const buttonClick = await this.deckDeleteButtonClickDetectService.onMouseDown(e);
                 if (buttonClick) {
                     this.deckDeleteButtonClickDetectService.setButtonClickState(false);
@@ -258,9 +257,21 @@ export class TCGJustTestMyDeckView {
             }
             const buttonClickState = this.deleteDeckPopupButtonClickDetectService.getButtonClickState();
             if (buttonClickState == true) {
+                this.myDeckButtonClickDetectService.setButtonClickState(false);
+                this.buildDeckButtonClickDetectService.setButtonClickState(false);
+                this.buildDeckButtonHoverDetectService.setButtonDetectState(false);
+                this.myDeckButtonEffectHoverDetectService.setEffectDetectState(false);
+                this.deckCardPageMoveButtonClickDetectService.setButtonClickState(false);
+                this.sideScrollAreaDetectService.setMyDeckScrollAreaDetectState(false);
                 const popupButtonClick = await this.deleteDeckPopupButtonClickDetectService.onMouseDown(e);
                 if (popupButtonClick) {
                     this.deleteDeckPopupButtonClickDetectService.setButtonClickState(false);
+                    this.myDeckButtonClickDetectService.setButtonClickState(true);
+                    this.buildDeckButtonClickDetectService.setButtonClickState(true);
+                    this.buildDeckButtonHoverDetectService.setButtonDetectState(true);
+                    this.myDeckButtonEffectHoverDetectService.setEffectDetectState(true);
+                    this.deckCardPageMoveButtonClickDetectService.setButtonClickState(true);
+                    this.sideScrollAreaDetectService.setMyDeckScrollAreaDetectState(true);
                 }
             }
         }, false);
