@@ -63,6 +63,8 @@ import {MyDeckButtonEffectHoverDetectService} from "../../src/my_deck_button_eff
 import {MyDeckButtonEffectHoverDetectServiceImpl} from "../../src/my_deck_button_effect_hover_detect/service/MyDeckButtonEffectHoverDetectServiceImpl";
 import {DeckDeleteButtonClickDetectService} from "../../src/deck_delete_button_click_detect/service/DeckDeleteButtonClickDetectService";
 import {DeckDeleteButtonClickDetectServiceImpl} from "../../src/deck_delete_button_click_detect/service/DeckDeleteButtonClickDetectServiceImpl";
+import {DeleteDeckPopupButtonClickDetectService} from "../../src/delete_deck_popup_button_click_detect/service/DeleteDeckPopupButtonClickDetectService";
+import {DeleteDeckPopupButtonClickDetectServiceImpl} from "../../src/delete_deck_popup_button_click_detect/service/DeleteDeckPopupButtonClickDetectServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 
@@ -121,6 +123,7 @@ export class TCGJustTestMyDeckView {
     private buildDeckButtonClickDetectService: BuildDeckButtonClickDetectService;
     private myDeckButtonEffectHoverDetectService: MyDeckButtonEffectHoverDetectService;
     private deckDeleteButtonClickDetectService: DeckDeleteButtonClickDetectService;
+    private deleteDeckPopupButtonClickDetectService: DeleteDeckPopupButtonClickDetectService;
 
     private initialized = false;
     private isAnimating = false;
@@ -242,6 +245,22 @@ export class TCGJustTestMyDeckView {
                 if (buttonClick) {
                     this.deckDeleteButtonClickDetectService.setButtonClickState(false);
                     this.myDeckButtonClickDetectService.setButtonClickState(true);
+                }
+            }
+        }, false);
+
+        // To-do: 팝업 창이 나타났을 때 팝업 창의 버튼 외의 다른 버튼들은 클릭되면 안 되게 해야 함.
+        this.deleteDeckPopupButtonClickDetectService = DeleteDeckPopupButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.renderer.domElement.addEventListener('mousedown', async (e) => {
+            const buttonsVisibleState = this.deleteDeckPopupButtonService.getButtonsVisibleState();
+            if (buttonsVisibleState.some((state) => state === true)) {
+                this.deleteDeckPopupButtonClickDetectService.setButtonClickState(true);
+            }
+            const buttonClickState = this.deleteDeckPopupButtonClickDetectService.getButtonClickState();
+            if (buttonClickState == true) {
+                const popupButtonClick = await this.deleteDeckPopupButtonClickDetectService.onMouseDown(e);
+                if (popupButtonClick) {
+                    this.deleteDeckPopupButtonClickDetectService.setButtonClickState(false);
                 }
             }
         }, false);
