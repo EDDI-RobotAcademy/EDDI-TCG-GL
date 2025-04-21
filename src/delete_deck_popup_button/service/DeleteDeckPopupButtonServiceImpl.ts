@@ -67,4 +67,9 @@ export class DeleteDeckPopupButtonServiceImpl implements DeleteDeckPopupButtonSe
         this.deleteDeckPopupButtonRepository.deleteAll();
     }
 
+    public getButtonsVisibleState(): boolean[] {
+        const buttons = this.getAllButton();
+        return buttons.map((button) => button.getVisibility());
+    }
+
 }
