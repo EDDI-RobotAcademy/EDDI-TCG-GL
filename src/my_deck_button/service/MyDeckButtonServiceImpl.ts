@@ -47,12 +47,25 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
     public async createMyDeckButtonWithPosition(deckId: number): Promise<THREE.Group | null> {
         const buttonGroup = new THREE.Group();
         try {
-            const position = this.myDeckButtonPosition(deckId);
-            console.log(`[DEBUG] Deck ${deckId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
-            this.saveMyDeckButtonPosition(deckId, position);
+            const existingPosition = this.getMyDeckButtonPosition(deckId);
+            const existingButton = this.getMyDeckButtonByDeckId(deckId);
 
-            const deckButton = await this.createMyDeckButton(deckId, position.position);
-            buttonGroup.add(deckButton.mesh);
+            if (existingPosition && existingButton) {
+                const positionX = existingPosition.getX() * window.innerWidth;
+                const positionY = existingPosition.getY() * window.innerHeight;
+                const existingButtonMesh = existingButton.getMesh();
+
+                existingButtonMesh.position.set(positionX, positionY, 0);
+                buttonGroup.add(existingButtonMesh);
+
+            } else {
+                const position = this.myDeckButtonPosition(deckId);
+                console.log(`[DEBUG] Deck ${deckId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
+                this.saveMyDeckButtonPosition(deckId, position);
+
+                const deckButton = await this.createMyDeckButton(deckId, position.position);
+                buttonGroup.add(deckButton.mesh);
+            }
 
         } catch (error) {
             console.error('Error creating my deck button with position:', error);
@@ -73,10 +86,9 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
         this.myDeckButtonPositionRepository.save(deckId, position);
     }
 
-    private findMyDeckButtonPosition(deckId: number): MyDeckButtonPosition | null {
+    private getMyDeckButtonPosition(deckId: number): MyDeckButtonPosition | null {
         return this.myDeckButtonPositionRepository.findPositionByDeckId(deckId);
     }
-
 
     public adjustMyDeckButtonPosition(): void {
         const positionRepository = this.myDeckButtonPositionRepository
@@ -135,6 +147,10 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
         this.buttonStateManager.initializeButtonState();
     }
 
+    public resetButtonVisibility(): void {
+        this.buttonStateManager.resetVisibility();
+    }
+
     public getMyDeckButtonByDeckId(deckId: number): MyDeckButton | null {
         return this.myDeckButtonRepository.findButtonByDeckId(deckId);
     }
@@ -165,6 +181,10 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
 
     public getMyDeckButtonGroups(): THREE.Group {
         return this.myDeckButtonRepository.findAllButtonGroups();
+    }
+
+    public resetMyDeckButtonGroups(): void {
+        this.myDeckButtonRepository.resetButtonGroups();
     }
 
     private getScrollArea(): SideScrollArea | null {

@@ -42,12 +42,25 @@ export class MyDeckNameTextServiceImpl implements MyDeckNameTextService {
     public async createMyDeckNameTextWithPosition(deckId: number, deckName: string): Promise<THREE.Group | null> {
         const textGroup = new THREE.Group();
         try {
-            const position = this.myDeckNameTextPosition(deckId);
-            console.log(`[DEBUG] Deck ${deckId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
-            this.saveMyDeckNameTextPosition(deckId, position);
+            const existingPosition = this.getMyDeckNameTextPosition(deckId);
+            const existingDeckNameText = this.getMyDeckNameTextByDeckId(deckId);
 
-            const deckNameText = await this.createMyDeckNameText(deckId, deckName, position.position);
-            textGroup.add(deckNameText.mesh);
+            if (existingPosition && existingDeckNameText) {
+                const positionX = existingPosition.getX() * window.innerWidth;
+                const positionY = existingPosition.getY() * window.innerHeight;
+                const existingTextMesh = existingDeckNameText.getMesh();
+
+                existingTextMesh.position.set(positionX, positionY, 0);
+                textGroup.add(existingTextMesh);
+
+            } else {
+                const position = this.myDeckNameTextPosition(deckId);
+                console.log(`[DEBUG] Deck ${deckId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
+                this.saveMyDeckNameTextPosition(deckId, position);
+
+                const deckNameText = await this.createMyDeckNameText(deckId, deckName, position.position);
+                textGroup.add(deckNameText.mesh);
+            }
 
         } catch (error) {
             console.error('Error creating my deck button with position:', error);
@@ -137,12 +150,20 @@ export class MyDeckNameTextServiceImpl implements MyDeckNameTextService {
         this.myDeckNameTextRepository.deleteTextByDeckId(deckId);
     }
 
+    private getMyDeckNameTextPosition(deckId: number): MyDeckNameTextPosition | null {
+        return this.myDeckNameTextPositionRepository.findPositionByDeckId(deckId);
+    }
+
     public deleteAllDeckNameText(): void {
         this.myDeckNameTextRepository.deleteAll();
     }
 
     public getMyDeckTextGroups(): THREE.Group {
         return this.myDeckNameTextRepository.findAllTextGroups();
+    }
+
+    public resetMyDeckTextGroups(): void {
+        this.myDeckNameTextRepository.resetTextGroups();
     }
 
     private getScrollArea(): SideScrollArea | null {

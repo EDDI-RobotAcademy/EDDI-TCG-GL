@@ -58,6 +58,10 @@ export class MyDeckCardPositionRepositoryImpl implements MyDeckCardPositionRepos
         return this.positionMap.delete(positionId);
     }
 
+    deletePositionByDeckId(deckId: number): void {
+        this.deckToPositionMap.delete(deckId);
+    }
+
     deleteAll(): void {
         this.positionMap.clear();
         this.deckToPositionMap.clear();
