@@ -147,6 +147,8 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
             });
         }
         this.deckMap.delete(deckId);
+        const deckIdList = this.findDeckIdList();
+        console.log(`%c삭제 후 남은 덱 id 리스트는? ${deckIdList}`, 'color: #FE2EF7; font-weight: bold;');
     }
 
     public showCard(cardUniqueId: number): void {

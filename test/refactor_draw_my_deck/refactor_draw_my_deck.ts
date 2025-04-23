@@ -34,8 +34,8 @@ import {MyDeckNameTextMapRepositoryImpl} from "../../src/my_deck_name_text/repos
 // import {DeckMakeButtonServiceImpl} from "../../src/deck_make_button/service/DeckMakeButtonServiceImpl";
 import {TransparentBackgroundServiceImpl} from "../../src/transparent_background/service/TransparentBackgroundServiceImpl";
 import {DeckMakePopupBackgroundServiceImpl} from "../../src/deck_make_pop_up_background/service/DeckMakePopupBackgroundServiceImpl";
-import {DeckMakePopupButtonsServiceImpl} from "../../src/deck_make_pop_up_buttons/service/DeckMakePopupButtonsServiceImpl";
-import {DeckMakePopupInputContainerServiceImpl} from "../../src/deck_make_pop_up_input_container/service/DeckMakePopupInputContainerServiceImpl";
+// import {DeckMakePopupButtonsServiceImpl} from "../../src/deck_make_pop_up_buttons/service/DeckMakePopupButtonsServiceImpl";
+// import {DeckMakePopupInputContainerServiceImpl} from "../../src/deck_make_pop_up_input_container/service/DeckMakePopupInputContainerServiceImpl";
 import {SideScrollAreaServiceImpl} from "../../src/side_scroll_area/service/SideScrollAreaServiceImpl";
 import {BuildDeckButtonServiceImpl} from "../../src/build_deck_button/service/BuildDeckButtonServiceImpl";
 import {DeckEditButtonServiceImpl} from "../../src/deck_edit_button/service/DeckEditButtonServiceImpl";
@@ -49,8 +49,8 @@ import {DeckCardPageMoveButtonClickDetectServiceImpl} from "../../src/deck_card_
 import {DeckCardPageMoveButtonClickDetectService} from "../../src/deck_card_page_movement_button_detect/service/DeckCardPageMoveButtonClickDetectService";
 import {DeckMakeButtonClickDetectServiceImpl} from "../../src/deck_make_button_click_detect/service/DeckMakeButtonClickDetectServiceImpl";
 import {DeckMakeButtonClickDetectService} from "../../src/deck_make_button_click_detect/service/DeckMakeButtonClickDetectService";
-import {DeckMakePopupButtonsClickDetectServiceImpl} from "../../src/deck_make_pop_up_buttons_click_detect/service/DeckMakePopupButtonsClickDetectServiceImpl";
-import {DeckMakePopupButtonsClickDetectService} from "../../src/deck_make_pop_up_buttons_click_detect/service/DeckMakePopupButtonsClickDetectService";
+// import {DeckMakePopupButtonsClickDetectServiceImpl} from "../../src/deck_make_pop_up_buttons_click_detect/service/DeckMakePopupButtonsClickDetectServiceImpl";
+// import {DeckMakePopupButtonsClickDetectService} from "../../src/deck_make_pop_up_buttons_click_detect/service/DeckMakePopupButtonsClickDetectService";
 import {MyDeckScrollService} from "../../src/my_deck_scroll/service/MyDeckScrollService";
 import {MyDeckScrollServiceImpl} from "../../src/my_deck_scroll/service/MyDeckScrollServiceImpl";
 import {SideScrollAreaDetectService} from "../../src/side_scroll_area_detect/service/SideScrollAreaDetectService";
@@ -91,9 +91,9 @@ export class TCGJustTestMyDeckView {
     private myDeckNameTextService = MyDeckNameTextServiceImpl.getInstance();
 //     private deckMakeButtonService = DeckMakeButtonServiceImpl.getInstance();
     private transparentBackgroundService = TransparentBackgroundServiceImpl.getInstance();
-    private decKMakePopupBackgroundService = DeckMakePopupBackgroundServiceImpl.getInstance();
-    private deckMakePopupButtonsService = DeckMakePopupButtonsServiceImpl.getInstance();
-    private deckMakePopupInputContainerService = DeckMakePopupInputContainerServiceImpl.getInstance();
+//     private decKMakePopupBackgroundService = DeckMakePopupBackgroundServiceImpl.getInstance();
+//     private deckMakePopupButtonsService = DeckMakePopupButtonsServiceImpl.getInstance();
+//     private deckMakePopupInputContainerService = DeckMakePopupInputContainerServiceImpl.getInstance();
     private sideScrollAreaService = SideScrollAreaServiceImpl.getInstance();
     private buildDeckButtonService = BuildDeckButtonServiceImpl.getInstance();
     private deckEditButtonService = DeckEditButtonServiceImpl.getInstance();
@@ -116,7 +116,7 @@ export class TCGJustTestMyDeckView {
     private myDeckButtonClickDetectService: MyDeckButtonClickDetectService;
     private deckCardPageMoveButtonClickDetectService: DeckCardPageMoveButtonClickDetectService;
 //     private deckMakeButtonClickDetectService: DeckMakeButtonClickDetectService;
-    private deckMakePopupButtonsClickDetectService: DeckMakePopupButtonsClickDetectService;
+//     private deckMakePopupButtonsClickDetectService: DeckMakePopupButtonsClickDetectService;
     private myDeckScrollService: MyDeckScrollService;
     private sideScrollAreaDetectService: SideScrollAreaDetectService;
     private buildDeckButtonHoverDetectService: BuildDeckButtonHoverDetectService;
@@ -264,6 +264,9 @@ export class TCGJustTestMyDeckView {
                 this.myDeckButtonEffectHoverDetectService.setEffectDetectState(false);
                 this.deckCardPageMoveButtonClickDetectService.setButtonClickState(false);
                 this.sideScrollAreaDetectService.setMyDeckScrollAreaDetectState(false);
+
+                await this.deleteAllCard();
+
                 const popupButtonClick = await this.deleteDeckPopupButtonClickDetectService.onMouseDown(e);
                 if (popupButtonClick) {
                     this.deleteDeckPopupButtonClickDetectService.setButtonClickState(false);
@@ -279,7 +282,6 @@ export class TCGJustTestMyDeckView {
                     await this.deleteDeckEditButton();
                     await this.deleteDeckDeleteButton();
                     await this.deleteDeckNameText();
-                    await this.deleteAllCard();
 
                     await this.addMyDeckCard();
                     await this.addMyDeckButton();
@@ -307,20 +309,20 @@ export class TCGJustTestMyDeckView {
 //             }
 //         }, false);
 
-        this.deckMakePopupButtonsClickDetectService = DeckMakePopupButtonsClickDetectServiceImpl.getInstance(this.camera, this.scene);
-//         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckMakePopupButtonsClickDetectService.onMouseDown(e), false);
-        this.renderer.domElement.addEventListener('mousedown', (e) => {
-            if (this.isDeckMakePopupButtonsEnabled) {
-                this.deckMakePopupButtonsClickDetectService.onMouseDown(e);
-                const currentButtonClickState = this.deckMakePopupButtonsClickDetectService.getCurrentButtonClickState();
-                if (currentButtonClickState) {
-                    this.isMyDeckButtonEnabled = true;
-                    this.isDeckPageMovementButtonEnabled = true;
-                    this.isDeckCardPageMovementButtonEnabled = true;
-                    this.isDeckMakeButtonEnabled = true;
-                }
-            }
-        }, false);
+//         this.deckMakePopupButtonsClickDetectService = DeckMakePopupButtonsClickDetectServiceImpl.getInstance(this.camera, this.scene);
+// //         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckMakePopupButtonsClickDetectService.onMouseDown(e), false);
+//         this.renderer.domElement.addEventListener('mousedown', (e) => {
+//             if (this.isDeckMakePopupButtonsEnabled) {
+//                 this.deckMakePopupButtonsClickDetectService.onMouseDown(e);
+//                 const currentButtonClickState = this.deckMakePopupButtonsClickDetectService.getCurrentButtonClickState();
+//                 if (currentButtonClickState) {
+//                     this.isMyDeckButtonEnabled = true;
+//                     this.isDeckPageMovementButtonEnabled = true;
+//                     this.isDeckCardPageMovementButtonEnabled = true;
+//                     this.isDeckMakeButtonEnabled = true;
+//                 }
+//             }
+//         }, false);
 
     }
 
@@ -364,9 +366,9 @@ export class TCGJustTestMyDeckView {
         await this.addDeckDeleteButton();
 //         this.addDeckMakeButton();
         this.addTransparentBackground();
-        this.addDeckMakePopupBackground();
-        this.addDeckMakePopupButtons();
-        this.addDeckMakePopupInputContainer();
+//         this.addDeckMakePopupBackground();
+//         this.addDeckMakePopupButtons();
+//         this.addDeckMakePopupInputContainer();
         this.addDeleteDeckPopupWindow();
         this.addDeleteDeckPopupButton();
 
@@ -606,8 +608,13 @@ export class TCGJustTestMyDeckView {
             }
 
             const deckIdList = this.myDeckCardService.getAllDeckIdList();
+            const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+            const firstDeckId = sortedDeckIdList[0];
+            console.log(`%cfirstDeckId?: ${firstDeckId}`, 'color: #FE2EF7; font-weight: bold;');
+            console.log(`%cDeckIdList?: ${deckIdList}`, 'color: #FE2EF7; font-weight: bold;');
+
             deckIdList.forEach((deckId, index) => {
-                if (index === 0) {
+                if (deckId === firstDeckId) {
                     this.myDeckButtonClickDetectService.saveCurrentClickDeckButtonId(deckId);
                     this.myDeckCardService.initializeCardVisibility(deckId);
                 } else {
@@ -747,48 +754,48 @@ export class TCGJustTestMyDeckView {
         }
     }
 
-    private async addDeckMakePopupBackground(): Promise<void> {
-        try {
-            const deckMakePopupBackground = await this.decKMakePopupBackgroundService.createDeckMakePopupBackground();
-            if (deckMakePopupBackground) {
-                this.decKMakePopupBackgroundService.initialDeckMakePopupBackgroundVisible();
-                this.scene.add(deckMakePopupBackground);
-            } else {
-                console.warn(`No deckMakePopupBackground found`);
-            }
-        }catch (error) {
-            console.error('Failed to add DeckMakePopupBackground:', error);
-        }
-    }
+//     private async addDeckMakePopupBackground(): Promise<void> {
+//         try {
+//             const deckMakePopupBackground = await this.decKMakePopupBackgroundService.createDeckMakePopupBackground();
+//             if (deckMakePopupBackground) {
+//                 this.decKMakePopupBackgroundService.initialDeckMakePopupBackgroundVisible();
+//                 this.scene.add(deckMakePopupBackground);
+//             } else {
+//                 console.warn(`No deckMakePopupBackground found`);
+//             }
+//         }catch (error) {
+//             console.error('Failed to add DeckMakePopupBackground:', error);
+//         }
+//     }
 
-    private async addDeckMakePopupButtons(): Promise<void> {
-        try {
-            const configList = new DeckMakePopupButtonsConfigList();
-            await Promise.all(configList.buttonConfigs.map(async (config) =>{
-                const button = await this.deckMakePopupButtonsService.createDeckMakePopupButtons(
-                    config.id,
-                    config.position
-                );
+//     private async addDeckMakePopupButtons(): Promise<void> {
+//         try {
+//             const configList = new DeckMakePopupButtonsConfigList();
+//             await Promise.all(configList.buttonConfigs.map(async (config) =>{
+//                 const button = await this.deckMakePopupButtonsService.createDeckMakePopupButtons(
+//                     config.id,
+//                     config.position
+//                 );
+//
+//                 if (button) {
+//                     this.deckMakePopupButtonsService.initializeDeckMakePopupButtonsVisible();
+//                     this.scene.add(button);
+//                     console.log(`Draw Deck Make Pop-up Button ${config.id}`);
+//                 }
+//             }));
+//         } catch (error) {
+//             console.error('Failed to add DeckMakePopupButtons:', error);
+//         }
+//     }
 
-                if (button) {
-                    this.deckMakePopupButtonsService.initializeDeckMakePopupButtonsVisible();
-                    this.scene.add(button);
-                    console.log(`Draw Deck Make Pop-up Button ${config.id}`);
-                }
-            }));
-        } catch (error) {
-            console.error('Failed to add DeckMakePopupButtons:', error);
-        }
-    }
-
-    private async addDeckMakePopupInputContainer():  Promise<void> {
-        try {
-            await this.deckMakePopupInputContainerService.createDeckMakePopupInputContainer();
-
-        } catch (error) {
-            console.error('Failed to add DeckMakePopupInputContainer:', error);
-        }
-    }
+//     private async addDeckMakePopupInputContainer():  Promise<void> {
+//         try {
+//             await this.deckMakePopupInputContainerService.createDeckMakePopupInputContainer();
+//
+//         } catch (error) {
+//             console.error('Failed to add DeckMakePopupInputContainer:', error);
+//         }
+//     }
 
     private async deleteMyDeckButtons(): Promise<void> {
         try {
@@ -892,7 +899,10 @@ export class TCGJustTestMyDeckView {
             const allDeckIdList = this.myDeckCardService.getAllDeckIdList();
             allDeckIdList.forEach((deckId) => {
                 const cardMeshList = this.myDeckCardService.getCardListByDeckId(deckId);
-                cardMeshList.forEach((cardMesh) => this.scene.remove(cardMesh));
+                for (const cardMesh of cardMeshList) {
+                    cardMesh.visible = false;
+                    this.scene.remove(cardMesh);
+                }
             });
 
             this.myDeckCardService.resetCardVisibility();
@@ -933,9 +943,9 @@ export class TCGJustTestMyDeckView {
             this.buildDeckButtonService.adjustBuildDeckButtonPosition();
 //             this.deckMakeButtonService.adjustDeckMakeButtonPosition();
             this.transparentBackgroundService.adjustTransparentBackgroundPosition();
-            this.decKMakePopupBackgroundService.adjustDeckMakePopupBackgroundPosition();
-            this.deckMakePopupButtonsService.adjustDeckMakePopupButtonsPosition();
-            this.deckMakePopupInputContainerService.adjustDeckMakePopupInputContainerPosition();
+//             this.decKMakePopupBackgroundService.adjustDeckMakePopupBackgroundPosition();
+//             this.deckMakePopupButtonsService.adjustDeckMakePopupButtonsPosition();
+//             this.deckMakePopupInputContainerService.adjustDeckMakePopupInputContainerPosition();
             this.deleteDeckPopupWindowService.adjustDeckMakePopupBackgroundPosition();
             this.deleteDeckPopupButtonService.adjustDeleteDeckPopupButtonPosition();
         }

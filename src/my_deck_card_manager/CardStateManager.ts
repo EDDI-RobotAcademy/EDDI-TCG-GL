@@ -80,6 +80,11 @@ export class CardStateManager {
 
     // 모든 visible 상태 초기화
     public resetVisibility(): void {
+        for (const [deckId, cardVisibilityMap] of this.deckCardVisibleStateMap.entries()) {
+            for (const [cardId, _] of cardVisibilityMap.entries()) {
+                this.myDeckCardRepository.hideCard(cardId);
+            }
+        }
         this.deckCardVisibleStateMap.clear();
     }
 
