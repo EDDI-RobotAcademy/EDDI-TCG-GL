@@ -52,8 +52,19 @@ export class MyDeckButtonEffectServiceImpl implements MyDeckButtonEffectService 
             }
             console.log(`[DEBUG] Effect ${deckId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
 
-            const deckButtonEffect = await this.createMyDeckButtonEffect(deckId, position.position);
-            buttonGroup.add(deckButtonEffect.mesh);
+            const existingButtonEffect = this.getMyDeckButtonEffectByDeckId(deckId);
+            if (existingButtonEffect) {
+                const positionX = position.getX() * window.innerWidth;
+                const positionY = position.getY() * window.innerHeight;
+                const existingEffectMesh = existingButtonEffect.getMesh();
+
+                existingEffectMesh.position.set(positionX, positionY, 0);
+                buttonGroup.add(existingEffectMesh);
+
+            } else {
+                const deckButtonEffect = await this.createMyDeckButtonEffect(deckId, position.position);
+                buttonGroup.add(deckButtonEffect.mesh);
+            }
 
         } catch (error) {
             console.log('Error creating button effect with position:', error);
@@ -125,6 +136,10 @@ export class MyDeckButtonEffectServiceImpl implements MyDeckButtonEffectService 
         this.buttonEffectManger.initializeEffectState();
     }
 
+    public resetEffectVisibility(): void {
+        this.buttonEffectManger.resetVisibility();
+    }
+
     public getMyDeckButtonEffectByDeckId(deckId: number): MyDeckButtonEffect | null {
         return this.myDeckButtonEffectRepository.findEffectByDeckId(deckId);
     }
@@ -143,6 +158,10 @@ export class MyDeckButtonEffectServiceImpl implements MyDeckButtonEffectService 
 
     public getMyDeckButtonEffectGroups(): THREE.Group {
         return this.myDeckButtonEffectRepository.findAllEffectGroups();
+    }
+
+    public resetMyDeckButtonEffectGroups(): void {
+        this.myDeckButtonEffectRepository.resetEffectGroups();
     }
 
     private getScrollArea(): SideScrollArea | null {

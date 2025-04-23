@@ -169,7 +169,8 @@ export class TCGJustTestMyDeckView {
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
             const buttonClickState = this.myDeckButtonClickDetectService.getButtonClickState();
             if (buttonClickState == true) {
-                this.myDeckButtonClickDetectService.onMouseDown(e);
+                this.deckDeleteButtonClickDetectService.setButtonClickState(false);
+                const buttonClick = await this.myDeckButtonClickDetectService.onMouseDown(e);
             }
         }, false);
 
@@ -272,6 +273,21 @@ export class TCGJustTestMyDeckView {
                     this.myDeckButtonEffectHoverDetectService.setEffectDetectState(true);
                     this.deckCardPageMoveButtonClickDetectService.setButtonClickState(true);
                     this.sideScrollAreaDetectService.setMyDeckScrollAreaDetectState(true);
+
+                    await this.deleteMyDeckButtons();
+                    await this.deleteMyDeckButtonEffects();
+                    await this.deleteDeckEditButton();
+                    await this.deleteDeckDeleteButton();
+                    await this.deleteDeckNameText();
+                    await this.deleteAllCard();
+
+                    await this.addMyDeckCard();
+                    await this.addMyDeckButton();
+                    await this.addMyDeckButtonEffect();
+                    await this.addMyDeckNameText();
+                    await this.addDeckEditButton();
+                    await this.addDeckDeleteButton();
+
                 }
             }
         }, false);
@@ -771,6 +787,118 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add DeckMakePopupInputContainer:', error);
+        }
+    }
+
+    private async deleteMyDeckButtons(): Promise<void> {
+        try {
+            const allButton = this.myDeckButtonService.getAllMyDeckButton();
+            const buttonGroup = this.myDeckButtonService.getMyDeckButtonGroups();
+            allButton.forEach((buttonMesh) => {
+                if (buttonMesh) {
+                    this.scene.remove(buttonMesh.getMesh());
+                }
+            });
+            if (buttonGroup) {
+                this.scene.remove(buttonGroup);
+                buttonGroup.clear();
+                this.myDeckButtonService.resetMyDeckButtonGroups();
+            }
+            this.myDeckButtonService.resetButtonVisibility();
+        } catch (error) {
+            console.error('Failed to delete My Deck Button:', error);
+        }
+    }
+
+    private async deleteMyDeckButtonEffects(): Promise<void> {
+        try {
+            const allEffect = this.myDeckButtonEffectService.getAllMyButtonEffect();
+            const effectGroup = this.myDeckButtonEffectService.getMyDeckButtonEffectGroups();
+            allEffect.forEach((effectMesh) => {
+                if (effectMesh) {
+                    this.scene.remove(effectMesh.getMesh());
+                }
+            });
+            if (effectGroup) {
+                this.scene.remove(effectGroup);
+                effectGroup.clear();
+                this.myDeckButtonEffectService.resetMyDeckButtonEffectGroups();
+            }
+            this.myDeckButtonEffectService.resetEffectVisibility();
+        } catch (error) {
+            console.error('Failed to delete My Deck Button Effect:', error);
+        }
+    }
+
+    private async deleteDeckEditButton(): Promise<void> {
+        try {
+            const allButton = this.deckEditButtonService.getAllButton();
+            const buttonGroup = this.deckEditButtonService.getButtonGroup();
+            allButton.forEach((buttonMesh) => {
+                if (buttonMesh) {
+                    this.scene.remove(buttonMesh.getMesh());
+                }
+            });
+            if (buttonGroup) {
+                this.scene.remove(buttonGroup);
+                buttonGroup.clear();
+                this.deckEditButtonService.resetButtonGroup();
+            }
+        } catch (error) {
+            console.error('Failed to delete Deck Edit Button:', error);
+        }
+    }
+
+    private async deleteDeckDeleteButton(): Promise<void> {
+        try {
+            const allButton = this.deckDeleteButtonService.getAllButton();
+            const buttonGroup = this.deckDeleteButtonService.getButtonGroup();
+            allButton.forEach((buttonMesh) => {
+                if (buttonMesh) {
+                    this.scene.remove(buttonMesh.getMesh());
+                }
+            });
+            if (buttonGroup) {
+                this.scene.remove(buttonGroup);
+                buttonGroup.clear();
+                this.deckDeleteButtonService.resetButtonGroup();
+            }
+        } catch (error) {
+            console.error('Failed to delete Deck Delete Button:', error);
+        }
+    }
+
+    private async deleteDeckNameText(): Promise<void> {
+        try {
+            const allText = this.myDeckNameTextService.getAllMyDeckNameText();
+            const textGroup = this.myDeckNameTextService.getMyDeckTextGroups();
+            allText.forEach((text) => {
+                if (text) {
+                    this.scene.remove(text.getMesh());
+                }
+            });
+            if (textGroup) {
+                this.scene.remove(textGroup);
+                textGroup.clear();
+                this.myDeckNameTextService.resetMyDeckTextGroups();
+            }
+        } catch (error) {
+            console.error('Failed to delete Deck Name Text:', error);
+        }
+    }
+
+    private async deleteAllCard(): Promise<void> {
+        try {
+            const allDeckIdList = this.myDeckCardService.getAllDeckIdList();
+            allDeckIdList.forEach((deckId) => {
+                const cardMeshList = this.myDeckCardService.getCardListByDeckId(deckId);
+                cardMeshList.forEach((cardMesh) => this.scene.remove(cardMesh));
+            });
+
+            this.myDeckCardService.resetCardVisibility();
+
+        } catch (error) {
+            console.error('Failed to delete Card:', error);
         }
     }
 

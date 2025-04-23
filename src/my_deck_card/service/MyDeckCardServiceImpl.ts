@@ -155,4 +155,8 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
     }
 
+    public resetCardVisibility(): void {
+        this.cardStateManager.resetVisibility();
+    }
+
 }

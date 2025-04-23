@@ -37,4 +37,8 @@ export class MyDeckNameTextMapRepositoryImpl implements MyDeckNameTextMapReposit
         return Array.from(this.myDeckNameMap.keys());
     }
 
+    public deleteMyDeckNameText(deckId: number): void {
+        this.myDeckNameMap.delete(deckId);
+    }
+
 }

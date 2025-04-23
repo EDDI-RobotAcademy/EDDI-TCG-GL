@@ -61,6 +61,26 @@ export class MyDeckButtonMapRepositoryImpl implements MyDeckButtonMapRepository 
         this.currentMyDeckMap = updatedMap;
     }
 
+    // deckId를 기준으로 덱을 제거하는 메서드
+    public removeMyDeckByDeckId(deckId: number): void {
+        let targetIndex: number | undefined;
+
+        // deckId에 해당하는 index를 찾음
+        for (const [index, value] of this.currentMyDeckMap.entries()) {
+            if (value === deckId) {
+                targetIndex = index;
+                break;
+            }
+        }
+
+        if (targetIndex !== undefined) {
+            this.currentMyDeckMap.delete(targetIndex);
+        } else {
+            console.warn(`deckId ${deckId}에 해당하는 덱이 존재하지 않습니다.`);
+        }
+    }
+
+
     public getMyDeckMapSize(): number {
         return this.currentMyDeckMap.size;
     }
