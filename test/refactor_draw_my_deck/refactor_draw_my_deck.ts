@@ -65,6 +65,8 @@ import {DeckDeleteButtonClickDetectService} from "../../src/deck_delete_button_c
 import {DeckDeleteButtonClickDetectServiceImpl} from "../../src/deck_delete_button_click_detect/service/DeckDeleteButtonClickDetectServiceImpl";
 import {DeleteDeckPopupButtonClickDetectService} from "../../src/delete_deck_popup_button_click_detect/service/DeleteDeckPopupButtonClickDetectService";
 import {DeleteDeckPopupButtonClickDetectServiceImpl} from "../../src/delete_deck_popup_button_click_detect/service/DeleteDeckPopupButtonClickDetectServiceImpl";
+import {DeckEditButtonClickDetectService} from "../../src/deck_edit_button_click_detect/service/DeckEditButtonClickDetectService";
+import {DeckEditButtonClickDetectServiceImpl} from "../../src/deck_edit_button_click_detect/service/DeckEditButtonClickDetectServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 
@@ -124,6 +126,7 @@ export class TCGJustTestMyDeckView {
     private myDeckButtonEffectHoverDetectService: MyDeckButtonEffectHoverDetectService;
     private deckDeleteButtonClickDetectService: DeckDeleteButtonClickDetectService;
     private deleteDeckPopupButtonClickDetectService: DeleteDeckPopupButtonClickDetectService;
+    private deckEditButtonClickDetectService: DeckEditButtonClickDetectService;
 
     private initialized = false;
     private isAnimating = false;
@@ -165,11 +168,13 @@ export class TCGJustTestMyDeckView {
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckDeleteButtonClickDetectService = DeckDeleteButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.deckEditButtonClickDetectService = DeckEditButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
 //         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
             const buttonClickState = this.myDeckButtonClickDetectService.getButtonClickState();
             if (buttonClickState == true) {
                 this.deckDeleteButtonClickDetectService.setButtonClickState(false);
+                this.deckEditButtonClickDetectService.setButtonClickState(false);
                 const buttonClick = await this.myDeckButtonClickDetectService.onMouseDown(e);
             }
         }, false);
@@ -290,6 +295,26 @@ export class TCGJustTestMyDeckView {
                     await this.addDeckEditButton();
                     await this.addDeckDeleteButton();
 
+                }
+            }
+        }, false);
+
+        this.renderer.domElement.addEventListener('mousedown', async (e) => {
+            const currentHoveredButtonEffectId = this.myDeckButtonEffectHoverDetectService.getCurrentHoveredEffectId();
+            if (currentHoveredButtonEffectId !== null) {
+                const deckEditButtonVisibleState = this.myDeckButtonEffectHoverDetectService.getDeckEditButtonVisibility(currentHoveredButtonEffectId);
+                if (deckEditButtonVisibleState == true) {
+                    this.deckEditButtonClickDetectService.setButtonClickState(true);
+                }
+            }
+
+            const deckEditButtonClickState = this.deckEditButtonClickDetectService.getButtonClickState();
+            if (deckEditButtonClickState == true) {
+                this.myDeckButtonClickDetectService.setButtonClickState(false);
+                const deckEditButtonClick = await this.deckEditButtonClickDetectService.onMouseDown(e);
+                if (deckEditButtonClick) {
+                    this.deckEditButtonClickDetectService.setButtonClickState(false);
+                    this.myDeckButtonClickDetectService.setButtonClickState(true);
                 }
             }
         }, false);
