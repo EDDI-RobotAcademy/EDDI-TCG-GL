@@ -11,7 +11,7 @@ export class MyDeckButtonEffectRepositoryImpl implements MyDeckButtonEffectRepos
     private deckButtonEffectGroup: THREE.Group | null = null;
     private textureManager: TextureManager;
 
-    private readonly BUTTON_WIDTH: number = 0.257
+    private readonly BUTTON_WIDTH: number = 0.18 //0.257
     private readonly BUTTON_HEIGHT: number = 90 / 1080
 
     private constructor(textureManager: TextureManager) {
@@ -35,7 +35,8 @@ export class MyDeckButtonEffectRepositoryImpl implements MyDeckButtonEffectRepos
 
         const buttonWidth = this.BUTTON_WIDTH * window.innerWidth;
 //         const buttonHeight = this.BUTTON_HEIGHT * window.innerHeight;
-        const buttonHeight = buttonWidth * 0.3;
+//         const buttonHeight = buttonWidth * 0.3;
+        const buttonHeight = buttonWidth * (240/1040);
 
         const buttonPositionX = position.getX() * window.innerWidth;
         const buttonPositionY = position.getY() * window.innerHeight;

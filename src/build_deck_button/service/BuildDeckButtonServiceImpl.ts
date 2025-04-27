@@ -45,8 +45,8 @@ export class BuildDeckButtonServiceImpl implements BuildDeckButtonService {
             const buttonMesh = button.getMesh();
             const initialPosition = button.position;
 
-            const buttonWidth = 0.257 * windowWidth;
-            const buttonHeight = buttonWidth * 0.3;
+            const buttonWidth = 0.18 * windowWidth;
+            const buttonHeight = buttonWidth * (240/1040);
 
             const newPositionX = initialPosition.getX() * windowWidth;
             const newPositionY = initialPosition.getY() * windowHeight;

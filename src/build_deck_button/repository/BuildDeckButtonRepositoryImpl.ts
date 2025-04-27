@@ -10,7 +10,7 @@ export class BuildDeckButtonRepositoryImpl implements BuildDeckButtonRepository 
     private buttonMap: Map<number, BuildDeckButton> = new Map();
     private textureManager: TextureManager;
 
-    private readonly BUTTON_WIDTH: number = 0.257
+    private readonly BUTTON_WIDTH: number = 0.18
 
     private constructor(textureManager: TextureManager) {
         this.textureManager = textureManager;
@@ -33,7 +33,7 @@ export class BuildDeckButtonRepositoryImpl implements BuildDeckButtonRepository 
         }
 
         const buttonWidth = this.BUTTON_WIDTH * window.innerWidth;
-        const buttonHeight = buttonWidth * 0.3;
+        const buttonHeight = buttonWidth * (240/1040);
 
         const buttonPositionX = position.getX() * window.innerWidth;
         const buttonPositionY = position.getY() * window.innerHeight;

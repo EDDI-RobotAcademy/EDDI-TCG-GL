@@ -10,11 +10,11 @@ export class BuildDeckButtonConfigList {
     public buttonConfigs: ButtonConfig[] = [
         {
             id: 0,
-            position: new Vector2d(- 0.3598, 0.23)
+            position: new Vector2d(- 0.38, 0.233)
         },
         {
             id: 1,
-            position: new Vector2d(- 0.3598, 0.23)
+            position: new Vector2d(- 0.38, 0.233)
         },
 
     ];
