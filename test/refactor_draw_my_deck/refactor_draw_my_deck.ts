@@ -205,10 +205,10 @@ export class TCGJustTestMyDeckView {
 
         this.myDeckScrollService = MyDeckScrollServiceImpl.getInstance(this.camera, this.scene, this.renderer);
         this.renderer.domElement.addEventListener('wheel', async (e) => {
-            const scrollAreaDetect = this.sideScrollAreaDetectService.getMyDeckScrollEnabled();
-            if (scrollAreaDetect == true && this.myDeckScrollService.getDeckCount() > 6) {
-                const scrollState = this.myDeckScrollService.getScrollState();
-                if (scrollState == true) {
+            const scrollState = this.myDeckScrollService.getScrollState();
+            if (scrollState == true && this.myDeckScrollService.getDeckCount() > 6) {
+                const scrollAreaDetect = this.sideScrollAreaDetectService.getMyDeckScrollEnabledById(0);
+                if (scrollAreaDetect == true) {
                     this.myDeckScrollService.onWheelScroll(e);
                 }
             }

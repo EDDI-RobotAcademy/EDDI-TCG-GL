@@ -5,10 +5,9 @@ import {SideScrollArea} from "../../side_scroll_area/entity/SideScrollArea";
 
 export class SideScrollAreaDetectRepositoryImpl implements SideScrollAreaDetectRepository {
     private static instance: SideScrollAreaDetectRepositoryImpl;
-    private isScrollEnabled: boolean = false;
     private isMakeDeckScrollEnabledMap: Map<number, boolean> = new Map(); // scrollAreaId: enable
+    private isMyCardScrollEnabledMap: Map<number, boolean> = new Map(); // scrollAreaId, enable
     private isMyCardScrollEnabled: boolean = false;
-    private isMyDeckScrollEnabled: boolean = false;
     private raycaster = new THREE.Raycaster();
 
     public static getInstance(): SideScrollAreaDetectRepositoryImpl {
@@ -46,10 +45,6 @@ export class SideScrollAreaDetectRepositoryImpl implements SideScrollAreaDetectR
             return null;
         }
 
-    public setScrollEnabled(enable: boolean): void {
-        this.isScrollEnabled = enable;
-    }
-
     public setMyCardScrollEnabled(enable: boolean): void {
         this.isMyCardScrollEnabled = enable;
     }
@@ -58,20 +53,16 @@ export class SideScrollAreaDetectRepositoryImpl implements SideScrollAreaDetectR
         this.isMakeDeckScrollEnabledMap.set(id, enable);
     }
 
-    public setMyDeckScrollEnabled(enable: boolean): void {
-        this.isMyDeckScrollEnabled = enable;
-    }
-
-    public findScrollEnabled(): boolean {
-        return this.isScrollEnabled;
+    public setMyDeckScrollEnabled(id: number, enable: boolean): void {
+        this.isMyCardScrollEnabledMap.set(id, enable);
     }
 
     public findMyCardScrollEnabled(): boolean {
         return this.isMyCardScrollEnabled;
     }
 
-    public findMyDeckScrollEnabled(): boolean {
-        return this.isMyDeckScrollEnabled;
+    public findMyDeckScrollEnabledById(areaId: number): boolean {
+        return this.isMyCardScrollEnabledMap.get(areaId) ?? false;
     }
 
     public findMakeDeckScrollEnabledById(areaId: number): boolean {
