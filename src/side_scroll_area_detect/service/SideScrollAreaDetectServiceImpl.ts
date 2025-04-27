@@ -134,12 +134,17 @@ export class SideScrollAreaDetectServiceImpl implements SideScrollAreaDetectServ
         );
 
         if (detectSideScrollArea) {
-            console.log(`%c[DEBUG] Detected My Deck Side Scroll Area`, 'color: #2E9AFE; font-weight: bold;');
-            this.setMyDeckScrollEnabled(true);
+            console.log(`%c[DEBUG] Detected My Deck Scroll Area ID: ${detectSideScrollArea.id}`, 'color: #2E9AFE; font-weight: bold;');
+            if (detectSideScrollArea.id == 0) {
+                this.setMyDeckScrollEnabled(0, true);
+                this.setMyDeckScrollEnabled(1, false);
+            }
 
-        } else {
-            console.log(`%c[DEBUG] No Detected My Deck Side Scroll Area`, 'color: #F78181; font-weight: bold;');
-            this.setMyDeckScrollEnabled(false);
+            if (detectSideScrollArea.id == 1) {
+                this.setMyDeckScrollEnabled(0, false);
+                this.setMyDeckScrollEnabled(1, true);
+            }
+
         }
         return null;
     }
@@ -167,16 +172,8 @@ export class SideScrollAreaDetectServiceImpl implements SideScrollAreaDetectServ
         }
     }
 
-    public setScrollEnabled(enable: boolean): void {
-        this.sideScrollAreaDetectRepository.setScrollEnabled(enable);
-    }
-
     public setMakeDeckScrollEnabled(areaId: number, enable: boolean): void {
         this.sideScrollAreaDetectRepository.setMakeDeckScrollEnabled(areaId, enable);
-    }
-
-    public getScrollEnabled(): boolean {
-        return this.sideScrollAreaDetectRepository.findScrollEnabled();
     }
 
     public getMakeDeckScrollEnabledById(areaId: number): boolean {
@@ -195,12 +192,12 @@ export class SideScrollAreaDetectServiceImpl implements SideScrollAreaDetectServ
         return this.sideScrollAreaDetectRepository.findMyCardScrollEnabled();
     }
 
-    public setMyDeckScrollEnabled(enable: boolean): void {
-        this.sideScrollAreaDetectRepository.setMyDeckScrollEnabled(enable);
+    public setMyDeckScrollEnabled(areaId: number, enable: boolean): void {
+        this.sideScrollAreaDetectRepository.setMyDeckScrollEnabled(areaId, enable);
     }
 
-    public getMyDeckScrollEnabled(): boolean {
-        return this.sideScrollAreaDetectRepository.findMyDeckScrollEnabled();
+    public getMyDeckScrollEnabledById(areaId: number): boolean {
+        return this.sideScrollAreaDetectRepository.findMyDeckScrollEnabledById(areaId);
     }
 
     private setMyCardScrollBarVisibility(isVisible: boolean): void {
