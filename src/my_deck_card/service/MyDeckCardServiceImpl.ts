@@ -85,8 +85,8 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
                     continue;
                 }
 
-                const cardWidth = 0.115 * window.innerWidth;
-                const cardHeight = cardWidth * 1.6176;
+                const cardWidth = 0.096 * window.innerWidth;
+                const cardHeight = cardWidth * (1540 / 952);
 
                 const newPositionX = initialPosition.getX() * windowWidth;
                 const newPositionY = initialPosition.getY() * windowHeight;
