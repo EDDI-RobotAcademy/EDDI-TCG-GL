@@ -8,9 +8,9 @@ export class MyDeckNameTextPositionRepositoryImpl implements MyDeckNameTextPosit
 //     private deckToPositionMap: Map<number, number>;
     private positionMap: Map<number, { deckId: number, position: MyDeckNameTextPosition}> = new Map();;
 
-    private initialX = - 0.3598;
-    private initialY = 0.135;
-    private incrementY = - 0.09;
+    private initialX = - 0.398;
+    private initialY = 0.153;
+    private incrementY = - 0.075;
     private maxNameTextsPerPage = 6;
     private positionIndex = 0;
 

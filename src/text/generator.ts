@@ -48,8 +48,9 @@ export class TextGenerator {
 
             context.font = `${fontSize}px ${fontFamily}`;
             const textWidth = context.measureText(text).width;
+            console.log(`텍스트 가로는? ${textWidth}`);
 
-            canvas.width = textWidth * devicePixelRatio;
+            canvas.width = 100 * devicePixelRatio; // To-do: 여기 설정 수정해야 함(좌측 정렬하려고 임시로 설정한 거임)
             canvas.height = adjustedFontSize * 1.5;
 
             context.font = `${fontSize}px ${fontFamily}`;

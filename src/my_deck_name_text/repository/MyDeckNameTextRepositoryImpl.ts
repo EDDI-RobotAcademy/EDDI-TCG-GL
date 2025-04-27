@@ -10,8 +10,8 @@ export class MyDeckNameTextRepositoryImpl implements MyDeckNameTextRepository {
     private deckNameTextMap: Map<number, { deckId: number, textMesh: MyDeckNameText }> = new Map(); // text unique id: {deck id: text mesh}
     private deckNameTextGroup: THREE.Group | null = null;
 
-    private readonly NAME_WIDTH: number = 180 / 1920
-    private readonly NAME_HEIGHT: number = 50 / 1080
+    private readonly NAME_WIDTH: number = 0.09375
+    private readonly NAME_HEIGHT: number = 0.046296
 
     private constructor() {}
 
@@ -24,7 +24,7 @@ export class MyDeckNameTextRepositoryImpl implements MyDeckNameTextRepository {
 
     public async createMyDeckNameText(deckId: number, deckName: string, position: Vector2d): Promise<MyDeckNameText> {
         // To-do pont 종류, 색상 변경 필요
-        const texture = TextGenerator.createText(deckName, 12, 'CustomFont', '#FFFFFF');
+        const texture = TextGenerator.createText(deckName, 9, 'CustomFont', '#FFFFFF');
 
         if (!texture) {
             throw new Error('MyDeckButton Name not found.');

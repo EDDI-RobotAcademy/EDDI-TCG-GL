@@ -9,9 +9,9 @@ export class MyDeckButtonPositionRepositoryImpl implements MyDeckButtonPositionR
     private positionMap: Map<number, { deckId: number, position: MyDeckButtonPosition}> = new Map();;
 
 
-    private initialX = - 0.3598;
-    private initialY = 0.135;
-    private incrementY = - 0.09;
+    private initialX = - 0.38;
+    private initialY = 0.153;
+    private incrementY = - 0.075;
     private maxButtonsPerPage = 6;
     private positionIndex = 0;
 
