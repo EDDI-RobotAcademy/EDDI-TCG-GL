@@ -15,7 +15,7 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
     private cardCountMap: Map<number, number> = new Map(); // Todo: deck id: [ card id: count] 형태로 변경 필요
     private textureManager: TextureManager;
 
-    private readonly CARD_WIDTH: number = 0.115
+    private readonly CARD_WIDTH: number = 0.096
     private readonly CARD_HEIGHT: number = 0.365
 
     private constructor(textureManager: TextureManager) {
@@ -42,7 +42,8 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
         }
 
         const cardWidth = this.CARD_WIDTH * window.innerWidth;
-        const cardHeight = cardWidth * 1.6176;
+//         const cardHeight = cardWidth * 1.6176;
+        const cardHeight = cardWidth * (1540 / 952);
 
         const cardPositionX = position.getX() * window.innerWidth;
         const cardPositionY = position.getY() * window.innerHeight;

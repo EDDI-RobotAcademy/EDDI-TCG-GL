@@ -116,7 +116,7 @@ export class TCGJustTestMyDeckView {
     private readonly cameraService = CameraServiceImpl.getInstance(this.cameraRepository);
 
     private myDeckButtonClickDetectService: MyDeckButtonClickDetectService;
-    private deckCardPageMoveButtonClickDetectService: DeckCardPageMoveButtonClickDetectService;
+//     private deckCardPageMoveButtonClickDetectService: DeckCardPageMoveButtonClickDetectService;
 //     private deckMakeButtonClickDetectService: DeckMakeButtonClickDetectService;
 //     private deckMakePopupButtonsClickDetectService: DeckMakePopupButtonsClickDetectService;
     private myDeckScrollService: MyDeckScrollService;
@@ -179,13 +179,13 @@ export class TCGJustTestMyDeckView {
             }
         }, false);
 
-        this.deckCardPageMoveButtonClickDetectService = DeckCardPageMoveButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
-        this.renderer.domElement.addEventListener('mousedown', (e) => {
-            const buttonClickState = this.deckCardPageMoveButtonClickDetectService.getButtonClickState();
-            if (buttonClickState == true) {
-                this.deckCardPageMoveButtonClickDetectService.onMouseDown(e);
-            }
-        }, false);
+//         this.deckCardPageMoveButtonClickDetectService = DeckCardPageMoveButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+//         this.renderer.domElement.addEventListener('mousedown', (e) => {
+//             const buttonClickState = this.deckCardPageMoveButtonClickDetectService.getButtonClickState();
+//             if (buttonClickState == true) {
+//                 this.deckCardPageMoveButtonClickDetectService.onMouseDown(e);
+//             }
+//         }, false);
 
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
         this.renderer.domElement.addEventListener('mousemove', async (e) => {
@@ -267,7 +267,7 @@ export class TCGJustTestMyDeckView {
                 this.buildDeckButtonClickDetectService.setButtonClickState(false);
                 this.buildDeckButtonHoverDetectService.setButtonDetectState(false);
                 this.myDeckButtonEffectHoverDetectService.setEffectDetectState(false);
-                this.deckCardPageMoveButtonClickDetectService.setButtonClickState(false);
+//                 this.deckCardPageMoveButtonClickDetectService.setButtonClickState(false);
                 this.sideScrollAreaDetectService.setMyDeckScrollAreaDetectState(false);
 
                 await this.deleteAllCard();
@@ -279,7 +279,7 @@ export class TCGJustTestMyDeckView {
                     this.buildDeckButtonClickDetectService.setButtonClickState(true);
                     this.buildDeckButtonHoverDetectService.setButtonDetectState(true);
                     this.myDeckButtonEffectHoverDetectService.setEffectDetectState(true);
-                    this.deckCardPageMoveButtonClickDetectService.setButtonClickState(true);
+//                     this.deckCardPageMoveButtonClickDetectService.setButtonClickState(true);
                     this.sideScrollAreaDetectService.setMyDeckScrollAreaDetectState(true);
 
                     await this.deleteMyDeckButtons();
@@ -382,7 +382,7 @@ export class TCGJustTestMyDeckView {
         await this.addBackground();
         await this.addScrollArea();
         await this.addMyDeckCard();
-        await this.addMyDeckCardPageMovementButton();
+//         await this.addMyDeckCardPageMovementButton();
         await this.addMyDeckButton();
         await this.addMyDeckButtonEffect();
         await this.addBuildDeckButton();
@@ -635,13 +635,12 @@ export class TCGJustTestMyDeckView {
             const deckIdList = this.myDeckCardService.getAllDeckIdList();
             const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
             const firstDeckId = sortedDeckIdList[0];
-            console.log(`%cfirstDeckId?: ${firstDeckId}`, 'color: #FE2EF7; font-weight: bold;');
-            console.log(`%cDeckIdList?: ${deckIdList}`, 'color: #FE2EF7; font-weight: bold;');
+//             console.log(`%cfirstDeckId?: ${firstDeckId}`, 'color: #FE2EF7; font-weight: bold;');
+//             console.log(`%cDeckIdList?: ${deckIdList}`, 'color: #FE2EF7; font-weight: bold;');
 
             deckIdList.forEach((deckId, index) => {
                 if (deckId === firstDeckId) {
                     this.myDeckButtonClickDetectService.saveCurrentClickDeckButtonId(deckId);
-                    this.myDeckCardService.initializeCardVisibility(deckId);
                 } else {
                     this.myDeckCardService.setAllCardVisibilityByDeckId(deckId, false);
                 }
