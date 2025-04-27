@@ -206,7 +206,7 @@ export class TCGJustTestMyDeckView {
         this.myDeckScrollService = MyDeckScrollServiceImpl.getInstance(this.camera, this.scene, this.renderer);
         this.renderer.domElement.addEventListener('wheel', async (e) => {
             const scrollAreaDetect = this.sideScrollAreaDetectService.getMyDeckScrollEnabled();
-            if (scrollAreaDetect == true && this.myDeckScrollService.getDeckCount() > 7) {
+            if (scrollAreaDetect == true && this.myDeckScrollService.getDeckCount() > 6) {
                 const scrollState = this.myDeckScrollService.getScrollState();
                 if (scrollState == true) {
                     this.myDeckScrollService.onWheelScroll(e);
@@ -381,6 +381,7 @@ export class TCGJustTestMyDeckView {
 
         await this.addBackground();
         await this.addScrollArea();
+        await this.addCardScrollArea();
         await this.addMyDeckCard();
 //         await this.addMyDeckCardPageMovementButton();
         await this.addMyDeckButton();
@@ -462,7 +463,7 @@ export class TCGJustTestMyDeckView {
 
     private async addScrollArea(): Promise<void> {
         try{
-            const areaMesh = await this.sideScrollAreaService.createSideScrollArea('myDeckScrollArea', 3, 0.24, 0.61, -0.36, -0.1167);
+            const areaMesh = await this.sideScrollAreaService.createSideScrollArea('myDeckScrollArea', 3, 0.203, 0.46, -0.381, -0.035);
             if (areaMesh) {
                 this.scene.add(areaMesh);
             } else {
@@ -471,6 +472,20 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add Side Scroll Area:', error);
+        }
+    }
+
+    private async addCardScrollArea(): Promise<void> {
+        try {
+            const areaMesh = await this.sideScrollAreaService.createSideScrollArea('myDeckCardScrollArea', 3, 0.54, 0.745, 0, -0.125);
+            if (areaMesh) {
+                this.scene.add(areaMesh);
+            } else {
+                console.warn(`No Card Scroll Area Mesh found`);
+            }
+
+        } catch (error) {
+            console.error('Failed to add Card Scroll Area:', error);
         }
     }
 
@@ -635,8 +650,6 @@ export class TCGJustTestMyDeckView {
             const deckIdList = this.myDeckCardService.getAllDeckIdList();
             const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
             const firstDeckId = sortedDeckIdList[0];
-//             console.log(`%cfirstDeckId?: ${firstDeckId}`, 'color: #FE2EF7; font-weight: bold;');
-//             console.log(`%cDeckIdList?: ${deckIdList}`, 'color: #FE2EF7; font-weight: bold;');
 
             deckIdList.forEach((deckId, index) => {
                 if (deckId === firstDeckId) {
@@ -644,9 +657,34 @@ export class TCGJustTestMyDeckView {
                 } else {
                     this.myDeckCardService.setAllCardVisibilityByDeckId(deckId, false);
                 }
-                const cardList = this.myDeckCardService.getCardListByDeckId(deckId);
-                cardList.forEach((cardMesh) => this.scene.add(cardMesh));
+//                 const cardList = this.myDeckCardService.getCardListByDeckId(deckId);
+//                 cardList.forEach((cardMesh) => this.scene.add(cardMesh));
             });
+
+            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 1);
+            let clippingPlanes: THREE.Plane[] = [];
+
+            if (scrollArea) {
+                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                deckIdList.forEach((deckId) => {
+                    const cardGroup = this.myDeckCardService.getCardGroupByDeckId(deckId);
+//                     console.log(`%c Card Group for Deck ID ${deckId}:, ${cardGroup}`, 'color: #FE2EF7; font-weight: bold;');
+//                     console.log(`%c Children of Card Group:${cardGroup.children}`, 'color: #FE2EF7; font-weight: bold;');
+                    cardGroup.children.forEach((buttonObject) => {
+                        if (buttonObject instanceof THREE.Mesh) {
+                            this.clippingMaskManager.applyClippingPlanesToMesh(buttonObject, clippingPlanes);
+                        } else {
+                            console.warn("[WARN] Skipping non-mesh object in cardGroup:", buttonObject);
+                        }
+                    });
+
+                    if (!this.scene.children.includes(cardGroup)) {
+                        this.scene.add(cardGroup);
+                    }
+                    cardGroup.position.y = 0;
+                });
+
+            }
         } catch (error) {
             console.error('Failed to add my deck cards:', error);
         }
@@ -957,6 +995,7 @@ export class TCGJustTestMyDeckView {
             this.userWindowSize.calculateScaleFactors(newWidth, newHeight);
             const { scaleX, scaleY } = this.userWindowSize.getScaleFactors();
             this.sideScrollAreaService.adjustMyDeckSideScrollAreaPosition();
+            this.sideScrollAreaService.adjustMyDeckCardScrollAreaPosition();
             this.myDeckCardPageMovementButtonService.adjustMyDeckCardPageMovementButtonPosition();
             this.myDeckButtonService.adjustMyDeckButtonPosition();
             this.myDeckButtonEffectService.adjustMyDeckButtonEffectPosition();

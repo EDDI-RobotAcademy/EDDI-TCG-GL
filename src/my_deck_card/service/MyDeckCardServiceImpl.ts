@@ -2,29 +2,41 @@ import * as THREE from 'three';
 import {Vector2d} from "../../common/math/Vector2d";
 
 import {MyDeckCardService} from "./MyDeckCardService";
+
 import {MyDeckCard} from "../../my_deck_card/entity/MyDeckCard";
+import {SideScrollArea} from "../../side_scroll_area/entity/SideScrollArea";
+
 import {MyDeckCardRepository} from "../../my_deck_card/repository/MyDeckCardRepository";
 import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardRepositoryImpl";
 import {MyDeckCardPositionRepositoryImpl} from "../../my_deck_card_position/repository/MyDeckCardPositionRepositoryImpl";
 import {MyDeckCardPosition} from "../../my_deck_card_position/entity/MyDeckCardPosition";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
+import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
+
 import {CardStateManager} from "../../my_deck_card_manager/CardStateManager";
 import {CardPageManager} from "../../my_deck_card_manager/CardPageManager";
+import {ClippingMaskManager} from "../../clipping_mask_manager/ClippingMaskManager";
 
 export class MyDeckCardServiceImpl implements MyDeckCardService {
     private static instance: MyDeckCardServiceImpl;
     private myDeckCardPositionRepository: MyDeckCardPositionRepositoryImpl;
     private myDeckCardRepository: MyDeckCardRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
+    private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
+
     private cardStateManager: CardStateManager;
     private cardPageManager: CardPageManager;
+    private clippingMaskManager: ClippingMaskManager;
 
     private constructor(myDeckCardRepository: MyDeckCardRepository) {
         this.myDeckCardPositionRepository = MyDeckCardPositionRepositoryImpl.getInstance();
         this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
+        this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
+
         this.cardStateManager = CardStateManager.getInstance();
         this.cardPageManager = CardPageManager.getInstance();
+        this.clippingMaskManager = ClippingMaskManager.getInstance();
     }
 
     public static getInstance(): MyDeckCardServiceImpl {
@@ -99,6 +111,15 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
                 cardMesh.geometry.dispose();
                 cardMesh.geometry = new THREE.PlaneGeometry(cardWidth, cardHeight);
                 cardMesh.position.set(newPositionX, newPositionY, 0);
+
+                const scrollArea = this.getScrollArea();
+                if (scrollArea) {
+                    scrollArea.width = 0.54 * windowWidth;
+                    scrollArea.height = 0.745 * windowHeight;
+                    scrollArea.position.set(0 * window.innerWidth, -0.125 * window.innerHeight);
+                    const clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+                    this.applyClippingPlanesToMesh(cardMesh, clippingPlanes);
+                }
             }
         }
     }
@@ -157,6 +178,18 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
 
     public resetCardVisibility(): void {
         this.cardStateManager.resetVisibility();
+    }
+
+    public getCardGroupByDeckId(deckId: number): THREE.Group {
+        return this.myDeckCardRepository.findCardGroupByDeckId(deckId);
+    }
+
+    private getScrollArea(): SideScrollArea | null {
+        return this.sideScrollAreaRepository.findAreaByTypeAndId(3, 1);
+    }
+
+    private applyClippingPlanesToMesh(mesh: THREE.Mesh, clippingPlanes: THREE.Plane[]): void {
+        this.clippingMaskManager.applyClippingPlanesToMesh(mesh, clippingPlanes);
     }
 
 }
