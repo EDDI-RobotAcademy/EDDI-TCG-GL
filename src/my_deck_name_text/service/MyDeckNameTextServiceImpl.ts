@@ -120,9 +120,9 @@ export class MyDeckNameTextServiceImpl implements MyDeckNameTextService {
 
             const scrollArea = this.getScrollArea();
             if (scrollArea) {
-                scrollArea.width = 0.24 * windowWidth;
-                scrollArea.height = 0.61 * windowHeight;
-                scrollArea.position.set(-0.36 * window.innerWidth, -0.1167 * window.innerHeight);
+                scrollArea.width = 0.203 * windowWidth;
+                scrollArea.height = 0.46 * windowHeight;
+                scrollArea.position.set(-0.381 * window.innerWidth, -0.035 * window.innerHeight);
                 const clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
                 this.applyClippingPlanesToMesh(textMesh, clippingPlanes);
             }

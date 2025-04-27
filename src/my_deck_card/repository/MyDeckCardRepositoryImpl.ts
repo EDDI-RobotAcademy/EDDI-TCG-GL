@@ -118,6 +118,25 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
         return Array.from(this.deckMap.keys());
     }
 
+    public findCardGroupByDeckId(deckId: number): THREE.Group {
+        const cardIdList = this.deckMap.get(deckId);
+        if (!cardIdList) {
+            throw new Error(`Deck with ID ${deckId} not found`);
+        }
+
+        const cardGroup = new THREE.Group();
+        cardIdList.forEach(cardUniqueId => {
+            const card = this.cardMap.get(cardUniqueId);
+            if (card) {
+                cardGroup.add(card.cardMesh.getMesh());
+            } else {
+                console.warn(`[WARN] Card with Unique ID ${cardUniqueId} not found in cardMap`);
+            }
+        });
+
+        return cardGroup;
+    }
+
     // 특정 덱의 특정 카드 삭제
     public deleteCardByDeckIdAndCardUniqueId(deckId: number, cardUniqueId: number): void {
         this.cardMap.delete(cardUniqueId);
