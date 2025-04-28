@@ -180,6 +180,10 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
         this.cardStateManager.resetVisibility();
     }
 
+    public saveCardGroup(deckId: number): void {
+        this.myDeckCardRepository.saveCardGroupByDeckId(deckId);
+    }
+
     public getCardGroupByDeckId(deckId: number): THREE.Group {
         return this.myDeckCardRepository.findCardGroupByDeckId(deckId);
     }

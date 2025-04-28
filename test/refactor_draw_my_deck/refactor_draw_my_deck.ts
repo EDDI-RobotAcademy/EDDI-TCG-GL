@@ -67,6 +67,8 @@ import {DeleteDeckPopupButtonClickDetectService} from "../../src/delete_deck_pop
 import {DeleteDeckPopupButtonClickDetectServiceImpl} from "../../src/delete_deck_popup_button_click_detect/service/DeleteDeckPopupButtonClickDetectServiceImpl";
 import {DeckEditButtonClickDetectService} from "../../src/deck_edit_button_click_detect/service/DeckEditButtonClickDetectService";
 import {DeckEditButtonClickDetectServiceImpl} from "../../src/deck_edit_button_click_detect/service/DeckEditButtonClickDetectServiceImpl";
+import {MyDeckCardScrollService} from "../../src/my_deck_card_scroll/service/MyDeckCardScrollService";
+import {MyDeckCardScrollServiceImpl} from "../../src/my_deck_card_scroll/service/MyDeckCardScrollServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 
@@ -127,6 +129,7 @@ export class TCGJustTestMyDeckView {
     private deckDeleteButtonClickDetectService: DeckDeleteButtonClickDetectService;
     private deleteDeckPopupButtonClickDetectService: DeleteDeckPopupButtonClickDetectService;
     private deckEditButtonClickDetectService: DeckEditButtonClickDetectService;
+    private myDeckCardScrollService: MyDeckCardScrollService;
 
     private initialized = false;
     private isAnimating = false;
@@ -210,6 +213,22 @@ export class TCGJustTestMyDeckView {
                 const scrollAreaDetect = this.sideScrollAreaDetectService.getMyDeckScrollEnabledById(0);
                 if (scrollAreaDetect == true) {
                     this.myDeckScrollService.onWheelScroll(e);
+                }
+            }
+
+        }, false);
+
+        this.myDeckCardScrollService = MyDeckCardScrollServiceImpl.getInstance(this.camera, this.scene, this.renderer);
+        this.renderer.domElement.addEventListener('wheel', async (e) => {
+            const scrollState = this.myDeckCardScrollService.getCardScrollState();
+            if (scrollState == true) {
+                const currentClickDeckId = this.myDeckCardScrollService.getCurrentClickDeckButtonId();
+                const scrollAreaDetect = this.sideScrollAreaDetectService.getMyDeckScrollEnabledById(1);
+                if (scrollAreaDetect == true && currentClickDeckId !== null) {
+                    const cardRowCount = this.myDeckCardScrollService.getCardRowCount(currentClickDeckId);
+                    if (cardRowCount > 2) {
+                        this.myDeckCardScrollService.onWheelScroll(e, currentClickDeckId);
+                    }
                 }
             }
 
@@ -657,6 +676,7 @@ export class TCGJustTestMyDeckView {
                 } else {
                     this.myDeckCardService.setAllCardVisibilityByDeckId(deckId, false);
                 }
+                this.myDeckCardService.saveCardGroup(deckId);
 //                 const cardList = this.myDeckCardService.getCardListByDeckId(deckId);
 //                 cardList.forEach((cardMesh) => this.scene.add(cardMesh));
             });

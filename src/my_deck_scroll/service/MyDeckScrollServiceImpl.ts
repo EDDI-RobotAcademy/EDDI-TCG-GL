@@ -68,7 +68,7 @@ export class MyDeckScrollServiceImpl implements MyDeckScrollService {
 
         // lowerLimit: 보이지 않는 덱 버튼이 차지하는 전체 높이
         const deckCount = this.getDeckCount();
-        const lowerLimit = 0.09 * window.innerHeight * (deckCount - 7) + (0.257 * 0.3 / 3) * window.innerWidth;
+        const lowerLimit = 0.075 * window.innerHeight * (deckCount - 6) + (0.18 * (240/1040) / 3) * window.innerWidth;
         const upperLimit = 0;
         console.log(`upperLimit: ${upperLimit}`); // 최대로 올릴 수 있는 범위
         console.log(`lowerLimit: ${lowerLimit}`); // 최대로 내릴 수 있는 범위
