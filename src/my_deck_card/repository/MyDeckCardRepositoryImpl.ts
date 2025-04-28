@@ -10,6 +10,7 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
     private static instance: MyDeckCardRepositoryImpl;
     private cardMap: Map<number, { cardId: number, cardMesh: MyDeckCard }> = new Map(); // card Unique ID: [card ID: card mesh]
     private deckMap: Map<number, number[]> = new Map(); // deckId: card Unique ID List
+    private deckGroupMap: Map<number, THREE.Group> = new Map(); // deckId -> Group
 
     // To-do: 별도로 관리할 필요 있음. 카드 개수 객체 repository 에서 관리 필요
     private cardCountMap: Map<number, number> = new Map(); // Todo: deck id: [ card id: count] 형태로 변경 필요
@@ -118,7 +119,12 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
         return Array.from(this.deckMap.keys());
     }
 
-    public findCardGroupByDeckId(deckId: number): THREE.Group {
+    public findCardCountByDeckId(deckId: number): number {
+        const cardUniqueIdList = this.deckMap.get(deckId);
+        return cardUniqueIdList ? cardUniqueIdList.length : 0;
+    }
+
+    public saveCardGroupByDeckId(deckId: number): void {
         const cardIdList = this.deckMap.get(deckId);
         if (!cardIdList) {
             throw new Error(`Deck with ID ${deckId} not found`);
@@ -134,6 +140,14 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
             }
         });
 
+        this.deckGroupMap.set(deckId, cardGroup);
+    }
+
+    public findCardGroupByDeckId(deckId: number): THREE.Group {
+        const cardGroup = this.deckGroupMap.get(deckId);
+        if (!cardGroup) {
+            throw new Error(`Deck group with ID ${deckId} not found`);
+        }
         return cardGroup;
     }
 
