@@ -14,7 +14,6 @@ import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_det
 import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
 
 import {CardStateManager} from "../../my_deck_card_manager/CardStateManager";
-import {CardPageManager} from "../../my_deck_card_manager/CardPageManager";
 import {ClippingMaskManager} from "../../clipping_mask_manager/ClippingMaskManager";
 
 export class MyDeckCardServiceImpl implements MyDeckCardService {
@@ -25,7 +24,6 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
 
     private cardStateManager: CardStateManager;
-    private cardPageManager: CardPageManager;
     private clippingMaskManager: ClippingMaskManager;
 
     private constructor(myDeckCardRepository: MyDeckCardRepository) {
@@ -35,7 +33,6 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
 
         this.cardStateManager = CardStateManager.getInstance();
-        this.cardPageManager = CardPageManager.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
     }
 
