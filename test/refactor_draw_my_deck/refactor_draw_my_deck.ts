@@ -34,7 +34,7 @@ import {DeckMakePopupBackgroundServiceImpl} from "../../src/deck_make_pop_up_bac
 // import {DeckMakePopupInputContainerServiceImpl} from "../../src/deck_make_pop_up_input_container/service/DeckMakePopupInputContainerServiceImpl";
 import {SideScrollAreaServiceImpl} from "../../src/side_scroll_area/service/SideScrollAreaServiceImpl";
 import {BuildDeckButtonServiceImpl} from "../../src/build_deck_button/service/BuildDeckButtonServiceImpl";
-import {DeckEditButtonServiceImpl} from "../../src/deck_edit_button/service/DeckEditButtonServiceImpl";
+import {DeckNameEditButtonServiceImpl} from "../../src/deck_name_edit_button/service/DeckNameEditButtonServiceImpl";
 import {DeckDeleteButtonServiceImpl} from "../../src/deck_delete_button/service/DeckDeleteButtonServiceImpl";
 import {DeleteDeckPopupWindowServiceImpl} from "../../src/delete_deck_popup_window/service/DeleteDeckPopupWindowServiceImpl";
 import {DeleteDeckPopupButtonServiceImpl} from "../../src/delete_deck_popup_button/service/DeleteDeckPopupButtonServiceImpl";
@@ -59,8 +59,8 @@ import {DeckDeleteButtonClickDetectService} from "../../src/deck_delete_button_c
 import {DeckDeleteButtonClickDetectServiceImpl} from "../../src/deck_delete_button_click_detect/service/DeckDeleteButtonClickDetectServiceImpl";
 import {DeleteDeckPopupButtonClickDetectService} from "../../src/delete_deck_popup_button_click_detect/service/DeleteDeckPopupButtonClickDetectService";
 import {DeleteDeckPopupButtonClickDetectServiceImpl} from "../../src/delete_deck_popup_button_click_detect/service/DeleteDeckPopupButtonClickDetectServiceImpl";
-import {DeckEditButtonClickDetectService} from "../../src/deck_edit_button_click_detect/service/DeckEditButtonClickDetectService";
-import {DeckEditButtonClickDetectServiceImpl} from "../../src/deck_edit_button_click_detect/service/DeckEditButtonClickDetectServiceImpl";
+import {DeckNameEditButtonClickDetectService} from "../../src/deck_name_edit_button_click_detect/service/DeckNameEditButtonClickDetectService";
+import {DeckNameEditButtonClickDetectServiceImpl} from "../../src/deck_name_edit_button_click_detect/service/DeckNameEditButtonClickDetectServiceImpl";
 import {MyDeckCardScrollService} from "../../src/my_deck_card_scroll/service/MyDeckCardScrollService";
 import {MyDeckCardScrollServiceImpl} from "../../src/my_deck_card_scroll/service/MyDeckCardScrollServiceImpl";
 
@@ -93,7 +93,7 @@ export class TCGJustTestMyDeckView {
 //     private deckMakePopupInputContainerService = DeckMakePopupInputContainerServiceImpl.getInstance();
     private sideScrollAreaService = SideScrollAreaServiceImpl.getInstance();
     private buildDeckButtonService = BuildDeckButtonServiceImpl.getInstance();
-    private deckEditButtonService = DeckEditButtonServiceImpl.getInstance();
+    private deckNameEditButtonService = DeckNameEditButtonServiceImpl.getInstance();
     private deckDeleteButtonService = DeckDeleteButtonServiceImpl.getInstance();
     private deleteDeckPopupWindowService = DeleteDeckPopupWindowServiceImpl.getInstance();
     private deleteDeckPopupButtonService = DeleteDeckPopupButtonServiceImpl.getInstance();
@@ -120,7 +120,7 @@ export class TCGJustTestMyDeckView {
     private myDeckButtonEffectHoverDetectService: MyDeckButtonEffectHoverDetectService;
     private deckDeleteButtonClickDetectService: DeckDeleteButtonClickDetectService;
     private deleteDeckPopupButtonClickDetectService: DeleteDeckPopupButtonClickDetectService;
-    private deckEditButtonClickDetectService: DeckEditButtonClickDetectService;
+    private deckNameEditButtonClickDetectService: DeckNameEditButtonClickDetectService;
     private myDeckCardScrollService: MyDeckCardScrollService;
 
     private initialized = false;
@@ -163,13 +163,13 @@ export class TCGJustTestMyDeckView {
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckDeleteButtonClickDetectService = DeckDeleteButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
-        this.deckEditButtonClickDetectService = DeckEditButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.deckNameEditButtonClickDetectService = DeckNameEditButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
 //         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
             const buttonClickState = this.myDeckButtonClickDetectService.getButtonClickState();
             if (buttonClickState == true) {
                 this.deckDeleteButtonClickDetectService.setButtonClickState(false);
-                this.deckEditButtonClickDetectService.setButtonClickState(false);
+                this.deckNameEditButtonClickDetectService.setButtonClickState(false);
                 const buttonClick = await this.myDeckButtonClickDetectService.onMouseDown(e);
             }
         }, false);
@@ -285,7 +285,7 @@ export class TCGJustTestMyDeckView {
 
                     await this.deleteMyDeckButtons();
                     await this.deleteMyDeckButtonEffects();
-                    await this.deleteDeckEditButton();
+                    await this.deleteDeckNameEditButton();
                     await this.deleteDeckDeleteButton();
                     await this.deleteDeckNameText();
 
@@ -293,7 +293,7 @@ export class TCGJustTestMyDeckView {
                     await this.addMyDeckButton();
                     await this.addMyDeckButtonEffect();
                     await this.addMyDeckNameText();
-                    await this.addDeckEditButton();
+                    await this.addDeckNameEditButton();
                     await this.addDeckDeleteButton();
 
                 }
@@ -303,18 +303,18 @@ export class TCGJustTestMyDeckView {
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
             const currentHoveredButtonEffectId = this.myDeckButtonEffectHoverDetectService.getCurrentHoveredEffectId();
             if (currentHoveredButtonEffectId !== null) {
-                const deckEditButtonVisibleState = this.myDeckButtonEffectHoverDetectService.getDeckEditButtonVisibility(currentHoveredButtonEffectId);
+                const deckEditButtonVisibleState = this.myDeckButtonEffectHoverDetectService.getDeckNameEditButtonVisibility(currentHoveredButtonEffectId);
                 if (deckEditButtonVisibleState == true) {
-                    this.deckEditButtonClickDetectService.setButtonClickState(true);
+                    this.deckNameEditButtonClickDetectService.setButtonClickState(true);
                 }
             }
 
-            const deckEditButtonClickState = this.deckEditButtonClickDetectService.getButtonClickState();
-            if (deckEditButtonClickState == true) {
+            const deckNameEditButtonClickState = this.deckNameEditButtonClickDetectService.getButtonClickState();
+            if (deckNameEditButtonClickState == true) {
                 this.myDeckButtonClickDetectService.setButtonClickState(false);
-                const deckEditButtonClick = await this.deckEditButtonClickDetectService.onMouseDown(e);
-                if (deckEditButtonClick) {
-                    this.deckEditButtonClickDetectService.setButtonClickState(false);
+                const deckNameEditButtonClick = await this.deckNameEditButtonClickDetectService.onMouseDown(e);
+                if (deckNameEditButtonClick) {
+                    this.deckNameEditButtonClickDetectService.setButtonClickState(false);
                     this.myDeckButtonClickDetectService.setButtonClickState(true);
                 }
             }
@@ -388,7 +388,7 @@ export class TCGJustTestMyDeckView {
         await this.addMyDeckButtonEffect();
         await this.addBuildDeckButton();
         await this.addMyDeckNameText();
-        await this.addDeckEditButton();
+        await this.addDeckNameEditButton();
         await this.addDeckDeleteButton();
 //         this.addDeckMakeButton();
         this.addTransparentBackground();
@@ -554,15 +554,15 @@ export class TCGJustTestMyDeckView {
         }
     }
 
-    private async addDeckEditButton(): Promise<void> {
+    private async addDeckNameEditButton(): Promise<void> {
         try {
             const myDeckButtonList = this.myDeckButtonMapRepository.getMyDeckList();
 
             for (const [index, deckId] of myDeckButtonList.entries()) {
-                await this.deckEditButtonService.createDeckEditButtonWithPosition(deckId);
+                await this.deckNameEditButtonService.createDeckNameEditButtonWithPosition(deckId);
             }
 
-            const buttonGroup = this.deckEditButtonService.getButtonGroup();
+            const buttonGroup = this.deckNameEditButtonService.getButtonGroup();
             const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 0);
             let clippingPlanes: THREE.Plane[] = [];
 
@@ -583,7 +583,7 @@ export class TCGJustTestMyDeckView {
             buttonGroup.position.y = 0;
 
         } catch (error) {
-            console.error('Failed to add Deck Edit Buttons:', error);
+            console.error('Failed to add Deck Name Edit Buttons:', error);
         }
     }
 
@@ -881,10 +881,10 @@ export class TCGJustTestMyDeckView {
         }
     }
 
-    private async deleteDeckEditButton(): Promise<void> {
+    private async deleteDeckNameEditButton(): Promise<void> {
         try {
-            const allButton = this.deckEditButtonService.getAllButton();
-            const buttonGroup = this.deckEditButtonService.getButtonGroup();
+            const allButton = this.deckNameEditButtonService.getAllButton();
+            const buttonGroup = this.deckNameEditButtonService.getButtonGroup();
             allButton.forEach((buttonMesh) => {
                 if (buttonMesh) {
                     this.scene.remove(buttonMesh.getMesh());
@@ -893,10 +893,10 @@ export class TCGJustTestMyDeckView {
             if (buttonGroup) {
                 this.scene.remove(buttonGroup);
                 buttonGroup.clear();
-                this.deckEditButtonService.resetButtonGroup();
+                this.deckNameEditButtonService.resetButtonGroup();
             }
         } catch (error) {
-            console.error('Failed to delete Deck Edit Button:', error);
+            console.error('Failed to delete Deck Name Edit Button:', error);
         }
     }
 
@@ -980,7 +980,7 @@ export class TCGJustTestMyDeckView {
             this.sideScrollAreaService.adjustMyDeckCardScrollAreaPosition();
             this.myDeckButtonService.adjustMyDeckButtonPosition();
             this.myDeckButtonEffectService.adjustMyDeckButtonEffectPosition();
-            this.deckEditButtonService.adjustDeckEditButtonPosition();
+            this.deckNameEditButtonService.adjustDeckNameEditButtonPosition();
             this.deckDeleteButtonService.adjustDeckDeleteButtonPosition();
             this.myDeckCardService.adjustMyDeckCardPosition();
             this.myDeckNameTextService.adjustMyDeckNameTextPosition();

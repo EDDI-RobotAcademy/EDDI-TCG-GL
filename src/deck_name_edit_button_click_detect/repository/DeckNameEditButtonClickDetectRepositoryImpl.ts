@@ -1,21 +1,21 @@
 import * as THREE from "three";
 
-import {DeckEditButtonClickDetectRepository} from "./DeckEditButtonClickDetectRepository";
-import {DeckEditButton} from "../../deck_edit_button/entity/DeckEditButton";
+import {DeckNameEditButtonClickDetectRepository} from "./DeckNameEditButtonClickDetectRepository";
+import {DeckNameEditButton} from "../../deck_name_edit_button/entity/DeckNameEditButton";
 
-export class DeckEditButtonClickDetectRepositoryImpl implements DeckEditButtonClickDetectRepository {
-    private static instance: DeckEditButtonClickDetectRepositoryImpl;
+export class DeckNameEditButtonClickDetectRepositoryImpl implements DeckNameEditButtonClickDetectRepository {
+    private static instance: DeckNameEditButtonClickDetectRepositoryImpl;
     private raycaster = new THREE.Raycaster();
     private currentClickedButtonId: number | null = null;
 
-    public static getInstance(): DeckEditButtonClickDetectRepositoryImpl {
-        if (!DeckEditButtonClickDetectRepositoryImpl.instance) {
-            DeckEditButtonClickDetectRepositoryImpl.instance = new DeckEditButtonClickDetectRepositoryImpl();
+    public static getInstance(): DeckNameEditButtonClickDetectRepositoryImpl {
+        if (!DeckNameEditButtonClickDetectRepositoryImpl.instance) {
+            DeckNameEditButtonClickDetectRepositoryImpl.instance = new DeckNameEditButtonClickDetectRepositoryImpl();
         }
-        return DeckEditButtonClickDetectRepositoryImpl.instance;
+        return DeckNameEditButtonClickDetectRepositoryImpl.instance;
     }
 
-    public isButtonClicked(clickPoint: { x: number; y: number }, buttonList: DeckEditButton[], camera: THREE.Camera): DeckEditButton | null {
+    public isButtonClicked(clickPoint: { x: number; y: number }, buttonList: DeckNameEditButton[], camera: THREE.Camera): DeckNameEditButton | null {
         const { x, y } = clickPoint;
 
         const normalizedMouse = new THREE.Vector2(
@@ -35,7 +35,7 @@ export class DeckEditButtonClickDetectRepositoryImpl implements DeckEditButtonCl
             );
 
             if (clickedButton) {
-                console.log('Detect Clicked Deck Edit Button!')
+                console.log('Detect Clicked Deck Name Edit Button!')
                 return clickedButton;
             }
         }

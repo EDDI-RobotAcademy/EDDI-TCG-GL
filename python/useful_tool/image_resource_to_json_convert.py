@@ -36,6 +36,7 @@ class WillBeReferenceImageLocation(Enum):
     DECK_PAGE_MOVEMENT_BUTTONS = "resource/my_deck/deck_page_movement_button/"
     DECK_CARD_PAGE_MOVEMENT_BUTTONS = "resource/my_deck/card_page_movement_button/"
     DECK_EDIT_REMOVE_BUTTON = "resource/my_deck/deck_edit_remove_button/"
+    DECK_EDIT_DONE_BUTTON = "resource/my_deck/deck_edit_done_button/"
     CARD_KINDS = "resource/card_kinds/"
     DECK_MAKING_POP_UP_BACKGROUND = "resource/deck_making_pop_up/background/"
     DECK_MAKING_POP_UP_BUTTONS = "resource/deck_making_pop_up/buttons/"
@@ -59,6 +60,7 @@ class WillBeReferenceImageLocation(Enum):
     MY_CARD_SCROLL_BAR = "resource/my_card/scroll_bar/"
     GLOBAL_NAVIGATION_BAR = "resource/global_navigation_bar/"
     GLOBAL_NAVIGATION_BAR_EFFECT = "resource/global_navigation_bar_effect/"
+    BLOCK = "resource/block/"
 
 class RelativeImageLocation(Enum):
     CARD = "../../resource/battle_field_unit/card/"
@@ -91,6 +93,7 @@ class RelativeImageLocation(Enum):
     DECK_PAGE_MOVEMENT_BUTTONS = "../../resource/my_deck/deck_page_movement_button/"
     DECK_CARD_PAGE_MOVEMENT_BUTTONS = "../../resource/my_deck/card_page_movement_button/"
     DECK_EDIT_REMOVE_BUTTON = "../../resource/my_deck/deck_edit_remove_button/"
+    DECK_EDIT_DONE_BUTTON = "../../resource/my_deck/deck_edit_done_button/"
     CARD_KINDS = "../../resource/card_kinds/"
     DECK_MAKING_POP_UP_BACKGROUND = "../../resource/deck_making_pop_up/background/"
     DECK_MAKING_POP_UP_BUTTONS = "../../resource/deck_making_pop_up/buttons/"
@@ -114,6 +117,7 @@ class RelativeImageLocation(Enum):
     MY_CARD_SCROLL_BAR = "../../resource/my_card/scroll_bar/"
     GLOBAL_NAVIGATION_BAR = "../../resource/global_navigation_bar/"
     GLOBAL_NAVIGATION_BAR_EFFECT = "../../resource/global_navigation_bar_effect/"
+    BLOCK = "../../resource/block/"
 
 # 디렉토리 경로 설정
 relative_paths = {
@@ -147,6 +151,7 @@ relative_paths = {
     RelativeImageLocation.DECK_PAGE_MOVEMENT_BUTTONS: RelativeImageLocation.DECK_PAGE_MOVEMENT_BUTTONS.value,
     RelativeImageLocation.DECK_CARD_PAGE_MOVEMENT_BUTTONS: RelativeImageLocation.DECK_CARD_PAGE_MOVEMENT_BUTTONS.value,
     RelativeImageLocation.DECK_EDIT_REMOVE_BUTTON: RelativeImageLocation.DECK_EDIT_REMOVE_BUTTON.value,
+    RelativeImageLocation.DECK_EDIT_DONE_BUTTON: RelativeImageLocation.DECK_EDIT_DONE_BUTTON.value,
     RelativeImageLocation.CARD_KINDS: RelativeImageLocation.CARD_KINDS.value,
     RelativeImageLocation.DECK_MAKING_POP_UP_BACKGROUND: RelativeImageLocation.DECK_MAKING_POP_UP_BACKGROUND.value,
     RelativeImageLocation.DECK_MAKING_POP_UP_BUTTONS: RelativeImageLocation.DECK_MAKING_POP_UP_BUTTONS.value,
@@ -170,6 +175,7 @@ relative_paths = {
     RelativeImageLocation.MY_CARD_SCROLL_BAR: RelativeImageLocation.MY_CARD_SCROLL_BAR.value,
     RelativeImageLocation.GLOBAL_NAVIGATION_BAR: RelativeImageLocation.GLOBAL_NAVIGATION_BAR.value,
     RelativeImageLocation.GLOBAL_NAVIGATION_BAR_EFFECT: RelativeImageLocation.GLOBAL_NAVIGATION_BAR_EFFECT.value,
+    RelativeImageLocation.BLOCK: RelativeImageLocation.BLOCK.value,
 }
 
 reference_paths = {
@@ -203,6 +209,7 @@ reference_paths = {
     WillBeReferenceImageLocation.DECK_PAGE_MOVEMENT_BUTTONS: WillBeReferenceImageLocation.DECK_PAGE_MOVEMENT_BUTTONS.value,
     WillBeReferenceImageLocation.DECK_CARD_PAGE_MOVEMENT_BUTTONS: WillBeReferenceImageLocation.DECK_CARD_PAGE_MOVEMENT_BUTTONS.value,
     WillBeReferenceImageLocation.DECK_EDIT_REMOVE_BUTTON: WillBeReferenceImageLocation.DECK_EDIT_REMOVE_BUTTON.value,
+    WillBeReferenceImageLocation.DECK_EDIT_DONE_BUTTON: WillBeReferenceImageLocation.DECK_EDIT_DONE_BUTTON.value,
     WillBeReferenceImageLocation.CARD_KINDS: WillBeReferenceImageLocation.CARD_KINDS.value,
     WillBeReferenceImageLocation.DECK_MAKING_POP_UP_BACKGROUND: WillBeReferenceImageLocation.DECK_MAKING_POP_UP_BACKGROUND.value,
     WillBeReferenceImageLocation.DECK_MAKING_POP_UP_BUTTONS: WillBeReferenceImageLocation.DECK_MAKING_POP_UP_BUTTONS.value,
@@ -226,6 +233,7 @@ reference_paths = {
     WillBeReferenceImageLocation.MY_CARD_SCROLL_BAR: WillBeReferenceImageLocation.MY_CARD_SCROLL_BAR.value,
     WillBeReferenceImageLocation.GLOBAL_NAVIGATION_BAR: WillBeReferenceImageLocation.GLOBAL_NAVIGATION_BAR.value,
     WillBeReferenceImageLocation.GLOBAL_NAVIGATION_BAR_EFFECT: WillBeReferenceImageLocation.GLOBAL_NAVIGATION_BAR_EFFECT.value,
+    WillBeReferenceImageLocation.BLOCK: WillBeReferenceImageLocation.BLOCK.value,
 }
 
 image_paths = {
@@ -259,6 +267,7 @@ image_paths = {
     "deck_page_movement_buttons": [],
     "deck_card_page_movement_buttons": [],
     "deck_edit_remove_button": [],
+    "deck_edit_done_button": [],
     "card_kinds": [],
     "deck_making_pop_up_background": [],
     "deck_making_pop_up_buttons": [],
@@ -282,6 +291,7 @@ image_paths = {
     "my_card_scroll_bar": [],
     "global_navigation_bar": [],
     "global_navigation_bar_effect": [],
+    "block": [],
 }
 
 ####### active_panel_skill은 실험 중 -> 문제 발생하면 이 부분 주석하고 생성 #######

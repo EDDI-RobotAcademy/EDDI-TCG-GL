@@ -6,7 +6,7 @@ import {MyDeckButtonEffectHoverDetectRepositoryImpl} from "../repository/MyDeckB
 import {MyDeckButtonEffect} from "../../my_deck_button_effect/entity/MyDeckButtonEffect";
 import {MyDeckButtonEffectRepositoryImpl} from "../../my_deck_button_effect/repository/MyDeckButtonEffectRepositoryImpl";
 import {DeckDeleteButtonRepositoryImpl} from "../../deck_delete_button/repository/DeckDeleteButtonRepositoryImpl";
-import {DeckEditButtonRepositoryImpl} from "../../deck_edit_button/repository/DeckEditButtonRepositoryImpl";
+import {DeckNameEditButtonRepositoryImpl} from "../../deck_name_edit_button/repository/DeckNameEditButtonRepositoryImpl";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
@@ -17,7 +17,7 @@ export class MyDeckButtonEffectHoverDetectServiceImpl implements MyDeckButtonEff
     private myDeckButtonEffectHoverDetectRepository: MyDeckButtonEffectHoverDetectRepositoryImpl;
     private myDeckButtonEffectRepository: MyDeckButtonEffectRepositoryImpl;
     private deckDeleteButtonRepository: DeckDeleteButtonRepositoryImpl;
-    private deckEditButtonRepository: DeckEditButtonRepositoryImpl;
+    private deckNameEditButtonRepository: DeckNameEditButtonRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private cameraRepository: CameraRepository;
 
@@ -27,7 +27,7 @@ export class MyDeckButtonEffectHoverDetectServiceImpl implements MyDeckButtonEff
         this.myDeckButtonEffectHoverDetectRepository = MyDeckButtonEffectHoverDetectRepositoryImpl.getInstance();
         this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance();
         this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance();
-        this.deckEditButtonRepository = DeckEditButtonRepositoryImpl.getInstance();
+        this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.cameraRepository = CameraRepositoryImpl.getInstance();
     }
@@ -65,16 +65,16 @@ export class MyDeckButtonEffectHoverDetectServiceImpl implements MyDeckButtonEff
             const currentHoveredEffectId = this.getCurrentHoveredEffectId();
 
             const shownButtonId = allEffectIdList.find(
-                (buttonId) => this.getDeckEditButtonVisibility(buttonId) == true
+                (buttonId) => this.getDeckNameEditButtonVisibility(buttonId) == true
             );
 
             if (shownButtonId !== undefined && shownButtonId !== null && shownButtonId !== currentHoveredEffectId) {
-                this.setDeckEditButtonVisibility(shownButtonId, false);
+                this.setDeckNameEditButtonVisibility(shownButtonId, false);
                 this.setDeckDeleteButtonVisibility(shownButtonId, false);
             }
 
             if (currentHoveredEffectId !== null && currentHoveredEffectId == this.getClickedDeckButtonId()) {
-                this.setDeckEditButtonVisibility(currentHoveredEffectId, true);
+                this.setDeckNameEditButtonVisibility(currentHoveredEffectId, true);
                 this.setDeckDeleteButtonVisibility(currentHoveredEffectId, true);
             }
 
@@ -82,7 +82,7 @@ export class MyDeckButtonEffectHoverDetectServiceImpl implements MyDeckButtonEff
 
         } else {
             allEffectIdList.forEach((buttonId) => {
-                this.setDeckEditButtonVisibility(buttonId, false);
+                this.setDeckNameEditButtonVisibility(buttonId, false);
                 this.setDeckDeleteButtonVisibility(buttonId, false);
             });
         }
@@ -113,8 +113,8 @@ export class MyDeckButtonEffectHoverDetectServiceImpl implements MyDeckButtonEff
         return this.myDeckButtonEffectHoverDetectRepository.findCurrentHoveredEffectId();
     }
 
-    private setDeckEditButtonVisibility(buttonId: number, isVisible: boolean): void {
-        const button = this.deckEditButtonRepository.findButtonByButtonUniqueId(buttonId);
+    private setDeckNameEditButtonVisibility(buttonId: number, isVisible: boolean): void {
+        const button = this.deckNameEditButtonRepository.findButtonByButtonUniqueId(buttonId);
         if (button !== null) {
             button.setVisibility(isVisible);
         }
@@ -138,8 +138,8 @@ export class MyDeckButtonEffectHoverDetectServiceImpl implements MyDeckButtonEff
         return undefined;
     }
 
-    public getDeckEditButtonVisibility(buttonId: number): boolean | undefined {
-        const button = this.deckEditButtonRepository.findButtonByButtonUniqueId(buttonId);
+    public getDeckNameEditButtonVisibility(buttonId: number): boolean | undefined {
+        const button = this.deckNameEditButtonRepository.findButtonByButtonUniqueId(buttonId);
         if (button !== null) {
             return button.getVisibility();
         }
