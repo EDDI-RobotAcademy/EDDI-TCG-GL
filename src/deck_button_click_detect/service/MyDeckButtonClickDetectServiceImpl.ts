@@ -19,7 +19,6 @@ import {ButtonStateManager} from "../../my_deck_button_manager/ButtonStateManage
 import {ButtonEffectManager} from "../../my_deck_button_manager/ButtonEffectManager";
 import {ButtonPageManager} from "../../my_deck_button_manager/ButtonPageManager";
 import {CardStateManager} from "../../my_deck_card_manager/CardStateManager";
-import {CardPageManager} from "../../my_deck_card_manager/CardPageManager";
 
 import * as THREE from "three";
 
@@ -35,7 +34,6 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private buttonEffectManager: ButtonEffectManager;
     private buttonPageManager: ButtonPageManager;
     private cardStateManager: CardStateManager;
-    private cardPageManager: CardPageManager;
 
     private cameraRepository: CameraRepository
     private buttonClickState: boolean = true;
@@ -50,7 +48,6 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.buttonStateManager = ButtonStateManager.getInstance();
         this.buttonEffectManager = ButtonEffectManager.getInstance();
         this.cardStateManager = CardStateManager.getInstance();
-        this.cardPageManager = CardPageManager.getInstance();
         this.buttonPageManager = ButtonPageManager.getInstance();
     }
 
@@ -94,14 +91,14 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                 this.setButtonVisibility(hiddenButtonId, true);
                 this.setEffectVisibility(hiddenButtonId, false);
                 this.setCardVisibilityByDeckId(hiddenButtonId, false);
-                this.resetCurrentCardPage();
+                this.setCardVisibilityByDeckId(hiddenButtonId, false);
                 console.log(`Deck Button ID ${hiddenButtonId} is now shown.`);
             }
 
             if (currentClickDeckButtonId !== null){
                 this.setButtonVisibility(currentClickDeckButtonId, false);
                 this.setEffectVisibility(currentClickDeckButtonId, true);
-                this.setCurrentPageCardVisibility(currentClickDeckButtonId, true);
+                this.setCardVisibilityByDeckId(currentClickDeckButtonId, true);
                 console.log(`Deck Button ID ${currentClickDeckButtonId} is now hidden.`);
             }
 
@@ -172,29 +169,6 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         cardUniqueIdList.forEach((cardUniqueId) => {
             this.setCardVisibility(deckId, cardUniqueId, isVisible);
         });
-    }
-
-    private setCurrentPageCardVisibility(deckId: number, isVisible: boolean): void {
-        const cardPage = this.getCurrentCardPage();
-        const cardUniqueIdList = this.getCardUniqueIdListByDeckId(deckId);
-        const currentPageCardId = this.getCardIdsForPage(cardPage, cardUniqueIdList);
-
-        currentPageCardId.forEach((cardUniqueId) => {
-            this.setCardVisibility(deckId, cardUniqueId, isVisible);
-        });
-    }
-
-    // 새로운 덱 버튼 클릭시 카드 페이지 초기화
-    private resetCurrentCardPage(): void {
-        this.cardPageManager.resetCurrentPage();
-    }
-
-    private getCurrentCardPage(): number {
-        return this.cardPageManager.getCurrentPage();
-    }
-
-    private getCardIdsForPage(page: number, cardIdList: number[]): number[] {
-        return this.cardPageManager.findCardIdsForPage(page, cardIdList);
     }
 
 }

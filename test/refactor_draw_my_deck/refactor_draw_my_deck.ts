@@ -15,10 +15,6 @@ import {CameraRepositoryImpl} from "../../src/camera/repository/CameraRepository
 
 import {BackgroundServiceImpl} from "../../src/background/service/BackgroundServiceImpl";
 import {BackgroundRepositoryImpl} from "../../src/background/repository/BackgroundRepositoryImpl";
-
-import {MyDeckCardPageMovementButtonServiceImpl} from "../../src/my_deck_card_page_movement_button/service/MyDeckCardPageMovementButtonServiceImpl";
-import {MyDeckCardPageMovementButtonRepositoryImpl} from "../../src/my_deck_card_page_movement_button/repository/MyDeckCardPageMovementButtonRepositoryImpl";
-import {MyDeckCardPageMovementButtonConfigList} from "../../src/my_deck_card_page_movement_button/entity/MyDeckCardPageMovementButtonConfigList";
 import {DeckMakePopupButtonsConfigList} from "../../src/deck_make_pop_up_buttons/entity/DeckMakePopupButtonsConfigList";
 import {BuildDeckButtonConfigList} from "../../src/build_deck_button/entity/BuildDeckButtonConfigList";
 import {DeleteDeckPopupButtonConfigList} from "../../src/delete_deck_popup_button/entity/DeleteDeckPopupButtonConfigList";
@@ -45,8 +41,6 @@ import {DeleteDeckPopupButtonServiceImpl} from "../../src/delete_deck_popup_butt
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
-import {DeckCardPageMoveButtonClickDetectServiceImpl} from "../../src/deck_card_page_movement_button_detect/service/DeckCardPageMoveButtonClickDetectServiceImpl";
-import {DeckCardPageMoveButtonClickDetectService} from "../../src/deck_card_page_movement_button_detect/service/DeckCardPageMoveButtonClickDetectService";
 import {DeckMakeButtonClickDetectServiceImpl} from "../../src/deck_make_button_click_detect/service/DeckMakeButtonClickDetectServiceImpl";
 import {DeckMakeButtonClickDetectService} from "../../src/deck_make_button_click_detect/service/DeckMakeButtonClickDetectService";
 // import {DeckMakePopupButtonsClickDetectServiceImpl} from "../../src/deck_make_pop_up_buttons_click_detect/service/DeckMakePopupButtonsClickDetectServiceImpl";
@@ -88,7 +82,6 @@ export class TCGJustTestMyDeckView {
     private background: NonBackgroundImage | null = null;
     private backgroundService = BackgroundServiceImpl.getInstance();
 
-    private myDeckCardPageMovementButtonService = MyDeckCardPageMovementButtonServiceImpl.getInstance();
     private myDeckButtonService = MyDeckButtonServiceImpl.getInstance();
     private myDeckButtonEffectService = MyDeckButtonEffectServiceImpl.getInstance();
     private myDeckCardService = MyDeckCardServiceImpl.getInstance();
@@ -118,7 +111,6 @@ export class TCGJustTestMyDeckView {
     private readonly cameraService = CameraServiceImpl.getInstance(this.cameraRepository);
 
     private myDeckButtonClickDetectService: MyDeckButtonClickDetectService;
-//     private deckCardPageMoveButtonClickDetectService: DeckCardPageMoveButtonClickDetectService;
 //     private deckMakeButtonClickDetectService: DeckMakeButtonClickDetectService;
 //     private deckMakePopupButtonsClickDetectService: DeckMakePopupButtonsClickDetectService;
     private myDeckScrollService: MyDeckScrollService;
@@ -181,14 +173,6 @@ export class TCGJustTestMyDeckView {
                 const buttonClick = await this.myDeckButtonClickDetectService.onMouseDown(e);
             }
         }, false);
-
-//         this.deckCardPageMoveButtonClickDetectService = DeckCardPageMoveButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
-//         this.renderer.domElement.addEventListener('mousedown', (e) => {
-//             const buttonClickState = this.deckCardPageMoveButtonClickDetectService.getButtonClickState();
-//             if (buttonClickState == true) {
-//                 this.deckCardPageMoveButtonClickDetectService.onMouseDown(e);
-//             }
-//         }, false);
 
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
         this.renderer.domElement.addEventListener('mousemove', async (e) => {
@@ -286,7 +270,6 @@ export class TCGJustTestMyDeckView {
                 this.buildDeckButtonClickDetectService.setButtonClickState(false);
                 this.buildDeckButtonHoverDetectService.setButtonDetectState(false);
                 this.myDeckButtonEffectHoverDetectService.setEffectDetectState(false);
-//                 this.deckCardPageMoveButtonClickDetectService.setButtonClickState(false);
                 this.sideScrollAreaDetectService.setMyDeckScrollAreaDetectState(false);
 
                 await this.deleteAllCard();
@@ -298,7 +281,6 @@ export class TCGJustTestMyDeckView {
                     this.buildDeckButtonClickDetectService.setButtonClickState(true);
                     this.buildDeckButtonHoverDetectService.setButtonDetectState(true);
                     this.myDeckButtonEffectHoverDetectService.setEffectDetectState(true);
-//                     this.deckCardPageMoveButtonClickDetectService.setButtonClickState(true);
                     this.sideScrollAreaDetectService.setMyDeckScrollAreaDetectState(true);
 
                     await this.deleteMyDeckButtons();
@@ -402,7 +384,6 @@ export class TCGJustTestMyDeckView {
         await this.addScrollArea();
         await this.addCardScrollArea();
         await this.addMyDeckCard();
-//         await this.addMyDeckCardPageMovementButton();
         await this.addMyDeckButton();
         await this.addMyDeckButtonEffect();
         await this.addBuildDeckButton();
@@ -457,26 +438,6 @@ export class TCGJustTestMyDeckView {
             }
         } catch (error) {
             console.error('Failed to add background:', error);
-        }
-    }
-
-    private async addMyDeckCardPageMovementButton(): Promise<void> {
-        try {
-            const configList = new MyDeckCardPageMovementButtonConfigList();
-            await Promise.all(configList.buttonConfigs.map(async (config) =>{
-                    const button = await this.myDeckCardPageMovementButtonService.createMyDeckCardPageMovementButton(
-                        config.id,
-                        config.position
-                    );
-
-                    if (button) {
-                        this.scene.add(button);
-                        console.log(`Draw My Deck Card Page Movement Button ${config.id}`);
-                    }
-                })
-            );
-        } catch (error) {
-            console.error('Failed to add my deck card page movement button:', error);
         }
     }
 
@@ -673,6 +634,7 @@ export class TCGJustTestMyDeckView {
             deckIdList.forEach((deckId, index) => {
                 if (deckId === firstDeckId) {
                     this.myDeckButtonClickDetectService.saveCurrentClickDeckButtonId(deckId);
+                    this.myDeckCardService.setAllCardVisibilityByDeckId(deckId, true);
                 } else {
                     this.myDeckCardService.setAllCardVisibilityByDeckId(deckId, false);
                 }
@@ -1016,7 +978,6 @@ export class TCGJustTestMyDeckView {
             const { scaleX, scaleY } = this.userWindowSize.getScaleFactors();
             this.sideScrollAreaService.adjustMyDeckSideScrollAreaPosition();
             this.sideScrollAreaService.adjustMyDeckCardScrollAreaPosition();
-            this.myDeckCardPageMovementButtonService.adjustMyDeckCardPageMovementButtonPosition();
             this.myDeckButtonService.adjustMyDeckButtonPosition();
             this.myDeckButtonEffectService.adjustMyDeckButtonEffectPosition();
             this.deckEditButtonService.adjustDeckEditButtonPosition();
