@@ -18,6 +18,7 @@ import {BackgroundRepositoryImpl} from "../../src/background/repository/Backgrou
 import {DeckMakePopupButtonsConfigList} from "../../src/deck_make_pop_up_buttons/entity/DeckMakePopupButtonsConfigList";
 import {BuildDeckButtonConfigList} from "../../src/build_deck_button/entity/BuildDeckButtonConfigList";
 import {DeleteDeckPopupButtonConfigList} from "../../src/delete_deck_popup_button/entity/DeleteDeckPopupButtonConfigList";
+import {DeckEditButtonConfigList} from "../../src/deck_edit_button/entity/DeckEditButtonConfigList";
 
 import {MyDeckButtonServiceImpl} from "../../src/my_deck_button/service/MyDeckButtonServiceImpl";
 import {MyDeckButtonEffectServiceImpl} from "../../src/my_deck_button_effect/service/MyDeckButtonEffectServiceImpl";
@@ -38,6 +39,7 @@ import {DeckNameEditButtonServiceImpl} from "../../src/deck_name_edit_button/ser
 import {DeckDeleteButtonServiceImpl} from "../../src/deck_delete_button/service/DeckDeleteButtonServiceImpl";
 import {DeleteDeckPopupWindowServiceImpl} from "../../src/delete_deck_popup_window/service/DeleteDeckPopupWindowServiceImpl";
 import {DeleteDeckPopupButtonServiceImpl} from "../../src/delete_deck_popup_button/service/DeleteDeckPopupButtonServiceImpl";
+import {DeckEditButtonServiceImpl} from "../../src/deck_edit_button/service/DeckEditButtonServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -97,6 +99,7 @@ export class TCGJustTestMyDeckView {
     private deckDeleteButtonService = DeckDeleteButtonServiceImpl.getInstance();
     private deleteDeckPopupWindowService = DeleteDeckPopupWindowServiceImpl.getInstance();
     private deleteDeckPopupButtonService = DeleteDeckPopupButtonServiceImpl.getInstance();
+    private deckEditButtonService = DeckEditButtonServiceImpl.getInstance();
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -387,6 +390,7 @@ export class TCGJustTestMyDeckView {
         await this.addMyDeckButton();
         await this.addMyDeckButtonEffect();
         await this.addBuildDeckButton();
+        await this.addDeckEditButton();
         await this.addMyDeckNameText();
         await this.addDeckNameEditButton();
         await this.addDeckDeleteButton();
@@ -752,6 +756,25 @@ export class TCGJustTestMyDeckView {
         }
     }
 
+    private async addDeckEditButton(): Promise<void> {
+        try {
+            const configList = new DeckEditButtonConfigList();
+            await Promise.all(configList.buttonConfigs.map(async (config) =>{
+                const button = await this.deckEditButtonService.createDeckEditButton(
+                    config.id,
+                    config.position
+                );
+
+                if (button) {
+                    this.scene.add(button);
+                    console.log(`Draw Deck Edit Button ${config.id}`);
+                }
+            }));
+        } catch (error) {
+            console.error('Failed to add Deck Edit Button:', error);
+        }
+    }
+
     private async addTransparentBackground(): Promise<void> {
         try{
             const transparentBackground = await this.transparentBackgroundService.createTransparentBackground();
@@ -985,6 +1008,7 @@ export class TCGJustTestMyDeckView {
             this.myDeckCardService.adjustMyDeckCardPosition();
             this.myDeckNameTextService.adjustMyDeckNameTextPosition();
             this.buildDeckButtonService.adjustBuildDeckButtonPosition();
+            this.deckEditButtonService.adjustDeckEditButtonPosition();
 //             this.deckMakeButtonService.adjustDeckMakeButtonPosition();
             this.transparentBackgroundService.adjustTransparentBackgroundPosition();
 //             this.decKMakePopupBackgroundService.adjustDeckMakePopupBackgroundPosition();
