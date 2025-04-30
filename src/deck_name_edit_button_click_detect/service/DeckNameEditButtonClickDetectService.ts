@@ -1,4 +1,4 @@
-export interface DeckEditButtonClickDetectService {
+export interface DeckNameEditButtonClickDetectService {
     setButtonClickState(state: boolean): void;
     getButtonClickState(): boolean;
     handleButtonClick(clickPoint: { x: number; y: number }): Promise<any | null>;

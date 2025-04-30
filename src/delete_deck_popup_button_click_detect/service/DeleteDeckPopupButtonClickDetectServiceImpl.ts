@@ -9,14 +9,14 @@ import {TransparentBackgroundRepositoryImpl} from "../../transparent_background/
 import {DeckDeleteButtonClickDetectRepositoryImpl} from "../../deck_delete_button_click_detect/repository/DeckDeleteButtonClickDetectRepositoryImpl";
 
 import {DeckDeleteButtonRepositoryImpl} from "../../deck_delete_button/repository/DeckDeleteButtonRepositoryImpl";
-import {DeckEditButtonRepositoryImpl} from "../../deck_edit_button/repository/DeckEditButtonRepositoryImpl";
+import {DeckNameEditButtonRepositoryImpl} from "../../deck_name_edit_button/repository/DeckNameEditButtonRepositoryImpl";
 import {MyDeckButtonRepositoryImpl} from "../../my_deck_button/repository/MyDeckButtonRepositoryImpl";
 import {MyDeckButtonEffectRepositoryImpl} from "../../my_deck_button_effect/repository/MyDeckButtonEffectRepositoryImpl";
 import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardRepositoryImpl";
 import {MyDeckNameTextRepositoryImpl} from "../../my_deck_name_text/repository/MyDeckNameTextRepositoryImpl";
 
 import {DeckDeleteButtonPositionRepositoryImpl} from "../../deck_delete_button_position/repository/DeckDeleteButtonPositionRepositoryImpl";
-import {DeckEditButtonPositionRepositoryImpl} from "../../deck_edit_button_position/repository/DeckEditButtonPositionRepositoryImpl";
+import {DeckNameEditButtonPositionRepositoryImpl} from "../../deck_name_edit_button_position/repository/DeckNameEditButtonPositionRepositoryImpl";
 import {MyDeckButtonPositionRepositoryImpl} from "../../my_deck_button_position/repository/MyDeckButtonPositionRepositoryImpl";
 import {MyDeckCardPositionRepositoryImpl} from "../../my_deck_card_position/repository/MyDeckCardPositionRepositoryImpl";
 import {MyDeckNameTextPositionRepositoryImpl} from "../../my_deck_name_text_position/repository/MyDeckNameTextPositionRepositoryImpl";
@@ -38,14 +38,14 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     private cameraRepository: CameraRepository;
 
     private deckDeleteButtonRepository: DeckDeleteButtonRepositoryImpl;
-    private deckEditButtonRepository: DeckEditButtonRepositoryImpl;
+    private deckNameEditButtonRepository: DeckNameEditButtonRepositoryImpl;
     private myDeckButtonRepository: MyDeckButtonRepositoryImpl;
     private myDeckButtonEffectRepository: MyDeckButtonEffectRepositoryImpl;
     private myDeckCardRepository: MyDeckCardRepositoryImpl;
     private myDeckNameTextRepository: MyDeckNameTextRepositoryImpl;
 
     private deckDeleteButtonPositionRepository: DeckDeleteButtonPositionRepositoryImpl;
-    private deckEditButtonPositionRepository: DeckEditButtonPositionRepositoryImpl;
+    private deckNameEditButtonPositionRepository: DeckNameEditButtonPositionRepositoryImpl;
     private myDeckButtonPositionRepository: MyDeckButtonPositionRepositoryImpl;
     private myDeckCardPositionRepository: MyDeckCardPositionRepositoryImpl;
     private myDeckNameTextPositionRepository: MyDeckNameTextPositionRepositoryImpl;
@@ -65,14 +65,14 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.cameraRepository = CameraRepositoryImpl.getInstance();
 
         this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance();
-        this.deckEditButtonRepository = DeckEditButtonRepositoryImpl.getInstance();
+        this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance();
         this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance();
         this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance();
         this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance();
         this.myDeckNameTextRepository = MyDeckNameTextRepositoryImpl.getInstance();
 
         this.deckDeleteButtonPositionRepository = DeckDeleteButtonPositionRepositoryImpl.getInstance();
-        this.deckEditButtonPositionRepository = DeckEditButtonPositionRepositoryImpl.getInstance();
+        this.deckNameEditButtonPositionRepository = DeckNameEditButtonPositionRepositoryImpl.getInstance();
         this.myDeckButtonPositionRepository = MyDeckButtonPositionRepositoryImpl.getInstance();
         this.myDeckCardPositionRepository = MyDeckCardPositionRepositoryImpl.getInstance();
         this.myDeckNameTextPositionRepository = MyDeckNameTextPositionRepositoryImpl.getInstance();
@@ -127,7 +127,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
                     this.deleteDeckButtonMapData();
                     this.deleteTextMapData();
                     this.deleteDeckDeleteButton();
-                    this.deleteDeckEditButton();
+                    this.deleteDeckNameEditButton();
                     this.deleteDeckButton();
                     this.deleteDeckButtonEffect();
                     this.deleteDeckNameText();
@@ -208,14 +208,14 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.deckDeleteButtonPositionRepository.deleteByPositionId(buttonId);
     }
 
-    private deleteDeckEditButton(): void {
+    private deleteDeckNameEditButton(): void {
         const buttonId = this.getCurrentClickDeckDeleteButtonId();
         if (buttonId === null) {
             console.warn("삭제할 버튼의 ID가 존재하지 않습니다.");
             return;
         }
-        this.deckEditButtonRepository.deleteButtonByButtonUniqueId(buttonId);
-        this.deckEditButtonPositionRepository.deleteByPositionId(buttonId);
+        this.deckNameEditButtonRepository.deleteButtonByButtonUniqueId(buttonId);
+        this.deckNameEditButtonPositionRepository.deleteByPositionId(buttonId);
     }
 
     private deleteDeckButton(): void {
