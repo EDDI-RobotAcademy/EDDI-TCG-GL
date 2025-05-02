@@ -138,11 +138,19 @@ export class SideScrollAreaDetectServiceImpl implements SideScrollAreaDetectServ
             if (detectSideScrollArea.id == 0) {
                 this.setMyDeckScrollEnabled(0, true);
                 this.setMyDeckScrollEnabled(1, false);
+                this.setMyDeckScrollEnabled(2, false);
             }
 
             if (detectSideScrollArea.id == 1) {
                 this.setMyDeckScrollEnabled(0, false);
                 this.setMyDeckScrollEnabled(1, true);
+                this.setMyDeckScrollEnabled(2, false);
+            }
+
+            if (detectSideScrollArea.id == 2) {
+                this.setMyDeckScrollEnabled(0, false);
+                this.setMyDeckScrollEnabled(1, false);
+                this.setMyDeckScrollEnabled(2, true);
             }
 
         }
