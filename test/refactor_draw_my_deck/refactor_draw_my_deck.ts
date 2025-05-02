@@ -388,6 +388,7 @@ export class TCGJustTestMyDeckView {
         await this.addBackground();
         await this.addScrollArea();
         await this.addCardScrollArea();
+        await this.addBlockScrollArea();
         await this.addMyDeckCard();
         await this.addMyDeckBlock();
         await this.addMyDeckButton();
@@ -473,6 +474,20 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add Card Scroll Area:', error);
+        }
+    }
+
+    private async addBlockScrollArea(): Promise<void> {
+        try {
+            const areaMesh = await this.sideScrollAreaService.createSideScrollArea('myDeckBlockScrollArea', 3, 0.202, 0.61, 0.38, -0.024);
+            if (areaMesh) {
+                this.scene.add(areaMesh);
+            } else {
+                console.warn(`Block Scroll Area Mesh Not found`);
+            }
+
+        } catch (error) {
+            console.error('Failed to add Block Scroll Area:', error);
         }
     }
 
@@ -1031,6 +1046,7 @@ export class TCGJustTestMyDeckView {
             const { scaleX, scaleY } = this.userWindowSize.getScaleFactors();
             this.sideScrollAreaService.adjustMyDeckSideScrollAreaPosition();
             this.sideScrollAreaService.adjustMyDeckCardScrollAreaPosition();
+            this.sideScrollAreaService.adjustMyDeckBlockScrollAreaPosition();
             this.myDeckButtonService.adjustMyDeckButtonPosition();
             this.myDeckButtonEffectService.adjustMyDeckButtonEffectPosition();
             this.deckNameEditButtonService.adjustDeckNameEditButtonPosition();
