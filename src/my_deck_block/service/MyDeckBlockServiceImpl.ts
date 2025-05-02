@@ -7,17 +7,24 @@ import {MyDeckBlockRepositoryImpl} from "../../my_deck_block/repository/MyDeckBl
 import {MyDeckBlockPositionRepositoryImpl} from "../../my_deck_block_position/repository/MyDeckBlockPositionRepositoryImpl";
 import {MyDeckBlockPosition} from "../../my_deck_block_position/entity/MyDeckBlockPosition";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
+import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
+import {SideScrollArea} from "../../side_scroll_area/entity/SideScrollArea";
+import {ClippingMaskManager} from "../../clipping_mask_manager/ClippingMaskManager";
 
 export class MyDeckBlockServiceImpl implements MyDeckBlockService {
     private static instance: MyDeckBlockServiceImpl;
     private myDeckBlockRepository: MyDeckBlockRepositoryImpl;
     private myDeckBlockPositionRepository: MyDeckBlockPositionRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
+    private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
+    private clippingMaskManager: ClippingMaskManager;
 
     private constructor() {
         this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance();
         this.myDeckBlockPositionRepository = MyDeckBlockPositionRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
+        this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
+        this.clippingMaskManager = ClippingMaskManager.getInstance();
     }
 
     public static getInstance(): MyDeckBlockServiceImpl {
@@ -92,6 +99,15 @@ export class MyDeckBlockServiceImpl implements MyDeckBlockService {
                 blockMesh.geometry = new THREE.PlaneGeometry(blockWidth, blockHeight);
                 blockMesh.position.set(newPositionX, newPositionY, 0);
 
+                const scrollArea = this.getScrollArea();
+                if (scrollArea) {
+                    scrollArea.width = 0.202 * windowWidth;
+                    scrollArea.height = 0.61 * windowHeight;
+                    scrollArea.position.set(0.38 * window.innerWidth, -0.024 * window.innerHeight);
+                    const clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                    this.applyClippingPlanesToMesh(blockMesh, clippingPlanes);
+                }
+
             }
         }
     }
@@ -152,6 +168,14 @@ export class MyDeckBlockServiceImpl implements MyDeckBlockService {
             return [];
         }
         return blockList;
+    }
+
+    private getScrollArea(): SideScrollArea | null {
+        return this.sideScrollAreaRepository.findAreaByTypeAndId(3, 2);
+    }
+
+    private applyClippingPlanesToMesh(mesh: THREE.Mesh, clippingPlanes: THREE.Plane[]): void {
+        this.clippingMaskManager.applyClippingPlanesToMesh(mesh, clippingPlanes);
     }
 
 }
