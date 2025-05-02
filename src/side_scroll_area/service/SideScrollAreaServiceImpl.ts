@@ -136,6 +136,31 @@ export class SideScrollAreaServiceImpl implements SideScrollAreaService {
         areaMesh.position.set(newPositionX, newPositionY, 0);
     }
 
+    public adjustMyDeckBlockScrollAreaPosition(): void {
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+
+        const allArea = this.getSideScrollAreaByTypeAndId(3, 2);
+        if (!allArea) {
+            console.error("Scroll Area is null. Cannot adjust position.");
+            return;
+        }
+
+        const areaMesh = allArea.getMesh();
+        const initialPosition = allArea.position;
+
+        const areaWidth = 0.202 * windowWidth;
+        const areaHeight = 0.61 * windowHeight;
+
+        const newPositionX = 0.38 * windowWidth;
+        const newPositionY = -0.024 * windowHeight;
+
+        areaMesh.geometry.dispose();
+        areaMesh.geometry = new THREE.PlaneGeometry(areaWidth, areaHeight);
+
+        areaMesh.position.set(newPositionX, newPositionY, 0);
+    }
+
     public getSideScrollAreaByType(type: SideScrollAreaType): SideScrollArea[] | null {
         return this.sideScrollAreaRepository.findAreasByType(type);
     }
