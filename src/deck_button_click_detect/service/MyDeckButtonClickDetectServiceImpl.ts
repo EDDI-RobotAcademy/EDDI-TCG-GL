@@ -1,16 +1,13 @@
 import {MyDeckButtonClickDetectService} from "./MyDeckButtonClickDetectService";
 
 import {MyDeckButton} from "../../my_deck_button/entity/MyDeckButton";
-import {MyDeckButtonRepository} from "../../my_deck_button/repository/MyDeckButtonRepository";
-import {MyDeckButtonRepositoryImpl} from "../../my_deck_button/repository/MyDeckButtonRepositoryImpl";
-
 import {MyDeckButtonEffect} from "../../my_deck_button_effect/entity/MyDeckButtonEffect";
-import {MyDeckButtonEffectRepositoryImpl} from "../../my_deck_button_effect/repository/MyDeckButtonEffectRepositoryImpl";
 
+import {MyDeckButtonRepositoryImpl} from "../../my_deck_button/repository/MyDeckButtonRepositoryImpl";
+import {MyDeckButtonEffectRepositoryImpl} from "../../my_deck_button_effect/repository/MyDeckButtonEffectRepositoryImpl";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../repository/MyDeckButtonClickDetectRepositoryImpl";
-import {MyDeckButtonClickDetectRepository} from "../repository/MyDeckButtonClickDetectRepository";
 import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardRepositoryImpl";
-import {MyDeckCard} from "../../my_deck_card/entity/MyDeckCard";
+import {MyDeckBlockRepositoryImpl} from "../../my_deck_block/repository/MyDeckBlockRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -29,6 +26,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private myDeckButtonEffectRepository: MyDeckButtonEffectRepositoryImpl;
     private myDeckCardRepository: MyDeckCardRepositoryImpl;
+    private myDeckBlockRepository: MyDeckBlockRepositoryImpl;
 
     private buttonStateManager: ButtonStateManager;
     private buttonEffectManager: ButtonEffectManager;
@@ -44,6 +42,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance();
         this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance();
+        this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance();
 
         this.buttonStateManager = ButtonStateManager.getInstance();
         this.buttonEffectManager = ButtonEffectManager.getInstance();
@@ -92,6 +91,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                 this.setEffectVisibility(hiddenButtonId, false);
                 this.setCardVisibilityByDeckId(hiddenButtonId, false);
                 this.setCardVisibilityByDeckId(hiddenButtonId, false);
+                this.setBlockVisibilityByDeckId(hiddenButtonId, false);
                 console.log(`Deck Button ID ${hiddenButtonId} is now shown.`);
             }
 
@@ -99,6 +99,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                 this.setButtonVisibility(currentClickDeckButtonId, false);
                 this.setEffectVisibility(currentClickDeckButtonId, true);
                 this.setCardVisibilityByDeckId(currentClickDeckButtonId, true);
+                this.setBlockVisibilityByDeckId(currentClickDeckButtonId, true);
                 console.log(`Deck Button ID ${currentClickDeckButtonId} is now hidden.`);
             }
 
@@ -152,10 +153,6 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         return this.myDeckButtonEffectRepository.findById(buttonId);
     }
 
-    private getCardListByDeckId(deckId: number): MyDeckCard[] | null {
-        return this.myDeckCardRepository.findCardListByDeckId(deckId) || null;
-    }
-
     private setCardVisibility(deckId: number, cardId: number, isVisible: boolean): void {
         this.cardStateManager.setCardVisibility(deckId, cardId, isVisible);
     }
@@ -169,6 +166,12 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         cardUniqueIdList.forEach((cardUniqueId) => {
             this.setCardVisibility(deckId, cardUniqueId, isVisible);
         });
+    }
+
+    private setBlockVisibilityByDeckId(deckId: number, isVisible: boolean): void {
+        this.myDeckBlockRepository.findBlockListByDeckId(deckId)?.forEach(block =>
+            block.setVisibility(isVisible)
+        );
     }
 
 }
