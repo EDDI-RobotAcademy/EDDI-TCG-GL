@@ -713,8 +713,31 @@ export class TCGJustTestMyDeckView {
                     blockList.forEach((block) => block.setVisibility(false));
                 }
                 this.myDeckBlockService.saveBlockGroup(deckId);
-                    blockList.forEach((block) => this.scene.add(block.getMesh()));
+//                 blockList.forEach((block) => this.scene.add(block.getMesh()));
+            });
+
+            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 2);
+            let clippingPlanes: THREE.Plane[] = [];
+
+            if (scrollArea) {
+                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                deckIdList.forEach((deckId) => {
+                    const blockGroup = this.myDeckBlockService.getBlockGroupByDeckId(deckId);
+                    blockGroup.children.forEach((blockObject) => {
+                        if (blockObject instanceof THREE.Mesh) {
+                            this.clippingMaskManager.applyClippingPlanesToMesh(blockObject, clippingPlanes);
+                        } else {
+                            console.warn("[WARN] Skipping non-mesh object in Block Group:", blockObject);
+                        }
+                    });
+
+                    if (!this.scene.children.includes(blockGroup)) {
+                        this.scene.add(blockGroup);
+                    }
+                    blockGroup.position.y = 0;
                 });
+
+            }
 
         } catch (error) {
             console.error('Failed to add my deck blocks:', error);
