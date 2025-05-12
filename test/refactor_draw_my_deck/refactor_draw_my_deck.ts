@@ -41,6 +41,7 @@ import {DeleteDeckPopupWindowServiceImpl} from "../../src/delete_deck_popup_wind
 import {DeleteDeckPopupButtonServiceImpl} from "../../src/delete_deck_popup_button/service/DeleteDeckPopupButtonServiceImpl";
 import {DeckEditButtonServiceImpl} from "../../src/deck_edit_button/service/DeckEditButtonServiceImpl";
 import {MyDeckBlockServiceImpl} from "../../src/my_deck_block/service/MyDeckBlockServiceImpl";
+import {MyDeckCardNameServiceImpl} from "../../src/my_deck_card_name/service/MyDeckCardNameServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -104,6 +105,7 @@ export class TCGJustTestMyDeckView {
     private deleteDeckPopupButtonService = DeleteDeckPopupButtonServiceImpl.getInstance();
     private deckEditButtonService = DeckEditButtonServiceImpl.getInstance();
     private myDeckBlockService = MyDeckBlockServiceImpl.getInstance();
+    private myDeckCardNameService = MyDeckCardNameServiceImpl.getInstance();
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -410,6 +412,7 @@ export class TCGJustTestMyDeckView {
         await this.addBlockScrollArea();
         await this.addMyDeckCard();
         await this.addMyDeckBlock();
+        await this.addMyDeckCardName();
         await this.addMyDeckButton();
         await this.addMyDeckButtonEffect();
         await this.addBuildDeckButton();
@@ -763,6 +766,33 @@ export class TCGJustTestMyDeckView {
         }
     }
 
+    private async addMyDeckCardName(): Promise<void> {
+        try {
+            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardListsNew();
+            for (const [deckId, cardIdList] of myDeckCardList) {
+                await this.myDeckCardNameService.createMyDeckCardNameWithPosition(deckId, cardIdList);
+            }
+
+            const deckIdList = this.myDeckCardNameService.getAllDeckIdList();
+            const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+            const firstDeckId = sortedDeckIdList[0];
+
+            deckIdList.forEach((deckId, index) => {
+                const cardNameList = this.myDeckCardNameService.getCardNameListByDeckId(deckId);
+                if (deckId === firstDeckId) {
+                    cardNameList.forEach((cardName) => cardName.setVisibility(true));
+                } else {
+                    cardNameList.forEach((cardName) => cardName.setVisibility(false));
+                }
+                this.myDeckCardNameService.saveCardNameGroup(deckId);
+                cardNameList.forEach((cardName) => this.scene.add(cardName.getMesh()));
+            });
+
+        } catch (error) {
+            console.error('Failed to add My Deck Card Name:', error);
+        }
+    }
+
     private async addMyDeckNameText(): Promise<void> {
         try{
             const deckIdList = this.myDeckNameTextMapRepository.getDeckIds();
@@ -1095,6 +1125,7 @@ export class TCGJustTestMyDeckView {
             this.deckDeleteButtonService.adjustDeckDeleteButtonPosition();
             this.myDeckCardService.adjustMyDeckCardPosition();
             this.myDeckBlockService.adjustMyDeckBlockPosition();
+            this.myDeckCardNameService.adjustMyDeckCardNamePosition();
             this.myDeckNameTextService.adjustMyDeckNameTextPosition();
             this.buildDeckButtonService.adjustBuildDeckButtonPosition();
             this.deckEditButtonService.adjustDeckEditButtonPosition();
