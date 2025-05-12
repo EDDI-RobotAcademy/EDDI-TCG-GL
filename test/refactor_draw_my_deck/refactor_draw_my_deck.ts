@@ -69,6 +69,8 @@ import {MyDeckCardScrollService} from "../../src/my_deck_card_scroll/service/MyD
 import {MyDeckCardScrollServiceImpl} from "../../src/my_deck_card_scroll/service/MyDeckCardScrollServiceImpl";
 import {MyDeckBlockScrollService} from "../../src/my_deck_block_scroll/service/MyDeckBlockScrollService";
 import {MyDeckBlockScrollServiceImpl} from "../../src/my_deck_block_scroll/service/MyDeckBlockScrollServiceImpl";
+import {DeckEditButtonClickDetectService} from "../../src/deck_edit_button_click_detect/service/DeckEditButtonClickDetectService";
+import {DeckEditButtonClickDetectServiceImpl} from "../../src/deck_edit_button_click_detect/service/DeckEditButtonClickDetectServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 
@@ -132,6 +134,7 @@ export class TCGJustTestMyDeckView {
     private deckNameEditButtonClickDetectService: DeckNameEditButtonClickDetectService;
     private myDeckCardScrollService: MyDeckCardScrollService;
     private myDeckBlockScrollService: MyDeckBlockScrollService;
+    private deckEditButtonClickDetectService: DeckEditButtonClickDetectService;
 
     private initialized = false;
     private isAnimating = false;
@@ -250,6 +253,14 @@ export class TCGJustTestMyDeckView {
             if (buildDeckButtonClickState == true) {
                 // To-do: 덱 생성 버튼 클릭 했을 때 덱 버튼은 클릭 안 되게 해야 함.
                 const buildDeckButtonClick = await this.buildDeckButtonClickDetectService.onMouseDown(e);
+            }
+        }, false);
+
+        this.deckEditButtonClickDetectService = DeckEditButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.renderer.domElement.addEventListener('mousedown', async (e) => {
+            const deckEditButtonClickEnabled = this.deckEditButtonClickDetectService.isButtonClickEnabled();
+            if (deckEditButtonClickEnabled == true) {
+                const deckEditButtonClick = await this.deckEditButtonClickDetectService.onMouseDown(e);
             }
         }, false);
 

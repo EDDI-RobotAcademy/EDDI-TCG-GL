@@ -9,11 +9,11 @@ export interface ButtonConfig {
 export class DeckEditButtonConfigList {
     public buttonConfigs: ButtonConfig[] = [
         {
-            id: 0,
+            id: 1,
             position: new Vector2d(0.3805, - 0.403)
         },
         {
-            id: 1,
+            id: 2,
             position: new Vector2d(0.3805, - 0.403)
         },
 
