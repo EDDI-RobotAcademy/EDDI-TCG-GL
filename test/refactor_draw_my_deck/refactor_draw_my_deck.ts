@@ -785,8 +785,31 @@ export class TCGJustTestMyDeckView {
                     cardNameList.forEach((cardName) => cardName.setVisibility(false));
                 }
                 this.myDeckCardNameService.saveCardNameGroup(deckId);
-                cardNameList.forEach((cardName) => this.scene.add(cardName.getMesh()));
+//                 cardNameList.forEach((cardName) => this.scene.add(cardName.getMesh()));
             });
+
+            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 2);
+            let clippingPlanes: THREE.Plane[] = [];
+
+            if (scrollArea) {
+                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                deckIdList.forEach((deckId) => {
+                    const cardNameGroup = this.myDeckCardNameService.getCardNameGroupByDeckId(deckId);
+                    cardNameGroup.children.forEach((cardNameObject) => {
+                        if (cardNameObject instanceof THREE.Mesh) {
+                            this.clippingMaskManager.applyClippingPlanesToMesh(cardNameObject, clippingPlanes);
+                        } else {
+                            console.warn("[WARN] Skipping non-mesh object in Card Name Group:", cardNameObject);
+                        }
+                    });
+
+                    if (!this.scene.children.includes(cardNameGroup)) {
+                        this.scene.add(cardNameGroup);
+                    }
+                    cardNameGroup.position.y = 0;
+                });
+
+            }
 
         } catch (error) {
             console.error('Failed to add My Deck Card Name:', error);

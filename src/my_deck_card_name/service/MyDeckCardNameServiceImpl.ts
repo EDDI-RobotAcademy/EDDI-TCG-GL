@@ -100,6 +100,15 @@ export class MyDeckCardNameServiceImpl implements MyDeckCardNameService {
                 cardNameMesh.geometry = new THREE.PlaneGeometry(cardNameWidth, cardNameHeight);
                 cardNameMesh.position.set(newPositionX, newPositionY, 0);
 
+                const scrollArea = this.getScrollArea();
+                if (scrollArea) {
+                    scrollArea.width = 0.202 * windowWidth;
+                    scrollArea.height = 0.61 * windowHeight;
+                    scrollArea.position.set(0.38 * window.innerWidth, -0.024 * window.innerHeight);
+                    const clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                    this.applyClippingPlanesToMesh(cardNameMesh, clippingPlanes);
+                }
+
             }
         }
     }
