@@ -25,7 +25,7 @@ export class DeckEditButtonRepositoryImpl implements DeckEditButtonRepository {
     }
 
     public async createDeckEditButton(type: number, position: Vector2d): Promise<DeckEditButton> {
-        const texture = await this.textureManager.getTexture('deck_edit_done_button', type);
+        const texture = await this.textureManager.getTexture('deck_edit_button', type);
         if (!texture) {
             throw new Error(`Texture for Deck Edit Button(button Id: ${type}) not found`);
         }
@@ -40,7 +40,7 @@ export class DeckEditButtonRepositoryImpl implements DeckEditButtonRepository {
         buttonMesh.position.set(buttonPositionX, buttonPositionY, 0);
 
         const newButton = new DeckEditButton(buttonMesh, position);
-        if (type == 1) {
+        if (type == 2) {
             newButton.setVisibility(false);
         }
         this.buttonMap.set(newButton.id, newButton);

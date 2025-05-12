@@ -39,6 +39,7 @@ export class TextureManager {
     private myDeckCardPageMovementButtonTextureList : { [id: number]: THREE.Texture } = {};
     private deckEditRemoveButtonTextureList: { [id: number]: THREE.Texture } = {};
     private deckEditDoneButtonTextureList: { [id: number]: THREE.Texture } = {};
+    private deckEditButtonTextureList: { [id: number]: THREE.Texture } = {};
     private cardKindsTextureList: { [id: number]: THREE.Texture } = {};
     private deckMakingPopupBackgroundTextureList: { [id: number]: THREE.Texture } = {};
     private deckMakingPopupButtonsTextureList: { [id: number]: THREE.Texture } = {};
@@ -63,6 +64,7 @@ export class TextureManager {
     private globalNavigationBarTextureList: { [id: number]: THREE.Texture } = {};
     private globalNavigationBarEffectTextureList: { [id: number]: THREE.Texture } = {};
     private blockTextureList: { [id: number]: THREE.Texture } = {};
+    private cardSelectionBlockerTextureList: { [id: number]: THREE.Texture } = {};
 
     private constructor() {}
 
@@ -115,6 +117,7 @@ export class TextureManager {
                 this.loadTextures(imageData.deck_card_page_movement_buttons, this.myDeckCardPageMovementButtonTextureList),
                 this.loadTextures(imageData.deck_edit_remove_button, this.deckEditRemoveButtonTextureList),
                 this.loadTextures(imageData.deck_edit_done_button, this.deckEditDoneButtonTextureList),
+                this.loadTextures(imageData.deck_edit_button, this.deckEditButtonTextureList),
                 this.loadTextures(imageData.card_kinds, this.cardKindsTextureList),
                 this.loadTextures(imageData.deck_making_pop_up_background, this.deckMakingPopupBackgroundTextureList),
                 this.loadTextures(imageData.deck_making_pop_up_buttons, this.deckMakingPopupButtonsTextureList),
@@ -139,6 +142,7 @@ export class TextureManager {
                 this.loadTextures(imageData.global_navigation_bar, this.globalNavigationBarTextureList),
                 this.loadTextures(imageData.global_navigation_bar_effect, this.globalNavigationBarEffectTextureList),
                 this.loadTextures(imageData.block, this.blockTextureList),
+                this.loadTextures(imageData.card_selection_blocker, this.cardSelectionBlockerTextureList),
             ]);
 
             console.log('All textures preloaded from TextureManager.ts');
@@ -274,6 +278,8 @@ export class TextureManager {
                 return this.deckEditRemoveButtonTextureList[id]
             case 'deck_edit_done_button':
                 return this.deckEditDoneButtonTextureList[id];
+            case 'deck_edit_button':
+                return this.deckEditButtonTextureList[id];
             case 'card_kinds':
                 return this.cardKindsTextureList[id]
             case 'deck_making_pop_up_background':
@@ -322,6 +328,8 @@ export class TextureManager {
                 return this.globalNavigationBarEffectTextureList[id];
             case 'block':
                 return this.blockTextureList[id];
+            case 'card_selection_blocker':
+                return this.cardSelectionBlockerTextureList[id];
             default:
                 return undefined;
         }
