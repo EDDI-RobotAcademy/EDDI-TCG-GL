@@ -4,20 +4,15 @@ import {MyDeckNameTextPositionRepository} from "./MyDeckNameTextPositionReposito
 
 export class MyDeckNameTextPositionRepositoryImpl implements MyDeckNameTextPositionRepository {
     private static instance: MyDeckNameTextPositionRepositoryImpl;
-//     private positionMap: Map<number, MyDeckNameTextPosition>;
-//     private deckToPositionMap: Map<number, number>;
     private positionMap: Map<number, { deckId: number, position: MyDeckNameTextPosition}> = new Map();;
 
-    private initialX = - 0.398;
+    private initialX = - 0.37;
     private initialY = 0.153;
     private incrementY = - 0.075;
     private maxNameTextsPerPage = 6;
     private positionIndex = 0;
 
-    private constructor() {
-//         this.positionMap = new Map<number, MyDeckNameTextPosition>();
-//         this.deckToPositionMap = new Map<number, number>();
-    }
+    private constructor() {}
 
     public static getInstance(): MyDeckNameTextPositionRepositoryImpl {
         if (!MyDeckNameTextPositionRepositoryImpl.instance) {
@@ -32,7 +27,6 @@ export class MyDeckNameTextPositionRepositoryImpl implements MyDeckNameTextPosit
         }
 
         const positionX = this.initialX;
-//         const positionY = this.initialY + ((deckId - 1) % this.maxNameTextsPerPage) * this.incrementY;
         const positionY = this.initialY + (this.positionIndex - 1) * this.incrementY;
 
         const position = new MyDeckNameTextPosition(positionX, positionY);
@@ -40,8 +34,6 @@ export class MyDeckNameTextPositionRepositoryImpl implements MyDeckNameTextPosit
     }
 
     save(deckId: number, position: MyDeckNameTextPosition): void {
-//         this.positionMap.set(position.id, position);
-//         this.deckToPositionMap.set(deckId, position.id);
         this.positionMap.set(position.id, {deckId, position: position});
     }
 
