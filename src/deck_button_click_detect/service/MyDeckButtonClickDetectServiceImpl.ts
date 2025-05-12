@@ -8,6 +8,7 @@ import {MyDeckButtonEffectRepositoryImpl} from "../../my_deck_button_effect/repo
 import {MyDeckButtonClickDetectRepositoryImpl} from "../repository/MyDeckButtonClickDetectRepositoryImpl";
 import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardRepositoryImpl";
 import {MyDeckBlockRepositoryImpl} from "../../my_deck_block/repository/MyDeckBlockRepositoryImpl";
+import {MyDeckCardNameRepositoryImpl} from "../../my_deck_card_name/repository/MyDeckCardNameRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -27,6 +28,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private myDeckButtonEffectRepository: MyDeckButtonEffectRepositoryImpl;
     private myDeckCardRepository: MyDeckCardRepositoryImpl;
     private myDeckBlockRepository: MyDeckBlockRepositoryImpl;
+    private myDeckCardNameRepository: MyDeckCardNameRepositoryImpl;
 
     private buttonStateManager: ButtonStateManager;
     private buttonEffectManager: ButtonEffectManager;
@@ -43,6 +45,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance();
         this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance();
         this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance();
+        this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance();
 
         this.buttonStateManager = ButtonStateManager.getInstance();
         this.buttonEffectManager = ButtonEffectManager.getInstance();
@@ -92,14 +95,28 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                 this.setCardVisibilityByDeckId(hiddenButtonId, false);
                 this.setCardVisibilityByDeckId(hiddenButtonId, false);
                 this.setBlockVisibilityByDeckId(hiddenButtonId, false);
+                this.setCardNameVisibilityByDeckId(hiddenButtonId, false);
                 console.log(`Deck Button ID ${hiddenButtonId} is now shown.`);
             }
 
             if (currentClickDeckButtonId !== null){
+                // 덱 버튼 누를 때마다 카드, 블록 원위치
+                const scrollTargets = [
+                    this.getBlockGroup(currentClickDeckButtonId),
+                    this.getCardNameGroup(currentClickDeckButtonId),
+                    this.getCardGroup(currentClickDeckButtonId)
+                ];
+
+                if (scrollTargets.every(target => !target)) return null;
+                scrollTargets.forEach(target => {
+                    target.position.y = 0;
+                });
+
                 this.setButtonVisibility(currentClickDeckButtonId, false);
                 this.setEffectVisibility(currentClickDeckButtonId, true);
                 this.setCardVisibilityByDeckId(currentClickDeckButtonId, true);
                 this.setBlockVisibilityByDeckId(currentClickDeckButtonId, true);
+                this.setCardNameVisibilityByDeckId(currentClickDeckButtonId, true);
                 console.log(`Deck Button ID ${currentClickDeckButtonId} is now hidden.`);
             }
 
@@ -172,6 +189,24 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.myDeckBlockRepository.findBlockListByDeckId(deckId)?.forEach(block =>
             block.setVisibility(isVisible)
         );
+    }
+
+    private setCardNameVisibilityByDeckId(deckId: number, isVisible: boolean): void {
+        this.myDeckCardNameRepository.findCardNameListByDeckId(deckId)?.forEach(cardName =>
+            cardName.setVisibility(isVisible)
+        );
+    }
+
+    private getBlockGroup(deckId: number): THREE.Group {
+        return this.myDeckBlockRepository.findBlockGroupByDeckId(deckId);
+    }
+
+    private getCardNameGroup(deckId: number): THREE.Group {
+        return this.myDeckCardNameRepository.findCardNameGroupByDeckId(deckId);
+    }
+
+    private getCardGroup(deckId: number): THREE.Group {
+        return this.myDeckCardRepository.findCardGroupByDeckId(deckId);
     }
 
 }
