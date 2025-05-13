@@ -740,8 +740,29 @@ export class TCGJustTestMyDeckView {
             const cardList = this.myDeckOwnedCardsService.getCardList();
             cardList.forEach((card) => {
                 card.setVisibility(false);
-                this.scene.add(card.getMesh());
+//                 this.scene.add(card.getMesh());
             });
+
+            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 1);
+            let clippingPlanes: THREE.Plane[] = [];
+
+            if (scrollArea) {
+                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                const cardGroup = this.myDeckOwnedCardsService.getCardGroup();
+                cardGroup.children.forEach((buttonObject) => {
+                    if (buttonObject instanceof THREE.Mesh) {
+                        this.clippingMaskManager.applyClippingPlanesToMesh(buttonObject, clippingPlanes);
+                    } else {
+                        console.warn("[WARN] Skipping non-mesh object in cardGroup:", buttonObject);
+                    }
+                });
+
+                if (!this.scene.children.includes(cardGroup)) {
+                    this.scene.add(cardGroup);
+                }
+                cardGroup.position.y = 0;
+
+            }
 
         } catch (error) {
             console.error('Failed to add my deck owned cards:', error);
