@@ -12,10 +12,10 @@ export class MyDeckNameTextMapRepositoryImpl implements MyDeckNameTextMapReposit
         this.myDeckNameMap.set(2, '언데드 덱');
         this.myDeckNameMap.set(3, '트렌트 덱');
         this.myDeckNameMap.set(4, '휴먼 덱');
-        this.myDeckNameMap.set(5, '언데드 휴먼 덱');
-        this.myDeckNameMap.set(6, '트렌트 휴먼 덱');
-        this.myDeckNameMap.set(7, '언데드 트렌트 덱');
-        this.myDeckNameMap.set(8, '언데드 트렌트 휴먼 덱');
+//         this.myDeckNameMap.set(5, '언데드 휴먼 덱');
+//         this.myDeckNameMap.set(6, '트렌트 휴먼 덱');
+//         this.myDeckNameMap.set(7, '언데드 트렌트 덱');
+//         this.myDeckNameMap.set(8, '언데드 트렌트 휴먼 덱');
     }
 
     public static getInstance(): MyDeckNameTextMapRepositoryImpl {

@@ -12,10 +12,10 @@ export class MyDeckButtonMapRepositoryImpl implements MyDeckButtonMapRepository 
         this.currentMyDeckMap.set(1, 2);
         this.currentMyDeckMap.set(2, 3);
         this.currentMyDeckMap.set(3, 4);
-        this.currentMyDeckMap.set(4, 5);
-        this.currentMyDeckMap.set(5, 6);
-        this.currentMyDeckMap.set(6, 7);
-        this.currentMyDeckMap.set(7, 8);
+//         this.currentMyDeckMap.set(4, 5);
+//         this.currentMyDeckMap.set(5, 6);
+//         this.currentMyDeckMap.set(6, 7);
+//         this.currentMyDeckMap.set(7, 8);
     }
 
     public static getInstance(): MyDeckButtonMapRepositoryImpl {
