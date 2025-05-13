@@ -25,6 +25,7 @@ import {MyDeckButtonEffectServiceImpl} from "../../src/my_deck_button_effect/ser
 import {MyDeckButtonMapRepositoryImpl} from "../../src/my_deck_button/repository/MyDeckButtonMapRepositoryImpl";
 import {MyDeckCardServiceImpl} from "../../src/my_deck_card/service/MyDeckCardServiceImpl";
 import {MyDeckCardMapRepositoryImpl} from "../../src/my_deck_card/repository/MyDeckCardMapRepositoryImpl";
+import {MyDeckOwnedCardsMapRepositoryImpl} from "../../src/my_deck_owned_cards/repository/MyDeckOwnedCardsMapRepositoryImpl";
 
 import {MyDeckNameTextServiceImpl} from "../../src/my_deck_name_text/service/MyDeckNameTextServiceImpl";
 import {MyDeckNameTextMapRepositoryImpl} from "../../src/my_deck_name_text/repository/MyDeckNameTextMapRepositoryImpl";
@@ -42,6 +43,7 @@ import {DeleteDeckPopupButtonServiceImpl} from "../../src/delete_deck_popup_butt
 import {DeckEditButtonServiceImpl} from "../../src/deck_edit_button/service/DeckEditButtonServiceImpl";
 import {MyDeckBlockServiceImpl} from "../../src/my_deck_block/service/MyDeckBlockServiceImpl";
 import {MyDeckCardNameServiceImpl} from "../../src/my_deck_card_name/service/MyDeckCardNameServiceImpl";
+import {MyDeckOwnedCardsServiceImpl} from "../../src/my_deck_owned_cards/service/MyDeckOwnedCardsServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -108,12 +110,14 @@ export class TCGJustTestMyDeckView {
     private deckEditButtonService = DeckEditButtonServiceImpl.getInstance();
     private myDeckBlockService = MyDeckBlockServiceImpl.getInstance();
     private myDeckCardNameService = MyDeckCardNameServiceImpl.getInstance();
+    private myDeckOwnedCardsService = MyDeckOwnedCardsServiceImpl.getInstance();
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
     private myDeckButtonMapRepository = MyDeckButtonMapRepositoryImpl.getInstance();
     private myDeckCardMapRepository = MyDeckCardMapRepositoryImpl.getInstance();
     private myDeckNameTextMapRepository = MyDeckNameTextMapRepositoryImpl.getInstance();
+    private myDeckOwnedCardsMapRepository = MyDeckOwnedCardsMapRepositoryImpl.getInstance();
 
     private readonly windowSceneRepository = WindowSceneRepositoryImpl.getInstance();
     private readonly windowSceneService = WindowSceneServiceImpl.getInstance(this.windowSceneRepository);
@@ -422,6 +426,7 @@ export class TCGJustTestMyDeckView {
         await this.addCardScrollArea();
         await this.addBlockScrollArea();
         await this.addMyDeckCard();
+        await this.addMyDeckOwnedCards();
         await this.addMyDeckBlock();
         await this.addMyDeckCardName();
         await this.addMyDeckButton();
@@ -724,6 +729,22 @@ export class TCGJustTestMyDeckView {
             }
         } catch (error) {
             console.error('Failed to add my deck cards:', error);
+        }
+    }
+
+    private async addMyDeckOwnedCards(): Promise<void> {
+        try {
+            const cardMap = this.myDeckOwnedCardsMapRepository.findCurrentMyDeckOwnedCardsMap();
+            await this.myDeckOwnedCardsService.createMyDeckOwnedCardsWithPosition(cardMap);
+
+            const cardList = this.myDeckOwnedCardsService.getCardList();
+            cardList.forEach((card) => {
+                card.setVisibility(false);
+                this.scene.add(card.getMesh());
+            });
+
+        } catch (error) {
+            console.error('Failed to add my deck owned cards:', error);
         }
     }
 
@@ -1158,6 +1179,7 @@ export class TCGJustTestMyDeckView {
             this.deckNameEditButtonService.adjustDeckNameEditButtonPosition();
             this.deckDeleteButtonService.adjustDeckDeleteButtonPosition();
             this.myDeckCardService.adjustMyDeckCardPosition();
+            this.myDeckOwnedCardsService.adjustMyDeckOwnedCardsPosition();
             this.myDeckBlockService.adjustMyDeckBlockPosition();
             this.myDeckCardNameService.adjustMyDeckCardNamePosition();
             this.myDeckNameTextService.adjustMyDeckNameTextPosition();
