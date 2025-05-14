@@ -4,6 +4,11 @@ import {DeckEditButtonClickDetectService} from "./DeckEditButtonClickDetectServi
 import {DeckEditButtonClickDetectRepositoryImpl} from "../repository/DeckEditButtonClickDetectRepositoryImpl";
 import {DeckEditButton} from "../../deck_edit_button/entity/DeckEditButton";
 import {DeckEditButtonRepositoryImpl} from "../../deck_edit_button/repository/DeckEditButtonRepositoryImpl";
+import {MyDeckOwnedCardsRepositoryImpl} from "../../my_deck_owned_cards/repository/MyDeckOwnedCardsRepositoryImpl";
+import {MyDeckOwnedCards} from "../../my_deck_owned_cards/entity/MyDeckOwnedCards";
+import {CardStateManager} from "../../my_deck_card_manager/CardStateManager";
+import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
+import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -12,13 +17,22 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private static instance: DeckEditButtonClickDetectServiceImpl | null = null;
     private deckEditButtonClickDetectRepository: DeckEditButtonClickDetectRepositoryImpl;
     private deckEditButtonRepository: DeckEditButtonRepositoryImpl;
+    private myDeckOwnedCardsRepository: MyDeckOwnedCardsRepositoryImpl;
+    private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
+    private myDeckCardRepository: MyDeckCardRepositoryImpl;
+    private cardStateManager: CardStateManager;
     private cameraRepository: CameraRepository;
     private buttonClickEnabled: boolean = true;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.deckEditButtonClickDetectRepository = DeckEditButtonClickDetectRepositoryImpl.getInstance();
         this.deckEditButtonRepository = DeckEditButtonRepositoryImpl.getInstance();
+        this.myDeckOwnedCardsRepository = MyDeckOwnedCardsRepositoryImpl.getInstance();
+        this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
+        this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance();
         this.cameraRepository = CameraRepositoryImpl.getInstance();
+
+        this.cardStateManager = CardStateManager.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckEditButtonClickDetectServiceImpl {
@@ -48,6 +62,13 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
             if (clickedButton) {
                 this.saveCurrentButtonClickState(true);
                 console.log(`[DEBUG] Clicked Deck Edit Button`);
+
+                const currentClickedDeckButtonId = this.getCurrentClickedDeckButtonId();
+                if (currentClickedDeckButtonId !== null) {
+                    console.log(`Deck Button Id?: ${currentClickedDeckButtonId}`);
+                    this.setMyDeckCardVisibilityByDeckId(currentClickedDeckButtonId, false);
+                }
+                this.setOwnedCardsVisibility(true);
                 return clickedButton;
             }
         }
@@ -68,6 +89,34 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
 
     private saveCurrentButtonClickState(state: boolean): void {
         this.deckEditButtonClickDetectRepository.saveCurrentButtonClickState(state);
+    }
+
+    private getAllOwnedCards(): MyDeckOwnedCards[] {
+        return this.myDeckOwnedCardsRepository.findAllCards();
+    }
+
+    private setOwnedCardsVisibility(isVisible: boolean): void {
+        const allCards = this.getAllOwnedCards();
+        allCards.forEach((card) => card.setVisibility(true));
+    }
+
+    private setMyDeckCardVisibility(deckId: number, cardId: number, isVisible: boolean): void {
+        this.cardStateManager.setCardVisibility(deckId, cardId, isVisible);
+    }
+
+    private setMyDeckCardVisibilityByDeckId(deckId: number, isVisible: boolean): void {
+        const cardUniqueIdList = this.getMyDeckCardUniqueIdListByDeckId(deckId);
+        cardUniqueIdList.forEach((cardUniqueId) => {
+            this.setMyDeckCardVisibility(deckId, cardUniqueId, isVisible);
+        });
+    }
+
+    private getMyDeckCardUniqueIdListByDeckId(deckId: number): number[] {
+        return this.myDeckCardRepository.findCardUniqueIdListByDeckId(deckId);
+    }
+
+    private getCurrentClickedDeckButtonId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
     }
 
 }
