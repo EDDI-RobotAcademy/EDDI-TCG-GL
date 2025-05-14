@@ -119,6 +119,10 @@ export class MyDeckOwnedCardsRepositoryImpl implements MyDeckOwnedCardsRepositor
         this.cardCountMap.delete(cardUniqueId);
     }
 
+    public findAllCardCount(): number {
+        return this.cardMap.size;
+    }
+
     public getCardCountByCardUniqueId(cardUniqueId: number): number | null {
         return this.cardCountMap.get(cardUniqueId) ?? null;
     }
