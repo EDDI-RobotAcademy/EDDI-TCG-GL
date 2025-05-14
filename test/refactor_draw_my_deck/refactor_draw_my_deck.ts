@@ -73,6 +73,8 @@ import {MyDeckBlockScrollService} from "../../src/my_deck_block_scroll/service/M
 import {MyDeckBlockScrollServiceImpl} from "../../src/my_deck_block_scroll/service/MyDeckBlockScrollServiceImpl";
 import {DeckEditButtonClickDetectService} from "../../src/deck_edit_button_click_detect/service/DeckEditButtonClickDetectService";
 import {DeckEditButtonClickDetectServiceImpl} from "../../src/deck_edit_button_click_detect/service/DeckEditButtonClickDetectServiceImpl";
+import {MyDeckOwnedCardsScrollService} from "../../src/my_deck_owned_cards_scroll/service/MyDeckOwnedCardsScrollService";
+import {MyDeckOwnedCardsScrollServiceImpl} from "../../src/my_deck_owned_cards_scroll/service/MyDeckOwnedCardsScrollServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 
@@ -139,6 +141,7 @@ export class TCGJustTestMyDeckView {
     private myDeckCardScrollService: MyDeckCardScrollService;
     private myDeckBlockScrollService: MyDeckBlockScrollService;
     private deckEditButtonClickDetectService: DeckEditButtonClickDetectService;
+    private myDeckOwnedCardsScrollService: MyDeckOwnedCardsScrollService;
 
     private initialized = false;
     private isAnimating = false;
@@ -229,6 +232,21 @@ export class TCGJustTestMyDeckView {
                     const cardRowCount = this.myDeckCardScrollService.getCardRowCount(currentClickDeckId);
                     if (cardRowCount > 2) {
                         this.myDeckCardScrollService.onWheelScroll(e, currentClickDeckId);
+                    }
+                }
+            }
+
+        }, false);
+
+        this.myDeckOwnedCardsScrollService = MyDeckOwnedCardsScrollServiceImpl.getInstance(this.camera, this.scene, this.renderer);
+        this.renderer.domElement.addEventListener('wheel', async (e) => {
+            const isScrollEnabled = this.myDeckOwnedCardsScrollService.isCardScrollEnabled();
+            if (isScrollEnabled == true) {
+                const scrollAreaDetect = this.sideScrollAreaDetectService.getMyDeckScrollEnabledById(1);
+                if (scrollAreaDetect == true) {
+                    const cardRowCount = this.myDeckOwnedCardsScrollService.getCardRowCount();
+                    if (cardRowCount > 2) {
+                        this.myDeckOwnedCardsScrollService.onWheelScroll(e);
                     }
                 }
             }
