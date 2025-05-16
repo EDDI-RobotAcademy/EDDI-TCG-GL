@@ -19,6 +19,7 @@ import {DeckMakePopupButtonsConfigList} from "../../src/deck_make_pop_up_buttons
 import {BuildDeckButtonConfigList} from "../../src/build_deck_button/entity/BuildDeckButtonConfigList";
 import {DeleteDeckPopupButtonConfigList} from "../../src/delete_deck_popup_button/entity/DeleteDeckPopupButtonConfigList";
 import {DeckEditButtonConfigList} from "../../src/deck_edit_button/entity/DeckEditButtonConfigList";
+import {DeckEditDoneButtonConfigList} from "../../src/deck_edit_done_button/entity/DeckEditDoneButtonConfigList";
 
 import {MyDeckButtonServiceImpl} from "../../src/my_deck_button/service/MyDeckButtonServiceImpl";
 import {MyDeckButtonEffectServiceImpl} from "../../src/my_deck_button_effect/service/MyDeckButtonEffectServiceImpl";
@@ -44,6 +45,7 @@ import {DeckEditButtonServiceImpl} from "../../src/deck_edit_button/service/Deck
 import {MyDeckBlockServiceImpl} from "../../src/my_deck_block/service/MyDeckBlockServiceImpl";
 import {MyDeckCardNameServiceImpl} from "../../src/my_deck_card_name/service/MyDeckCardNameServiceImpl";
 import {MyDeckOwnedCardsServiceImpl} from "../../src/my_deck_owned_cards/service/MyDeckOwnedCardsServiceImpl";
+import {DeckEditDoneButtonServiceImpl} from "../../src/deck_edit_done_button/service/DeckEditDoneButtonServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -113,6 +115,7 @@ export class TCGJustTestMyDeckView {
     private myDeckBlockService = MyDeckBlockServiceImpl.getInstance();
     private myDeckCardNameService = MyDeckCardNameServiceImpl.getInstance();
     private myDeckOwnedCardsService = MyDeckOwnedCardsServiceImpl.getInstance();
+    private deckEditDoneButtonService = DeckEditDoneButtonServiceImpl.getInstance();
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -451,6 +454,7 @@ export class TCGJustTestMyDeckView {
         await this.addMyDeckButtonEffect();
         await this.addBuildDeckButton();
         await this.addDeckEditButton();
+        await this.addDeckEditDoneButton();
         await this.addMyDeckNameText();
         await this.addDeckNameEditButton();
         await this.addDeckDeleteButton();
@@ -986,6 +990,25 @@ export class TCGJustTestMyDeckView {
         }
     }
 
+    private async addDeckEditDoneButton(): Promise<void> {
+        try {
+            const configList = new DeckEditDoneButtonConfigList();
+            await Promise.all(configList.buttonConfigs.map(async (config) => {
+                const button = await this.deckEditDoneButtonService.createDeckEditDoneButton(
+                    config.id,
+                    config.position
+                );
+
+                if (button) {
+                    this.scene.add(button);
+                    console.log(`Draw Deck Edit Done Button ${config.id}`);
+                }
+            }));
+        } catch (error) {
+            console.error('Failed to add Deck Edit Done Button:', error);
+        }
+    }
+
     private async addTransparentBackground(): Promise<void> {
         try{
             const transparentBackground = await this.transparentBackgroundService.createTransparentBackground();
@@ -1224,6 +1247,7 @@ export class TCGJustTestMyDeckView {
             this.myDeckNameTextService.adjustMyDeckNameTextPosition();
             this.buildDeckButtonService.adjustBuildDeckButtonPosition();
             this.deckEditButtonService.adjustDeckEditButtonPosition();
+            this.deckEditDoneButtonService.adjustDeckEditDoneButtonPosition();
 //             this.deckMakeButtonService.adjustDeckMakeButtonPosition();
             this.transparentBackgroundService.adjustTransparentBackgroundPosition();
 //             this.decKMakePopupBackgroundService.adjustDeckMakePopupBackgroundPosition();
