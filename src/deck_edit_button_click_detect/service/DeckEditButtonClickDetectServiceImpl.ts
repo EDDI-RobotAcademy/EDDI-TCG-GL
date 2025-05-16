@@ -1,17 +1,20 @@
 import * as THREE from "three";
 
+import {DeckEditButton} from "../../deck_edit_button/entity/DeckEditButton";
+import {MyDeckOwnedCards} from "../../my_deck_owned_cards/entity/MyDeckOwnedCards";
+import {DeckEditDoneButton} from "../../deck_edit_done_button/entity/DeckEditDoneButton";
+
 import {DeckEditButtonClickDetectService} from "./DeckEditButtonClickDetectService";
 import {DeckEditButtonClickDetectRepositoryImpl} from "../repository/DeckEditButtonClickDetectRepositoryImpl";
-import {DeckEditButton} from "../../deck_edit_button/entity/DeckEditButton";
 import {DeckEditButtonRepositoryImpl} from "../../deck_edit_button/repository/DeckEditButtonRepositoryImpl";
 import {MyDeckOwnedCardsRepositoryImpl} from "../../my_deck_owned_cards/repository/MyDeckOwnedCardsRepositoryImpl";
-import {MyDeckOwnedCards} from "../../my_deck_owned_cards/entity/MyDeckOwnedCards";
-import {CardStateManager} from "../../my_deck_card_manager/CardStateManager";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardRepositoryImpl";
-
+import {DeckEditDoneButtonRepositoryImpl} from "../../deck_edit_done_button/repository/DeckEditDoneButtonRepositoryImpl";
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
+
+import {CardStateManager} from "../../my_deck_card_manager/CardStateManager";
 
 export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClickDetectService {
     private static instance: DeckEditButtonClickDetectServiceImpl | null = null;
@@ -20,6 +23,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private myDeckOwnedCardsRepository: MyDeckOwnedCardsRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private myDeckCardRepository: MyDeckCardRepositoryImpl;
+    private deckEditDoneButtonRepository: DeckEditDoneButtonRepositoryImpl;
     private cardStateManager: CardStateManager;
     private cameraRepository: CameraRepository;
     private buttonClickEnabled: boolean = true;
@@ -30,6 +34,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.myDeckOwnedCardsRepository = MyDeckOwnedCardsRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance();
+        this.deckEditDoneButtonRepository = DeckEditDoneButtonRepositoryImpl.getInstance();
         this.cameraRepository = CameraRepositoryImpl.getInstance();
 
         this.cardStateManager = CardStateManager.getInstance();
@@ -68,6 +73,9 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                     console.log(`Deck Button Id?: ${currentClickedDeckButtonId}`);
                     this.setMyDeckCardVisibilityByDeckId(currentClickedDeckButtonId, false);
                 }
+
+                this.setDeckEditButtonVisibility(false);
+                this.setDeckEditDoneButtonVisibility(true);
                 this.setOwnedCardsVisibility(true);
                 return clickedButton;
             }
@@ -85,6 +93,18 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
 
     private getDeckEditButton(): DeckEditButton | null {
         return this.deckEditButtonRepository.findButtonById(0);
+    }
+
+    private getDeckEditDoneButton(): DeckEditDoneButton | null {
+        return this.deckEditDoneButtonRepository.findButtonById(0);
+    }
+
+    private setDeckEditButtonVisibility(isVisible: boolean): void {
+        this.getDeckEditButton()?.setVisibility(isVisible);
+    }
+
+    private setDeckEditDoneButtonVisibility(isVisible: boolean): void {
+        this.getDeckEditDoneButton()?.setVisibility(isVisible);
     }
 
     private saveCurrentButtonClickState(state: boolean): void {

@@ -46,6 +46,7 @@ import {MyDeckBlockServiceImpl} from "../../src/my_deck_block/service/MyDeckBloc
 import {MyDeckCardNameServiceImpl} from "../../src/my_deck_card_name/service/MyDeckCardNameServiceImpl";
 import {MyDeckOwnedCardsServiceImpl} from "../../src/my_deck_owned_cards/service/MyDeckOwnedCardsServiceImpl";
 import {DeckEditDoneButtonServiceImpl} from "../../src/deck_edit_done_button/service/DeckEditDoneButtonServiceImpl";
+import {CardSelectionBlockerServiceImpl} from "../../src/card_selection_blocker/service/CardSelectionBlockerServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -116,6 +117,7 @@ export class TCGJustTestMyDeckView {
     private myDeckCardNameService = MyDeckCardNameServiceImpl.getInstance();
     private myDeckOwnedCardsService = MyDeckOwnedCardsServiceImpl.getInstance();
     private deckEditDoneButtonService = DeckEditDoneButtonServiceImpl.getInstance();
+    private cardSelectionBlockerService = CardSelectionBlockerServiceImpl.getInstance();
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -448,6 +450,7 @@ export class TCGJustTestMyDeckView {
         await this.addBlockScrollArea();
         await this.addMyDeckCard();
         await this.addMyDeckOwnedCards();
+        await this.addCardSelectionBlocker();
         await this.addMyDeckBlock();
         await this.addMyDeckCardName();
         await this.addMyDeckButton();
@@ -788,6 +791,21 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add my deck owned cards:', error);
+        }
+    }
+
+    private async addCardSelectionBlocker(): Promise<void> {
+        try {
+            const cardIdList = this.myDeckOwnedCardsMapRepository.getCardIdList();
+            await this.cardSelectionBlockerService.createCardSelectionBlockerWithPosition(cardIdList);
+
+            const blockerList = this.cardSelectionBlockerService.getBlockerList();
+            blockerList.forEach((blocker) => {
+                this.scene.add(blocker.getMesh());
+            });
+
+        } catch (error) {
+            console.error('Failed to add Card Selection Blocker:', error);
         }
     }
 
@@ -1242,6 +1260,7 @@ export class TCGJustTestMyDeckView {
             this.deckDeleteButtonService.adjustDeckDeleteButtonPosition();
             this.myDeckCardService.adjustMyDeckCardPosition();
             this.myDeckOwnedCardsService.adjustMyDeckOwnedCardsPosition();
+            this.cardSelectionBlockerService.adjustCardSelectionBlockerPosition();
             this.myDeckBlockService.adjustMyDeckBlockPosition();
             this.myDeckCardNameService.adjustMyDeckCardNamePosition();
             this.myDeckNameTextService.adjustMyDeckNameTextPosition();
