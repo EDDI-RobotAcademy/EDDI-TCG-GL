@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 import {MyDeckOwnedCardsScrollService} from "./MyDeckOwnedCardsScrollService";
 import {MyDeckOwnedCardsRepositoryImpl} from "../../my_deck_owned_cards/repository/MyDeckOwnedCardsRepositoryImpl";
+import {CardSelectionBlockerRepositoryImpl} from "../../card_selection_blocker/repository/CardSelectionBlockerRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -11,6 +12,7 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
     private renderer: THREE.WebGLRenderer;
     private cameraRepository: CameraRepository;
     private myDeckOwnedCardsRepository: MyDeckOwnedCardsRepositoryImpl;
+    private cardSelectionBlockerRepository: CardSelectionBlockerRepositoryImpl;
 
     private isScrollEnabled: boolean = true;
 
@@ -18,6 +20,7 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
         this.renderer = renderer;
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.myDeckOwnedCardsRepository = MyDeckOwnedCardsRepositoryImpl.getInstance();
+        this.cardSelectionBlockerRepository = CardSelectionBlockerRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer): MyDeckOwnedCardsScrollServiceImpl {
@@ -38,6 +41,7 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
     public async onWheelScroll(event: WheelEvent): Promise<void> {
         const scrollTargets = [
             this.getOwnedCardGroup(), // scrollTargetDeckOwnedCard
+            this.getCardSelectionBlocker(),
         ];
 
         if (scrollTargets.every(target => !target)) return;
@@ -70,6 +74,10 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
 
     private getOwnedCardGroup(): THREE.Group {
         return this.myDeckOwnedCardsRepository.findCardGroup();
+    }
+
+    private getCardSelectionBlocker(): THREE.Group {
+        return this.cardSelectionBlockerRepository.findBlockerGroup();
     }
 
     private getCardCount(): number {
