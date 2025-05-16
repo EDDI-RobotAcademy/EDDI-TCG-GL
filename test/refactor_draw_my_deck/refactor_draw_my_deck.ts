@@ -800,9 +800,29 @@ export class TCGJustTestMyDeckView {
             await this.cardSelectionBlockerService.createCardSelectionBlockerWithPosition(cardIdList);
 
             const blockerList = this.cardSelectionBlockerService.getBlockerList();
-            blockerList.forEach((blocker) => {
-                this.scene.add(blocker.getMesh());
-            });
+//             blockerList.forEach((blocker) => {
+//                 this.scene.add(blocker.getMesh());
+//             });
+
+            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 1);
+            let clippingPlanes: THREE.Plane[] = [];
+
+            if (scrollArea) {
+                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                const blockerGroup = this.cardSelectionBlockerService.getBlockerGroup();
+                blockerGroup.children.forEach((blockerObject) => {
+                    if (blockerObject instanceof THREE.Mesh) {
+                        this.clippingMaskManager.applyClippingPlanesToMesh(blockerObject, clippingPlanes);
+                    } else {
+                        console.warn("[WARN] Skipping non-mesh object in blockerGroup:", blockerObject);
+                    }
+                });
+
+                if (!this.scene.children.includes(blockerGroup)) {
+                    this.scene.add(blockerGroup);
+                }
+                blockerGroup.position.y = 0;
+            }
 
         } catch (error) {
             console.error('Failed to add Card Selection Blocker:', error);

@@ -90,6 +90,15 @@ export class CardSelectionBlockerServiceImpl implements CardSelectionBlockerServ
             blockerMesh.geometry = new THREE.PlaneGeometry(blockerWidth, blockerHeight);
             blockerMesh.position.set(newPositionX, newPositionY, 0);
 
+            const scrollArea = this.getScrollArea();
+            if (scrollArea) {
+                scrollArea.width = 0.54 * windowWidth;
+                scrollArea.height = 0.745 * windowHeight;
+                scrollArea.position.set(0 * window.innerWidth, -0.125 * window.innerHeight);
+                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                this.applyClippingPlanesToMesh(blockerMesh, clippingPlanes);
+            }
+
         }
     }
 
