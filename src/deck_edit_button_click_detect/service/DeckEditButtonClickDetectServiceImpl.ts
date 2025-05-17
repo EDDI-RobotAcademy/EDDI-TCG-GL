@@ -11,6 +11,8 @@ import {MyDeckOwnedCardsRepositoryImpl} from "../../my_deck_owned_cards/reposito
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardRepositoryImpl";
 import {DeckEditDoneButtonRepositoryImpl} from "../../deck_edit_done_button/repository/DeckEditDoneButtonRepositoryImpl";
+import {MyDeckCardMapRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardMapRepositoryImpl";
+import {CardSelectionBlockerRepositoryImpl} from "../../card_selection_blocker/repository/CardSelectionBlockerRepositoryImpl";
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
 
@@ -24,6 +26,8 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private myDeckCardRepository: MyDeckCardRepositoryImpl;
     private deckEditDoneButtonRepository: DeckEditDoneButtonRepositoryImpl;
+    private myDeckCardMapRepository: MyDeckCardMapRepositoryImpl;
+    private cardSelectionBlockerRepository: CardSelectionBlockerRepositoryImpl;
     private cardStateManager: CardStateManager;
     private cameraRepository: CameraRepository;
     private buttonClickEnabled: boolean = true;
@@ -35,6 +39,8 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance();
         this.deckEditDoneButtonRepository = DeckEditDoneButtonRepositoryImpl.getInstance();
+        this.myDeckCardMapRepository = MyDeckCardMapRepositoryImpl.getInstance();
+        this.cardSelectionBlockerRepository = CardSelectionBlockerRepositoryImpl.getInstance();
         this.cameraRepository = CameraRepositoryImpl.getInstance();
 
         this.cardStateManager = CardStateManager.getInstance();
@@ -68,10 +74,12 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                 this.saveCurrentButtonClickState(true);
                 console.log(`[DEBUG] Clicked Deck Edit Button`);
 
+//                 this.hideAllCardBlocker();
                 const currentClickedDeckButtonId = this.getCurrentClickedDeckButtonId();
                 if (currentClickedDeckButtonId !== null) {
                     console.log(`Deck Button Id?: ${currentClickedDeckButtonId}`);
                     this.setMyDeckCardVisibilityByDeckId(currentClickedDeckButtonId, false);
+                    this.showCardBlockersForFullyUsedCards(currentClickedDeckButtonId);
                 }
 
                 this.setDeckEditButtonVisibility(false);
@@ -137,6 +145,52 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
 
     private getCurrentClickedDeckButtonId(): number | null {
         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    }
+
+    // 카드 개수 객체(카드 아래 개수 표시) 만들면 해당 repository 에서 가져오는 걸로 수정해야 함
+    private getMyDeckCardCountByDeckIdAndCardId(deckId: number, cardId: number): number {
+        return this.myDeckCardMapRepository.findCardCountByDeckIdAndCardId(deckId, cardId);
+    }
+
+    private getOwnedCardCountByCardUniqueId(cardUniqueId: number): number | null {
+        return this.myDeckOwnedCardsRepository.getCardCountByCardUniqueId(cardUniqueId);
+    }
+
+    private getCardUniqueIdListByDeckId(deckId: number): number[] {
+        return this.myDeckCardRepository.findCardUniqueIdListByDeckId(deckId);
+    }
+
+    private getCardIdByCardUniqueId(cardUniqueId: number): number | null {
+        return this.myDeckOwnedCardsRepository.findCardIdByCardUniqueId(cardUniqueId);
+    }
+
+    // 덱에 이미 최대한으로 사용된 카드들에 대해 선택을 막는 blocker 를 표시
+    private showCardBlockersForFullyUsedCards(deckId: number): void {
+        const cardUniqueIdList = this.getCardUniqueIdListByDeckId(deckId);
+        cardUniqueIdList.forEach((cardUniqueId) => {
+            const ownedCardCount = this.getOwnedCardCountByCardUniqueId(cardUniqueId);
+            const cardId = this.getCardIdByCardUniqueId(cardUniqueId);
+
+            if (ownedCardCount == null || cardId == null) return;
+
+            const cardCount = this.getMyDeckCardCountByDeckIdAndCardId(deckId, cardId);
+
+            if (ownedCardCount === cardCount) {
+                this.setCardBlockerVisibility(cardId, true);
+            }
+        });
+    }
+
+    private setCardBlockerVisibility(cardId: number, isVisible: boolean): void {
+        const blocker = this.cardSelectionBlockerRepository.findBlockerByCardId(cardId);
+        if (blocker !== null) {
+            blocker.setVisibility(isVisible);
+        }
+    }
+
+    private hideAllCardBlocker(): void {
+        const allBlockers = this.cardSelectionBlockerRepository.findAllBlockers();
+        allBlockers.forEach((blocker) => blocker.setVisibility(false));
     }
 
 }
