@@ -86,7 +86,7 @@ export class DeckDeleteButtonServiceImpl implements DeckDeleteButtonService {
             }
             console.log(`[DEBUG] (adjust) Button InitialPosition: ${initialPosition}`);
 
-            const buttonWidth = 0.047 * window.innerWidth;
+            const buttonWidth = 0.034 * window.innerWidth;
             const buttonHeight = buttonWidth * 0.9;
 
             const newPositionX = initialPosition.getX() * windowWidth;
@@ -167,6 +167,17 @@ export class DeckDeleteButtonServiceImpl implements DeckDeleteButtonService {
 
     private applyClippingPlanesToMesh(mesh: THREE.Mesh, clippingPlanes: THREE.Plane[]): void {
         this.clippingMaskManager.applyClippingPlanesToMesh(mesh, clippingPlanes);
+    }
+
+    public initializeDeckDeleteButtonVisibility(): void {
+        const deckIdList = this.getButtonDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
+        const button = this.deckDeleteButtonRepository.findButtonByDeckId(firstDeckId);
+
+        if (button !== null) {
+            button.setVisibility(true);
+        }
     }
 
 }

@@ -6,9 +6,9 @@ export class DeckDeleteButtonPositionRepositoryImpl implements DeckDeleteButtonP
     private static instance: DeckDeleteButtonPositionRepositoryImpl;
     private positionMap: Map<number, { deckId: number, position: DeckDeleteButtonPosition }> = new Map(); // position unique id: {deck id: mesh}
 
-    private positionX = - 0.277;
-    private initialY = 0.135;
-    private incrementY = - 0.09;
+    private positionX = - 0.31;
+    private initialY = 0.153;
+    private incrementY = - 0.075;
     private positionIndex = 0;
 
     private constructor() {}

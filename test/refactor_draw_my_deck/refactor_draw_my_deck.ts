@@ -139,7 +139,7 @@ export class TCGJustTestMyDeckView {
     private sideScrollAreaDetectService: SideScrollAreaDetectService;
     private buildDeckButtonHoverDetectService: BuildDeckButtonHoverDetectService;
     private buildDeckButtonClickDetectService: BuildDeckButtonClickDetectService;
-    private myDeckButtonEffectHoverDetectService: MyDeckButtonEffectHoverDetectService;
+//     private myDeckButtonEffectHoverDetectService: MyDeckButtonEffectHoverDetectService;
     private deckDeleteButtonClickDetectService: DeckDeleteButtonClickDetectService;
     private deleteDeckPopupButtonClickDetectService: DeleteDeckPopupButtonClickDetectService;
     private deckNameEditButtonClickDetectService: DeckNameEditButtonClickDetectService;
@@ -291,23 +291,16 @@ export class TCGJustTestMyDeckView {
             }
         }, false);
 
-        this.myDeckButtonEffectHoverDetectService = MyDeckButtonEffectHoverDetectServiceImpl.getInstance(this.camera, this.scene);
-        this.renderer.domElement.addEventListener('mousemove', async (e) => {
-            const effectDetectState = this.myDeckButtonEffectHoverDetectService.getEffectDetectState();
-            if (effectDetectState == true) {
-                const buttonEffectHover = await this.myDeckButtonEffectHoverDetectService.onMouseMove(e);
-            }
-        }, false);
+//         this.myDeckButtonEffectHoverDetectService = MyDeckButtonEffectHoverDetectServiceImpl.getInstance(this.camera, this.scene);
+//         this.renderer.domElement.addEventListener('mousemove', async (e) => {
+//             const effectDetectState = this.myDeckButtonEffectHoverDetectService.getEffectDetectState();
+//             if (effectDetectState == true) {
+//                 const buttonEffectHover = await this.myDeckButtonEffectHoverDetectService.onMouseMove(e);
+//             }
+//         }, false);
 
-        // 덱 버튼 클릭되고 덱 삭제 버튼이 나타날 때만 삭제 버튼 클릭 가능해야 함
+        // To-do: 덱 버튼 클릭되고 덱 삭제 버튼이 나타날 때만 삭제 버튼 클릭 가능해야 함
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            const currentHoveredEffectId = this.myDeckButtonEffectHoverDetectService.getCurrentHoveredEffectId();
-            if (currentHoveredEffectId !== null) {
-                const deleteButtonVisibleState = this.myDeckButtonEffectHoverDetectService.getDeckDeleteButtonVisibility(currentHoveredEffectId);
-                if (deleteButtonVisibleState == true) {
-                    this.deckDeleteButtonClickDetectService.setButtonClickState(true);
-                }
-            }
 
             // 덱 삭제 버튼 클릭시 덱 버튼이 클릭되면 안 됨
             const buttonClickState = this.deckDeleteButtonClickDetectService.getButtonClickState();
@@ -333,7 +326,7 @@ export class TCGJustTestMyDeckView {
                 this.myDeckButtonClickDetectService.setButtonClickState(false);
                 this.buildDeckButtonClickDetectService.setButtonClickState(false);
                 this.buildDeckButtonHoverDetectService.setButtonDetectState(false);
-                this.myDeckButtonEffectHoverDetectService.setEffectDetectState(false);
+//                 this.myDeckButtonEffectHoverDetectService.setEffectDetectState(false);
                 this.sideScrollAreaDetectService.setMyDeckScrollAreaDetectState(false);
 
                 await this.deleteAllCard();
@@ -344,7 +337,7 @@ export class TCGJustTestMyDeckView {
                     this.myDeckButtonClickDetectService.setButtonClickState(true);
                     this.buildDeckButtonClickDetectService.setButtonClickState(true);
                     this.buildDeckButtonHoverDetectService.setButtonDetectState(true);
-                    this.myDeckButtonEffectHoverDetectService.setEffectDetectState(true);
+//                     this.myDeckButtonEffectHoverDetectService.setEffectDetectState(true);
                     this.sideScrollAreaDetectService.setMyDeckScrollAreaDetectState(true);
 
                     await this.deleteMyDeckButtons();
@@ -364,15 +357,8 @@ export class TCGJustTestMyDeckView {
             }
         }, false);
 
+        // To-do: 기능 수정 필요(편집 버튼 visible true일 때 기능 활성화)
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            const currentHoveredButtonEffectId = this.myDeckButtonEffectHoverDetectService.getCurrentHoveredEffectId();
-            if (currentHoveredButtonEffectId !== null) {
-                const deckEditButtonVisibleState = this.myDeckButtonEffectHoverDetectService.getDeckNameEditButtonVisibility(currentHoveredButtonEffectId);
-                if (deckEditButtonVisibleState == true) {
-                    this.deckNameEditButtonClickDetectService.setButtonClickState(true);
-                }
-            }
-
             const deckNameEditButtonClickState = this.deckNameEditButtonClickDetectService.getButtonClickState();
             if (deckNameEditButtonClickState == true) {
                 this.myDeckButtonClickDetectService.setButtonClickState(false);
@@ -647,6 +633,8 @@ export class TCGJustTestMyDeckView {
                 await this.deckNameEditButtonService.createDeckNameEditButtonWithPosition(deckId);
             }
 
+            this.deckNameEditButtonService.initializeDeckNameEditButtonVisibility();
+
             const buttonGroup = this.deckNameEditButtonService.getButtonGroup();
             const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 0);
             let clippingPlanes: THREE.Plane[] = [];
@@ -679,6 +667,8 @@ export class TCGJustTestMyDeckView {
             for (const [index, deckId] of myDeckButtonList.entries()) {
                 await this.deckDeleteButtonService.createDeckDeleteButtonWithPosition(deckId);
             }
+
+            this.deckDeleteButtonService.initializeDeckDeleteButtonVisibility();
 
             const buttonGroup = this.deckDeleteButtonService.getButtonGroup();
             const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 0);
