@@ -11,7 +11,7 @@ export class DeckDeleteButtonRepositoryImpl implements DeckDeleteButtonRepositor
     private textureManager: TextureManager;
     private buttonGroup: THREE.Group | null = null;
 
-    private readonly BUTTON_WIDTH: number = 0.047
+    private readonly BUTTON_WIDTH: number = 0.034
 
     private constructor(textureManager: TextureManager) {
         this.textureManager = textureManager;

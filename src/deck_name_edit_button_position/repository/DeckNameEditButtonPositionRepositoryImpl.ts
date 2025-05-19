@@ -6,9 +6,9 @@ export class DeckNameEditButtonPositionRepositoryImpl implements DeckNameEditBut
     private static instance: DeckNameEditButtonPositionRepositoryImpl;
     private positionMap: Map<number, { deckId: number, position: DeckNameEditButtonPosition }> = new Map(); // position unique id: {deck id: mesh}
 
-    private positionX = - 0.321;
-    private initialY = 0.135;
-    private incrementY = - 0.09;
+    private positionX = - 0.345;
+    private initialY = 0.153;
+    private incrementY = - 0.075;
     private positionIndex = 0;
 
     private constructor() {}
