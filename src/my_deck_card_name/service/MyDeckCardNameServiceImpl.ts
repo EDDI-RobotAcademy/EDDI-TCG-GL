@@ -39,11 +39,27 @@ export class MyDeckCardNameServiceImpl implements MyDeckCardNameService {
         try {
             await Promise.all(
                 cardIdList.map(async (cardId, index) => {
-                    const position = this.myMyDeckCardNamePosition(deckId, index);
-                    console.log(`[Block] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
+                    const cardNameId = this.getCardNameIdByDeckIdAndCardId(deckId, cardId);
+                    if (cardNameId == null) {
+                        const position = this.myMyDeckCardNamePosition(deckId, index);
+                        console.log(`[Block] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
 
-                    const myDeckBlock = await this.createMyDeckCardName(deckId, cardId, position.position);
-                    cardNameGroup.add(myDeckBlock.getMesh());
+                        const myDeckBlock = await this.createMyDeckCardName(deckId, cardId, position.position);
+                        cardNameGroup.add(myDeckBlock.getMesh());
+
+                    } else {
+                        const existingPosition = this.getPositionByCardNameId(cardNameId);
+                        const existingCardNameMesh = this.getCardNameMeshByDeckIdAndCardId(deckId, cardId);
+
+                        if (existingPosition && existingCardNameMesh) {
+                            const positionX = existingPosition.getX() * window.innerWidth;
+                            const positionY = existingPosition.getY() * window.innerHeight;
+
+                            existingCardNameMesh.position.set(positionX, positionY, 0);
+                            cardNameGroup.add(existingCardNameMesh);
+                        }
+                    }
+
                 })
             );
         } catch (error) {
@@ -156,6 +172,24 @@ export class MyDeckCardNameServiceImpl implements MyDeckCardNameService {
         return this.myDeckCardNamePositionRepository.findPositionByPositionId(cardNameId);
     }
 
+    private getCardNameMeshByDeckIdAndCardId(deckId: number, cardId: number): THREE.Mesh | null {
+        const cardName = this.myDeckCardNameRepository.findCardNameByDeckIdAndCardId(deckId, cardId);
+        if (!cardName) {
+            console.warn(`[WARN] Card Name with Deck ID: ${deckId}, Card ID ${cardId} not found`);
+            return null;
+        }
+        return cardName.getMesh();
+    }
+
+    private getCardNameIdByDeckIdAndCardId(deckId: number, cardId: number): number | null {
+        const cardNameId = this.myDeckCardNameRepository.findCardNameIdByDeckIdAndCardId(deckId, cardId);
+        if (!cardNameId) {
+            console.warn(`[WARN] Card Name Id ${cardNameId} not found`);
+            return null;
+        }
+        return cardNameId;
+    }
+
     public saveCardNameGroup(deckId: number): void {
         this.myDeckCardNameRepository.saveCardNameGroupByDeckId(deckId);
     }
@@ -178,6 +212,10 @@ export class MyDeckCardNameServiceImpl implements MyDeckCardNameService {
 
     private applyClippingPlanesToMesh(mesh: THREE.Mesh, clippingPlanes: THREE.Plane[]): void {
         this.clippingMaskManager.applyClippingPlanesToMesh(mesh, clippingPlanes);
+    }
+
+    public resetCardNameGroup(): void {
+        this.myDeckCardNameRepository.resetCardNameGroup();
     }
 
 }

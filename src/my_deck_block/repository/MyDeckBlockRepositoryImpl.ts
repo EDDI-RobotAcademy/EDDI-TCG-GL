@@ -89,6 +89,36 @@ export class MyDeckBlockRepositoryImpl implements MyDeckBlockRepository {
         }
     }
 
+    public findBlockByDeckIdAndCardId(deckId: number, cardId: number): MyDeckBlock | null {
+        const blockIdList = this.deckMap.get(deckId);
+        if (!blockIdList) {
+            return null;
+        }
+
+        for (const blockId of blockIdList) {
+            const block = this.blockMap.get(blockId);
+            if (block && block.cardId === cardId) {
+                return block.blockMesh;
+            }
+        }
+        return null;
+    }
+
+    public findBlockIdByDeckIdAndCardId(deckId: number, cardId: number): number | null {
+        const blockIdList = this.deckMap.get(deckId);
+        if (!blockIdList) {
+            return null;
+        }
+
+        for (const blockId of blockIdList) {
+            const blockEntry = this.blockMap.get(blockId);
+            if (blockEntry && blockEntry.cardId === cardId) {
+                return blockId;
+            }
+        }
+        return null;
+    }
+
     public findBlockListByDeckId(deckId: number): MyDeckBlock[] | null {
         const blockUniqueIdList = this.deckMap.get(deckId);
         if (blockUniqueIdList === undefined) {
@@ -146,6 +176,10 @@ export class MyDeckBlockRepositoryImpl implements MyDeckBlockRepository {
             throw new Error(`Block group with Deck ID ${deckId} not found`);
         }
         return blockGroup;
+    }
+
+    public resetBlockGroup(): void {
+        this.blockGroupMap.clear();
     }
 
     // 특정 덱의 특정 block 삭제
