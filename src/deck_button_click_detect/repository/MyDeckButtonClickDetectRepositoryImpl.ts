@@ -53,4 +53,8 @@ export class MyDeckButtonClickDetectRepositoryImpl implements MyDeckButtonClickD
         return this.currentClickDeckButtonId;
     }
 
+    resetCurrentClickDeckButtonId(): void {
+        this.currentClickDeckButtonId = null;
+    }
+
 }

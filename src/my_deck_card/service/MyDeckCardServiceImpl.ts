@@ -49,11 +49,27 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
         try {
             await Promise.all(
                 cardIdList.map(async (cardId, index) => {
-                    const position = this.myDeckCardPosition(deckId, index);
-                    console.log(`[DEBUG] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
+                    const cardUniqueId = this.getCardUniqueIdByDeckIdAndCardId(deckId, cardId);
+                    if (cardUniqueId == null) {
+                        const position = this.myDeckCardPosition(deckId, index);
+                        console.log(`[DEBUG] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
 
-                    const myDeckCard = await this.createMyDeckCard(deckId, cardId, position.position);
-                    cardGroup.add(myDeckCard.getMesh());
+                        const myDeckCard = await this.createMyDeckCard(deckId, cardId, position.position);
+                        cardGroup.add(myDeckCard.getMesh());
+
+                    } else {
+                        const existingPosition = this.getPositionByCardUniqueId(cardUniqueId);
+                        const existingCardMesh = this.getCardMeshByDeckIdAndCardId(deckId, cardId);
+
+                        if (existingPosition && existingCardMesh) {
+                            const positionX = existingPosition.getX() * window.innerWidth;
+                            const positionY = existingPosition.getY() * window.innerHeight;
+
+                            existingCardMesh.position.set(positionX, positionY, 0);
+                            cardGroup.add(existingCardMesh);
+
+                        }
+                    }
                 })
             );
         } catch (error) {
@@ -64,7 +80,7 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
     }
 
     public adjustMyDeckCardPosition(): void {
-        const currentDeckButtonId = this.getCurrentClickDeckButton();
+        const currentDeckButtonId = this.getCurrentClickDeckButtonId();
         if (currentDeckButtonId === null) {
             console.error("No deck button clicked");
             return;
@@ -151,6 +167,24 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
         return this.myDeckCardPositionRepository.findPositionByPositionId(cardUniqueId);
     }
 
+    private getCardMeshByDeckIdAndCardId(deckId: number, cardId: number): THREE.Mesh | null {
+        const card = this.myDeckCardRepository.findCardByDeckIdAndCardId(deckId, cardId);
+        if (!card) {
+            console.warn(`[WARN] Card with Deck ID: ${deckId}, Card ID ${cardId} not found`);
+            return null;
+        }
+        return card.getMesh();
+    }
+
+    private getCardUniqueIdByDeckIdAndCardId(deckId: number, cardId: number): number | null {
+        const cardUniqueId = this.myDeckCardRepository.findCardUniqueIdByDeckIdAndCardId(deckId, cardId);
+        if (!cardUniqueId) {
+            console.warn(`[WARN] Card Unique ID ${cardUniqueId} not found`);
+            return null;
+        }
+        return cardUniqueId;
+    }
+
     // 이름 변경 필요
     public initializeCardVisibility(deckId: number): void {
         this.cardStateManager.initializeCardVisibility(deckId);
@@ -169,8 +203,12 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
         return cardList.map((card) => card.getMesh());
     }
 
-    public getCurrentClickDeckButton(): number | null {
+    public getCurrentClickDeckButtonId(): number | null {
         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    }
+
+    public saveCurrentClickDeckButtonId(deckId: number): void {
+        this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(deckId);
     }
 
     public resetCardVisibility(): void {
@@ -191,6 +229,10 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
 
     private applyClippingPlanesToMesh(mesh: THREE.Mesh, clippingPlanes: THREE.Plane[]): void {
         this.clippingMaskManager.applyClippingPlanesToMesh(mesh, clippingPlanes);
+    }
+
+    public resetCardGroup(): void {
+        this.myDeckCardRepository.resetCardGroup();
     }
 
 }

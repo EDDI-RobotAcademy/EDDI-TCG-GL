@@ -14,7 +14,7 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
     private myDeckCardRepository: MyDeckCardRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
 
-    private scrollState: boolean = true;
+    private isScrollEnabled: boolean = true;
 
     private constructor(camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer) {
         this.renderer = renderer;
@@ -30,12 +30,12 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
         return MyDeckCardScrollServiceImpl.instance;
     }
 
-    public setCardScrollState(state: boolean): void {
-        this.scrollState = state;
+    public setCardScrollEnabled(scrollEnable: boolean): void {
+        this.isScrollEnabled = scrollEnable;
     }
 
-    public getCardScrollState(): boolean {
-        return this.scrollState;
+    public isCardScrollEnabled(): boolean {
+        return this.isScrollEnabled;
     }
 
     public async onWheelScroll(event: WheelEvent, currentClickDeckId: number): Promise<void> {
@@ -80,7 +80,9 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
 
     public getCardRowCount(deckId: number): number {
         const cardCount = this.getCardCountByDeckId(deckId);
+        console.log(`Card Count?${cardCount}`);
         const rowCount = Math.ceil(cardCount / 4);
+        console.log(`Card Row Count? ${rowCount}`);
 
         return rowCount;
     }

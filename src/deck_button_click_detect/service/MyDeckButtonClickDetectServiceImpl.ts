@@ -148,6 +148,10 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(buttonDeckId);
     }
 
+    public getCurrentClickDeckButtonId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId() ?? null;
+    }
+
     public getDeckIdByButtonId(buttonId: number): number {
         return this.myDeckButtonRepository.findDeckIdByButtonId(buttonId) ?? -1;
     }

@@ -7,6 +7,7 @@ import {DeleteDeckPopupButtonRepositoryImpl} from "../../delete_deck_popup_butto
 import {DeleteDeckPopupWindowRepositoryImpl} from "../../delete_deck_popup_window/repository/DeleteDeckPopupWindowRepositoryImpl";
 import {TransparentBackgroundRepositoryImpl} from "../../transparent_background/repository/TransparentBackgroundRepositoryImpl";
 import {DeckDeleteButtonClickDetectRepositoryImpl} from "../../deck_delete_button_click_detect/repository/DeckDeleteButtonClickDetectRepositoryImpl";
+import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 
 import {DeckDeleteButtonRepositoryImpl} from "../../deck_delete_button/repository/DeckDeleteButtonRepositoryImpl";
 import {DeckNameEditButtonRepositoryImpl} from "../../deck_name_edit_button/repository/DeckNameEditButtonRepositoryImpl";
@@ -14,16 +15,19 @@ import {MyDeckButtonRepositoryImpl} from "../../my_deck_button/repository/MyDeck
 import {MyDeckButtonEffectRepositoryImpl} from "../../my_deck_button_effect/repository/MyDeckButtonEffectRepositoryImpl";
 import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardRepositoryImpl";
 import {MyDeckNameTextRepositoryImpl} from "../../my_deck_name_text/repository/MyDeckNameTextRepositoryImpl";
+import {MyDeckBlockRepositoryImpl} from "../../my_deck_block/repository/MyDeckBlockRepositoryImpl";
 
 import {DeckDeleteButtonPositionRepositoryImpl} from "../../deck_delete_button_position/repository/DeckDeleteButtonPositionRepositoryImpl";
 import {DeckNameEditButtonPositionRepositoryImpl} from "../../deck_name_edit_button_position/repository/DeckNameEditButtonPositionRepositoryImpl";
 import {MyDeckButtonPositionRepositoryImpl} from "../../my_deck_button_position/repository/MyDeckButtonPositionRepositoryImpl";
 import {MyDeckCardPositionRepositoryImpl} from "../../my_deck_card_position/repository/MyDeckCardPositionRepositoryImpl";
 import {MyDeckNameTextPositionRepositoryImpl} from "../../my_deck_name_text_position/repository/MyDeckNameTextPositionRepositoryImpl";
+import {MyDeckBlockPositionRepositoryImpl} from "../../my_deck_block_position/repository/MyDeckBlockPositionRepositoryImpl";
 
 import {MyDeckButtonMapRepositoryImpl} from "../../my_deck_button/repository/MyDeckButtonMapRepositoryImpl";
 import {MyDeckCardMapRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardMapRepositoryImpl";
 import {MyDeckNameTextMapRepositoryImpl} from "../../my_deck_name_text/repository/MyDeckNameTextMapRepositoryImpl";
+import {CardStateManager} from "../../my_deck_card_manager/CardStateManager";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -35,6 +39,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     private deleteDeckPopupWindowRepository: DeleteDeckPopupWindowRepositoryImpl;
     private transparentBackgroundRepository : TransparentBackgroundRepositoryImpl;
     private deckDeleteButtonClickDetectRepository: DeckDeleteButtonClickDetectRepositoryImpl;
+    private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private cameraRepository: CameraRepository;
 
     private deckDeleteButtonRepository: DeckDeleteButtonRepositoryImpl;
@@ -43,16 +48,19 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     private myDeckButtonEffectRepository: MyDeckButtonEffectRepositoryImpl;
     private myDeckCardRepository: MyDeckCardRepositoryImpl;
     private myDeckNameTextRepository: MyDeckNameTextRepositoryImpl;
+    private myDeckBlockRepository: MyDeckBlockRepositoryImpl;
 
     private deckDeleteButtonPositionRepository: DeckDeleteButtonPositionRepositoryImpl;
     private deckNameEditButtonPositionRepository: DeckNameEditButtonPositionRepositoryImpl;
     private myDeckButtonPositionRepository: MyDeckButtonPositionRepositoryImpl;
     private myDeckCardPositionRepository: MyDeckCardPositionRepositoryImpl;
     private myDeckNameTextPositionRepository: MyDeckNameTextPositionRepositoryImpl;
+    private myDeckBlockPositionRepository: MyDeckBlockPositionRepositoryImpl;
 
     private myDeckButtonMapRepository: MyDeckButtonMapRepositoryImpl;
     private myDeckCardMapRepository: MyDeckCardMapRepositoryImpl;
     private myDeckNameTextMapRepository: MyDeckNameTextMapRepositoryImpl;
+    private cardStateManager: CardStateManager;
 
     private buttonClickState: boolean = false;
 
@@ -62,6 +70,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.deleteDeckPopupWindowRepository = DeleteDeckPopupWindowRepositoryImpl.getInstance();
         this.transparentBackgroundRepository = TransparentBackgroundRepositoryImpl.getInstance();
         this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
+        this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.cameraRepository = CameraRepositoryImpl.getInstance();
 
         this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance();
@@ -70,16 +79,19 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance();
         this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance();
         this.myDeckNameTextRepository = MyDeckNameTextRepositoryImpl.getInstance();
+        this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance();
 
         this.deckDeleteButtonPositionRepository = DeckDeleteButtonPositionRepositoryImpl.getInstance();
         this.deckNameEditButtonPositionRepository = DeckNameEditButtonPositionRepositoryImpl.getInstance();
         this.myDeckButtonPositionRepository = MyDeckButtonPositionRepositoryImpl.getInstance();
         this.myDeckCardPositionRepository = MyDeckCardPositionRepositoryImpl.getInstance();
         this.myDeckNameTextPositionRepository = MyDeckNameTextPositionRepositoryImpl.getInstance();
+        this.myDeckBlockPositionRepository = MyDeckBlockPositionRepositoryImpl.getInstance();
 
         this.myDeckButtonMapRepository = MyDeckButtonMapRepositoryImpl.getInstance();
         this.myDeckCardMapRepository = MyDeckCardMapRepositoryImpl.getInstance();
         this.myDeckNameTextMapRepository = MyDeckNameTextMapRepositoryImpl.getInstance();
+        this.cardStateManager = CardStateManager.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeleteDeckPopupButtonClickDetectServiceImpl {
@@ -122,7 +134,9 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
                     break;
                 case 1:
                     console.log(`Deck Delete!`);
+                    await this.clearAllDeckCardsFromScene();
                     this.deleteCard();
+                    this.deleteBlock();
                     this.deleteCardMapData();
                     this.deleteDeckButtonMapData();
                     this.deleteTextMapData();
@@ -257,6 +271,16 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.myDeckCardPositionRepository.deletePositionByDeckId(deckId);
     }
 
+    private deleteBlock(): void {
+        const deckId = this.getDeckIdByDeleteButtonId();
+        if (deckId === null) {
+            console.warn("삭제할 덱 ID를 찾을 수 없습니다.");
+            return;
+        }
+        this.myDeckBlockRepository.deleteDeckByDeckId(deckId);
+        this.myDeckBlockPositionRepository.deletePositionByDeckId(deckId);
+    }
+
     private deleteDeckButtonMapData(): void {
         const deckId = this.getDeckIdByDeleteButtonId();
         if (deckId === null) {
@@ -282,6 +306,36 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
             return;
         }
         this.myDeckNameTextMapRepository.deleteMyDeckNameText(deckId);
+    }
+
+    private async clearAllDeckCardsFromScene(): Promise<void> {
+        try {
+            const allDeckIdList = this.myDeckCardRepository.findDeckIdList();
+
+            allDeckIdList.forEach(deckId => {
+                const cardList = this.myDeckCardRepository.findCardListByDeckId(deckId)?? [];
+
+                for (const card of cardList) {
+                    if (card) {
+                        card.getMesh().visible = false;
+                        this.scene.remove(card.getMesh());
+                    }
+                }
+
+                const cardGroup = this.myDeckCardRepository.findCardGroupByDeckId(deckId);
+                if (cardGroup) {
+                    this.scene.remove(cardGroup);
+                    cardGroup.clear();
+                }
+            });
+
+            this.myDeckCardRepository.resetCardGroup();
+            this.cardStateManager.resetVisibility();
+
+            console.log(`[INFO] All deck cards and groups removed from scene.`);
+        } catch (error) {
+            console.error('[ERROR] Failed to remove all deck cards:', error);
+        }
     }
 
 }

@@ -111,6 +111,38 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
         return cardMeshList;
     }
 
+    public findCardByDeckIdAndCardId(deckId: number, cardId: number): MyDeckCard | null {
+        const cardUniqueIdList = this.deckMap.get(deckId);
+        if (!cardUniqueIdList) {
+            return null;
+        }
+
+        for (const uniqueId of cardUniqueIdList) {
+            const card = this.cardMap.get(uniqueId);
+            if (card && card.cardId === cardId) {
+                return card.cardMesh;
+            }
+        }
+
+        return null;
+    }
+
+    public findCardUniqueIdByDeckIdAndCardId(deckId: number, cardId: number): number | null {
+        const cardUniqueIdList = this.deckMap.get(deckId);
+        if (!cardUniqueIdList) {
+            return null;
+        }
+
+        for (const uniqueId of cardUniqueIdList) {
+            const cardEntry = this.cardMap.get(uniqueId);
+            if (cardEntry && cardEntry.cardId === cardId) {
+                return uniqueId;
+            }
+        }
+
+        return null;
+    }
+
     public findCardUniqueIdListByDeckId(deckId: number): number[] {
         return this.deckMap.get(deckId) || [];
     }
@@ -164,6 +196,10 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
 //                 this.deckMap.delete(deckId);
 //             }
         }
+    }
+
+    public resetCardGroup(): void {
+        this.deckGroupMap.clear();
     }
 
     // 모든 정보 삭제(덱, 카드 모두)

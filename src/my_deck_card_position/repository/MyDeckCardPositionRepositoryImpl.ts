@@ -56,7 +56,6 @@ export class MyDeckCardPositionRepositoryImpl implements MyDeckCardPositionRepos
         return this.deckToPositionMap.get(deckId) || [];
     }
 
-
     // To-do: 삭제 부분 후에 수정해야 함
     deleteById(positionId: number): boolean {
         return this.positionMap.delete(positionId);

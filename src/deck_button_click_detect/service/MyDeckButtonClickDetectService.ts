@@ -6,4 +6,5 @@ export interface MyDeckButtonClickDetectService {
     ): any | null;
     onMouseDown(event: MouseEvent): Promise<any | null>;
     saveCurrentClickDeckButtonId(buttonDeckId: number): void;
+    getCurrentClickDeckButtonId(): number | null;
 }
