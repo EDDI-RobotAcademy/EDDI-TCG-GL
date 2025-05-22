@@ -39,11 +39,28 @@ export class MyDeckBlockServiceImpl implements MyDeckBlockService {
         try {
             await Promise.all(
                 cardIdList.map(async (cardId, index) => {
-                    const position = this.myDeckBlockPosition(deckId, index);
-                    console.log(`[Block] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
+                    const blockId = this.getBlockIdByDeckIdAndCardId(deckId, cardId);
+                    if (blockId == null){
+                        const position = this.myDeckBlockPosition(deckId, index);
+                        console.log(`[Block] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
 
-                    const myDeckBlock = await this.createMyDeckBlock(deckId, cardId, position.position);
-                    blockGroup.add(myDeckBlock.getMesh());
+                        const myDeckBlock = await this.createMyDeckBlock(deckId, cardId, position.position);
+                        blockGroup.add(myDeckBlock.getMesh());
+
+                    } else {
+                        const existingPosition = this.getPositionByBlockUniqueId(blockId);
+                        const existingBlockMesh = this.getBlockMeshByDeckIdAndCardId(deckId, cardId);
+
+                        if (existingPosition && existingBlockMesh) {
+                            const positionX = existingPosition.getX() * window.innerWidth;
+                            const positionY = existingPosition.getY() * window.innerHeight;
+
+                            existingBlockMesh.position.set(positionX, positionY, 0);
+                            blockGroup.add(existingBlockMesh);
+                        }
+
+                    }
+
                 })
             );
         } catch (error) {
@@ -146,6 +163,24 @@ export class MyDeckBlockServiceImpl implements MyDeckBlockService {
         return this.myDeckBlockPositionRepository.findPositionByPositionId(blockUniqueId);
     }
 
+    private getBlockMeshByDeckIdAndCardId(deckId: number, cardId: number): THREE.Mesh | null {
+        const block = this.myDeckBlockRepository.findBlockByDeckIdAndCardId(deckId, cardId);
+        if (!block) {
+            console.warn(`[WARN] Block with Deck ID: ${deckId}, Card ID ${cardId} not found`);
+            return null;
+        }
+        return block.getMesh();
+    }
+
+    private getBlockIdByDeckIdAndCardId(deckId: number, cardId: number): number | null {
+        const blockId = this.myDeckBlockRepository.findBlockIdByDeckIdAndCardId(deckId, cardId);
+        if (!blockId) {
+            console.warn(`[WARN] Block ID ${blockId} not found`);
+            return null;
+        }
+        return blockId;
+    }
+
 //     public getBlockListByDeckId(deckId: number): THREE.Mesh[] {
 //         const blockList = this.myDeckBlockRepository.findBlockListByDeckId(deckId);
 //         if (!blockList) {
@@ -176,6 +211,10 @@ export class MyDeckBlockServiceImpl implements MyDeckBlockService {
 
     private applyClippingPlanesToMesh(mesh: THREE.Mesh, clippingPlanes: THREE.Plane[]): void {
         this.clippingMaskManager.applyClippingPlanesToMesh(mesh, clippingPlanes);
+    }
+
+    public resetBlockGroup(): void {
+        this.myDeckBlockRepository.resetBlockGroup();
     }
 
 }

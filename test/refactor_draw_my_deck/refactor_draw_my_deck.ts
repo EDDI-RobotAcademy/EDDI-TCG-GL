@@ -344,6 +344,7 @@ export class TCGJustTestMyDeckView {
 
 //                 await this.deleteAllCard();
                 await this.deleteAllDeckBlock();
+                await this.deleteAllDeckCardName();
 
                 const popupButtonClick = await this.deleteDeckPopupButtonClickDetectService.onMouseDown(e);
                 if (popupButtonClick) {
@@ -361,6 +362,7 @@ export class TCGJustTestMyDeckView {
 
                     await this.addMyDeckCard();
                     await this.addMyDeckBlock();
+                    await this.addMyDeckCardName();
                     await this.addMyDeckButton();
                     await this.addMyDeckButtonEffect();
                     await this.addMyDeckNameText();
@@ -1272,10 +1274,36 @@ export class TCGJustTestMyDeckView {
                     block.setVisibility(false);
                     this.scene.remove(block.getMesh());
                 }
+                const blockGroup = this.myDeckBlockService.getBlockGroupByDeckId(deckId);
+                this.scene.remove(blockGroup);
+                blockGroup.clear();
             });
+
+            this.myDeckBlockService.resetBlockGroup();
 
         } catch (error) {
             console.error('Failed to delete My Deck Block:', error);
+        }
+    }
+
+    private async deleteAllDeckCardName(): Promise<void> {
+        try {
+            const allDeckIdList = this.myDeckCardNameService.getAllDeckIdList();
+            allDeckIdList.forEach((deckId) => {
+                const cardNameList = this.myDeckCardNameService.getCardNameListByDeckId(deckId);
+                for (const cardName of cardNameList) {
+                    cardName.setVisibility(false);
+                    this.scene.remove(cardName.getMesh());
+                }
+                const cardNameGroup = this.myDeckCardNameService.getCardNameGroupByDeckId(deckId);
+                this.scene.remove(cardNameGroup);
+                cardNameGroup.clear();
+            });
+
+            this.myDeckCardNameService.resetCardNameGroup();
+
+        } catch (error) {
+            console.error('Failed to delete My Deck Card Name:', error);
         }
     }
 

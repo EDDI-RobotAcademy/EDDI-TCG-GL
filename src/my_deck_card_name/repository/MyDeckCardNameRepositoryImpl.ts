@@ -92,6 +92,36 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
         }
     }
 
+    public findCardNameByDeckIdAndCardId(deckId: number, cardId: number): MyDeckCardName | null {
+        const cardNameIdList = this.deckMap.get(deckId);
+        if (!cardNameIdList) {
+            return null;
+        }
+
+        for (const cardNameId of cardNameIdList) {
+            const cardName = this.cardNameMap.get(cardNameId);
+            if (cardName && cardName.cardId === cardId) {
+                return cardName.cardNameMesh;
+            }
+        }
+        return null;
+    }
+
+    public findCardNameIdByDeckIdAndCardId(deckId: number, cardId: number): number | null {
+        const cardNameIdList = this.deckMap.get(deckId);
+        if (!cardNameIdList) {
+            return null;
+        }
+
+        for (const cardNameId of cardNameIdList) {
+            const cardName = this.cardNameMap.get(cardNameId);
+            if (cardName && cardName.cardId === cardId) {
+                return cardNameId;
+            }
+        }
+        return null;
+    }
+
     public findCardNameListByDeckId(deckId: number): MyDeckCardName[] | null {
         const cardNameUniqueIdList = this.deckMap.get(deckId);
         if (cardNameUniqueIdList === undefined) {
@@ -149,6 +179,10 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
             throw new Error(`card name group with Deck ID ${deckId} not found`);
         }
         return cardNameGroup;
+    }
+
+    public resetCardNameGroup(): void {
+        this.nameGroupMap.clear();
     }
 
     // 특정 덱의 특정 card name 삭제
