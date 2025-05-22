@@ -23,7 +23,7 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
     private deleteDeckPopupButtonRepository: DeleteDeckPopupButtonRepositoryImpl;
     private cameraRepository: CameraRepository;
 
-    private buttonClickState: boolean = false;
+    private buttonClickEnabled: boolean = false;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
@@ -41,12 +41,12 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
         return DeckDeleteButtonClickDetectServiceImpl.instance;
     }
 
-    public setButtonClickState(state: boolean): void {
-        this.buttonClickState = state;
+    public setButtonClickEnabled(isEnabled: boolean): void {
+        this.buttonClickEnabled = isEnabled;
     }
 
-    public getButtonClickState(): boolean {
-        return this.buttonClickState;
+    public isButtonClickEnabled(): boolean {
+        return this.buttonClickEnabled;
     }
 
     public async handleButtonClick(clickPoint: { x: number; y: number }): Promise<DeckDeleteButton | null> {
@@ -107,6 +107,14 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
     private setPopupButtonsVisibility(isVisible: boolean): void {
         const popupButtons = this.deleteDeckPopupButtonRepository.findAllButton();
         popupButtons.forEach((button) => button.setVisibility(isVisible));
+    }
+
+    public getDeckDeleteButtonVisibility(deckId: number): boolean | undefined {
+        const button = this.deckDeleteButtonRepository.findButtonByDeckId(deckId);
+        if (button !== null) {
+            return button.getVisibility();
+        }
+        return undefined;
     }
 
 }

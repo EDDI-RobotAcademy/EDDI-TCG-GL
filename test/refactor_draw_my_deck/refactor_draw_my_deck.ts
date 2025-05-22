@@ -193,7 +193,7 @@ export class TCGJustTestMyDeckView {
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
             const buttonClickState = this.myDeckButtonClickDetectService.getButtonClickState();
             if (buttonClickState == true) {
-                this.deckDeleteButtonClickDetectService.setButtonClickState(false);
+                this.deckDeleteButtonClickDetectService.setButtonClickEnabled(false);
                 this.deckNameEditButtonClickDetectService.setButtonClickState(false);
                 const buttonClick = await this.myDeckButtonClickDetectService.onMouseDown(e);
             }
@@ -229,11 +229,17 @@ export class TCGJustTestMyDeckView {
 
         this.myDeckCardScrollService = MyDeckCardScrollServiceImpl.getInstance(this.camera, this.scene, this.renderer);
         this.renderer.domElement.addEventListener('wheel', async (e) => {
-            const scrollState = this.myDeckCardScrollService.getCardScrollState();
-            if (scrollState == true) {
-                const currentClickDeckId = this.myDeckCardScrollService.getCurrentClickDeckButtonId();
+            const scrollEnabled = this.myDeckCardScrollService.isCardScrollEnabled();
+            if (scrollEnabled == true) {
+                const currentClickDeckId = this.myDeckCardService.getCurrentClickDeckButtonId();
                 const scrollAreaDetect = this.sideScrollAreaDetectService.getMyDeckScrollEnabledById(1);
                 if (scrollAreaDetect == true && currentClickDeckId !== null) {
+                    const validDeckIdList = this.myDeckCardService.getAllDeckIdList();
+                    if (!validDeckIdList.includes(currentClickDeckId)) {
+                        console.warn(`[WARN] Invalid deck ID: ${currentClickDeckId}`);
+                        return;
+                    }
+                    console.log(`%c current click deck id?${currentClickDeckId}`, 'color: #0000FF; font-weight: bold;');
                     const cardRowCount = this.myDeckCardScrollService.getCardRowCount(currentClickDeckId);
                     if (cardRowCount > 2) {
                         this.myDeckCardScrollService.onWheelScroll(e, currentClickDeckId);
@@ -301,15 +307,22 @@ export class TCGJustTestMyDeckView {
 
         // To-do: 덱 버튼 클릭되고 덱 삭제 버튼이 나타날 때만 삭제 버튼 클릭 가능해야 함
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            if (currentClickedDeckId !== null) {
+                const deleteDeckButtonVisible = this.deckDeleteButtonClickDetectService.getDeckDeleteButtonVisibility(currentClickedDeckId);
+                if (deleteDeckButtonVisible == true) {
+                    this.deckDeleteButtonClickDetectService.setButtonClickEnabled(true);
+                }
+            }
 
             // 덱 삭제 버튼 클릭시 덱 버튼이 클릭되면 안 됨
-            const buttonClickState = this.deckDeleteButtonClickDetectService.getButtonClickState();
-            if (buttonClickState == true) {
-                this.myDeckButtonClickDetectService.setButtonClickState(false);
+            const buttonClickEnable = this.deckDeleteButtonClickDetectService.isButtonClickEnabled();
+            if (buttonClickEnable == true) {
+//                 this.myDeckButtonClickDetectService.setButtonClickState(false);
                 const buttonClick = await this.deckDeleteButtonClickDetectService.onMouseDown(e);
                 if (buttonClick) {
-                    this.deckDeleteButtonClickDetectService.setButtonClickState(false);
-                    this.myDeckButtonClickDetectService.setButtonClickState(true);
+                    this.deckDeleteButtonClickDetectService.setButtonClickEnabled(false);
+//                     this.myDeckButtonClickDetectService.setButtonClickState(true);
                 }
             }
         }, false);
@@ -326,10 +339,11 @@ export class TCGJustTestMyDeckView {
                 this.myDeckButtonClickDetectService.setButtonClickState(false);
                 this.buildDeckButtonClickDetectService.setButtonClickState(false);
                 this.buildDeckButtonHoverDetectService.setButtonDetectState(false);
-//                 this.myDeckButtonEffectHoverDetectService.setEffectDetectState(false);
                 this.sideScrollAreaDetectService.setMyDeckScrollAreaDetectState(false);
+                this.myDeckCardScrollService.setCardScrollEnabled(false);
 
-                await this.deleteAllCard();
+//                 await this.deleteAllCard();
+                await this.deleteAllDeckBlock();
 
                 const popupButtonClick = await this.deleteDeckPopupButtonClickDetectService.onMouseDown(e);
                 if (popupButtonClick) {
@@ -337,7 +351,6 @@ export class TCGJustTestMyDeckView {
                     this.myDeckButtonClickDetectService.setButtonClickState(true);
                     this.buildDeckButtonClickDetectService.setButtonClickState(true);
                     this.buildDeckButtonHoverDetectService.setButtonDetectState(true);
-//                     this.myDeckButtonEffectHoverDetectService.setEffectDetectState(true);
                     this.sideScrollAreaDetectService.setMyDeckScrollAreaDetectState(true);
 
                     await this.deleteMyDeckButtons();
@@ -347,11 +360,14 @@ export class TCGJustTestMyDeckView {
                     await this.deleteDeckNameText();
 
                     await this.addMyDeckCard();
+                    await this.addMyDeckBlock();
                     await this.addMyDeckButton();
                     await this.addMyDeckButtonEffect();
                     await this.addMyDeckNameText();
                     await this.addDeckNameEditButton();
                     await this.addDeckDeleteButton();
+
+                    this.myDeckCardScrollService.setCardScrollEnabled(true);
 
                 }
             }
@@ -705,10 +721,11 @@ export class TCGJustTestMyDeckView {
             const deckIdList = this.myDeckCardService.getAllDeckIdList();
             const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
             const firstDeckId = sortedDeckIdList[0];
+            console.log(`%c first Deck Id?${firstDeckId}`, 'color: #FF4500; font-weight: bold;');
 
             deckIdList.forEach((deckId, index) => {
                 if (deckId === firstDeckId) {
-                    this.myDeckButtonClickDetectService.saveCurrentClickDeckButtonId(deckId);
+                    this.myDeckCardService.saveCurrentClickDeckButtonId(deckId);
                     this.myDeckCardService.setAllCardVisibilityByDeckId(deckId, true);
                 } else {
                     this.myDeckCardService.setAllCardVisibilityByDeckId(deckId, false);
@@ -1232,12 +1249,33 @@ export class TCGJustTestMyDeckView {
                     cardMesh.visible = false;
                     this.scene.remove(cardMesh);
                 }
+
+                const cardGroup = this.myDeckCardService.getCardGroupByDeckId(deckId);
+                this.scene.remove(cardGroup);
+                cardGroup.clear();
             });
 
+            this.myDeckCardService.resetCardGroup();
             this.myDeckCardService.resetCardVisibility();
 
         } catch (error) {
             console.error('Failed to delete Card:', error);
+        }
+    }
+
+    private async deleteAllDeckBlock(): Promise<void> {
+        try {
+            const allDeckIdList = this.myDeckBlockService.getAllDeckIdList();
+            allDeckIdList.forEach((deckId) => {
+                const blockList = this.myDeckBlockService.getBlockListByDeckId(deckId);
+                for (const block of blockList) {
+                    block.setVisibility(false);
+                    this.scene.remove(block.getMesh());
+                }
+            });
+
+        } catch (error) {
+            console.error('Failed to delete My Deck Block:', error);
         }
     }
 

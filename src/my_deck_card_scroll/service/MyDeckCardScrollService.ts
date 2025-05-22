@@ -1,6 +1,6 @@
 export interface MyDeckCardScrollService {
-    setCardScrollState(state: boolean): void;
-    getCardScrollState(): boolean;
+    setCardScrollEnabled(scrollEnable: boolean): void;
+    isCardScrollEnabled(): boolean;
     onWheelScroll(event: WheelEvent, currentClickDeckId: number): Promise<void>;
     getCurrentClickDeckButtonId(): number | null;
     getCardRowCount(deckId: number): number;
