@@ -168,6 +168,13 @@ export class MyDeckCardMapRepositoryImpl implements MyDeckCardMapRepository {
         });
     }
 
+    public getDeckIdAndCardCountList(): [number, number[]][] {
+        return Array.from(this.currentMyDeckCardMapNew.entries()).map(([deckId, cardInfos]) => {
+            const cardCountList = cardInfos.map(({ cardCount }) => cardCount);
+            return [deckId, cardCountList];
+        });
+    }
+
     public deleteMyDeck(deckId: number): void {
         this.currentMyDeckCardMapNew.delete(deckId);
     }

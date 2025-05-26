@@ -47,6 +47,7 @@ import {MyDeckCardNameServiceImpl} from "../../src/my_deck_card_name/service/MyD
 import {MyDeckOwnedCardsServiceImpl} from "../../src/my_deck_owned_cards/service/MyDeckOwnedCardsServiceImpl";
 import {DeckEditDoneButtonServiceImpl} from "../../src/deck_edit_done_button/service/DeckEditDoneButtonServiceImpl";
 import {CardSelectionBlockerServiceImpl} from "../../src/card_selection_blocker/service/CardSelectionBlockerServiceImpl";
+import {MyDeckNumberOfCardsServiceImpl} from "../../src/my_deck_number_of_cards/service/MyDeckNumberOfCardsServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -118,6 +119,7 @@ export class TCGJustTestMyDeckView {
     private myDeckOwnedCardsService = MyDeckOwnedCardsServiceImpl.getInstance();
     private deckEditDoneButtonService = DeckEditDoneButtonServiceImpl.getInstance();
     private cardSelectionBlockerService = CardSelectionBlockerServiceImpl.getInstance();
+    private myDeckNumberOfCardsService = MyDeckNumberOfCardsServiceImpl.getInstance();
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -454,6 +456,7 @@ export class TCGJustTestMyDeckView {
         await this.addBlockScrollArea();
         await this.addMyDeckCard();
         await this.addMyDeckOwnedCards();
+        await this.addMyDeckNumberOfCards();
         await this.addCardSelectionBlocker();
         await this.addMyDeckBlock();
         await this.addMyDeckCardName();
@@ -835,6 +838,36 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add Card Selection Blocker:', error);
+        }
+    }
+
+    private async addMyDeckNumberOfCards(): Promise<void> {
+        try {
+            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardListsNew();
+            for (const [deckId, cardIdList] of myDeckCardList) {
+                for (const cardId of cardIdList) {
+                    const cardCount = this.myDeckCardMapRepository.findCardCountByDeckIdAndCardId(deckId, cardId);
+                    await this.myDeckNumberOfCardsService.createMyDeckNumberOfCardsWithPosition(deckId, cardId, cardCount);
+                }
+            }
+
+            const deckIdList = this.myDeckNumberOfCardsService.getAllDeckIdList();
+            const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+            const firstDeckId = sortedDeckIdList[0];
+
+            deckIdList.forEach((deckId, index) => {
+                const numberList = this.myDeckNumberOfCardsService.getNumberListByDeckId(deckId);
+                if (deckId === firstDeckId) {
+                    numberList.forEach((number) => number.setVisibility(true));
+                } else {
+                    numberList.forEach((number) => number.setVisibility(false));
+                }
+                this.myDeckNumberOfCardsService.saveNumberGroup(deckId);
+                numberList.forEach((number) => this.scene.add(number.getMesh()));
+            });
+
+        } catch (error) {
+            console.error('Failed to add my deck number of cards:', error);
         }
     }
 
@@ -1336,6 +1369,7 @@ export class TCGJustTestMyDeckView {
             this.deckDeleteButtonService.adjustDeckDeleteButtonPosition();
             this.myDeckCardService.adjustMyDeckCardPosition();
             this.myDeckOwnedCardsService.adjustMyDeckOwnedCardsPosition();
+            this.myDeckNumberOfCardsService.adjustMyDeckNumberOfCardsPosition();
             this.cardSelectionBlockerService.adjustCardSelectionBlockerPosition();
             this.myDeckBlockService.adjustMyDeckBlockPosition();
             this.myDeckCardNameService.adjustMyDeckCardNamePosition();
