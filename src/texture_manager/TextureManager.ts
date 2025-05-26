@@ -65,6 +65,8 @@ export class TextureManager {
     private globalNavigationBarEffectTextureList: { [id: number]: THREE.Texture } = {};
     private blockTextureList: { [id: number]: THREE.Texture } = {};
     private cardSelectionBlockerTextureList: { [id: number]: THREE.Texture } = {};
+    private cardCountTextureList: { [id: number]: THREE.Texture } = {};
+    private cardCountNotationTextureList: { [id: number]: THREE.Texture } = {};
 
     private constructor() {}
 
@@ -143,6 +145,8 @@ export class TextureManager {
                 this.loadTextures(imageData.global_navigation_bar_effect, this.globalNavigationBarEffectTextureList),
                 this.loadTextures(imageData.block, this.blockTextureList),
                 this.loadTextures(imageData.card_selection_blocker, this.cardSelectionBlockerTextureList),
+                this.loadTextures(imageData.card_count, this.cardCountTextureList),
+                this.loadTextures(imageData.card_count_notation, this.cardCountNotationTextureList),
             ]);
 
             console.log('All textures preloaded from TextureManager.ts');
@@ -330,6 +334,10 @@ export class TextureManager {
                 return this.blockTextureList[id];
             case 'card_selection_blocker':
                 return this.cardSelectionBlockerTextureList[id];
+            case 'card_count':
+                return this.cardCountTextureList[id];
+            case 'card_count_notation':
+                return this.cardCountNotationTextureList[id];
             default:
                 return undefined;
         }

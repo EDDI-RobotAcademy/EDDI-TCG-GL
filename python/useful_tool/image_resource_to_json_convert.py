@@ -63,6 +63,8 @@ class WillBeReferenceImageLocation(Enum):
     GLOBAL_NAVIGATION_BAR_EFFECT = "resource/global_navigation_bar_effect/"
     BLOCK = "resource/block/"
     CARD_SELECTION_BLOCKER = "resource/card_selection_blocker/"
+    CARD_COUNT = "resource/card_count/"
+    CARD_COUNT_NOTATION = "resource/card_count_notation/"
 
 class RelativeImageLocation(Enum):
     CARD = "../../resource/battle_field_unit/card/"
@@ -122,6 +124,8 @@ class RelativeImageLocation(Enum):
     GLOBAL_NAVIGATION_BAR_EFFECT = "../../resource/global_navigation_bar_effect/"
     BLOCK = "../../resource/block/"
     CARD_SELECTION_BLOCKER = "../../resource/card_selection_blocker/"
+    CARD_COUNT = "../../resource/card_count/"
+    CARD_COUNT_NOTATION = "../../resource/card_count_notation/"
 
 # 디렉토리 경로 설정
 relative_paths = {
@@ -182,6 +186,8 @@ relative_paths = {
     RelativeImageLocation.GLOBAL_NAVIGATION_BAR_EFFECT: RelativeImageLocation.GLOBAL_NAVIGATION_BAR_EFFECT.value,
     RelativeImageLocation.BLOCK: RelativeImageLocation.BLOCK.value,
     RelativeImageLocation.CARD_SELECTION_BLOCKER: RelativeImageLocation.CARD_SELECTION_BLOCKER.value,
+    RelativeImageLocation.CARD_COUNT: RelativeImageLocation.CARD_COUNT.value,
+    RelativeImageLocation.CARD_COUNT_NOTATION: RelativeImageLocation.CARD_COUNT_NOTATION.value,
 }
 
 reference_paths = {
@@ -242,6 +248,8 @@ reference_paths = {
     WillBeReferenceImageLocation.GLOBAL_NAVIGATION_BAR_EFFECT: WillBeReferenceImageLocation.GLOBAL_NAVIGATION_BAR_EFFECT.value,
     WillBeReferenceImageLocation.BLOCK: WillBeReferenceImageLocation.BLOCK.value,
     WillBeReferenceImageLocation.CARD_SELECTION_BLOCKER: WillBeReferenceImageLocation.CARD_SELECTION_BLOCKER.value,
+    WillBeReferenceImageLocation.CARD_COUNT: WillBeReferenceImageLocation.CARD_COUNT.value,
+    WillBeReferenceImageLocation.CARD_COUNT_NOTATION: WillBeReferenceImageLocation.CARD_COUNT_NOTATION.value,
 }
 
 image_paths = {
@@ -302,6 +310,8 @@ image_paths = {
     "global_navigation_bar_effect": [],
     "block": [],
     "card_selection_blocker": [],
+    "card_count": [],
+    "card_count_notation": [],
 }
 
 ####### active_panel_skill은 실험 중 -> 문제 발생하면 이 부분 주석하고 생성 #######
