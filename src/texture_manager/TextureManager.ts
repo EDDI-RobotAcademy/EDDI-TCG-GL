@@ -26,6 +26,7 @@ export class TextureManager {
     private shopSelectScreenTextureList: { [id: number]: THREE.Texture } = {};
     private shopYesOrNoButtonTextureList: { [id: number]: THREE.Texture } = {};
     private selectCardScreenTextureList: { [id: number]: THREE.Texture } = {};
+    private shopGachaButtonTextureList: { [id: number]: THREE.Texture } = {};
     private tryAgainScreenTextureList: { [id: number]: THREE.Texture } = {};
     private tryAgainButtonsTextureList: { [id: number]: THREE.Texture } = {};
     private battleFieldBackgroundTextureList: { [id: number]: THREE.Texture } = {};
@@ -106,6 +107,7 @@ export class TextureManager {
                 this.loadTextures(imageData.shop_select_screens, this.shopSelectScreenTextureList),
                 this.loadTextures(imageData.shop_yes_or_no_button, this.shopYesOrNoButtonTextureList),
                 this.loadTextures(imageData.select_card_screen, this.selectCardScreenTextureList),
+                this.loadTextures(imageData.shop_gacha_button, this.shopGachaButtonTextureList),
                 this.loadTextures(imageData.try_again_screen, this.tryAgainScreenTextureList),
                 this.loadTextures(imageData.try_again_buttons, this.tryAgainButtonsTextureList),
                 this.loadTextures(imageData.battle_field_background, this.battleFieldBackgroundTextureList),
@@ -256,6 +258,8 @@ export class TextureManager {
                 return this.shopYesOrNoButtonTextureList[id]
             case 'select_card_screen':
                 return this.selectCardScreenTextureList[id]
+            case 'shop_gacha_button':
+                return this.shopGachaButtonTextureList[id]
             case 'try_again_screen':
                 return this.tryAgainScreenTextureList[id]
             case 'try_again_buttons':
