@@ -11,6 +11,7 @@ import {MyDeckBlockRepositoryImpl} from "../../my_deck_block/repository/MyDeckBl
 import {MyDeckCardNameRepositoryImpl} from "../../my_deck_card_name/repository/MyDeckCardNameRepositoryImpl";
 import {DeckNameEditButtonRepositoryImpl} from "../../deck_name_edit_button/repository/DeckNameEditButtonRepositoryImpl";
 import {DeckDeleteButtonRepositoryImpl} from "../../deck_delete_button/repository/DeckDeleteButtonRepositoryImpl";
+import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/repository/MyDeckNumberOfCardsRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -33,6 +34,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private myDeckCardNameRepository: MyDeckCardNameRepositoryImpl;
     private deckNameEditButtonRepository: DeckNameEditButtonRepositoryImpl;
     private deckDeleteButtonRepository: DeckDeleteButtonRepositoryImpl;
+    private myDeckNumberOfCardsRepository: MyDeckNumberOfCardsRepositoryImpl;
 
     private buttonStateManager: ButtonStateManager;
     private buttonEffectManager: ButtonEffectManager;
@@ -52,6 +54,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance();
         this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance();
         this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance();
+        this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance();
 
         this.buttonStateManager = ButtonStateManager.getInstance();
         this.buttonEffectManager = ButtonEffectManager.getInstance();
@@ -104,6 +107,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                 this.setCardNameVisibilityByDeckId(hiddenButtonId, false);
                 this.setDeckNameEditButtonVisibility(hiddenButtonId, false);
                 this.setDeckDeleteButtonVisibility(hiddenButtonId, false);
+                this.setNumberOfCardsVisibilityByDeckId(hiddenButtonId, false);
                 console.log(`Deck Button ID ${hiddenButtonId} is now shown.`);
             }
 
@@ -112,7 +116,8 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                 const scrollTargets = [
                     this.getBlockGroup(currentClickDeckButtonId),
                     this.getCardNameGroup(currentClickDeckButtonId),
-                    this.getCardGroup(currentClickDeckButtonId)
+                    this.getCardGroup(currentClickDeckButtonId),
+                    this.getNumberOfCardsGroup(currentClickDeckButtonId),
                 ];
 
                 if (scrollTargets.every(target => !target)) return null;
@@ -127,6 +132,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                 this.setCardNameVisibilityByDeckId(currentClickDeckButtonId, true);
                 this.setDeckNameEditButtonVisibility(currentClickDeckButtonId, true);
                 this.setDeckDeleteButtonVisibility(currentClickDeckButtonId, true);
+                this.setNumberOfCardsVisibilityByDeckId(currentClickDeckButtonId, true);
                 console.log(`Deck Button ID ${currentClickDeckButtonId} is now hidden.`);
             }
 
@@ -211,6 +217,12 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         );
     }
 
+    private setNumberOfCardsVisibilityByDeckId(deckId: number, isVisible: boolean): void {
+        this.myDeckNumberOfCardsRepository.findNumberListByDeckId(deckId)?.forEach(number =>
+            number.setVisibility(isVisible)
+        );
+    }
+
     private getBlockGroup(deckId: number): THREE.Group {
         return this.myDeckBlockRepository.findBlockGroupByDeckId(deckId);
     }
@@ -221,6 +233,10 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
 
     private getCardGroup(deckId: number): THREE.Group {
         return this.myDeckCardRepository.findCardGroupByDeckId(deckId);
+    }
+
+    private getNumberOfCardsGroup(deckId: number): THREE.Group {
+        return this.myDeckNumberOfCardsRepository.findNumberGroupByDeckId(deckId);
     }
 
     private setDeckNameEditButtonVisibility(deckId: number, isVisible: boolean): void {
