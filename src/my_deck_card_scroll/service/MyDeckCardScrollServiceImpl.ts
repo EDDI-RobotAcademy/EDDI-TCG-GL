@@ -3,6 +3,7 @@ import * as THREE from "three";
 import {MyDeckCardScrollService} from "./MyDeckCardScrollService";
 import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardRepositoryImpl";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
+import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/repository/MyDeckNumberOfCardsRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -13,6 +14,7 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
     private cameraRepository: CameraRepository;
     private myDeckCardRepository: MyDeckCardRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
+    private myDeckNumberOfCardsRepository: MyDeckNumberOfCardsRepositoryImpl;
 
     private isScrollEnabled: boolean = true;
 
@@ -21,6 +23,7 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
+        this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer): MyDeckCardScrollServiceImpl {
@@ -41,6 +44,7 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
     public async onWheelScroll(event: WheelEvent, currentClickDeckId: number): Promise<void> {
         const scrollTargets = [
             this.getDeckCardGroup(currentClickDeckId), // scrollTargetDeckCard
+            this.getNumberOfCardsGroup(currentClickDeckId),
         ];
 
         if (scrollTargets.every(target => !target)) return;
@@ -72,6 +76,10 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
 
     private getDeckCardGroup(deckId: number): THREE.Group {
         return this.myDeckCardRepository.findCardGroupByDeckId(deckId);
+    }
+
+    private getNumberOfCardsGroup(deckId: number): THREE.Group {
+        return this.myDeckNumberOfCardsRepository.findNumberGroupByDeckId(deckId);
     }
 
     private getCardCountByDeckId(deckId: number): number {
