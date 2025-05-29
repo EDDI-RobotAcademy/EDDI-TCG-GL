@@ -815,10 +815,29 @@ export class TCGJustTestMyDeckView {
             await this.myDeckTotalOwnedCardsService.createMyDeckTotalOwnedCardsWithPosition(cardMap);
             const totalOwnedCardsList = this.myDeckTotalOwnedCardsService.getTotalOwnedCardsList();
 
-            totalOwnedCardsList.forEach((totalOwnedCards) => {
-                this.scene.add(totalOwnedCards.getMesh());
-            });
+//             totalOwnedCardsList.forEach((totalOwnedCards) => {
+//                 this.scene.add(totalOwnedCards.getMesh());
+//             });
 
+            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 1);
+            let clippingPlanes: THREE.Plane[] = [];
+
+            if (scrollArea) {
+                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                const totalOwnedCardsGroup = this.myDeckTotalOwnedCardsService.getTotalOwnedCardsGroup();
+                totalOwnedCardsGroup.children.forEach((totalOwnedCardsObject) => {
+                    if (totalOwnedCardsObject instanceof THREE.Mesh) {
+                        this.clippingMaskManager.applyClippingPlanesToMesh(totalOwnedCardsObject, clippingPlanes);
+                    } else {
+                        console.warn("[WARN] Skipping non-mesh object in totalOwnedCardsGroup:", totalOwnedCardsObject);
+                    }
+                });
+
+                if (!this.scene.children.includes(totalOwnedCardsGroup)) {
+                    this.scene.add(totalOwnedCardsGroup);
+                }
+                totalOwnedCardsGroup.position.y = 0;
+            }
         } catch (error) {
             console.error('Failed to add my deck total owned cards:', error);
         }
