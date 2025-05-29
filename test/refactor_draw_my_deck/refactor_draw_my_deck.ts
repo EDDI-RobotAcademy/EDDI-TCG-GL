@@ -48,6 +48,7 @@ import {MyDeckOwnedCardsServiceImpl} from "../../src/my_deck_owned_cards/service
 import {DeckEditDoneButtonServiceImpl} from "../../src/deck_edit_done_button/service/DeckEditDoneButtonServiceImpl";
 import {CardSelectionBlockerServiceImpl} from "../../src/card_selection_blocker/service/CardSelectionBlockerServiceImpl";
 import {MyDeckNumberOfCardsServiceImpl} from "../../src/my_deck_number_of_cards/service/MyDeckNumberOfCardsServiceImpl";
+import {MyDeckTotalOwnedCardsServiceImpl} from "../../src/my_deck_total_owned_cards/service/MyDeckTotalOwnedCardsServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -120,6 +121,7 @@ export class TCGJustTestMyDeckView {
     private deckEditDoneButtonService = DeckEditDoneButtonServiceImpl.getInstance();
     private cardSelectionBlockerService = CardSelectionBlockerServiceImpl.getInstance();
     private myDeckNumberOfCardsService = MyDeckNumberOfCardsServiceImpl.getInstance();
+    private myDeckTotalOwnedCardsService = MyDeckTotalOwnedCardsServiceImpl.getInstance();
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -456,6 +458,7 @@ export class TCGJustTestMyDeckView {
         await this.addBlockScrollArea();
         await this.addMyDeckCard();
         await this.addMyDeckOwnedCards();
+        await this.addMyDeckTotalOwnedCards();
         await this.addMyDeckNumberOfCards();
         await this.addCardSelectionBlocker();
         await this.addMyDeckBlock();
@@ -803,6 +806,21 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add my deck owned cards:', error);
+        }
+    }
+
+    private async addMyDeckTotalOwnedCards(): Promise<void> {
+        try {
+            const cardMap = this.myDeckOwnedCardsMapRepository.findCurrentMyDeckOwnedCardsMap();
+            await this.myDeckTotalOwnedCardsService.createMyDeckTotalOwnedCardsWithPosition(cardMap);
+            const totalOwnedCardsList = this.myDeckTotalOwnedCardsService.getTotalOwnedCardsList();
+
+            totalOwnedCardsList.forEach((totalOwnedCards) => {
+                this.scene.add(totalOwnedCards.getMesh());
+            });
+
+        } catch (error) {
+            console.error('Failed to add my deck total owned cards:', error);
         }
     }
 
@@ -1390,6 +1408,7 @@ export class TCGJustTestMyDeckView {
             this.deckDeleteButtonService.adjustDeckDeleteButtonPosition();
             this.myDeckCardService.adjustMyDeckCardPosition();
             this.myDeckOwnedCardsService.adjustMyDeckOwnedCardsPosition();
+            this.myDeckTotalOwnedCardsService.adjustMyDeckTotalOwnedCardsPosition();
             this.myDeckNumberOfCardsService.adjustMyDeckNumberOfCardsPosition();
             this.cardSelectionBlockerService.adjustCardSelectionBlockerPosition();
             this.myDeckBlockService.adjustMyDeckBlockPosition();
