@@ -3,6 +3,7 @@ import * as THREE from "three";
 import {DeckEditButton} from "../../deck_edit_button/entity/DeckEditButton";
 import {MyDeckOwnedCards} from "../../my_deck_owned_cards/entity/MyDeckOwnedCards";
 import {DeckEditDoneButton} from "../../deck_edit_done_button/entity/DeckEditDoneButton";
+import {MyDeckTotalOwnedCards} from "../../my_deck_total_owned_cards/entity/MyDeckTotalOwnedCards";
 
 import {DeckEditButtonClickDetectService} from "./DeckEditButtonClickDetectService";
 import {DeckEditButtonClickDetectRepositoryImpl} from "../repository/DeckEditButtonClickDetectRepositoryImpl";
@@ -13,6 +14,8 @@ import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCard
 import {DeckEditDoneButtonRepositoryImpl} from "../../deck_edit_done_button/repository/DeckEditDoneButtonRepositoryImpl";
 import {MyDeckCardMapRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardMapRepositoryImpl";
 import {CardSelectionBlockerRepositoryImpl} from "../../card_selection_blocker/repository/CardSelectionBlockerRepositoryImpl";
+import {MyDeckTotalOwnedCardsRepositoryImpl} from "../../my_deck_total_owned_cards/repository/MyDeckTotalOwnedCardsRepositoryImpl";
+import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/repository/MyDeckNumberOfCardsRepositoryImpl";
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
 
@@ -28,6 +31,8 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private deckEditDoneButtonRepository: DeckEditDoneButtonRepositoryImpl;
     private myDeckCardMapRepository: MyDeckCardMapRepositoryImpl;
     private cardSelectionBlockerRepository: CardSelectionBlockerRepositoryImpl;
+    private myDeckTotalOwnedCardsRepository: MyDeckTotalOwnedCardsRepositoryImpl;
+    private myDeckNumberOfCardsRepository: MyDeckNumberOfCardsRepositoryImpl;
     private cardStateManager: CardStateManager;
     private cameraRepository: CameraRepository;
     private buttonClickEnabled: boolean = true;
@@ -41,6 +46,8 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.deckEditDoneButtonRepository = DeckEditDoneButtonRepositoryImpl.getInstance();
         this.myDeckCardMapRepository = MyDeckCardMapRepositoryImpl.getInstance();
         this.cardSelectionBlockerRepository = CardSelectionBlockerRepositoryImpl.getInstance();
+        this.myDeckTotalOwnedCardsRepository = MyDeckTotalOwnedCardsRepositoryImpl.getInstance();
+        this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance();
         this.cameraRepository = CameraRepositoryImpl.getInstance();
 
         this.cardStateManager = CardStateManager.getInstance();
@@ -79,12 +86,14 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                 if (currentClickedDeckButtonId !== null) {
                     console.log(`Deck Button Id?: ${currentClickedDeckButtonId}`);
                     this.setMyDeckCardVisibilityByDeckId(currentClickedDeckButtonId, false);
+                    this.setMyDeckNumberOfCards(currentClickedDeckButtonId, false);
                     this.showCardBlockersForFullyUsedCards(currentClickedDeckButtonId);
                 }
 
                 this.setDeckEditButtonVisibility(false);
                 this.setDeckEditDoneButtonVisibility(true);
                 this.setOwnedCardsVisibility(true);
+                this.setTotalOwnedCardsVisibility(true);
                 return clickedButton;
             }
         }
@@ -123,9 +132,22 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         return this.myDeckOwnedCardsRepository.findAllCards();
     }
 
+    private getAllTotalOwnedCards(): MyDeckTotalOwnedCards[] {
+        return this.myDeckTotalOwnedCardsRepository.findAllTotalOwnedCardsList();
+    }
+
+    private setMyDeckNumberOfCards(deckId: number, isVisible: boolean): void {
+        const numberList = this.myDeckNumberOfCardsRepository.findNumberListByDeckId(deckId);
+        numberList?.forEach((number) => number.setVisibility(isVisible));
+    }
+
     private setOwnedCardsVisibility(isVisible: boolean): void {
         const allCards = this.getAllOwnedCards();
-        allCards.forEach((card) => card.setVisibility(true));
+        allCards.forEach((card) => card.setVisibility(isVisible));
+    }
+
+    private setTotalOwnedCardsVisibility(isVisible: boolean): void {
+        this.getAllTotalOwnedCards().forEach((totalOwnedCards) => totalOwnedCards.setVisibility(isVisible));
     }
 
     private setMyDeckCardVisibility(deckId: number, cardId: number, isVisible: boolean): void {
