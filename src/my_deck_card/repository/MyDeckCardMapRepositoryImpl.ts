@@ -187,4 +187,16 @@ export class MyDeckCardMapRepositoryImpl implements MyDeckCardMapRepository {
         return cardInfo ? cardInfo.cardCount : 0;
     }
 
+    public getTotalUsedCardCount(): Map<number, number> {
+        const totalCardCountMap: Map<number, number> = new Map();
+
+        for (const cardList of this.currentMyDeckCardMapNew.values()) {
+            for (const { cardId, cardCount } of cardList) {
+                const currentCount = totalCardCountMap.get(cardId)?? 0;
+                totalCardCountMap.set(cardId, currentCount + cardCount);
+            }
+        }
+        return totalCardCountMap;
+    }
+
 }
