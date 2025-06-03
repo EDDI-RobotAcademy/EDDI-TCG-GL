@@ -6,7 +6,7 @@ export class MyDeckTotalOwnedCardsPositionRepositoryImpl implements MyDeckTotalO
     private static instance: MyDeckTotalOwnedCardsPositionRepositoryImpl;
     private positionMap: Map< number, MyDeckTotalOwnedCardsPosition> = new Map(); // position Unique ID: position
 
-    private initialX = - 0.175;
+    private initialX = - 0.178;
     private incrementX = 0.1275;
     private initialY =  - 0.09;
     private incrementY = - 0.34;
