@@ -4,6 +4,7 @@ import {MyDeckOwnedCardsScrollService} from "./MyDeckOwnedCardsScrollService";
 import {MyDeckOwnedCardsRepositoryImpl} from "../../my_deck_owned_cards/repository/MyDeckOwnedCardsRepositoryImpl";
 import {CardSelectionBlockerRepositoryImpl} from "../../card_selection_blocker/repository/CardSelectionBlockerRepositoryImpl";
 import {MyDeckTotalOwnedCardsRepositoryImpl} from "../../my_deck_total_owned_cards/repository/MyDeckTotalOwnedCardsRepositoryImpl";
+import {MyDeckRemainingCardsRepositoryImpl} from "../../my_deck_remaining_cards/repository/MyDeckRemainingCardsRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -15,6 +16,7 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
     private myDeckOwnedCardsRepository: MyDeckOwnedCardsRepositoryImpl;
     private cardSelectionBlockerRepository: CardSelectionBlockerRepositoryImpl;
     private myDeckTotalOwnedCardsRepository: MyDeckTotalOwnedCardsRepositoryImpl;
+    private myDeckRemainingCardsRepository: MyDeckRemainingCardsRepositoryImpl;
 
     private isScrollEnabled: boolean = true;
 
@@ -24,6 +26,7 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
         this.myDeckOwnedCardsRepository = MyDeckOwnedCardsRepositoryImpl.getInstance();
         this.cardSelectionBlockerRepository = CardSelectionBlockerRepositoryImpl.getInstance();
         this.myDeckTotalOwnedCardsRepository = MyDeckTotalOwnedCardsRepositoryImpl.getInstance();
+        this.myDeckRemainingCardsRepository = MyDeckRemainingCardsRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer): MyDeckOwnedCardsScrollServiceImpl {
@@ -46,6 +49,7 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
             this.getOwnedCardGroup(), // scrollTargetDeckOwnedCard
             this.getCardSelectionBlocker(),
             this.getTotalOwnedCardsGroup(),
+            this.getRemainingCardsGroup(),
         ];
 
         if (scrollTargets.every(target => !target)) return;
@@ -86,6 +90,10 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
 
     private getTotalOwnedCardsGroup(): THREE.Group {
         return this.myDeckTotalOwnedCardsRepository.findTotalOwnedCardsGroup();
+    }
+
+    private getRemainingCardsGroup(): THREE.Group {
+        return this.myDeckRemainingCardsRepository.findRemainingCardsGroup();
     }
 
     private getCardCount(): number {

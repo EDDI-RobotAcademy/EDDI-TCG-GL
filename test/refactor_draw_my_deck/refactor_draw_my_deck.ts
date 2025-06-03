@@ -863,6 +863,26 @@ export class TCGJustTestMyDeckView {
                 this.scene.add(remainingCard.getMesh());
             });
 
+            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 1);
+            let clippingPlanes: THREE.Plane[] = [];
+
+            if (scrollArea) {
+                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                const remainingCardsGroup = this.myDeckRemainingCardsService.getRemainingCardsGroup();
+                remainingCardsGroup.children.forEach((remainingCardsObject) => {
+                    if (remainingCardsObject instanceof THREE.Mesh) {
+                        this.clippingMaskManager.applyClippingPlanesToMesh(remainingCardsObject, clippingPlanes);
+                    } else {
+                        console.warn("[WARN] Skipping non-mesh object in remainingCardsGroup:", remainingCardsObject);
+                    }
+                });
+
+                if (!this.scene.children.includes(remainingCardsGroup)) {
+                    this.scene.add(remainingCardsGroup);
+                }
+                remainingCardsGroup.position.y = 0;
+            }
+
         } catch (error) {
             console.error('Failed to add my deck remaining cards:', error);
         }

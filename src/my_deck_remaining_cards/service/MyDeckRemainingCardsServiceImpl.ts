@@ -94,7 +94,16 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
                 remainingCardsMesh.geometry.dispose();
                 remainingCardsMesh.geometry = new THREE.PlaneGeometry(remainingCardsWidth, remainingCardsHeight);
                 remainingCardsMesh.position.set(newPositionX, newPositionY, 0);
-            }
+
+                const scrollArea = this.getScrollArea();
+                if (scrollArea) {
+                    scrollArea.width = 0.54 * windowWidth;
+                    scrollArea.height = 0.745 * windowHeight;
+                    scrollArea.position.set(0 * window.innerWidth, -0.125 * window.innerHeight);
+                    const clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                    this.applyClippingPlanesToMesh(remainingCardsMesh, clippingPlanes);
+                }
+        }
     }
 
     private async createMyDeckRemainingCards(cardId: number, cardCount: number, position: Vector2d): Promise<MyDeckRemainingCards> {
