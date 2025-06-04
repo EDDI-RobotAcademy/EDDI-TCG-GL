@@ -10,10 +10,10 @@ export class MyDeckRemainingCards {
 
     constructor(mesh: THREE.Mesh, position: Vector2d) {
         this.id = IdGenerator.generateId("MyDeckRemainingCards");
-        this.isVisible = true;
+        this.isVisible = false;
         this.mesh = mesh;
         this.position = position;
-        this.mesh.visible = true;
+        this.mesh.visible = false;
     }
 
     public getMesh(): THREE.Mesh {
