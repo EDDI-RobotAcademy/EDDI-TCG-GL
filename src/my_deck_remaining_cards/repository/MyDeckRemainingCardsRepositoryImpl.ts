@@ -82,6 +82,15 @@ export class MyDeckRemainingCardsRepositoryImpl implements MyDeckRemainingCardsR
         return Array.from(this.remainingCardsMap.keys());
     }
 
+    public findRemainingCardCountById(remainingCardsId: number): number {
+        const entry = this.remainingCardsMap.get(remainingCardsId);
+        if (entry) {
+            return entry.cardCount;
+        } else {
+            throw new Error(`Remaining Card Count with ID ${remainingCardsId} not found.`);
+        }
+    }
+
     public deleteRemainingCardsById(remainingCardsId: number): void {
         const remainingCards = this.remainingCardsMap.get(remainingCardsId);
         if (remainingCards && this.remainingCardsGroup) {
