@@ -901,6 +901,26 @@ export class TCGJustTestMyDeckView {
                 this.scene.add(slash.getMesh());
             });
 
+            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 1);
+            let clippingPlanes: THREE.Plane[] = [];
+
+            if (scrollArea) {
+                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                const slashGroup = this.myDeckRemainingOutOfTotalSlashService.getSlashGroup();
+                slashGroup.children.forEach((slashObject) => {
+                    if (slashObject instanceof THREE.Mesh) {
+                        this.clippingMaskManager.applyClippingPlanesToMesh(slashObject, clippingPlanes);
+                    } else {
+                        console.warn("[WARN] Skipping non-mesh object in slashGroup:", slashObject);
+                    }
+                });
+
+                if (!this.scene.children.includes(slashGroup)) {
+                    this.scene.add(slashGroup);
+                }
+                slashGroup.position.y = 0;
+            }
+
         } catch (error) {
             console.error('Failed to add remaining out of total Slash:', error);
         }
