@@ -5,6 +5,7 @@ import {MyDeckOwnedCards} from "../../my_deck_owned_cards/entity/MyDeckOwnedCard
 import {DeckEditDoneButton} from "../../deck_edit_done_button/entity/DeckEditDoneButton";
 import {MyDeckTotalOwnedCards} from "../../my_deck_total_owned_cards/entity/MyDeckTotalOwnedCards";
 import {MyDeckRemainingCards} from "../../my_deck_remaining_cards/entity/MyDeckRemainingCards";
+import {MyDeckRemainingOutOfTotalSlash} from "../../my_deck_remaining_out_of_total_slash/entity/MyDeckRemainingOutOfTotalSlash";
 
 import {DeckEditButtonClickDetectService} from "./DeckEditButtonClickDetectService";
 import {DeckEditButtonClickDetectRepositoryImpl} from "../repository/DeckEditButtonClickDetectRepositoryImpl";
@@ -18,6 +19,7 @@ import {CardSelectionBlockerRepositoryImpl} from "../../card_selection_blocker/r
 import {MyDeckTotalOwnedCardsRepositoryImpl} from "../../my_deck_total_owned_cards/repository/MyDeckTotalOwnedCardsRepositoryImpl";
 import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/repository/MyDeckNumberOfCardsRepositoryImpl";
 import {MyDeckRemainingCardsRepositoryImpl} from "../../my_deck_remaining_cards/repository/MyDeckRemainingCardsRepositoryImpl";
+import {MyDeckRemainingOutOfTotalSlashRepositoryImpl} from "../../my_deck_remaining_out_of_total_slash/repository/MyDeckRemainingOutOfTotalSlashRepositoryImpl";
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
 
@@ -36,6 +38,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private myDeckTotalOwnedCardsRepository: MyDeckTotalOwnedCardsRepositoryImpl;
     private myDeckNumberOfCardsRepository: MyDeckNumberOfCardsRepositoryImpl;
     private myDeckRemainingCardsRepository: MyDeckRemainingCardsRepositoryImpl;
+    private myDeckRemainingOutOfTotalSlashRepository: MyDeckRemainingOutOfTotalSlashRepositoryImpl;
     private cardStateManager: CardStateManager;
     private cameraRepository: CameraRepository;
     private buttonClickEnabled: boolean = true;
@@ -52,6 +55,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.myDeckTotalOwnedCardsRepository = MyDeckTotalOwnedCardsRepositoryImpl.getInstance();
         this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance();
         this.myDeckRemainingCardsRepository = MyDeckRemainingCardsRepositoryImpl.getInstance();
+        this.myDeckRemainingOutOfTotalSlashRepository = MyDeckRemainingOutOfTotalSlashRepositoryImpl.getInstance();
         this.cameraRepository = CameraRepositoryImpl.getInstance();
 
         this.cardStateManager = CardStateManager.getInstance();
@@ -100,6 +104,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                 this.setOwnedCardsVisibility(true);
                 this.setTotalOwnedCardsVisibility(true);
                 this.setRemainingCardsVisibility(true);
+                this.setRemainingOutOfTotalSlashVisibility(true);
                 return clickedButton;
             }
         }
@@ -146,6 +151,10 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         return this.myDeckRemainingCardsRepository.findAllRemainingCardsList();
     }
 
+    private getAllRemainingOutOfTotalSlash(): MyDeckRemainingOutOfTotalSlash[] {
+        return this.myDeckRemainingOutOfTotalSlashRepository.findAllSlashList();
+    }
+
     private setMyDeckNumberOfCards(deckId: number, isVisible: boolean): void {
         const numberList = this.myDeckNumberOfCardsRepository.findNumberListByDeckId(deckId);
         numberList?.forEach((number) => number.setVisibility(isVisible));
@@ -162,6 +171,10 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
 
     private setRemainingCardsVisibility(isVisible: boolean): void {
         this.getAllRemainingCards().forEach((remainingCards) => remainingCards.setVisibility(isVisible));
+    }
+
+    private setRemainingOutOfTotalSlashVisibility(isVisible: boolean): void {
+        this.getAllRemainingOutOfTotalSlash().forEach((slash) => slash.setVisibility(isVisible));
     }
 
     private setMyDeckCardVisibility(deckId: number, cardId: number, isVisible: boolean): void {
@@ -241,12 +254,17 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         return this.myDeckRemainingCardsRepository.findRemainingCardsGroup();
     }
 
+    private getRemainingOutOfTotalSlashGroup(): THREE.Group {
+        return this.myDeckRemainingOutOfTotalSlashRepository.findSlashGroup();
+    }
+
     private resetScrollTargetPositions(): void {
         const scrollTargets = [
             this.getOwnedCardGroup(),
             this.getCardSelectionBlockerGroup(),
             this.getTotalOwnedCardsGroup(),
             this.getRemainingCardsGroup(),
+            this.getRemainingOutOfTotalSlashGroup(),
         ];
 
         if (scrollTargets.every(target => !target)) return;
