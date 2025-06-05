@@ -50,6 +50,7 @@ import {CardSelectionBlockerServiceImpl} from "../../src/card_selection_blocker/
 import {MyDeckNumberOfCardsServiceImpl} from "../../src/my_deck_number_of_cards/service/MyDeckNumberOfCardsServiceImpl";
 import {MyDeckTotalOwnedCardsServiceImpl} from "../../src/my_deck_total_owned_cards/service/MyDeckTotalOwnedCardsServiceImpl";
 import {MyDeckRemainingCardsServiceImpl} from "../../src/my_deck_remaining_cards/service/MyDeckRemainingCardsServiceImpl";
+import {MyDeckRemainingOutOfTotalSlashServiceImpl} from "../../src/my_deck_remaining_out_of_total_slash/service/MyDeckRemainingOutOfTotalSlashServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -124,6 +125,7 @@ export class TCGJustTestMyDeckView {
     private myDeckNumberOfCardsService = MyDeckNumberOfCardsServiceImpl.getInstance();
     private myDeckTotalOwnedCardsService = MyDeckTotalOwnedCardsServiceImpl.getInstance();
     private myDeckRemainingCardsService = MyDeckRemainingCardsServiceImpl.getInstance();
+    private myDeckRemainingOutOfTotalSlashService = MyDeckRemainingOutOfTotalSlashServiceImpl.getInstance();
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -462,6 +464,7 @@ export class TCGJustTestMyDeckView {
         await this.addMyDeckOwnedCards();
         await this.addMyDeckTotalOwnedCards();
         await this.addMyDeckNumberOfCards();
+        await this.addRemainingOutOfTotalSlash();
         await this.addCardSelectionBlocker();
         await this.addMyDeckRemainingCards();
         await this.addMyDeckBlock();
@@ -885,6 +888,21 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add my deck remaining cards:', error);
+        }
+    }
+
+    private async addRemainingOutOfTotalSlash(): Promise<void> {
+        try {
+            const cardMap = this.myDeckOwnedCardsMapRepository.findCurrentMyDeckOwnedCardsMap();
+            await this.myDeckRemainingOutOfTotalSlashService.createSlashWithPosition(cardMap);
+            const slashList = this.myDeckRemainingOutOfTotalSlashService.getSlashList();
+
+            slashList.forEach((slash) => {
+                this.scene.add(slash.getMesh());
+            });
+
+        } catch (error) {
+            console.error('Failed to add remaining out of total Slash:', error);
         }
     }
 
@@ -1474,6 +1492,7 @@ export class TCGJustTestMyDeckView {
             this.myDeckOwnedCardsService.adjustMyDeckOwnedCardsPosition();
             this.myDeckTotalOwnedCardsService.adjustMyDeckTotalOwnedCardsPosition();
             this.myDeckNumberOfCardsService.adjustMyDeckNumberOfCardsPosition();
+            this.myDeckRemainingOutOfTotalSlashService.adjustSlashPosition();
             this.myDeckRemainingCardsService.adjustMyDeckRemainingCardsPosition();
             this.cardSelectionBlockerService.adjustCardSelectionBlockerPosition();
             this.myDeckBlockService.adjustMyDeckBlockPosition();
