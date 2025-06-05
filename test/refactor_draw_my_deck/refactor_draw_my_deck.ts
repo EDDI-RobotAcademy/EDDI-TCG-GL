@@ -83,6 +83,8 @@ import {DeckEditButtonClickDetectService} from "../../src/deck_edit_button_click
 import {DeckEditButtonClickDetectServiceImpl} from "../../src/deck_edit_button_click_detect/service/DeckEditButtonClickDetectServiceImpl";
 import {MyDeckOwnedCardsScrollService} from "../../src/my_deck_owned_cards_scroll/service/MyDeckOwnedCardsScrollService";
 import {MyDeckOwnedCardsScrollServiceImpl} from "../../src/my_deck_owned_cards_scroll/service/MyDeckOwnedCardsScrollServiceImpl";
+import {MyDeckOwnedCardsClickDetectService} from "../../src/deck_owned_cards_click_detect/service/MyDeckOwnedCardsClickDetectService";
+import {MyDeckOwnedCardsClickDetectServiceImpl} from "../../src/deck_owned_cards_click_detect/service/MyDeckOwnedCardsClickDetectServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 
@@ -157,6 +159,7 @@ export class TCGJustTestMyDeckView {
     private myDeckBlockScrollService: MyDeckBlockScrollService;
     private deckEditButtonClickDetectService: DeckEditButtonClickDetectService;
     private myDeckOwnedCardsScrollService: MyDeckOwnedCardsScrollService;
+    private myDeckOwnedCardsClickDetectService: MyDeckOwnedCardsClickDetectService;
 
     private initialized = false;
     private isAnimating = false;
@@ -299,11 +302,22 @@ export class TCGJustTestMyDeckView {
             }
         }, false);
 
+        this.myDeckOwnedCardsClickDetectService = MyDeckOwnedCardsClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckEditButtonClickDetectService = DeckEditButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
             const deckEditButtonClickEnabled = this.deckEditButtonClickDetectService.isButtonClickEnabled();
             if (deckEditButtonClickEnabled == true) {
                 const deckEditButtonClick = await this.deckEditButtonClickDetectService.onMouseDown(e);
+                if (deckEditButtonClick) {
+                    this.myDeckOwnedCardsClickDetectService.setCardClickEnabled(true);
+                }
+            }
+        }, false);
+
+        this.renderer.domElement.addEventListener('mousedown', async (e) => {
+            const cardClickEnabled = this.myDeckOwnedCardsClickDetectService.isCardClickEnabled();
+            if (cardClickEnabled == true) {
+                await this.myDeckOwnedCardsClickDetectService.onMouseDown(e);
             }
         }, false);
 
