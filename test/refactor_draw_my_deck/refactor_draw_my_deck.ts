@@ -51,6 +51,7 @@ import {MyDeckNumberOfCardsServiceImpl} from "../../src/my_deck_number_of_cards/
 import {MyDeckTotalOwnedCardsServiceImpl} from "../../src/my_deck_total_owned_cards/service/MyDeckTotalOwnedCardsServiceImpl";
 import {MyDeckRemainingCardsServiceImpl} from "../../src/my_deck_remaining_cards/service/MyDeckRemainingCardsServiceImpl";
 import {MyDeckRemainingOutOfTotalSlashServiceImpl} from "../../src/my_deck_remaining_out_of_total_slash/service/MyDeckRemainingOutOfTotalSlashServiceImpl";
+import {MyDeckNumberOfSelectedCardsServiceImpl} from "../../src/my_deck_number_of_selected_cards/service/MyDeckNumberOfSelectedCardsServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -126,6 +127,7 @@ export class TCGJustTestMyDeckView {
     private myDeckTotalOwnedCardsService = MyDeckTotalOwnedCardsServiceImpl.getInstance();
     private myDeckRemainingCardsService = MyDeckRemainingCardsServiceImpl.getInstance();
     private myDeckRemainingOutOfTotalSlashService = MyDeckRemainingOutOfTotalSlashServiceImpl.getInstance();
+    private myDeckNumberOfSelectedCardsService = MyDeckNumberOfSelectedCardsServiceImpl.getInstance();
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -464,6 +466,7 @@ export class TCGJustTestMyDeckView {
         await this.addMyDeckOwnedCards();
         await this.addMyDeckTotalOwnedCards();
         await this.addMyDeckNumberOfCards();
+        await this.addMyDeckNumberOfSelectedCards();
         await this.addRemainingOutOfTotalSlash();
         await this.addCardSelectionBlocker();
         await this.addMyDeckRemainingCards();
@@ -861,10 +864,10 @@ export class TCGJustTestMyDeckView {
                 await this.myDeckRemainingCardsService.createMyDeckRemainingCardsWithPosition(cardId, remainingCount);
             }
 
-            const remainingCardList = this.myDeckRemainingCardsService.getRemainingCardsList();
-            remainingCardList.forEach((remainingCard) => {
-                this.scene.add(remainingCard.getMesh());
-            });
+//             const remainingCardList = this.myDeckRemainingCardsService.getRemainingCardsList();
+//             remainingCardList.forEach((remainingCard) => {
+//                 this.scene.add(remainingCard.getMesh());
+//             });
 
             const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 1);
             let clippingPlanes: THREE.Plane[] = [];
@@ -1009,6 +1012,36 @@ export class TCGJustTestMyDeckView {
             }
         } catch (error) {
             console.error('Failed to add my deck number of cards:', error);
+        }
+    }
+
+    private async addMyDeckNumberOfSelectedCards(): Promise<void> {
+        try {
+            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardListsNew();
+            for (const [deckId, cardIdList] of myDeckCardList) {
+                for (const cardId of cardIdList) {
+                    const cardCount = this.myDeckCardMapRepository.findCardCountByDeckIdAndCardId(deckId, cardId);
+                    await this.myDeckNumberOfSelectedCardsService.createMyDeckNumberOfSelectedCardsWithPosition(deckId, cardId, cardCount);
+                }
+            }
+
+            const deckIdList = this.myDeckNumberOfSelectedCardsService.getAllDeckIdList();
+            const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+            const firstDeckId = sortedDeckIdList[0];
+
+            deckIdList.forEach((deckId, index) => {
+                const numberList = this.myDeckNumberOfSelectedCardsService.getNumberListByDeckId(deckId);
+                if (deckId === firstDeckId) {
+                    numberList.forEach((number) => number.setVisibility(true));
+                } else {
+                    numberList.forEach((number) => number.setVisibility(false));
+                }
+                this.myDeckNumberOfSelectedCardsService.saveNumberGroup(deckId);
+                numberList.forEach((number) => this.scene.add(number.getMesh()));
+            });
+
+        } catch (error) {
+            console.error('Failed to add my deck number of selected cards:', error);
         }
     }
 
@@ -1512,6 +1545,7 @@ export class TCGJustTestMyDeckView {
             this.myDeckOwnedCardsService.adjustMyDeckOwnedCardsPosition();
             this.myDeckTotalOwnedCardsService.adjustMyDeckTotalOwnedCardsPosition();
             this.myDeckNumberOfCardsService.adjustMyDeckNumberOfCardsPosition();
+            this.myDeckNumberOfSelectedCardsService.adjustMyDeckNumberOfSelectedCardsPosition();
             this.myDeckRemainingOutOfTotalSlashService.adjustSlashPosition();
             this.myDeckRemainingCardsService.adjustMyDeckRemainingCardsPosition();
             this.cardSelectionBlockerService.adjustCardSelectionBlockerPosition();
