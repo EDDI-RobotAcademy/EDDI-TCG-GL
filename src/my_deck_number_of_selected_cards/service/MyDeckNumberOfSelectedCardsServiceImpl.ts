@@ -111,6 +111,15 @@ export class MyDeckNumberOfSelectedCardsServiceImpl implements MyDeckNumberOfSel
                 numberMesh.geometry.dispose();
                 numberMesh.geometry = new THREE.PlaneGeometry(numberWidth, numberHeight);
                 numberMesh.position.set(newPositionX, newPositionY, 0);
+
+                const scrollArea = this.getScrollArea();
+                if (scrollArea) {
+                    scrollArea.width = 0.202 * windowWidth;
+                    scrollArea.height = 0.61 * windowHeight;
+                    scrollArea.position.set(0.38 * window.innerWidth, -0.024 * window.innerHeight);
+                    const clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                    this.applyClippingPlanesToMesh(numberMesh, clippingPlanes);
+                }
             }
         }
     }

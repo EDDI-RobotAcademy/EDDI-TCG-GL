@@ -1037,8 +1037,30 @@ export class TCGJustTestMyDeckView {
                     numberList.forEach((number) => number.setVisibility(false));
                 }
                 this.myDeckNumberOfSelectedCardsService.saveNumberGroup(deckId);
-                numberList.forEach((number) => this.scene.add(number.getMesh()));
+//                 numberList.forEach((number) => this.scene.add(number.getMesh()));
             });
+
+            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 2);
+            let clippingPlanes: THREE.Plane[] = [];
+
+            if (scrollArea) {
+                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                deckIdList.forEach((deckId) => {
+                    const numberGroup = this.myDeckNumberOfSelectedCardsService.getNumberGroupByDeckId(deckId);
+                    numberGroup.children.forEach((numberObject) => {
+                        if (numberObject instanceof THREE.Mesh) {
+                            this.clippingMaskManager.applyClippingPlanesToMesh(numberObject, clippingPlanes);
+                        } else {
+                            console.warn("[WARN] Skipping non-mesh object in numberGroup:", numberObject);
+                        }
+                    });
+
+                    if (!this.scene.children.includes(numberGroup)) {
+                        this.scene.add(numberGroup);
+                    }
+                    numberGroup.position.y = 0;
+                });
+            }
 
         } catch (error) {
             console.error('Failed to add my deck number of selected cards:', error);
