@@ -52,6 +52,7 @@ import {MyDeckTotalOwnedCardsServiceImpl} from "../../src/my_deck_total_owned_ca
 import {MyDeckRemainingCardsServiceImpl} from "../../src/my_deck_remaining_cards/service/MyDeckRemainingCardsServiceImpl";
 import {MyDeckRemainingOutOfTotalSlashServiceImpl} from "../../src/my_deck_remaining_out_of_total_slash/service/MyDeckRemainingOutOfTotalSlashServiceImpl";
 import {MyDeckNumberOfSelectedCardsServiceImpl} from "../../src/my_deck_number_of_selected_cards/service/MyDeckNumberOfSelectedCardsServiceImpl";
+import {MyDeckChosenOutOfTotalSlashServiceImpl} from "../../src/my_deck_chosen_out_of_total_slash/service/MyDeckChosenOutOfTotalSlashServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -130,6 +131,7 @@ export class TCGJustTestMyDeckView {
     private myDeckRemainingCardsService = MyDeckRemainingCardsServiceImpl.getInstance();
     private myDeckRemainingOutOfTotalSlashService = MyDeckRemainingOutOfTotalSlashServiceImpl.getInstance();
     private myDeckNumberOfSelectedCardsService = MyDeckNumberOfSelectedCardsServiceImpl.getInstance();
+    private myDeckChosenOutOfTotalSlashService = MyDeckChosenOutOfTotalSlashServiceImpl.getInstance();
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -476,6 +478,7 @@ export class TCGJustTestMyDeckView {
         await this.addScrollArea();
         await this.addCardScrollArea();
         await this.addBlockScrollArea();
+        await this.addChosenOutOfTotalSlash();
         await this.addMyDeckCard();
         await this.addMyDeckOwnedCards();
         await this.addMyDeckTotalOwnedCards();
@@ -584,6 +587,20 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add Block Scroll Area:', error);
+        }
+    }
+
+    private async addChosenOutOfTotalSlash(): Promise<void> {
+        try {
+            const slashMesh = await this.myDeckChosenOutOfTotalSlashService.createSlash();
+            if (slashMesh) {
+                this.scene.add(slashMesh);
+            } else {
+                console.warn(`Chosen Out Of Total Slash Mesh Not found`);
+            }
+
+        } catch (error) {
+            console.error('Failed to add Chosen Out Of Total Slash:', error);
         }
     }
 
@@ -1573,6 +1590,7 @@ export class TCGJustTestMyDeckView {
             this.sideScrollAreaService.adjustMyDeckSideScrollAreaPosition();
             this.sideScrollAreaService.adjustMyDeckCardScrollAreaPosition();
             this.sideScrollAreaService.adjustMyDeckBlockScrollAreaPosition();
+            this.myDeckChosenOutOfTotalSlashService.adjustSlashPosition();
             this.myDeckButtonService.adjustMyDeckButtonPosition();
             this.myDeckButtonEffectService.adjustMyDeckButtonEffectPosition();
             this.deckNameEditButtonService.adjustDeckNameEditButtonPosition();
