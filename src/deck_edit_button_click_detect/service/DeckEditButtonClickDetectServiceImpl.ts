@@ -6,6 +6,8 @@ import {DeckEditDoneButton} from "../../deck_edit_done_button/entity/DeckEditDon
 import {MyDeckTotalOwnedCards} from "../../my_deck_total_owned_cards/entity/MyDeckTotalOwnedCards";
 import {MyDeckRemainingCards} from "../../my_deck_remaining_cards/entity/MyDeckRemainingCards";
 import {MyDeckRemainingOutOfTotalSlash} from "../../my_deck_remaining_out_of_total_slash/entity/MyDeckRemainingOutOfTotalSlash";
+import {TotalNumberOfSelectedCards} from "../../my_deck_total_number_of_selected_cards/entity/TotalNumberOfSelectedCards";
+import {MyDeckChosenOutOfTotalSlash} from "../../my_deck_chosen_out_of_total_slash/entity/MyDeckChosenOutOfTotalSlash";
 
 import {DeckEditButtonClickDetectService} from "./DeckEditButtonClickDetectService";
 import {DeckEditButtonClickDetectRepositoryImpl} from "../repository/DeckEditButtonClickDetectRepositoryImpl";
@@ -20,6 +22,8 @@ import {MyDeckTotalOwnedCardsRepositoryImpl} from "../../my_deck_total_owned_car
 import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/repository/MyDeckNumberOfCardsRepositoryImpl";
 import {MyDeckRemainingCardsRepositoryImpl} from "../../my_deck_remaining_cards/repository/MyDeckRemainingCardsRepositoryImpl";
 import {MyDeckRemainingOutOfTotalSlashRepositoryImpl} from "../../my_deck_remaining_out_of_total_slash/repository/MyDeckRemainingOutOfTotalSlashRepositoryImpl";
+import {TotalNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_total_number_of_selected_cards/repository/TotalNumberOfSelectedCardsRepositoryImpl";
+import {MyDeckChosenOutOfTotalSlashRepositoryImpl} from "../../my_deck_chosen_out_of_total_slash/repository/MyDeckChosenOutOfTotalSlashRepositoryImpl";
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
 
@@ -39,6 +43,8 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private myDeckNumberOfCardsRepository: MyDeckNumberOfCardsRepositoryImpl;
     private myDeckRemainingCardsRepository: MyDeckRemainingCardsRepositoryImpl;
     private myDeckRemainingOutOfTotalSlashRepository: MyDeckRemainingOutOfTotalSlashRepositoryImpl;
+    private totalNumberOfSelectedCardsRepository: TotalNumberOfSelectedCardsRepositoryImpl;
+    private myDeckChosenOutOfTotalSlashRepository: MyDeckChosenOutOfTotalSlashRepositoryImpl;
     private cardStateManager: CardStateManager;
     private cameraRepository: CameraRepository;
     private buttonClickEnabled: boolean = true;
@@ -56,6 +62,8 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance();
         this.myDeckRemainingCardsRepository = MyDeckRemainingCardsRepositoryImpl.getInstance();
         this.myDeckRemainingOutOfTotalSlashRepository = MyDeckRemainingOutOfTotalSlashRepositoryImpl.getInstance();
+        this.totalNumberOfSelectedCardsRepository = TotalNumberOfSelectedCardsRepositoryImpl.getInstance();
+        this.myDeckChosenOutOfTotalSlashRepository = MyDeckChosenOutOfTotalSlashRepositoryImpl.getInstance();
         this.cameraRepository = CameraRepositoryImpl.getInstance();
 
         this.cardStateManager = CardStateManager.getInstance();
@@ -97,6 +105,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                     this.setMyDeckCardVisibilityByDeckId(currentClickedDeckButtonId, false);
                     this.setMyDeckNumberOfCards(currentClickedDeckButtonId, false);
                     this.showCardBlockersForFullyUsedCards(currentClickedDeckButtonId);
+                    this.setTotalNumberOfSelectedCardsVisibility(currentClickedDeckButtonId, true);
                 }
 
                 this.setDeckEditButtonVisibility(false);
@@ -105,6 +114,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                 this.setTotalOwnedCardsVisibility(true);
                 this.setRemainingCardsVisibility(true);
                 this.setRemainingOutOfTotalSlashVisibility(true);
+                this.setChosenOutOfTotalSlashVisibility(true);
                 return clickedButton;
             }
         }
@@ -155,9 +165,31 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         return this.myDeckRemainingOutOfTotalSlashRepository.findAllSlashList();
     }
 
+    private getTotalNumberOfSelectedCardsByDeckId(deckId: number): TotalNumberOfSelectedCards | null {
+        return this.totalNumberOfSelectedCardsRepository.findNumberByDeckId(deckId);
+    }
+
+    private setChosenOutOfTotalSlashVisibility(isVisible: boolean): void {
+        const slash = this.myDeckChosenOutOfTotalSlashRepository.findSlash();
+        if (slash !== null) {
+            slash.setVisibility(isVisible);
+        } else {
+            console.log(`Not Found Chosen Out Of Total Slash`);
+        }
+    }
+
     private setMyDeckNumberOfCards(deckId: number, isVisible: boolean): void {
         const numberList = this.myDeckNumberOfCardsRepository.findNumberListByDeckId(deckId);
         numberList?.forEach((number) => number.setVisibility(isVisible));
+    }
+
+    private setTotalNumberOfSelectedCardsVisibility(deckId: number, isVisible: boolean): void {
+        const totalNumber = this.getTotalNumberOfSelectedCardsByDeckId(deckId);
+        if (totalNumber !== null) {
+            totalNumber.setVisibility(isVisible);
+        } else {
+            console.log(`Not Found Total Number Of Selected Cards (Deck ID: ${deckId})`);
+        }
     }
 
     private setOwnedCardsVisibility(isVisible: boolean): void {
