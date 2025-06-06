@@ -1,4 +1,3 @@
 export interface MyDeckCardMapRepository {
-    addMyDeckCard(deckId: number, cardIdList: number[]): void;
-    getDeckIdAndCardLists(): [number, number[]][]
+    addMyDeckCard(deckId: number, cardId: number, cardCount: number): void;
 }

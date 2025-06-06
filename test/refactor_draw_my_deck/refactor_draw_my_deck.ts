@@ -53,6 +53,7 @@ import {MyDeckRemainingCardsServiceImpl} from "../../src/my_deck_remaining_cards
 import {MyDeckRemainingOutOfTotalSlashServiceImpl} from "../../src/my_deck_remaining_out_of_total_slash/service/MyDeckRemainingOutOfTotalSlashServiceImpl";
 import {MyDeckNumberOfSelectedCardsServiceImpl} from "../../src/my_deck_number_of_selected_cards/service/MyDeckNumberOfSelectedCardsServiceImpl";
 import {MyDeckChosenOutOfTotalSlashServiceImpl} from "../../src/my_deck_chosen_out_of_total_slash/service/MyDeckChosenOutOfTotalSlashServiceImpl";
+import {TotalNumberOfSelectedCardsServiceImpl} from "../../src/my_deck_total_number_of_selected_cards/service/TotalNumberOfSelectedCardsServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -132,6 +133,7 @@ export class TCGJustTestMyDeckView {
     private myDeckRemainingOutOfTotalSlashService = MyDeckRemainingOutOfTotalSlashServiceImpl.getInstance();
     private myDeckNumberOfSelectedCardsService = MyDeckNumberOfSelectedCardsServiceImpl.getInstance();
     private myDeckChosenOutOfTotalSlashService = MyDeckChosenOutOfTotalSlashServiceImpl.getInstance();
+    private totalNumberOfSelectedCardsService = TotalNumberOfSelectedCardsServiceImpl.getInstance();
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -479,6 +481,7 @@ export class TCGJustTestMyDeckView {
         await this.addCardScrollArea();
         await this.addBlockScrollArea();
         await this.addChosenOutOfTotalSlash();
+        await this.addTotalNumberOfSelectedCards();
         await this.addMyDeckCard();
         await this.addMyDeckOwnedCards();
         await this.addMyDeckTotalOwnedCards();
@@ -601,6 +604,22 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add Chosen Out Of Total Slash:', error);
+        }
+    }
+
+    private async addTotalNumberOfSelectedCards(): Promise<void> {
+        try {
+            const totalCardCountMap = this.myDeckCardMapRepository.getTotalCardCount();
+            for (const [deckId, totalCardCount] of totalCardCountMap) {
+                const numberMesh = await this.totalNumberOfSelectedCardsService.createTotalNumberOfSelectedCards(deckId, totalCardCount);
+                if (numberMesh) {
+                    this.scene.add(numberMesh);
+                } else {
+                    console.warn(`Total Number Of Selected Cards Mesh Not found`);
+                }
+            }
+        } catch (error) {
+            console.error('Failed To Add Total Number Of Selected Cards:', error);
         }
     }
 
@@ -761,7 +780,7 @@ export class TCGJustTestMyDeckView {
 
     private async addMyDeckCard(): Promise<void> {
         try {
-            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardListsNew();
+            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardLists();
             for (const [deckId, cardIdList] of myDeckCardList) {
                 await this.myDeckCardService.createMyDeckCardWithPosition(deckId, cardIdList);
             }
@@ -997,7 +1016,7 @@ export class TCGJustTestMyDeckView {
 
     private async addMyDeckNumberOfCards(): Promise<void> {
         try {
-            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardListsNew();
+            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardLists();
             for (const [deckId, cardIdList] of myDeckCardList) {
                 for (const cardId of cardIdList) {
                     const cardCount = this.myDeckCardMapRepository.findCardCountByDeckIdAndCardId(deckId, cardId);
@@ -1048,7 +1067,7 @@ export class TCGJustTestMyDeckView {
 
     private async addMyDeckNumberOfSelectedCards(): Promise<void> {
         try {
-            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardListsNew();
+            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardLists();
             for (const [deckId, cardIdList] of myDeckCardList) {
                 for (const cardId of cardIdList) {
                     const cardCount = this.myDeckCardMapRepository.findCardCountByDeckIdAndCardId(deckId, cardId);
@@ -1100,7 +1119,7 @@ export class TCGJustTestMyDeckView {
 
     private async addMyDeckBlock(): Promise<void> {
         try {
-            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardListsNew();
+            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardLists();
             for (const [deckId, cardIdList] of myDeckCardList) {
                 await this.myDeckBlockService.createMyDeckBlockWithPosition(deckId, cardIdList);
             }
@@ -1150,7 +1169,7 @@ export class TCGJustTestMyDeckView {
 
     private async addMyDeckCardName(): Promise<void> {
         try {
-            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardListsNew();
+            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardLists();
             for (const [deckId, cardIdList] of myDeckCardList) {
                 await this.myDeckCardNameService.createMyDeckCardNameWithPosition(deckId, cardIdList);
             }
@@ -1591,6 +1610,7 @@ export class TCGJustTestMyDeckView {
             this.sideScrollAreaService.adjustMyDeckCardScrollAreaPosition();
             this.sideScrollAreaService.adjustMyDeckBlockScrollAreaPosition();
             this.myDeckChosenOutOfTotalSlashService.adjustSlashPosition();
+            this.totalNumberOfSelectedCardsService.adjustTotalNumberOfSelectedCardsPosition();
             this.myDeckButtonService.adjustMyDeckButtonPosition();
             this.myDeckButtonEffectService.adjustMyDeckButtonEffectPosition();
             this.deckNameEditButtonService.adjustDeckNameEditButtonPosition();
