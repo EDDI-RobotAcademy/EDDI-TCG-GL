@@ -31,6 +31,7 @@ import {CardStateManager} from "../../my_deck_card_manager/CardStateManager";
 
 export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClickDetectService {
     private static instance: DeckEditButtonClickDetectServiceImpl | null = null;
+    private cameraRepository: CameraRepository;
     private deckEditButtonClickDetectRepository: DeckEditButtonClickDetectRepositoryImpl;
     private deckEditButtonRepository: DeckEditButtonRepositoryImpl;
     private myDeckOwnedCardsRepository: MyDeckOwnedCardsRepositoryImpl;
@@ -46,10 +47,11 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private totalNumberOfSelectedCardsRepository: TotalNumberOfSelectedCardsRepositoryImpl;
     private myDeckChosenOutOfTotalSlashRepository: MyDeckChosenOutOfTotalSlashRepositoryImpl;
     private cardStateManager: CardStateManager;
-    private cameraRepository: CameraRepository;
+
     private buttonClickEnabled: boolean = true;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
+        this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.deckEditButtonClickDetectRepository = DeckEditButtonClickDetectRepositoryImpl.getInstance();
         this.deckEditButtonRepository = DeckEditButtonRepositoryImpl.getInstance();
         this.myDeckOwnedCardsRepository = MyDeckOwnedCardsRepositoryImpl.getInstance();
@@ -64,7 +66,6 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.myDeckRemainingOutOfTotalSlashRepository = MyDeckRemainingOutOfTotalSlashRepositoryImpl.getInstance();
         this.totalNumberOfSelectedCardsRepository = TotalNumberOfSelectedCardsRepositoryImpl.getInstance();
         this.myDeckChosenOutOfTotalSlashRepository = MyDeckChosenOutOfTotalSlashRepositoryImpl.getInstance();
-        this.cameraRepository = CameraRepositoryImpl.getInstance();
 
         this.cardStateManager = CardStateManager.getInstance();
     }

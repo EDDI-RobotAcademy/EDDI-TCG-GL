@@ -134,7 +134,7 @@ export class SideScrollAreaDetectServiceImpl implements SideScrollAreaDetectServ
         );
 
         if (detectSideScrollArea) {
-            console.log(`%c[DEBUG] Detected My Deck Scroll Area ID: ${detectSideScrollArea.id}`, 'color: #2E9AFE; font-weight: bold;');
+//             console.log(`%c[DEBUG] Detected My Deck Scroll Area ID: ${detectSideScrollArea.id}`, 'color: #2E9AFE; font-weight: bold;');
             if (detectSideScrollArea.id == 0) {
                 this.setMyDeckScrollEnabled(0, true);
                 this.setMyDeckScrollEnabled(1, false);
