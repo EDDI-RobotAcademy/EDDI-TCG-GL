@@ -1,12 +1,15 @@
 import {MyDeckOwnedCardsClickDetectService} from "./MyDeckOwnedCardsClickDetectService";
 
 import {MyDeckOwnedCards} from "../../my_deck_owned_cards/entity/MyDeckOwnedCards";
+import {getCardById} from "../../card/utility";
 
 import {MyDeckOwnedCardsClickDetectRepositoryImpl} from "../repository/MyDeckOwnedCardsClickDetectRepositoryImpl";
 import {MyDeckOwnedCardsRepositoryImpl} from "../../my_deck_owned_cards/repository/MyDeckOwnedCardsRepositoryImpl";
+import {MyDeckTotalOwnedCardsRepositoryImpl} from "../../my_deck_total_owned_cards/repository/MyDeckTotalOwnedCardsRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
+import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 import * as THREE from "three";
 
@@ -15,6 +18,8 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
     private cameraRepository: CameraRepository;
     private myDeckOwnedCardsClickDetectRepository: MyDeckOwnedCardsClickDetectRepositoryImpl;
     private myDeckOwnedCardsRepository: MyDeckOwnedCardsRepositoryImpl;
+    private myDeckTotalOwnedCardsRepository: MyDeckTotalOwnedCardsRepositoryImpl;
+    private cardCountManager: CardCountManager;
 
     private cardClickEnabled: boolean = false;
 
@@ -22,6 +27,8 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.myDeckOwnedCardsClickDetectRepository = MyDeckOwnedCardsClickDetectRepositoryImpl.getInstance();
         this.myDeckOwnedCardsRepository = MyDeckOwnedCardsRepositoryImpl.getInstance();
+        this.myDeckTotalOwnedCardsRepository = MyDeckTotalOwnedCardsRepositoryImpl.getInstance();
+        this.cardCountManager = CardCountManager.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckOwnedCardsClickDetectServiceImpl {
@@ -56,7 +63,8 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
 
             console.log(`Clicked My Deck Owned Card Unique ID: ${cardUniqueId}, Card ID: ${cardId}`);
 
-            this.saveCurrentClickedCardId(cardUniqueId);
+            this.saveCurrentClickedCardId(cardId);
+            this.saveClickedCardCount(cardId);
 
             return clickedCard;
         }
@@ -71,8 +79,8 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
         return null;
     }
 
-    private saveCurrentClickedCardId(cardUniqueId: number): void {
-        this.myDeckOwnedCardsClickDetectRepository.saveCurrentClickedCardId(cardUniqueId);
+    private saveCurrentClickedCardId(cardId: number): void {
+        this.myDeckOwnedCardsClickDetectRepository.saveCurrentClickedCardId(cardId);
     }
 
     public getCurrentClickedCardId(): number | null {
@@ -85,6 +93,39 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
 
     private getCardIdByCardUniqueId(cardUniqueId: number): number | null {
         return this.myDeckOwnedCardsRepository.findCardIdByCardUniqueId(cardUniqueId);
+    }
+
+    private saveClickedCardCount(cardId: number): void {
+        const ownedCardCount = this.myDeckTotalOwnedCardsRepository.findCardCountByCardId(cardId);
+        const alreadySavedCardCount = this.cardCountManager.findCardCountByCardId(cardId);
+        if (alreadySavedCardCount == null) {
+            console.warn(`[WARN] Card click count not found for cardId: ${cardId}`);
+            return;
+        }
+
+        const card = getCardById(cardId);
+        if (!card) {
+            console.warn(`[WARN] Card with ID ${cardId} not found`);
+            return;
+        }
+        const grade = Number(card.등급);
+        const maxSelectableCardCountByGrade = this.cardCountManager.getMaxClickCountByGrade(grade);
+        const currentSelectedCardCountByGrade = this.cardCountManager.findGradeCardCount(grade);
+
+        // 등급별 제한 검사
+        if (currentSelectedCardCountByGrade >= maxSelectableCardCountByGrade) {
+            console.warn(`[DEBUG] Grade limit exceeded (grade: ${grade}, max count: ${maxSelectableCardCountByGrade})`);
+            return;
+        }
+
+        // 사용자가 소지한 카드 개수 제한 검사
+        if (ownedCardCount !== null && alreadySavedCardCount >= ownedCardCount) {
+            console.warn(`[DEBUG] User Owned Card Not Enough: ${cardId} (Owned Card Count: ${ownedCardCount})`);
+            return;
+        }
+
+        this.cardCountManager.incrementCardClickCount(cardId);
+        this.cardCountManager.incrementGradeCardCount(grade);
     }
 
 }

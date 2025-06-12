@@ -6,11 +6,13 @@ import {MyDeckTotalOwnedCardsService} from "./MyDeckTotalOwnedCardsService";
 import {MyDeckTotalOwnedCards} from "../entity/MyDeckTotalOwnedCards";
 import {MyDeckTotalOwnedCardsPosition} from "../../my_deck_total_owned_cards_position/entity/MyDeckTotalOwnedCardsPosition";
 import {SideScrollArea} from "../../side_scroll_area/entity/SideScrollArea";
+import {getCardById} from "../../card/utility";
 
 import {MyDeckTotalOwnedCardsRepositoryImpl} from "../repository/MyDeckTotalOwnedCardsRepositoryImpl";
 import {MyDeckTotalOwnedCardsPositionRepositoryImpl} from "../../my_deck_total_owned_cards_position/repository/MyDeckTotalOwnedCardsPositionRepositoryImpl";
 import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
 import {ClippingMaskManager} from "../../clipping_mask_manager/ClippingMaskManager";
+import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 export class MyDeckTotalOwnedCardsServiceImpl implements MyDeckTotalOwnedCardsService {
     private static instance: MyDeckTotalOwnedCardsServiceImpl;
@@ -18,12 +20,14 @@ export class MyDeckTotalOwnedCardsServiceImpl implements MyDeckTotalOwnedCardsSe
     private myDeckTotalOwnedCardsPositionRepository: MyDeckTotalOwnedCardsPositionRepositoryImpl;
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
     private clippingMaskManager: ClippingMaskManager;
+    private cardCountManager: CardCountManager;
 
     private constructor() {
         this.myDeckTotalOwnedCardsRepository = MyDeckTotalOwnedCardsRepositoryImpl.getInstance();
         this.myDeckTotalOwnedCardsPositionRepository = MyDeckTotalOwnedCardsPositionRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
+        this.cardCountManager = CardCountManager.getInstance();
     }
 
     public static getInstance(): MyDeckTotalOwnedCardsServiceImpl {
@@ -109,7 +113,16 @@ export class MyDeckTotalOwnedCardsServiceImpl implements MyDeckTotalOwnedCardsSe
     }
 
     private async createMyDeckTotalOwnedCards(cardId: number, cardCount: number, position: Vector2d): Promise<MyDeckTotalOwnedCards> {
-        return await this.myDeckTotalOwnedCardsRepository.createMyDeckTotalOwnedCards(cardId, cardCount, position);
+        const card = getCardById(cardId);
+        if (!card) {
+            throw new Error(`Card with ID ${cardId} not found`);
+        }
+        const grade = Number(card.등급);
+
+        const mesh = await this.myDeckTotalOwnedCardsRepository.createMyDeckTotalOwnedCards(cardId, cardCount, position);
+        this.cardCountManager.saveGradCardCount(grade, cardCount);
+
+        return mesh;
     }
 
     private myDeckTotalOwnedCardsPosition(cardId: number, cardIndex: number): MyDeckTotalOwnedCardsPosition {

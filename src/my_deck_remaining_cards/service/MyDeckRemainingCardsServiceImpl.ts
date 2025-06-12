@@ -11,6 +11,7 @@ import {MyDeckRemainingCardsRepositoryImpl} from "../repository/MyDeckRemainingC
 import {MyDeckRemainingCardsPositionRepositoryImpl} from "../../my_deck_remaining_cards_position/repository/MyDeckRemainingCardsPositionRepositoryImpl";
 import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
 import {ClippingMaskManager} from "../../clipping_mask_manager/ClippingMaskManager";
+import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsService {
     private static instance: MyDeckRemainingCardsServiceImpl;
@@ -18,12 +19,14 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
     private myDeckRemainingCardsPositionRepository: MyDeckRemainingCardsPositionRepositoryImpl;
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
     private clippingMaskManager: ClippingMaskManager;
+    private cardCountManager: CardCountManager;
 
     private constructor() {
         this.myDeckRemainingCardsRepository = MyDeckRemainingCardsRepositoryImpl.getInstance();
         this.myDeckRemainingCardsPositionRepository = MyDeckRemainingCardsPositionRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
+        this.cardCountManager = CardCountManager.getInstance();
     }
 
     public static getInstance(): MyDeckRemainingCardsServiceImpl {
@@ -85,29 +88,31 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
 
             const newPositionX = initialPosition.getX() * windowWidth;
             const newPositionY = initialPosition.getY() * windowHeight;
-                console.log(`[DEBUG] (adjust) Remaining Cards ${remainingCardsId}:`, {
-                    initialPosition: initialPosition,
-                    newPositionX,
-                    newPositionY,
-                });
+            console.log(`[DEBUG] (adjust) Remaining Cards ${remainingCardsId}:`, {
+                initialPosition: initialPosition,
+                newPositionX,
+                newPositionY,
+            });
 
-                remainingCardsMesh.geometry.dispose();
-                remainingCardsMesh.geometry = new THREE.PlaneGeometry(remainingCardsWidth, remainingCardsHeight);
-                remainingCardsMesh.position.set(newPositionX, newPositionY, 0);
+            remainingCardsMesh.geometry.dispose();
+            remainingCardsMesh.geometry = new THREE.PlaneGeometry(remainingCardsWidth, remainingCardsHeight);
+            remainingCardsMesh.position.set(newPositionX, newPositionY, 0);
 
-                const scrollArea = this.getScrollArea();
-                if (scrollArea) {
-                    scrollArea.width = 0.54 * windowWidth;
-                    scrollArea.height = 0.745 * windowHeight;
-                    scrollArea.position.set(0 * window.innerWidth, -0.125 * window.innerHeight);
-                    const clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
-                    this.applyClippingPlanesToMesh(remainingCardsMesh, clippingPlanes);
-                }
+            const scrollArea = this.getScrollArea();
+            if (scrollArea) {
+                scrollArea.width = 0.54 * windowWidth;
+                scrollArea.height = 0.745 * windowHeight;
+                scrollArea.position.set(0 * window.innerWidth, -0.125 * window.innerHeight);
+                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                this.applyClippingPlanesToMesh(remainingCardsMesh, clippingPlanes);
+            }
         }
     }
 
     private async createMyDeckRemainingCards(cardId: number, cardCount: number, position: Vector2d): Promise<MyDeckRemainingCards> {
-        return await this.myDeckRemainingCardsRepository.createMyDeckRemainingCards(cardId, cardCount, position);
+        const mesh = await this.myDeckRemainingCardsRepository.createMyDeckRemainingCards(cardId, cardCount, position);
+        this.cardCountManager.saveRemainingCardCount(cardId, cardCount);
+        return mesh;
     }
 
     private myDeckRemainingCardsPosition(cardId: number): MyDeckRemainingCardsPosition {
