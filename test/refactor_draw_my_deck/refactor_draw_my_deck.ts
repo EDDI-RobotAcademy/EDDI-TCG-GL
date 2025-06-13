@@ -90,6 +90,8 @@ import {MyDeckOwnedCardsClickDetectService} from "../../src/deck_owned_cards_cli
 import {MyDeckOwnedCardsClickDetectServiceImpl} from "../../src/deck_owned_cards_click_detect/service/MyDeckOwnedCardsClickDetectServiceImpl";
 import {MyDeckBlockHoverDetectService} from "../../src/my_deck_block_hover_detect/service/MyDeckBlockHoverDetectService";
 import {MyDeckBlockHoverDetectServiceImpl} from "../../src/my_deck_block_hover_detect/service/MyDeckBlockHoverDetectServiceImpl";
+import {DeckCardDeleteButtonClickDetectService} from "../../src/deck_card_delete_button_click_detect/service/DeckCardDeleteButtonClickDetectService";
+import {DeckCardDeleteButtonClickDetectServiceImpl} from "../../src/deck_card_delete_button_click_detect/service/DeckCardDeleteButtonClickDetectServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 
@@ -170,6 +172,7 @@ export class TCGJustTestMyDeckView {
     private myDeckOwnedCardsScrollService: MyDeckOwnedCardsScrollService;
     private myDeckOwnedCardsClickDetectService: MyDeckOwnedCardsClickDetectService;
     private myDeckBlockHoverDetectService: MyDeckBlockHoverDetectService;
+    private deckCardDeleteButtonClickDetectService: DeckCardDeleteButtonClickDetectServiceImpl;
 
     private initialized = false;
     private isAnimating = false;
@@ -313,6 +316,14 @@ export class TCGJustTestMyDeckView {
             }
         }, false);
 
+        this.deckCardDeleteButtonClickDetectService = DeckCardDeleteButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.renderer.domElement.addEventListener('mousedown', async (e) => {
+            const buttonClickEnable = this.deckCardDeleteButtonClickDetectService.isButtonClickEnabled();
+            if (buttonClickEnable == true) {
+                await this.deckCardDeleteButtonClickDetectService.onMouseDown(e);
+            }
+        }, false);
+
         this.buildDeckButtonClickDetectService = BuildDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
             const buildDeckButtonClickState = this.buildDeckButtonClickDetectService.getButtonClickState();
@@ -331,6 +342,7 @@ export class TCGJustTestMyDeckView {
                 if (deckEditButtonClick) {
                     this.myDeckOwnedCardsClickDetectService.setCardClickEnabled(true);
                     this.myDeckBlockHoverDetectService.setBlockHoverEnabled(true);
+                    this.deckCardDeleteButtonClickDetectService.setButtonClickEnabled(true);
                 }
             }
         }, false);
