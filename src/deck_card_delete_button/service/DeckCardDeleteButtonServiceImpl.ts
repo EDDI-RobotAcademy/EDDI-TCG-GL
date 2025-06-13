@@ -112,6 +112,16 @@ export class DeckCardDeleteButtonServiceImpl implements DeckCardDeleteButtonServ
                 buttonMesh.geometry.dispose();
                 buttonMesh.geometry = new THREE.PlaneGeometry(buttonWidth, buttonHeight);
                 buttonMesh.position.set(newPositionX, newPositionY, 0);
+
+                const scrollArea = this.getScrollArea();
+                if (scrollArea) {
+                    scrollArea.width = 0.202 * windowWidth;
+                    scrollArea.height = 0.61 * windowHeight;
+                    scrollArea.position.set(0.38 * window.innerWidth, -0.024 * window.innerHeight);
+                    const clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                    this.applyClippingPlanesToMesh(buttonMesh, clippingPlanes);
+                }
+
             }
         }
     }
@@ -167,7 +177,6 @@ export class DeckCardDeleteButtonServiceImpl implements DeckCardDeleteButtonServ
         const buttonMesh = button.getMesh();
         return buttonMesh;
     }
-
 
     public getButtonListByDeckId(deckId: number): DeckCardDeleteButton[] {
         const buttonList = this.deckCardDeleteButtonRepository.findButtonListByDeckId(deckId);
