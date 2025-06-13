@@ -54,6 +54,7 @@ import {MyDeckRemainingOutOfTotalSlashServiceImpl} from "../../src/my_deck_remai
 import {MyDeckNumberOfSelectedCardsServiceImpl} from "../../src/my_deck_number_of_selected_cards/service/MyDeckNumberOfSelectedCardsServiceImpl";
 import {MyDeckChosenOutOfTotalSlashServiceImpl} from "../../src/my_deck_chosen_out_of_total_slash/service/MyDeckChosenOutOfTotalSlashServiceImpl";
 import {TotalNumberOfSelectedCardsServiceImpl} from "../../src/my_deck_total_number_of_selected_cards/service/TotalNumberOfSelectedCardsServiceImpl";
+import {DeckCardDeleteButtonServiceImpl} from "../../src/deck_card_delete_button/service/DeckCardDeleteButtonServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -135,6 +136,8 @@ export class TCGJustTestMyDeckView {
     private myDeckChosenOutOfTotalSlashService = MyDeckChosenOutOfTotalSlashServiceImpl.getInstance();
     private totalNumberOfSelectedCardsService = TotalNumberOfSelectedCardsServiceImpl.getInstance();
 
+    private deckCardDeleteButtonService: DeckCardDeleteButtonServiceImpl;
+
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
     private myDeckButtonMapRepository = MyDeckButtonMapRepositoryImpl.getInstance();
@@ -202,6 +205,8 @@ export class TCGJustTestMyDeckView {
         window.addEventListener('resize', this.onWindowResize.bind(this));
         this.mouseController = new MouseController(this.camera, this.scene);
         window.addEventListener('click', () => this.initializeAudio(), { once: true });
+
+        this.deckCardDeleteButtonService = DeckCardDeleteButtonServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckDeleteButtonClickDetectService = DeckDeleteButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -492,6 +497,7 @@ export class TCGJustTestMyDeckView {
         await this.addMyDeckRemainingCards();
         await this.addMyDeckBlock();
         await this.addMyDeckCardName();
+        await this.addDeckCardDeleteButton();
         await this.addMyDeckButton();
         await this.addMyDeckButtonEffect();
         await this.addBuildDeckButton();
@@ -1263,6 +1269,28 @@ export class TCGJustTestMyDeckView {
         }
     }
 
+    private async addDeckCardDeleteButton(): Promise<void> {
+        try {
+            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardLists();
+            for (const [deckId, cardIdList] of myDeckCardList) {
+                for (const cardId of cardIdList) {
+                    await this.deckCardDeleteButtonService.createDeckCardDeleteButtonWithPosition(deckId, cardId);
+                }
+            }
+
+            const deckIdList = this.deckCardDeleteButtonService.getAllDeckIdList();
+            deckIdList.forEach((deckId, index) => {
+                const buttonList = this.deckCardDeleteButtonService.getButtonListByDeckId(deckId);
+
+                this.deckCardDeleteButtonService.saveButtonGroup(deckId);
+                buttonList.forEach((button) => this.scene.add(button.getMesh()));
+            });
+
+        } catch (error) {
+            console.error('Failed to add deck card delete button:', error);
+        }
+    }
+
 //     private async addDeckMakeButton(): Promise<void> {
 //         try{
 //             const deckMakeButtonMesh = await this.deckMakeButtonService.createDeckMakeButton();
@@ -1625,6 +1653,7 @@ export class TCGJustTestMyDeckView {
             this.cardSelectionBlockerService.adjustCardSelectionBlockerPosition();
             this.myDeckBlockService.adjustMyDeckBlockPosition();
             this.myDeckCardNameService.adjustMyDeckCardNamePosition();
+            this.deckCardDeleteButtonService.adjustDeckCardDeleteButtonPosition();
             this.myDeckNameTextService.adjustMyDeckNameTextPosition();
             this.buildDeckButtonService.adjustBuildDeckButtonPosition();
             this.deckEditButtonService.adjustDeckEditButtonPosition();
