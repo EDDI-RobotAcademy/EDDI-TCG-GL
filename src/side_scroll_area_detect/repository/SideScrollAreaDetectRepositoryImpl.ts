@@ -38,7 +38,7 @@ export class SideScrollAreaDetectRepositoryImpl implements SideScrollAreaDetectR
                 );
 
                 if (detectedArea) {
-                    console.log('Detect Make Deck Side Scroll Area!')
+//                     console.log('Detect Make Deck Side Scroll Area!')
                     return detectedArea;
                 }
             }

@@ -150,6 +150,10 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.deckEditButtonClickDetectRepository.saveCurrentButtonClickState(state);
     }
 
+    public getCurrentButtonClickState(): boolean | null {
+        return this.deckEditButtonClickDetectRepository.getCurrentButtonClickState();
+    }
+
     private getAllOwnedCards(): MyDeckOwnedCards[] {
         return this.myDeckOwnedCardsRepository.findAllCards();
     }
