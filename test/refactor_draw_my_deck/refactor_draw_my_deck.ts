@@ -1283,9 +1283,30 @@ export class TCGJustTestMyDeckView {
                 const buttonList = this.deckCardDeleteButtonService.getButtonListByDeckId(deckId);
 
                 this.deckCardDeleteButtonService.saveButtonGroup(deckId);
-                buttonList.forEach((button) => this.scene.add(button.getMesh()));
+//                 buttonList.forEach((button) => this.scene.add(button.getMesh()));
             });
 
+            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 2);
+            let clippingPlanes: THREE.Plane[] = [];
+
+            if (scrollArea) {
+                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                deckIdList.forEach((deckId) => {
+                    const buttonGroup = this.deckCardDeleteButtonService.getButtonGroupByDeckId(deckId);
+                    buttonGroup.children.forEach((buttonObject) => {
+                        if (buttonObject instanceof THREE.Mesh) {
+                            this.clippingMaskManager.applyClippingPlanesToMesh(buttonObject, clippingPlanes);
+                        } else {
+                            console.warn("[WARN] Skipping non-mesh object in Deck Card Delete Button Group:", buttonObject);
+                        }
+                    });
+
+                    if (!this.scene.children.includes(buttonGroup)) {
+                        this.scene.add(buttonGroup);
+                    }
+                    buttonGroup.position.y = 0;
+                });
+            }
         } catch (error) {
             console.error('Failed to add deck card delete button:', error);
         }

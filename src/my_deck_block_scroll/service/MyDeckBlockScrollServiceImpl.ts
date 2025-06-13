@@ -5,6 +5,7 @@ import {MyDeckBlockRepositoryImpl} from "../../my_deck_block/repository/MyDeckBl
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {MyDeckCardNameRepositoryImpl} from "../../my_deck_card_name/repository/MyDeckCardNameRepositoryImpl";
 import {MyDeckNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_number_of_selected_cards/repository/MyDeckNumberOfSelectedCardsRepositoryImpl";
+import {DeckCardDeleteButtonRepositoryImpl} from "../../deck_card_delete_button/repository/DeckCardDeleteButtonRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -17,6 +18,7 @@ export class MyDeckBlockScrollServiceImpl implements MyDeckBlockScrollService {
     private myDeckCardNameRepository: MyDeckCardNameRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private myDeckNumberOfSelectedCardsRepository: MyDeckNumberOfSelectedCardsRepositoryImpl;
+    private deckCardDeleteButtonRepository: DeckCardDeleteButtonRepositoryImpl;
 
     private scrollState: boolean = true;
 
@@ -27,6 +29,7 @@ export class MyDeckBlockScrollServiceImpl implements MyDeckBlockScrollService {
         this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckNumberOfSelectedCardsRepository = MyDeckNumberOfSelectedCardsRepositoryImpl.getInstance();
+        this.deckCardDeleteButtonRepository = DeckCardDeleteButtonRepositoryImpl.getInstance(scene);
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer): MyDeckBlockScrollServiceImpl {
@@ -49,6 +52,7 @@ export class MyDeckBlockScrollServiceImpl implements MyDeckBlockScrollService {
             this.getBlockGroup(currentClickDeckId), // scrollTargetBlock
             this.getCardNameGroup(currentClickDeckId),
             this.getNumberOfSelectedCardsGroup(currentClickDeckId),
+            this.getDeckCardDeleteButtonGroup(currentClickDeckId),
         ];
 
         if (scrollTargets.every(target => !target)) return;
@@ -96,6 +100,10 @@ export class MyDeckBlockScrollServiceImpl implements MyDeckBlockScrollService {
 
     public getCurrentClickDeckButtonId(): number | null {
         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    }
+
+    private getDeckCardDeleteButtonGroup(deckId: number): THREE.Group {
+        return this.deckCardDeleteButtonRepository.findButtonGroupByDeckId(deckId);
     }
 
 }
