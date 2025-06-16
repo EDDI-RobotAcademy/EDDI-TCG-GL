@@ -66,6 +66,11 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
 
             this.saveCurrentClickedButtonId(buttonUniqueId);
 
+            const cardId = this.getCardIdByButtonId(buttonUniqueId);
+            if (cardId == null) return null;
+            this.saveClickedCardCount(currentClickedDeckButtonId, cardId);
+
+
             return clickedButton;
         }
         return null;
@@ -93,6 +98,35 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
 
     private getCurrentClickDeckButtonId(): number | null {
         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    }
+
+    private getCardIdByButtonId(buttonId: number): number | null {
+        return this.deckCardDeleteButtonRepository.findCardIdByButtonUniqueId(buttonId);
+    }
+
+    private saveClickedCardCount(deckId: number, cardId: number): void {
+        const card = getCardById(cardId);
+        if (!card) {
+            throw new Error(`Card with ID ${cardId} not found`);
+        }
+        const grade = Number(card.등급);
+
+        const currentRemainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
+        if (currentRemainingCardCount == null) {
+            console.warn(`[WARN] "Remaining Card Count" not found for cardId: ${cardId}`);
+            return;
+        }
+
+        const selectedCardCount = this.cardCountManager.findCardCountByDeck(deckId, cardId);
+        if (selectedCardCount == 0) {
+            console.warn(`[DEBUG] Card id: ${cardId}, Count: ${selectedCardCount} No more cards to remove.`);
+            return;
+        }
+
+        // 선택한 카드 개수는 감소, 남은 카드 개수는 증가
+        this.cardCountManager.incrementRemainingCardCount(cardId);
+        this.cardCountManager.decrementCardCountByDeck(deckId, cardId);
+        this.cardCountManager.decrementCardCountByGrade(deckId, grade);
     }
 
 }
