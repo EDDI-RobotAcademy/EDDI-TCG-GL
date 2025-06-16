@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {Vector2d} from "../../common/math/Vector2d";
+import {getCardById} from "../../card/utility";
 
 import {MyDeckNumberOfCardsService} from "./MyDeckNumberOfCardsService";
 import {MyDeckNumberOfCards} from "../entity/MyDeckNumberOfCards";
@@ -9,7 +10,9 @@ import {MyDeckNumberOfCardsPosition} from "../../my_deck_number_of_cards_positio
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
 import {SideScrollArea} from "../../side_scroll_area/entity/SideScrollArea";
+
 import {ClippingMaskManager} from "../../clipping_mask_manager/ClippingMaskManager";
+import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 export class MyDeckNumberOfCardsServiceImpl implements MyDeckNumberOfCardsService {
     private static instance: MyDeckNumberOfCardsServiceImpl;
@@ -18,6 +21,7 @@ export class MyDeckNumberOfCardsServiceImpl implements MyDeckNumberOfCardsServic
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
     private clippingMaskManager: ClippingMaskManager;
+    private cardCountManager: CardCountManager;
 
     private constructor() {
         this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance();
@@ -25,6 +29,7 @@ export class MyDeckNumberOfCardsServiceImpl implements MyDeckNumberOfCardsServic
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
+        this.cardCountManager = CardCountManager.getInstance();
     }
 
     public static getInstance(): MyDeckNumberOfCardsServiceImpl {
@@ -124,7 +129,17 @@ export class MyDeckNumberOfCardsServiceImpl implements MyDeckNumberOfCardsServic
     }
 
     private async createMyDeckNumberOfCards(deckId: number, cardId: number, cardCount: number, position: Vector2d): Promise<MyDeckNumberOfCards> {
-        return await this.myDeckNumberOfCardsRepository.createMyDeckNumberOfCards(deckId, cardId, cardCount, position);
+        const card = getCardById(cardId);
+        if (!card) {
+            throw new Error(`Card with ID ${cardId} not found`);
+        }
+
+        const grade = Number(card.등급);
+        this.cardCountManager.saveGradeCardCount(deckId, grade, cardCount);
+        this.cardCountManager.saveCardCountByDeck(deckId, cardId, cardCount);
+
+        const mesh = await this.myDeckNumberOfCardsRepository.createMyDeckNumberOfCards(deckId, cardId, cardCount, position);
+        return mesh;
     }
 
     private myDeckNumberOfCardsPosition(deckId: number, cardId: number): MyDeckNumberOfCardsPosition {

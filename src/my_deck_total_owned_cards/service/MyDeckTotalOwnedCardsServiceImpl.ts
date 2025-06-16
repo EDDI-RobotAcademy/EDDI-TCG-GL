@@ -113,16 +113,7 @@ export class MyDeckTotalOwnedCardsServiceImpl implements MyDeckTotalOwnedCardsSe
     }
 
     private async createMyDeckTotalOwnedCards(cardId: number, cardCount: number, position: Vector2d): Promise<MyDeckTotalOwnedCards> {
-        const card = getCardById(cardId);
-        if (!card) {
-            throw new Error(`Card with ID ${cardId} not found`);
-        }
-        const grade = Number(card.등급);
-
-        const mesh = await this.myDeckTotalOwnedCardsRepository.createMyDeckTotalOwnedCards(cardId, cardCount, position);
-        this.cardCountManager.saveGradCardCount(grade, cardCount);
-
-        return mesh;
+        return await this.myDeckTotalOwnedCardsRepository.createMyDeckTotalOwnedCards(cardId, cardCount, position);
     }
 
     private myDeckTotalOwnedCardsPosition(cardId: number, cardIndex: number): MyDeckTotalOwnedCardsPosition {

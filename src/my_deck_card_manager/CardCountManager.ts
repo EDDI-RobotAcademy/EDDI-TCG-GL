@@ -2,8 +2,12 @@ import {getCardById} from "../card/utility";
 
 export class CardCountManager {
     private static instance: CardCountManager;
-    private clickCardCountMap: Map<number, number> = new Map(); // cardId: cardClickCount
-    private gradeIdToClickCardCountMap: Map<number, number> = new Map(); // gradeId: cardClickCount
+    // 남은 카드 개수(선택 가능한 카드 개수)
+    private remainingCardCountMap: Map<number, number> = new Map(); // cardId: cardClickCount
+    // 덱별 카드 개수
+    private cardCountMap: Map<number, { cardId: number, count: number }[]> = new Map(); // deckId: {cardId: card Count}
+    // 등급별 카드 개수
+    private cardCountByGradeMap: Map<number, { gradeId: number, count: number }[]> = new Map(); // deckId: {gradeId: card Count}
 
     private constructor() {}
 
@@ -14,80 +18,140 @@ export class CardCountManager {
         return CardCountManager.instance;
     }
 
+    // 사용 가능한 카드 개수(덱 만들고 남은 카드 개수)
     public saveRemainingCardCount(cardId: number, cardCount: number): void {
-        const existingCardCountInfo = this.clickCardCountMap.get(cardId);
+        const existingCardCountInfo = this.remainingCardCountMap.get(cardId);
 
         if (existingCardCountInfo) {
             console.log(`Already Exist Remaining Card Count Info card ID:${cardId}`);
         } else {
-            this.clickCardCountMap.set(cardId, cardCount);
+            this.remainingCardCountMap.set(cardId, cardCount);
             // 제대로 확인 되면 주석 처리
             console.log(`Save Remaining Card Count "Card ID: ${cardId}", "Card Count: ${cardCount}"`);
         }
     }
 
-    public findCardCountByCardId(cardId: number): number | null {
-        return this.clickCardCountMap.get(cardId) ?? null;
+    public findRemainingCardCountByCardId(cardId: number): number | null {
+        return this.remainingCardCountMap.get(cardId) ?? null;
     }
 
-    public incrementCardClickCount(cardId: number): void {
-        const currentCount = this.findCardCountByCardId(cardId);
+    public incrementRemainingCardCount(cardId: number): void {
+        const currentCount = this.findRemainingCardCountByCardId(cardId);
         if (currentCount !== null) {
-            this.clickCardCountMap.set(cardId, currentCount + 1);
+            this.remainingCardCountMap.set(cardId, currentCount + 1);
 
             // 확인용
-            const numberOfCardIncreased = this.findCardCountByCardId(cardId);
-            console.log(`카드(ID: ${cardId}) 클릭 후 카드 수량: ${numberOfCardIncreased}`);
+            const numberOfCardIncreased = this.findRemainingCardCountByCardId(cardId);
+            console.log(`남은 카드(ID: ${cardId}) 클릭 후 카드 수량: ${numberOfCardIncreased}`);
         }
     }
 
-    public decrementCardClickCount(cardId: number): void {
-        const currentCount = this.findCardCountByCardId(cardId);
+    public decrementRemainingCardCount(cardId: number): void {
+        const currentCount = this.findRemainingCardCountByCardId(cardId);
         if (currentCount !== null) {
-             this.clickCardCountMap.set( cardId, currentCount - 1);
+             this.remainingCardCountMap.set( cardId, currentCount - 1);
+
+             // 확인용
+             const numberOfCardIncreased = this.findRemainingCardCountByCardId(cardId);
+             console.log(`남은 카드(ID: ${cardId}) 클릭 후 카드 수량: ${numberOfCardIncreased}`);
         }
+    }
+
+    // 덱별 카드 개수
+    public findCardCountByDeck(deckId: number, cardId: number): number {
+        const cardCountList = this.cardCountMap.get(deckId);
+        if (!cardCountList) return 0;
+
+        const cardCountEntry = cardCountList.find(entry => entry.cardId === cardId);
+        return cardCountEntry ? cardCountEntry.count : 0;
+    }
+
+    public saveCardCountByDeck(deckId: number, cardId: number, count: number): void {
+        const existingCardCountList = this.cardCountMap.get(deckId);
+        if (existingCardCountList) {
+            const cardEntry = existingCardCountList.find(entry => entry.cardId === cardId);
+            if (cardEntry) {
+                cardEntry.count += count;
+            } else {
+                existingCardCountList.push({cardId: cardId, count: count});
+            }
+        } else {
+            this.cardCountMap.set(deckId, [{ cardId: cardId, count: count }]);
+        }
+    }
+
+    public incrementCardCountByDeck(deckId: number, cardId: number): void {
+        const currentCount = this.findCardCountByDeck(deckId, cardId);
+        this.cardCountMap.set(deckId, [{ cardId: cardId, count: currentCount + 1 }]);
+
+        // 확인용 (나중에 지워야 함)
+        const count = this.findCardCountByDeck(deckId, cardId);
+        console.log(`카드 개수 증가 Deck ID: ${deckId}, Card ID: ${cardId}, Card Count: ${count}`);
+    }
+
+    public decrementCardCountByDeck(deckId: number, cardId: number): void {
+        const currentCount = this.findCardCountByDeck(deckId, cardId);
+        this.cardCountMap.set(deckId, [{ cardId: cardId, count: currentCount - 1 }]);
+
+        // 확인용 (나중에 지워야 함)
+        const count = this.findCardCountByDeck(deckId, cardId);
+        console.log(`카드 개수 감소 Deck ID: ${deckId}, Card ID: ${cardId}, Card Count: ${count}`);
     }
 
     // 등급별 카드 개수
-    public findGradeCardCount(gradeId: number): number {
-        return this.gradeIdToClickCardCountMap.get(gradeId) ?? 0;
+    public findCardCountByGrade(deckId: number, gradeId: number): number {
+        const gradeCountList = this.cardCountByGradeMap.get(deckId);
+        if (!gradeCountList) return 0;
+
+        const gradeCountEntry = gradeCountList.find(entry => entry.gradeId === gradeId);
+        return gradeCountEntry ? gradeCountEntry.count : 0;
     }
 
-    public saveGradCardCount(gradeId: number, count: number): void {
-        const existingGradCardCount = this.gradeIdToClickCardCountMap.get(gradeId);
-        if (existingGradCardCount) {
-            this.gradeIdToClickCardCountMap.set(gradeId, existingGradCardCount + count);
-
-            // 확인용
-            const currentCount = this.findGradeCardCount(gradeId);
-            console.log(`Save Grade Card Count "Grade ID: ${gradeId}", "Current Count: ${currentCount}"`);
+    public saveGradeCardCount(deckId: number, gradeId: number, count: number): void {
+        const existingGradeCountList = this.cardCountByGradeMap.get(deckId);
+        if (existingGradeCountList) {
+            const gradeEntry = existingGradeCountList.find(entry => entry.gradeId === gradeId);
+            if (gradeEntry) {
+                gradeEntry.count += count;
+            } else {
+                existingGradeCountList.push({gradeId: gradeId, count: count});
+            }
         } else {
-            this.gradeIdToClickCardCountMap.set(gradeId, count);
+            this.cardCountByGradeMap.set(deckId, [{ gradeId: gradeId, count: count }]);
         }
     }
 
-    public incrementGradeCardCount(gradeId: number): void {
-        const currentCount = this.findGradeCardCount(gradeId);
-        this.gradeIdToClickCardCountMap.set(gradeId, currentCount + 1);
+    public incrementCardCountByGrade(deckId: number, gradeId: number): void {
+        const currentCount = this.findCardCountByGrade(deckId, gradeId);
+        this.cardCountByGradeMap.set(deckId, [{ gradeId: gradeId, count: currentCount + 1 }]);
 
         // 확인용 (나중에 지워야 함)
-        const count = this.findGradeCardCount(gradeId);
-        console.log(`Current Grade(ID: ${gradeId}) Card Count: ${count}`);
+        const count = this.findCardCountByGrade(deckId, gradeId);
+        console.log(`등급별 카드 개수 증가 Deck ID: ${deckId}, Grade ID: ${gradeId}, Card Count: ${count}`);
     }
 
-    public decrementGradeCardCount(gradeId: number): void {
-        const currentCount = this.findGradeCardCount(gradeId);
-        this.gradeIdToClickCardCountMap.set(gradeId, currentCount - 1);
+    public decrementCardCountByGrade(deckId: number, gradeId: number): void {
+        const currentCount = this.findCardCountByGrade(deckId, gradeId);
+        this.cardCountByGradeMap.set(deckId, [{ gradeId: gradeId, count: currentCount - 1 }]);
+
+        // 확인용 (나중에 지워야 함)
+        const count = this.findCardCountByGrade(deckId, gradeId);
+        console.log(`등급별 카드 개수 감소 Deck ID: ${deckId}, Grade ID: ${gradeId}, Card Count: ${count}`);
     }
 
-    public findTotalSelectedCardCount(): number {
-        const totalCount = Array.from(this.gradeIdToClickCardCountMap.values()).reduce((sum, count) => sum + count, 0);
-        console.log(`Current Total Selected Card Count?: ${totalCount}`);
+    public findTotalSelectedCardCount(deckId: number): number {
+        const gradeCountList = this.cardCountByGradeMap.get(deckId);
+        if (!gradeCountList) return 0;
+
+        const totalCount = gradeCountList.reduce((sum, info) => sum + info.count, 0);
+        console.log(`Deck ID: ${deckId}, Total Selected Card Count: ${totalCount}`);
+
         return totalCount;
     }
 
-    public deleteCardCountByDeckId(deckId: number): void {
-        this.clickCardCountMap.delete(deckId);
+    public deleteCardCount(deckId: number): void {
+        this.cardCountByGradeMap.delete(deckId);
+        this.cardCountMap.delete(deckId);
     }
 
     public getMaxClickCountByGrade(gradeId: number): number {

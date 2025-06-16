@@ -6,6 +6,7 @@ import {getCardById} from "../../card/utility";
 import {MyDeckOwnedCardsClickDetectRepositoryImpl} from "../repository/MyDeckOwnedCardsClickDetectRepositoryImpl";
 import {MyDeckOwnedCardsRepositoryImpl} from "../../my_deck_owned_cards/repository/MyDeckOwnedCardsRepositoryImpl";
 import {MyDeckTotalOwnedCardsRepositoryImpl} from "../../my_deck_total_owned_cards/repository/MyDeckTotalOwnedCardsRepositoryImpl";
+import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -19,6 +20,7 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
     private myDeckOwnedCardsClickDetectRepository: MyDeckOwnedCardsClickDetectRepositoryImpl;
     private myDeckOwnedCardsRepository: MyDeckOwnedCardsRepositoryImpl;
     private myDeckTotalOwnedCardsRepository: MyDeckTotalOwnedCardsRepositoryImpl;
+    private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private cardCountManager: CardCountManager;
 
     private cardClickEnabled: boolean = false;
@@ -28,6 +30,7 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
         this.myDeckOwnedCardsClickDetectRepository = MyDeckOwnedCardsClickDetectRepositoryImpl.getInstance();
         this.myDeckOwnedCardsRepository = MyDeckOwnedCardsRepositoryImpl.getInstance();
         this.myDeckTotalOwnedCardsRepository = MyDeckTotalOwnedCardsRepositoryImpl.getInstance();
+        this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.cardCountManager = CardCountManager.getInstance();
     }
 
@@ -95,22 +98,31 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
         return this.myDeckOwnedCardsRepository.findCardIdByCardUniqueId(cardUniqueId);
     }
 
-    private saveClickedCardCount(cardId: number): void {
-        const ownedCardCount = this.myDeckTotalOwnedCardsRepository.findCardCountByCardId(cardId);
-        const alreadySavedCardCount = this.cardCountManager.findCardCountByCardId(cardId);
-        if (alreadySavedCardCount == null) {
-            console.warn(`[WARN] Card click count not found for cardId: ${cardId}`);
-            return;
-        }
+    private getCurrentClickDeckButtonId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    }
 
+    private saveClickedCardCount(cardId: number): void {
         const card = getCardById(cardId);
         if (!card) {
             console.warn(`[WARN] Card with ID ${cardId} not found`);
             return;
         }
         const grade = Number(card.등급);
+
         const maxSelectableCardCountByGrade = this.cardCountManager.getMaxClickCountByGrade(grade);
-        const currentSelectedCardCountByGrade = this.cardCountManager.findGradeCardCount(grade);
+        const ownedCardCount = this.myDeckTotalOwnedCardsRepository.findCardCountByCardId(cardId);
+        const remainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
+        if (remainingCardCount == null) {
+            console.warn(`[WARN] Remaining Card Count not found for cardId: ${cardId}`);
+            return;
+        }
+
+        const currentClickedDeckButtonId = this.getCurrentClickDeckButtonId();
+        if (currentClickedDeckButtonId == null) return;
+
+        const currentSelectedCardCount = this.cardCountManager.findCardCountByDeck(currentClickedDeckButtonId, cardId);
+        const currentSelectedCardCountByGrade = this.cardCountManager.findCardCountByGrade(currentClickedDeckButtonId, grade);
 
         // 등급별 제한 검사
         if (currentSelectedCardCountByGrade >= maxSelectableCardCountByGrade) {
@@ -119,13 +131,14 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
         }
 
         // 사용자가 소지한 카드 개수 제한 검사
-        if (ownedCardCount !== null && alreadySavedCardCount >= ownedCardCount) {
+        if (ownedCardCount !== null && currentSelectedCardCount >= ownedCardCount) {
             console.warn(`[DEBUG] User Owned Card Not Enough: ${cardId} (Owned Card Count: ${ownedCardCount})`);
             return;
         }
 
-        this.cardCountManager.incrementCardClickCount(cardId);
-        this.cardCountManager.incrementGradeCardCount(grade);
+        this.cardCountManager.decrementRemainingCardCount(cardId);
+        this.cardCountManager.incrementCardCountByDeck(currentClickedDeckButtonId, cardId);
+        this.cardCountManager.incrementCardCountByGrade(currentClickedDeckButtonId, grade);
     }
 
 }
