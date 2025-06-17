@@ -262,15 +262,10 @@ export class TCGJustTestMyDeckView {
                 const currentClickDeckId = this.myDeckCardService.getCurrentClickDeckButtonId();
                 const scrollAreaDetect = this.sideScrollAreaDetectService.getMyDeckScrollEnabledById(1);
                 if (scrollAreaDetect == true && currentClickDeckId !== null) {
-                    const validDeckIdList = this.myDeckCardService.getAllDeckIdList();
-                    if (!validDeckIdList.includes(currentClickDeckId)) {
-                        console.warn(`[WARN] Invalid deck ID: ${currentClickDeckId}`);
-                        return;
-                    }
                     console.log(`%c current click deck id?${currentClickDeckId}`, 'color: #0000FF; font-weight: bold;');
                     const cardRowCount = this.myDeckCardScrollService.getCardRowCount(currentClickDeckId);
                     if (cardRowCount > 2) {
-                        this.myDeckCardScrollService.onWheelScroll(e, currentClickDeckId);
+                        await this.myDeckCardScrollService.onWheelScroll(e, currentClickDeckId);
                     }
                 }
             }
@@ -671,7 +666,11 @@ export class TCGJustTestMyDeckView {
             }
 
             this.myDeckButtonService.initializeDeckButton();
-            this.myDeckButtonService.saveCurrentClickDeckButtonId(1);
+            const sortedDeckIdList = [...myDeckButtonList].sort((a, b) => a - b);
+            const firstDeckId = sortedDeckIdList[0];
+            console.log(`%c first Deck Id?${firstDeckId}`, 'color: #FF4500; font-weight: bold;');
+            this.myDeckButtonService.saveCurrentClickDeckButtonId(firstDeckId);
+
             const deckButtonGroup = this.myDeckButtonService.getMyDeckButtonGroups();
             const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 0);
             let clippingPlanes: THREE.Plane[] = [];
@@ -822,7 +821,6 @@ export class TCGJustTestMyDeckView {
 
             deckIdList.forEach((deckId, index) => {
                 if (deckId === firstDeckId) {
-                    this.myDeckCardService.saveCurrentClickDeckButtonId(deckId);
                     this.myDeckCardService.setAllCardVisibilityByDeckId(deckId, true);
                 } else {
                     this.myDeckCardService.setAllCardVisibilityByDeckId(deckId, false);
