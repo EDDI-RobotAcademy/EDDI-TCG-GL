@@ -106,7 +106,7 @@ export class DeckDeleteButtonServiceImpl implements DeckDeleteButtonService {
                 scrollArea.width = 0.24 * windowWidth;
                 scrollArea.height = 0.61 * windowHeight;
                 scrollArea.position.set(-0.36 * window.innerWidth, -0.1167 * window.innerHeight);
-                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
                 this.applyClippingPlanesToMesh(buttonMesh, clippingPlanes);
             }
         }
@@ -161,10 +161,6 @@ export class DeckDeleteButtonServiceImpl implements DeckDeleteButtonService {
         return this.sideScrollAreaRepository.findAreaByTypeAndId(3, 0);
     }
 
-    private getClippingPlanes(id: number): THREE.Plane[] {
-        return this.clippingMaskManager.getClippingPlanes(id);
-    }
-
     private applyClippingPlanesToMesh(mesh: THREE.Mesh, clippingPlanes: THREE.Plane[]): void {
         this.clippingMaskManager.applyClippingPlanesToMesh(mesh, clippingPlanes);
     }
@@ -186,7 +182,7 @@ export class DeckDeleteButtonServiceImpl implements DeckDeleteButtonService {
         let clippingPlanes: THREE.Plane[] = [];
 
         if (scrollArea) {
-            clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
             buttonGroup.children.forEach((buttonObject) => {
                 if (buttonObject instanceof THREE.Mesh) {
                     this.applyClippingPlanesToMesh(buttonObject, clippingPlanes);

@@ -136,7 +136,7 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
                 scrollArea.width = 0.203 * windowWidth;
                 scrollArea.height = 0.46 * windowHeight;
                 scrollArea.position.set(-0.381 * window.innerWidth, -0.035 * window.innerHeight);
-                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
                 this.applyClippingPlanesToMesh(buttonMesh, clippingPlanes);
             }
         }
@@ -206,7 +206,7 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
         let clippingPlanes: THREE.Plane[] = [];
 
         if (scrollArea) {
-            clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
             deckButtonGroup.children.forEach((buttonObject) => {
                 if (buttonObject instanceof THREE.Mesh) {
                     this.applyClippingPlanesToMesh(buttonObject, clippingPlanes);

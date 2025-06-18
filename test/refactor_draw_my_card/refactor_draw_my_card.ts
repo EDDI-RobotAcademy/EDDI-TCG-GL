@@ -320,7 +320,7 @@ export class TCGJustTestMyCardView {
             let clippingPlanes: THREE.Plane[] = [];
 
             if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(1, scrollArea);
+                clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
             }
             this.myCardScreenCardService.initializeCardVisibility();
 
@@ -365,7 +365,7 @@ export class TCGJustTestMyCardView {
             let clippingPlanes: THREE.Plane[] = [];
 
             if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(1, scrollArea);
+                clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
             }
             this.myCardScreenCardEffectService.initializeCardEffectVisibility();
 

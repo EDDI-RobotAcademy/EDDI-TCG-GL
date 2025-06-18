@@ -125,7 +125,7 @@ export class MyDeckButtonEffectServiceImpl implements MyDeckButtonEffectService 
                 scrollArea.width = 0.203 * windowWidth;
                 scrollArea.height = 0.46 * windowHeight;
                 scrollArea.position.set(-0.381 * window.innerWidth, -0.035 * window.innerHeight);
-                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
                 this.applyClippingPlanesToMesh(buttonEffectMesh, clippingPlanes);
             }
         }
@@ -178,7 +178,7 @@ export class MyDeckButtonEffectServiceImpl implements MyDeckButtonEffectService 
         let clippingPlanes: THREE.Plane[] = [];
 
         if (scrollArea) {
-            clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
             deckButtonEffectGroup.children.forEach((effectObject) => {
                 if (effectObject instanceof THREE.Mesh) {
                     this.applyClippingPlanesToMesh(effectObject, clippingPlanes);

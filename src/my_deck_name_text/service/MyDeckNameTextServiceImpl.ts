@@ -123,7 +123,7 @@ export class MyDeckNameTextServiceImpl implements MyDeckNameTextService {
                 scrollArea.width = 0.203 * windowWidth;
                 scrollArea.height = 0.46 * windowHeight;
                 scrollArea.position.set(-0.381 * window.innerWidth, -0.035 * window.innerHeight);
-                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
                 this.applyClippingPlanesToMesh(textMesh, clippingPlanes);
             }
         }
@@ -180,7 +180,7 @@ export class MyDeckNameTextServiceImpl implements MyDeckNameTextService {
         let clippingPlanes: THREE.Plane[] = [];
 
         if (scrollArea) {
-            clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
             textGroup.children.forEach((textObject) => {
                 if (textObject instanceof THREE.Mesh) {
                     this.applyClippingPlanesToMesh(textObject, clippingPlanes);
