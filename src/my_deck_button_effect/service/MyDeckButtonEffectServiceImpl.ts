@@ -172,4 +172,21 @@ export class MyDeckButtonEffectServiceImpl implements MyDeckButtonEffectService 
         this.clippingMaskManager.applyClippingPlanesToMesh(mesh, clippingPlanes);
     }
 
+    public applyClippingMaskToDeckButtonEffects(): void {
+        const deckButtonEffectGroup = this.getMyDeckButtonEffectGroups();
+        const scrollArea = this.getScrollArea();
+        let clippingPlanes: THREE.Plane[] = [];
+
+        if (scrollArea) {
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+            deckButtonEffectGroup.children.forEach((effectObject) => {
+                if (effectObject instanceof THREE.Mesh) {
+                    this.applyClippingPlanesToMesh(effectObject, clippingPlanes);
+                } else {
+                    console.warn("[WARN] Skipping non-mesh object in effectGroup:", effectObject);
+                }
+            });
+        }
+    }
+
 }

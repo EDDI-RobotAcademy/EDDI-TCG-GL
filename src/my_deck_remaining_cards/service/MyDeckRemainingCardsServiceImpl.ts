@@ -184,4 +184,21 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
         this.clippingMaskManager.applyClippingPlanesToMesh(mesh, clippingPlanes);
     }
 
+    public applyClippingMaskToRemainingCards(): void {
+        const numberGroup = this.getRemainingCardsGroup();
+        const scrollArea = this.getScrollArea();
+        let clippingPlanes: THREE.Plane[] = [];
+
+        if (scrollArea) {
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+            numberGroup.children.forEach((numberObject) => {
+                if (numberObject instanceof THREE.Mesh) {
+                    this.applyClippingPlanesToMesh(numberObject, clippingPlanes);
+                } else {
+                    console.warn("[WARN] Skipping non-mesh object in numberGroup:", numberObject);
+                }
+            });
+        }
+    }
+
 }

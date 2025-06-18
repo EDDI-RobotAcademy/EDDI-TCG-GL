@@ -20,6 +20,7 @@ import {BuildDeckButtonConfigList} from "../../src/build_deck_button/entity/Buil
 import {DeleteDeckPopupButtonConfigList} from "../../src/delete_deck_popup_button/entity/DeleteDeckPopupButtonConfigList";
 import {DeckEditButtonConfigList} from "../../src/deck_edit_button/entity/DeckEditButtonConfigList";
 import {DeckEditDoneButtonConfigList} from "../../src/deck_edit_done_button/entity/DeckEditDoneButtonConfigList";
+import {SideScrollAreaConfigList} from "../../src/side_scroll_area/entity/SideScrollAreaConfigList";
 
 import {MyDeckButtonServiceImpl} from "../../src/my_deck_button/service/MyDeckButtonServiceImpl";
 import {MyDeckButtonEffectServiceImpl} from "../../src/my_deck_button_effect/service/MyDeckButtonEffectServiceImpl";
@@ -176,12 +177,6 @@ export class TCGJustTestMyDeckView {
 
     private initialized = false;
     private isAnimating = false;
-
-    private isMyDeckButtonEnabled: boolean = true;
-    private isDeckPageMovementButtonEnabled: boolean = true;
-    private isDeckCardPageMovementButtonEnabled: boolean = true;
-    private isDeckMakeButtonEnabled: boolean = true;
-    private isDeckMakePopupButtonsEnabled: boolean = true;
 
     private userWindowSize: UserWindowSize;
 
@@ -502,8 +497,6 @@ export class TCGJustTestMyDeckView {
 
         await this.addBackground();
         await this.addScrollArea();
-        await this.addCardScrollArea();
-        await this.addBlockScrollArea();
         await this.addChosenOutOfTotalSlash();
         await this.addTotalNumberOfSelectedCards();
         await this.addMyDeckCard();
@@ -578,43 +571,19 @@ export class TCGJustTestMyDeckView {
 
     private async addScrollArea(): Promise<void> {
         try{
-            const areaMesh = await this.sideScrollAreaService.createSideScrollArea('myDeckScrollArea', 3, 0.203, 0.46, -0.381, -0.035);
-            if (areaMesh) {
-                this.scene.add(areaMesh);
-            } else {
-                console.warn(`No Side Scroll Area Mesh found`);
-            }
+            const configList = new SideScrollAreaConfigList();
+            await Promise.all(configList.myDeckScrollAreaConfigs.map(async (config) => {
+                const areaMesh = await this.sideScrollAreaService.createSideScrollArea(
+                    config.type, config.id, config.name, config.width, config.height, config.position);
+
+                if (areaMesh) {
+                    this.scene.add(areaMesh);
+                    console.log(`Draw Scroll Area ${config.id}`);
+                }
+            }));
 
         } catch (error) {
             console.error('Failed to add Side Scroll Area:', error);
-        }
-    }
-
-    private async addCardScrollArea(): Promise<void> {
-        try {
-            const areaMesh = await this.sideScrollAreaService.createSideScrollArea('myDeckCardScrollArea', 3, 0.54, 0.745, 0, -0.125);
-            if (areaMesh) {
-                this.scene.add(areaMesh);
-            } else {
-                console.warn(`No Card Scroll Area Mesh found`);
-            }
-
-        } catch (error) {
-            console.error('Failed to add Card Scroll Area:', error);
-        }
-    }
-
-    private async addBlockScrollArea(): Promise<void> {
-        try {
-            const areaMesh = await this.sideScrollAreaService.createSideScrollArea('myDeckBlockScrollArea', 3, 0.202, 0.61, 0.38, -0.024);
-            if (areaMesh) {
-                this.scene.add(areaMesh);
-            } else {
-                console.warn(`Block Scroll Area Mesh Not found`);
-            }
-
-        } catch (error) {
-            console.error('Failed to add Block Scroll Area:', error);
         }
     }
 
@@ -652,40 +621,15 @@ export class TCGJustTestMyDeckView {
         try {
             const myDeckButtonList = this.myDeckButtonMapRepository.getMyDeckList();
 
-//             myDeckButtonList.forEach(async (deckId, index) => {
-//                 const buttonGroup = await this.myDeckButtonService.createMyDeckButtonWithPosition(deckId);
-//
-//                 if (buttonGroup) {
-//                     this.myDeckButtonService.initializeDeckButton(); // 처음 6개만 visible
-//                     this.scene.add(buttonGroup);
-//                 }
-//             });
-
             for (const [index, deckId] of myDeckButtonList.entries()) {
                 await this.myDeckButtonService.createMyDeckButtonWithPosition(deckId);
             }
 
             this.myDeckButtonService.initializeDeckButton();
-            const sortedDeckIdList = [...myDeckButtonList].sort((a, b) => a - b);
-            const firstDeckId = sortedDeckIdList[0];
-            console.log(`%c first Deck Id?${firstDeckId}`, 'color: #FF4500; font-weight: bold;');
-            this.myDeckButtonService.saveCurrentClickDeckButtonId(firstDeckId);
+            this.myDeckButtonService.saveCurrentClickDeckButtonId();
+            this.myDeckButtonService.applyClippingMaskToDeckButtons();
 
             const deckButtonGroup = this.myDeckButtonService.getMyDeckButtonGroups();
-            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 0);
-            let clippingPlanes: THREE.Plane[] = [];
-
-            if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
-                deckButtonGroup.children.forEach((buttonObject) => {
-                    if (buttonObject instanceof THREE.Mesh) {
-                        this.clippingMaskManager.applyClippingPlanesToMesh(buttonObject, clippingPlanes);
-                    } else {
-                        console.warn("[WARN] Skipping non-mesh object in buttonGroup:", buttonObject);
-                    }
-                });
-            }
-
             if (!this.scene.children.includes(deckButtonGroup)) {
                 this.scene.add(deckButtonGroup);
             }
@@ -700,33 +644,13 @@ export class TCGJustTestMyDeckView {
         try {
             const myDeckButtonList = this.myDeckButtonMapRepository.getMyDeckList();
 
-//             myDeckButtonList.forEach(async (deckId, index) => {
-//                 const buttonEffectGroup = await this.myDeckButtonEffectService.createDeckButtonEffectWithPosition(deckId);
-//                 if (buttonEffectGroup) {
-//                     this.myDeckButtonEffectService.initializeDeckButtonEffect();
-//                     this.scene.add(buttonEffectGroup);
-//                 }
-//             });
-
             for (const [index, deckId] of myDeckButtonList.entries()) {
                 await this.myDeckButtonEffectService.createDeckButtonEffectWithPosition(deckId);
             }
             this.myDeckButtonEffectService.initializeDeckButtonEffect();
+            this.myDeckButtonEffectService.applyClippingMaskToDeckButtonEffects();
+
             const deckButtonEffectGroup = this.myDeckButtonEffectService.getMyDeckButtonEffectGroups();
-            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 0);
-            let clippingPlanes: THREE.Plane[] = [];
-
-            if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
-                deckButtonEffectGroup.children.forEach((effectObject) => {
-                    if (effectObject instanceof THREE.Mesh) {
-                        this.clippingMaskManager.applyClippingPlanesToMesh(effectObject, clippingPlanes);
-                    } else {
-                        console.warn("[WARN] Skipping non-mesh object in button effect Group:", effectObject);
-                    }
-                });
-            }
-
             if (!this.scene.children.includes(deckButtonEffectGroup)) {
                 this.scene.add(deckButtonEffectGroup);
             }
@@ -746,22 +670,9 @@ export class TCGJustTestMyDeckView {
             }
 
             this.deckNameEditButtonService.initializeDeckNameEditButtonVisibility();
+            this.deckNameEditButtonService.applyClippingMaskToDeckNameEditButtons();
 
             const buttonGroup = this.deckNameEditButtonService.getButtonGroup();
-            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 0);
-            let clippingPlanes: THREE.Plane[] = [];
-
-            if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
-                buttonGroup.children.forEach((buttonObject) => {
-                    if (buttonObject instanceof THREE.Mesh) {
-                        this.clippingMaskManager.applyClippingPlanesToMesh(buttonObject, clippingPlanes);
-                    } else {
-                        console.warn("[WARN] Skipping non-mesh object in buttonGroup:", buttonObject);
-                    }
-                });
-            }
-
             if (!this.scene.children.includes(buttonGroup)) {
                 this.scene.add(buttonGroup);
             }
@@ -781,22 +692,9 @@ export class TCGJustTestMyDeckView {
             }
 
             this.deckDeleteButtonService.initializeDeckDeleteButtonVisibility();
+            this.deckDeleteButtonService.applyClippingMaskToDeckNameEditButtons();
 
             const buttonGroup = this.deckDeleteButtonService.getButtonGroup();
-            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 0);
-            let clippingPlanes: THREE.Plane[] = [];
-
-            if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
-                buttonGroup.children.forEach((buttonObject) => {
-                    if (buttonObject instanceof THREE.Mesh) {
-                        this.clippingMaskManager.applyClippingPlanesToMesh(buttonObject, clippingPlanes);
-                    } else {
-                        console.warn("[WARN] Skipping non-mesh object in buttonGroup:", buttonObject);
-                    }
-                });
-            }
-
             if (!this.scene.children.includes(buttonGroup)) {
                 this.scene.add(buttonGroup);
             }
@@ -812,48 +710,20 @@ export class TCGJustTestMyDeckView {
             const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardLists();
             for (const [deckId, cardIdList] of myDeckCardList) {
                 await this.myDeckCardService.createMyDeckCardWithPosition(deckId, cardIdList);
+                this.myDeckCardService.saveCardGroup(deckId);
             }
+
+            this.myDeckCardService.initializeDeckCardVisibility();
+            this.myDeckCardService.applyClippingMaskToMyDeckCards();
 
             const deckIdList = this.myDeckCardService.getAllDeckIdList();
-            const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
-            const firstDeckId = sortedDeckIdList[0];
-            console.log(`%c first Deck Id?${firstDeckId}`, 'color: #FF4500; font-weight: bold;');
-
-            deckIdList.forEach((deckId, index) => {
-                if (deckId === firstDeckId) {
-                    this.myDeckCardService.setAllCardVisibilityByDeckId(deckId, true);
-                } else {
-                    this.myDeckCardService.setAllCardVisibilityByDeckId(deckId, false);
+            deckIdList.forEach((deckId) => {
+                const cardGroup = this.myDeckCardService.getCardGroupByDeckId(deckId);
+                if (!this.scene.children.includes(cardGroup)) {
+                    this.scene.add(cardGroup);
                 }
-                this.myDeckCardService.saveCardGroup(deckId);
-//                 const cardList = this.myDeckCardService.getCardListByDeckId(deckId);
-//                 cardList.forEach((cardMesh) => this.scene.add(cardMesh));
+                cardGroup.position.y = 0;
             });
-
-            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 1);
-            let clippingPlanes: THREE.Plane[] = [];
-
-            if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
-                deckIdList.forEach((deckId) => {
-                    const cardGroup = this.myDeckCardService.getCardGroupByDeckId(deckId);
-//                     console.log(`%c Card Group for Deck ID ${deckId}:, ${cardGroup}`, 'color: #FE2EF7; font-weight: bold;');
-//                     console.log(`%c Children of Card Group:${cardGroup.children}`, 'color: #FE2EF7; font-weight: bold;');
-                    cardGroup.children.forEach((buttonObject) => {
-                        if (buttonObject instanceof THREE.Mesh) {
-                            this.clippingMaskManager.applyClippingPlanesToMesh(buttonObject, clippingPlanes);
-                        } else {
-                            console.warn("[WARN] Skipping non-mesh object in cardGroup:", buttonObject);
-                        }
-                    });
-
-                    if (!this.scene.children.includes(cardGroup)) {
-                        this.scene.add(cardGroup);
-                    }
-                    cardGroup.position.y = 0;
-                });
-
-            }
         } catch (error) {
             console.error('Failed to add my deck cards:', error);
         }
@@ -863,33 +733,13 @@ export class TCGJustTestMyDeckView {
         try {
             const cardMap = this.myDeckOwnedCardsMapRepository.findCurrentMyDeckOwnedCardsMap();
             await this.myDeckOwnedCardsService.createMyDeckOwnedCardsWithPosition(cardMap);
+            this.myDeckOwnedCardsService.applyClippingMaskToDeckOwnedCards();
 
-            const cardList = this.myDeckOwnedCardsService.getCardList();
-            cardList.forEach((card) => {
-                card.setVisibility(false);
-//                 this.scene.add(card.getMesh());
-            });
-
-            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 1);
-            let clippingPlanes: THREE.Plane[] = [];
-
-            if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
-                const cardGroup = this.myDeckOwnedCardsService.getCardGroup();
-                cardGroup.children.forEach((buttonObject) => {
-                    if (buttonObject instanceof THREE.Mesh) {
-                        this.clippingMaskManager.applyClippingPlanesToMesh(buttonObject, clippingPlanes);
-                    } else {
-                        console.warn("[WARN] Skipping non-mesh object in cardGroup:", buttonObject);
-                    }
-                });
-
-                if (!this.scene.children.includes(cardGroup)) {
-                    this.scene.add(cardGroup);
-                }
-                cardGroup.position.y = 0;
-
+            const cardGroup = this.myDeckOwnedCardsService.getCardGroup();
+            if (!this.scene.children.includes(cardGroup)) {
+                this.scene.add(cardGroup);
             }
+            cardGroup.position.y = 0;
 
         } catch (error) {
             console.error('Failed to add my deck owned cards:', error);
@@ -900,31 +750,14 @@ export class TCGJustTestMyDeckView {
         try {
             const cardMap = this.myDeckOwnedCardsMapRepository.findCurrentMyDeckOwnedCardsMap();
             await this.myDeckTotalOwnedCardsService.createMyDeckTotalOwnedCardsWithPosition(cardMap);
-            const totalOwnedCardsList = this.myDeckTotalOwnedCardsService.getTotalOwnedCardsList();
+            this.myDeckTotalOwnedCardsService.applyClippingMaskToTotalOwnedCards();
 
-//             totalOwnedCardsList.forEach((totalOwnedCards) => {
-//                 this.scene.add(totalOwnedCards.getMesh());
-//             });
-
-            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 1);
-            let clippingPlanes: THREE.Plane[] = [];
-
-            if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
-                const totalOwnedCardsGroup = this.myDeckTotalOwnedCardsService.getTotalOwnedCardsGroup();
-                totalOwnedCardsGroup.children.forEach((totalOwnedCardsObject) => {
-                    if (totalOwnedCardsObject instanceof THREE.Mesh) {
-                        this.clippingMaskManager.applyClippingPlanesToMesh(totalOwnedCardsObject, clippingPlanes);
-                    } else {
-                        console.warn("[WARN] Skipping non-mesh object in totalOwnedCardsGroup:", totalOwnedCardsObject);
-                    }
-                });
-
-                if (!this.scene.children.includes(totalOwnedCardsGroup)) {
-                    this.scene.add(totalOwnedCardsGroup);
-                }
-                totalOwnedCardsGroup.position.y = 0;
+            const totalOwnedCardsGroup = this.myDeckTotalOwnedCardsService.getTotalOwnedCardsGroup();
+            if (!this.scene.children.includes(totalOwnedCardsGroup)) {
+                this.scene.add(totalOwnedCardsGroup);
             }
+            totalOwnedCardsGroup.position.y = 0;
+
         } catch (error) {
             console.error('Failed to add my deck total owned cards:', error);
         }
@@ -942,30 +775,13 @@ export class TCGJustTestMyDeckView {
                 await this.myDeckRemainingCardsService.createMyDeckRemainingCardsWithPosition(cardId, remainingCount);
             }
 
-//             const remainingCardList = this.myDeckRemainingCardsService.getRemainingCardsList();
-//             remainingCardList.forEach((remainingCard) => {
-//                 this.scene.add(remainingCard.getMesh());
-//             });
+            this.myDeckRemainingCardsService.applyClippingMaskToRemainingCards();
 
-            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 1);
-            let clippingPlanes: THREE.Plane[] = [];
-
-            if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
-                const remainingCardsGroup = this.myDeckRemainingCardsService.getRemainingCardsGroup();
-                remainingCardsGroup.children.forEach((remainingCardsObject) => {
-                    if (remainingCardsObject instanceof THREE.Mesh) {
-                        this.clippingMaskManager.applyClippingPlanesToMesh(remainingCardsObject, clippingPlanes);
-                    } else {
-                        console.warn("[WARN] Skipping non-mesh object in remainingCardsGroup:", remainingCardsObject);
-                    }
-                });
-
-                if (!this.scene.children.includes(remainingCardsGroup)) {
-                    this.scene.add(remainingCardsGroup);
-                }
-                remainingCardsGroup.position.y = 0;
+            const remainingCardsGroup = this.myDeckRemainingCardsService.getRemainingCardsGroup();
+            if (!this.scene.children.includes(remainingCardsGroup)) {
+                this.scene.add(remainingCardsGroup);
             }
+            remainingCardsGroup.position.y = 0;
 
         } catch (error) {
             console.error('Failed to add my deck remaining cards:', error);
@@ -976,31 +792,13 @@ export class TCGJustTestMyDeckView {
         try {
             const cardMap = this.myDeckOwnedCardsMapRepository.findCurrentMyDeckOwnedCardsMap();
             await this.myDeckRemainingOutOfTotalSlashService.createSlashWithPosition(cardMap);
-            const slashList = this.myDeckRemainingOutOfTotalSlashService.getSlashList();
+            this.myDeckRemainingOutOfTotalSlashService.applyClippingMaskToSlash();
 
-            slashList.forEach((slash) => {
-                this.scene.add(slash.getMesh());
-            });
-
-            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 1);
-            let clippingPlanes: THREE.Plane[] = [];
-
-            if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
-                const slashGroup = this.myDeckRemainingOutOfTotalSlashService.getSlashGroup();
-                slashGroup.children.forEach((slashObject) => {
-                    if (slashObject instanceof THREE.Mesh) {
-                        this.clippingMaskManager.applyClippingPlanesToMesh(slashObject, clippingPlanes);
-                    } else {
-                        console.warn("[WARN] Skipping non-mesh object in slashGroup:", slashObject);
-                    }
-                });
-
-                if (!this.scene.children.includes(slashGroup)) {
-                    this.scene.add(slashGroup);
-                }
-                slashGroup.position.y = 0;
+            const slashGroup = this.myDeckRemainingOutOfTotalSlashService.getSlashGroup();
+            if (!this.scene.children.includes(slashGroup)) {
+                this.scene.add(slashGroup);
             }
+            slashGroup.position.y = 0;
 
         } catch (error) {
             console.error('Failed to add remaining out of total Slash:', error);
@@ -1011,31 +809,13 @@ export class TCGJustTestMyDeckView {
         try {
             const cardIdList = this.myDeckOwnedCardsMapRepository.getCardIdList();
             await this.cardSelectionBlockerService.createCardSelectionBlockerWithPosition(cardIdList);
+            this.cardSelectionBlockerService.applyClippingMaskToBlocker();
 
-            const blockerList = this.cardSelectionBlockerService.getBlockerList();
-//             blockerList.forEach((blocker) => {
-//                 this.scene.add(blocker.getMesh());
-//             });
-
-            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 1);
-            let clippingPlanes: THREE.Plane[] = [];
-
-            if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
-                const blockerGroup = this.cardSelectionBlockerService.getBlockerGroup();
-                blockerGroup.children.forEach((blockerObject) => {
-                    if (blockerObject instanceof THREE.Mesh) {
-                        this.clippingMaskManager.applyClippingPlanesToMesh(blockerObject, clippingPlanes);
-                    } else {
-                        console.warn("[WARN] Skipping non-mesh object in blockerGroup:", blockerObject);
-                    }
-                });
-
-                if (!this.scene.children.includes(blockerGroup)) {
-                    this.scene.add(blockerGroup);
-                }
-                blockerGroup.position.y = 0;
+            const blockerGroup = this.cardSelectionBlockerService.getBlockerGroup();
+            if (!this.scene.children.includes(blockerGroup)) {
+                this.scene.add(blockerGroup);
             }
+            blockerGroup.position.y = 0;
 
         } catch (error) {
             console.error('Failed to add Card Selection Blocker:', error);
@@ -1049,45 +829,21 @@ export class TCGJustTestMyDeckView {
                 for (const cardId of cardIdList) {
                     const cardCount = this.myDeckCardMapRepository.findCardCountByDeckIdAndCardId(deckId, cardId);
                     await this.myDeckNumberOfCardsService.createMyDeckNumberOfCardsWithPosition(deckId, cardId, cardCount);
+                    this.myDeckNumberOfCardsService.saveNumberGroup(deckId);
                 }
             }
+
+            this.myDeckNumberOfCardsService.initializeDeckNumberOfCardsVisibility();
+            this.myDeckNumberOfCardsService.applyClippingMaskToMyDeckNumberOfCards();
 
             const deckIdList = this.myDeckNumberOfCardsService.getAllDeckIdList();
-            const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
-            const firstDeckId = sortedDeckIdList[0];
-
-            deckIdList.forEach((deckId, index) => {
-                const numberList = this.myDeckNumberOfCardsService.getNumberListByDeckId(deckId);
-                if (deckId === firstDeckId) {
-                    numberList.forEach((number) => number.setVisibility(true));
-                } else {
-                    numberList.forEach((number) => number.setVisibility(false));
+            deckIdList.forEach((deckId) => {
+                const numberGroup = this.myDeckNumberOfCardsService.getNumberGroupByDeckId(deckId);
+                if (!this.scene.children.includes(numberGroup)) {
+                    this.scene.add(numberGroup);
                 }
-                this.myDeckNumberOfCardsService.saveNumberGroup(deckId);
-//                 numberList.forEach((number) => this.scene.add(number.getMesh()));
+                numberGroup.position.y = 0;
             });
-
-            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 1);
-            let clippingPlanes: THREE.Plane[] = [];
-
-            if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
-                deckIdList.forEach((deckId) => {
-                    const numberGroup = this.myDeckNumberOfCardsService.getNumberGroupByDeckId(deckId);
-                    numberGroup.children.forEach((numberObject) => {
-                        if (numberObject instanceof THREE.Mesh) {
-                            this.clippingMaskManager.applyClippingPlanesToMesh(numberObject, clippingPlanes);
-                        } else {
-                            console.warn("[WARN] Skipping non-mesh object in numberGroup:", numberObject);
-                        }
-                    });
-
-                    if (!this.scene.children.includes(numberGroup)) {
-                        this.scene.add(numberGroup);
-                    }
-                    numberGroup.position.y = 0;
-                });
-            }
         } catch (error) {
             console.error('Failed to add my deck number of cards:', error);
         }
@@ -1100,45 +856,21 @@ export class TCGJustTestMyDeckView {
                 for (const cardId of cardIdList) {
                     const cardCount = this.myDeckCardMapRepository.findCardCountByDeckIdAndCardId(deckId, cardId);
                     await this.myDeckNumberOfSelectedCardsService.createMyDeckNumberOfSelectedCardsWithPosition(deckId, cardId, cardCount);
+                    this.myDeckNumberOfSelectedCardsService.saveNumberGroup(deckId);
                 }
             }
+
+            this.myDeckNumberOfSelectedCardsService.initializeNumberVisibility();
+            this.myDeckNumberOfSelectedCardsService.applyClippingMaskToNumber();
 
             const deckIdList = this.myDeckNumberOfSelectedCardsService.getAllDeckIdList();
-            const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
-            const firstDeckId = sortedDeckIdList[0];
-
-            deckIdList.forEach((deckId, index) => {
-                const numberList = this.myDeckNumberOfSelectedCardsService.getNumberListByDeckId(deckId);
-                if (deckId === firstDeckId) {
-                    numberList.forEach((number) => number.setVisibility(true));
-                } else {
-                    numberList.forEach((number) => number.setVisibility(false));
+            deckIdList.forEach((deckId) => {
+                const numberGroup = this.myDeckNumberOfSelectedCardsService.getNumberGroupByDeckId(deckId);
+                if (!this.scene.children.includes(numberGroup)) {
+                    this.scene.add(numberGroup);
                 }
-                this.myDeckNumberOfSelectedCardsService.saveNumberGroup(deckId);
-//                 numberList.forEach((number) => this.scene.add(number.getMesh()));
+                numberGroup.position.y = 0;
             });
-
-            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 2);
-            let clippingPlanes: THREE.Plane[] = [];
-
-            if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
-                deckIdList.forEach((deckId) => {
-                    const numberGroup = this.myDeckNumberOfSelectedCardsService.getNumberGroupByDeckId(deckId);
-                    numberGroup.children.forEach((numberObject) => {
-                        if (numberObject instanceof THREE.Mesh) {
-                            this.clippingMaskManager.applyClippingPlanesToMesh(numberObject, clippingPlanes);
-                        } else {
-                            console.warn("[WARN] Skipping non-mesh object in numberGroup:", numberObject);
-                        }
-                    });
-
-                    if (!this.scene.children.includes(numberGroup)) {
-                        this.scene.add(numberGroup);
-                    }
-                    numberGroup.position.y = 0;
-                });
-            }
 
         } catch (error) {
             console.error('Failed to add my deck number of selected cards:', error);
@@ -1150,45 +882,20 @@ export class TCGJustTestMyDeckView {
             const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardLists();
             for (const [deckId, cardIdList] of myDeckCardList) {
                 await this.myDeckBlockService.createMyDeckBlockWithPosition(deckId, cardIdList);
+                this.myDeckBlockService.saveBlockGroup(deckId);
             }
+
+            this.myDeckBlockService.initializeBlockVisibility();
+            this.myDeckBlockService.applyClippingMaskToBlock();
 
             const deckIdList = this.myDeckBlockService.getAllDeckIdList();
-            const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
-            const firstDeckId = sortedDeckIdList[0];
-
-            deckIdList.forEach((deckId, index) => {
-                const blockList = this.myDeckBlockService.getBlockListByDeckId(deckId);
-                if (deckId === firstDeckId) {
-                    blockList.forEach((block) => block.setVisibility(true));
-                } else {
-                    blockList.forEach((block) => block.setVisibility(false));
+            deckIdList.forEach((deckId) => {
+                const blockGroup = this.myDeckBlockService.getBlockGroupByDeckId(deckId);
+                if (!this.scene.children.includes(blockGroup)) {
+                    this.scene.add(blockGroup);
                 }
-                this.myDeckBlockService.saveBlockGroup(deckId);
-//                 blockList.forEach((block) => this.scene.add(block.getMesh()));
+                blockGroup.position.y = 0;
             });
-
-            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 2);
-            let clippingPlanes: THREE.Plane[] = [];
-
-            if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
-                deckIdList.forEach((deckId) => {
-                    const blockGroup = this.myDeckBlockService.getBlockGroupByDeckId(deckId);
-                    blockGroup.children.forEach((blockObject) => {
-                        if (blockObject instanceof THREE.Mesh) {
-                            this.clippingMaskManager.applyClippingPlanesToMesh(blockObject, clippingPlanes);
-                        } else {
-                            console.warn("[WARN] Skipping non-mesh object in Block Group:", blockObject);
-                        }
-                    });
-
-                    if (!this.scene.children.includes(blockGroup)) {
-                        this.scene.add(blockGroup);
-                    }
-                    blockGroup.position.y = 0;
-                });
-
-            }
 
         } catch (error) {
             console.error('Failed to add my deck blocks:', error);
@@ -1200,45 +907,20 @@ export class TCGJustTestMyDeckView {
             const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardLists();
             for (const [deckId, cardIdList] of myDeckCardList) {
                 await this.myDeckCardNameService.createMyDeckCardNameWithPosition(deckId, cardIdList);
+                this.myDeckCardNameService.saveCardNameGroup(deckId);
             }
+
+            this.myDeckCardNameService.initializeCardNameVisibility();
+            this.myDeckCardNameService.applyClippingMaskToCardName();
 
             const deckIdList = this.myDeckCardNameService.getAllDeckIdList();
-            const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
-            const firstDeckId = sortedDeckIdList[0];
-
-            deckIdList.forEach((deckId, index) => {
-                const cardNameList = this.myDeckCardNameService.getCardNameListByDeckId(deckId);
-                if (deckId === firstDeckId) {
-                    cardNameList.forEach((cardName) => cardName.setVisibility(true));
-                } else {
-                    cardNameList.forEach((cardName) => cardName.setVisibility(false));
+            deckIdList.forEach((deckId) => {
+                const cardNameGroup = this.myDeckCardNameService.getCardNameGroupByDeckId(deckId);
+                if (!this.scene.children.includes(cardNameGroup)) {
+                    this.scene.add(cardNameGroup);
                 }
-                this.myDeckCardNameService.saveCardNameGroup(deckId);
-//                 cardNameList.forEach((cardName) => this.scene.add(cardName.getMesh()));
+                cardNameGroup.position.y = 0;
             });
-
-            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 2);
-            let clippingPlanes: THREE.Plane[] = [];
-
-            if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
-                deckIdList.forEach((deckId) => {
-                    const cardNameGroup = this.myDeckCardNameService.getCardNameGroupByDeckId(deckId);
-                    cardNameGroup.children.forEach((cardNameObject) => {
-                        if (cardNameObject instanceof THREE.Mesh) {
-                            this.clippingMaskManager.applyClippingPlanesToMesh(cardNameObject, clippingPlanes);
-                        } else {
-                            console.warn("[WARN] Skipping non-mesh object in Card Name Group:", cardNameObject);
-                        }
-                    });
-
-                    if (!this.scene.children.includes(cardNameGroup)) {
-                        this.scene.add(cardNameGroup);
-                    }
-                    cardNameGroup.position.y = 0;
-                });
-
-            }
 
         } catch (error) {
             console.error('Failed to add My Deck Card Name:', error);
@@ -1250,37 +932,14 @@ export class TCGJustTestMyDeckView {
             const deckIdList = this.myDeckNameTextMapRepository.getDeckIds();
             const myDeckNameList = this.myDeckNameTextMapRepository.getMyDeckNameTextList();
 
-//             myDeckNameList.forEach(async (deckName, index) => {
-//                 const deckId = deckIdList[index];
-//                 const textGroup = await this.myDeckNameTextService.createMyDeckNameTextWithPosition(deckId, deckName);
-//
-//                 if (textGroup) {
-//                     this.scene.add(textGroup);
-//                 } else {
-//                     console.warn(`No deckId found for index ${index}`);
-//                 }
-//             });
-
             for (const [index, deckName] of myDeckNameList.entries()) {
                 const deckId = deckIdList[index];
                 await this.myDeckNameTextService.createMyDeckNameTextWithPosition(deckId, deckName);
             }
 
+            this.myDeckNameTextService.applyClippingMaskToDeckNameText();
+
             const textGroup = this.myDeckNameTextService.getMyDeckTextGroups();
-            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 0);
-            let clippingPlanes: THREE.Plane[] = [];
-
-            if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
-                textGroup.children.forEach((textObject) => {
-                    if (textObject instanceof THREE.Mesh) {
-                        this.clippingMaskManager.applyClippingPlanesToMesh(textObject, clippingPlanes);
-                    } else {
-                        console.warn("[WARN] Skipping non-mesh object in text Group:", textObject);
-                    }
-                });
-            }
-
             if (!this.scene.children.includes(textGroup)) {
                 this.scene.add(textGroup);
             }
@@ -1298,37 +957,20 @@ export class TCGJustTestMyDeckView {
                 for (const cardId of cardIdList) {
                     await this.deckCardDeleteButtonService.createDeckCardDeleteButtonWithPosition(deckId, cardId);
                 }
+                this.deckCardDeleteButtonService.saveButtonGroup(deckId);
             }
+
+            this.deckCardDeleteButtonService.applyClippingMaskToButton();
 
             const deckIdList = this.deckCardDeleteButtonService.getAllDeckIdList();
-            deckIdList.forEach((deckId, index) => {
-                const buttonList = this.deckCardDeleteButtonService.getButtonListByDeckId(deckId);
-
-                this.deckCardDeleteButtonService.saveButtonGroup(deckId);
-//                 buttonList.forEach((button) => this.scene.add(button.getMesh()));
+            deckIdList.forEach((deckId) => {
+                const buttonGroup = this.deckCardDeleteButtonService.getButtonGroupByDeckId(deckId);
+                if (!this.scene.children.includes(buttonGroup)) {
+                    this.scene.add(buttonGroup);
+                }
+                buttonGroup.position.y = 0;
             });
 
-            const scrollArea = this.sideScrollAreaService.getSideScrollAreaByTypeAndId(3, 2);
-            let clippingPlanes: THREE.Plane[] = [];
-
-            if (scrollArea) {
-                clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
-                deckIdList.forEach((deckId) => {
-                    const buttonGroup = this.deckCardDeleteButtonService.getButtonGroupByDeckId(deckId);
-                    buttonGroup.children.forEach((buttonObject) => {
-                        if (buttonObject instanceof THREE.Mesh) {
-                            this.clippingMaskManager.applyClippingPlanesToMesh(buttonObject, clippingPlanes);
-                        } else {
-                            console.warn("[WARN] Skipping non-mesh object in Deck Card Delete Button Group:", buttonObject);
-                        }
-                    });
-
-                    if (!this.scene.children.includes(buttonGroup)) {
-                        this.scene.add(buttonGroup);
-                    }
-                    buttonGroup.position.y = 0;
-                });
-            }
         } catch (error) {
             console.error('Failed to add deck card delete button:', error);
         }

@@ -180,4 +180,21 @@ export class DeckDeleteButtonServiceImpl implements DeckDeleteButtonService {
         }
     }
 
+    public applyClippingMaskToDeckNameEditButtons(): void {
+        const buttonGroup = this.getButtonGroup();
+        const scrollArea = this.getScrollArea();
+        let clippingPlanes: THREE.Plane[] = [];
+
+        if (scrollArea) {
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+            buttonGroup.children.forEach((buttonObject) => {
+                if (buttonObject instanceof THREE.Mesh) {
+                    this.applyClippingPlanesToMesh(buttonObject, clippingPlanes);
+                } else {
+                    console.warn("[WARN] Skipping non-mesh object in buttonGroup:", buttonObject);
+                }
+            });
+        }
+    }
+
 }

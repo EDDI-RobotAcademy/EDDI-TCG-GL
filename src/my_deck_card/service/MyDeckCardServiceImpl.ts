@@ -186,13 +186,21 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
     }
 
     // 이름 변경 필요
-    public initializeCardVisibility(deckId: number): void {
-        this.cardStateManager.initializeCardVisibility(deckId);
-    }
-
-    // 이름 변경 필요
     public setAllCardVisibilityByDeckId(deckId: number, isVisible: boolean): void {
         this.cardStateManager.setAllCardVisibility(deckId, isVisible);
+    }
+
+    public initializeDeckCardVisibility(): void {
+        const deckIdList = this.getAllDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
+        deckIdList.forEach((deckId, index) => {
+            if (deckId === firstDeckId) {
+                this.setAllCardVisibilityByDeckId(deckId, true);
+            } else {
+                this.setAllCardVisibilityByDeckId(deckId, false);
+            }
+        });
     }
 
     public getCardListByDeckId(deckId: number): THREE.Mesh[] {
@@ -235,4 +243,23 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
         this.myDeckCardRepository.resetCardGroup();
     }
 
+    public applyClippingMaskToMyDeckCards(): void {
+        const deckIdList = this.getAllDeckIdList();
+        const scrollArea = this.getScrollArea();
+        let clippingPlanes: THREE.Plane[] = [];
+
+        if (scrollArea) {
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+            deckIdList.forEach((deckId) => {
+                const cardGroup = this.getCardGroupByDeckId(deckId);
+                cardGroup.children.forEach((cardObject) => {
+                    if (cardObject instanceof THREE.Mesh) {
+                        this.applyClippingPlanesToMesh(cardObject, clippingPlanes);
+                    } else {
+                        console.warn("[WARN] Skipping non-mesh object in cardGroup:", cardObject);
+                    }
+                });
+            });
+        }
+    }
 }

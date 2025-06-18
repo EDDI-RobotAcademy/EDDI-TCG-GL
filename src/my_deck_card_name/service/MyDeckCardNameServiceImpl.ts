@@ -218,4 +218,39 @@ export class MyDeckCardNameServiceImpl implements MyDeckCardNameService {
         this.myDeckCardNameRepository.resetCardNameGroup();
     }
 
+    public initializeCardNameVisibility(): void {
+        const deckIdList = this.getAllDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
+
+        deckIdList.forEach((deckId, index) => {
+            const cardNameList = this.getCardNameListByDeckId(deckId);
+            if (deckId === firstDeckId) {
+                cardNameList.forEach((cardName) => cardName.setVisibility(true));
+            } else {
+                cardNameList.forEach((cardName) => cardName.setVisibility(false));
+            }
+        });
+    }
+
+    public applyClippingMaskToCardName(): void {
+        const deckIdList = this.getAllDeckIdList();
+        const scrollArea = this.getScrollArea();
+        let clippingPlanes: THREE.Plane[] = [];
+
+        if (scrollArea) {
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+            deckIdList.forEach((deckId) => {
+                const cardNameGroup = this.getCardNameGroupByDeckId(deckId);
+                cardNameGroup.children.forEach((cardNameObject) => {
+                    if (cardNameObject instanceof THREE.Mesh) {
+                        this.applyClippingPlanesToMesh(cardNameObject, clippingPlanes);
+                    } else {
+                        console.warn("[WARN] Skipping non-mesh object in cardNameGroup:", cardNameObject);
+                    }
+                });
+            });
+        }
+    }
+
 }

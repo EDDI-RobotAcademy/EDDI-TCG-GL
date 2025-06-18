@@ -3,6 +3,6 @@ import {SideScrollAreaType} from "../entity/SideScrollAreaType";
 
 export interface SideScrollAreaService {
     createSideScrollArea(
-        id: string, type: SideScrollAreaType, width: number, height: number, positionX: number, positionY: number
+        type: SideScrollAreaType, areaId: number, name: string, width: number, height: number, position: THREE.Vector2
     ): Promise<THREE.Mesh | null>;
 }

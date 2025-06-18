@@ -174,4 +174,22 @@ export class MyDeckNameTextServiceImpl implements MyDeckNameTextService {
         this.clippingMaskManager.applyClippingPlanesToMesh(mesh, clippingPlanes);
     }
 
+    public applyClippingMaskToDeckNameText(): void {
+        const textGroup = this.getMyDeckTextGroups();
+        const scrollArea = this.getScrollArea();
+        let clippingPlanes: THREE.Plane[] = [];
+
+        if (scrollArea) {
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+            textGroup.children.forEach((textObject) => {
+                if (textObject instanceof THREE.Mesh) {
+                    this.applyClippingPlanesToMesh(textObject, clippingPlanes);
+                } else {
+                    console.warn("[WARN] Skipping non-mesh object in textGroup:", textObject);
+                }
+            });
+        }
+    }
+
+
 }

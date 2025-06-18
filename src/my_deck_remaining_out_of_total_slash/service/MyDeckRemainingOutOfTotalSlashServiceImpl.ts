@@ -146,4 +146,21 @@ export class MyDeckRemainingOutOfTotalSlashServiceImpl implements MyDeckRemainin
         this.clippingMaskManager.applyClippingPlanesToMesh(mesh, clippingPlanes);
     }
 
+    public applyClippingMaskToSlash(): void {
+        const slashGroup = this.getSlashGroup();
+        const scrollArea = this.getScrollArea();
+        let clippingPlanes: THREE.Plane[] = [];
+
+        if (scrollArea) {
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+            slashGroup.children.forEach((slashObject) => {
+                if (slashObject instanceof THREE.Mesh) {
+                    this.applyClippingPlanesToMesh(slashObject, clippingPlanes);
+                } else {
+                    console.warn("[WARN] Skipping non-mesh object in slashGroup:", slashObject);
+                }
+            });
+        }
+    }
+
 }

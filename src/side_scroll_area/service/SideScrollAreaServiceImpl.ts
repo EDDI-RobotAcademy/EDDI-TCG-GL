@@ -22,11 +22,11 @@ export class SideScrollAreaServiceImpl implements SideScrollAreaService {
     }
 
     public async createSideScrollArea(
-        id: string, type: SideScrollAreaType, width: number, height: number, positionX: number, positionY: number
+        type: SideScrollAreaType, areaId: number, name: string, width: number, height: number, position: THREE.Vector2
     ): Promise<THREE.Mesh | null> {
 
         const area = await this.sideScrollAreaRepository.createSideScrollArea(
-            id, type, width, height, positionX, positionY);
+            type, areaId, name, width, height, position);
         const areaMesh = area.getMesh();
 
         return areaMesh;

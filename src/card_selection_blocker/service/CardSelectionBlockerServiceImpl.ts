@@ -144,4 +144,21 @@ export class CardSelectionBlockerServiceImpl implements CardSelectionBlockerServ
         this.clippingMaskManager.applyClippingPlanesToMesh(mesh, clippingPlanes);
     }
 
+    public applyClippingMaskToBlocker(): void {
+        const blockerGroup = this.getBlockerGroup();
+        const scrollArea = this.getScrollArea();
+        let clippingPlanes: THREE.Plane[] = [];
+
+        if (scrollArea) {
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+            blockerGroup.children.forEach((blockerObject) => {
+                if (blockerObject instanceof THREE.Mesh) {
+                    this.applyClippingPlanesToMesh(blockerObject, clippingPlanes);
+                } else {
+                    console.warn("[WARN] Skipping non-mesh object in blockerGroup:", blockerObject);
+                }
+            });
+        }
+    }
+
 }
