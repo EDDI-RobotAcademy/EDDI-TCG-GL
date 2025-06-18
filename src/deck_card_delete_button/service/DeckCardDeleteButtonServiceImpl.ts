@@ -118,7 +118,7 @@ export class DeckCardDeleteButtonServiceImpl implements DeckCardDeleteButtonServ
                     scrollArea.width = 0.202 * windowWidth;
                     scrollArea.height = 0.61 * windowHeight;
                     scrollArea.position.set(0.38 * window.innerWidth, -0.024 * window.innerHeight);
-                    const clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                    const clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
                     this.applyClippingPlanesToMesh(buttonMesh, clippingPlanes);
                 }
 
@@ -212,7 +212,7 @@ export class DeckCardDeleteButtonServiceImpl implements DeckCardDeleteButtonServ
         let clippingPlanes: THREE.Plane[] = [];
 
         if (scrollArea) {
-            clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
             deckIdList.forEach((deckId) => {
                 const buttonGroup = this.getButtonGroupByDeckId(deckId);
                 buttonGroup.children.forEach((buttonObject) => {

@@ -120,7 +120,7 @@ export class NumberOfSelectedCardsServiceImpl implements NumberOfSelectedCardsSe
 
             const sideScrollArea = this.getSideScrollArea();
             if (sideScrollArea) {
-                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(0, sideScrollArea);
+                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(sideScrollArea);
                 this.applyClippingPlanesToMesh(numberObjectMesh, clippingPlanes);
             }
         }
@@ -207,10 +207,6 @@ export class NumberOfSelectedCardsServiceImpl implements NumberOfSelectedCardsSe
 
     private getSideScrollArea(): SideScrollArea | null {
         return this.sideScrollAreaRepository.findAreaByTypeAndId(1, 0);
-    }
-
-    private getClippingPlanes(id: number): THREE.Plane[] {
-        return this.clippingMaskManager.getClippingPlanes(id);
     }
 
     private applyClippingPlanesToMesh(mesh: THREE.Mesh, clippingPlanes: THREE.Plane[]): void {

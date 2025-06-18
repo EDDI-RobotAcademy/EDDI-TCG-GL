@@ -95,7 +95,7 @@ export class MyDeckRemainingOutOfTotalSlashServiceImpl implements MyDeckRemainin
                 scrollArea.width = 0.54 * windowWidth;
                 scrollArea.height = 0.745 * windowHeight;
                 scrollArea.position.set(0 * window.innerWidth, -0.125 * window.innerHeight);
-                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
                 this.applyClippingPlanesToMesh(slashMesh, clippingPlanes);
             }
         }
@@ -152,7 +152,7 @@ export class MyDeckRemainingOutOfTotalSlashServiceImpl implements MyDeckRemainin
         let clippingPlanes: THREE.Plane[] = [];
 
         if (scrollArea) {
-            clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
             slashGroup.children.forEach((slashObject) => {
                 if (slashObject instanceof THREE.Mesh) {
                     this.applyClippingPlanesToMesh(slashObject, clippingPlanes);

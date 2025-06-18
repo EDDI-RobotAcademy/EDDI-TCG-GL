@@ -132,7 +132,7 @@ export class MyCardScreenCardServiceImpl implements MyCardScreenCardService {
                 scrollArea.width = 0.902 * windowWidth;
                 scrollArea.height = 0.884 * windowHeight;
                 scrollArea.position.set(0.048 * window.innerWidth, -0.06 * window.innerHeight);
-                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(1, scrollArea);
+                const clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
                 this.applyClippingPlanesToMesh(cardMesh, clippingPlanes);
             }
         }

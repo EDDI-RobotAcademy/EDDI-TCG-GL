@@ -121,7 +121,7 @@ export class MyDeckCardNameServiceImpl implements MyDeckCardNameService {
                     scrollArea.width = 0.202 * windowWidth;
                     scrollArea.height = 0.61 * windowHeight;
                     scrollArea.position.set(0.38 * window.innerWidth, -0.024 * window.innerHeight);
-                    const clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+                    const clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
                     this.applyClippingPlanesToMesh(cardNameMesh, clippingPlanes);
                 }
 
@@ -239,7 +239,7 @@ export class MyDeckCardNameServiceImpl implements MyDeckCardNameService {
         let clippingPlanes: THREE.Plane[] = [];
 
         if (scrollArea) {
-            clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
             deckIdList.forEach((deckId) => {
                 const cardNameGroup = this.getCardNameGroupByDeckId(deckId);
                 cardNameGroup.children.forEach((cardNameObject) => {

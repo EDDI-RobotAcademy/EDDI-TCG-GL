@@ -21,17 +21,11 @@ export class ClippingMaskManager {
         this.renderer.localClippingEnabled = true;
     }
 
-    public setClippingPlanes(id: number, sideScrollArea: SideScrollArea): THREE.Plane[] {
+    public setClippingPlanes(sideScrollArea: SideScrollArea): THREE.Plane[] {
         if (!sideScrollArea) {
             console.error("SideScrollArea is null. Clipping planes cannot be set.");
             return [];
         }
-
-        // 이미 존재하면 새로 추가하지 않음
-//         if (this.clippingPlanesMap.has(id)) {
-//             console.warn(`Clipping planes for id ${id} already exist. Skipping update.`);
-//             return this.clippingPlanesMap.get(id) || [];
-//         }
 
         const sideScrollAreaX = sideScrollArea.position.x;
         const sideScrollAreaY = sideScrollArea.position.y;
@@ -45,8 +39,6 @@ export class ClippingMaskManager {
                 new THREE.Plane(new THREE.Vector3(0, -1, 0), sideScrollAreaY + sideScrollAreaHeight / 2),
                 new THREE.Plane(new THREE.Vector3(0, 1, 0), -(sideScrollAreaY - sideScrollAreaHeight / 2)),
             ];
-
-            this.clippingPlanesMap.set(id, clippingPlanes);
             return clippingPlanes;
         }
         return [];
@@ -64,11 +56,4 @@ export class ClippingMaskManager {
         }
     }
 
-    public getClippingPlanes(id: number): THREE.Plane[] {
-        return this.clippingPlanesMap.get(id) || [];
-    }
-
-    public removeClippingPlanes(id: number): void {
-        this.clippingPlanesMap.delete(id);
-    }
 }

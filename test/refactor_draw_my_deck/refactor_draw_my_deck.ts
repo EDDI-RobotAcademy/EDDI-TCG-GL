@@ -1319,9 +1319,9 @@ export class TCGJustTestMyDeckView {
 
             this.userWindowSize.calculateScaleFactors(newWidth, newHeight);
             const { scaleX, scaleY } = this.userWindowSize.getScaleFactors();
-            this.sideScrollAreaService.adjustMyDeckSideScrollAreaPosition();
-            this.sideScrollAreaService.adjustMyDeckCardScrollAreaPosition();
-            this.sideScrollAreaService.adjustMyDeckBlockScrollAreaPosition();
+//             this.sideScrollAreaService.adjustMyDeckSideScrollAreaPosition();
+//             this.sideScrollAreaService.adjustMyDeckCardScrollAreaPosition();
+//             this.sideScrollAreaService.adjustMyDeckBlockScrollAreaPosition();
             this.myDeckChosenOutOfTotalSlashService.adjustSlashPosition();
             this.totalNumberOfSelectedCardsService.adjustTotalNumberOfSelectedCardsPosition();
             this.myDeckButtonService.adjustMyDeckButtonPosition();
