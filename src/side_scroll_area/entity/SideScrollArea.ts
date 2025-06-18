@@ -4,16 +4,16 @@ import {IdGenerator} from "../../common/id_generator/IdGenerator";
 import {SideScrollAreaType} from "./SideScrollAreaType";
 
 export class SideScrollArea {
-    id: number;
     type: SideScrollAreaType;
+    id: number;
     mesh: THREE.Mesh;
     position: THREE.Vector2;
     width: number;
     height: number;
 
-    constructor(type: SideScrollAreaType, mesh: THREE.Mesh, position: THREE.Vector2, width: number, height: number) {
-        this.id = IdGenerator.generateId("SideScrollArea");
+    constructor(type: SideScrollAreaType, id: number, mesh: THREE.Mesh, position: THREE.Vector2, width: number, height: number) {
         this.type = type;
+        this.id = id;
         this.mesh = mesh;
         this.position = position;
         this.width = width;

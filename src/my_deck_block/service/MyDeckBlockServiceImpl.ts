@@ -217,4 +217,39 @@ export class MyDeckBlockServiceImpl implements MyDeckBlockService {
         this.myDeckBlockRepository.resetBlockGroup();
     }
 
+    public initializeBlockVisibility(): void {
+        const deckIdList = this.getAllDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
+
+        deckIdList.forEach((deckId, index) => {
+            const blockList = this.getBlockListByDeckId(deckId);
+            if (deckId === firstDeckId) {
+                blockList.forEach((block) => block.setVisibility(true));
+            } else {
+                blockList.forEach((block) => block.setVisibility(false));
+            }
+        });
+    }
+
+    public applyClippingMaskToBlock(): void {
+        const deckIdList = this.getAllDeckIdList();
+        const scrollArea = this.getScrollArea();
+        let clippingPlanes: THREE.Plane[] = [];
+
+        if (scrollArea) {
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+            deckIdList.forEach((deckId) => {
+                const blockGroup = this.getBlockGroupByDeckId(deckId);
+                blockGroup.children.forEach((blockObject) => {
+                    if (blockObject instanceof THREE.Mesh) {
+                        this.applyClippingPlanesToMesh(blockObject, clippingPlanes);
+                    } else {
+                        console.warn("[WARN] Skipping non-mesh object in blockGroup:", blockObject);
+                    }
+                });
+            });
+        }
+    }
+
 }

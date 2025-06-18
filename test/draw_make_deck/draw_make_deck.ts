@@ -537,7 +537,7 @@ export class TCGJustTestMakeDeckView {
 
     private async addSideScrollArea(): Promise<void> {
         try{
-            const areaMesh = await this.sideScrollAreaService.createSideScrollArea('makeDeckSideScrollArea',1, 0.255, 0.735, 0.3895, 0.04);
+            const areaMesh = await this.sideScrollAreaService.createSideScrollArea(1, 0, 'makeDeckSideScrollArea', 0.255, 0.735, new THREE.Vector2(0.3895, 0.04));
             if (areaMesh) {
                 this.scene.add(areaMesh);
             } else {

@@ -204,4 +204,39 @@ export class MyDeckNumberOfSelectedCardsServiceImpl implements MyDeckNumberOfSel
         this.clippingMaskManager.applyClippingPlanesToMesh(mesh, clippingPlanes);
     }
 
+    public initializeNumberVisibility(): void {
+        const deckIdList = this.getAllDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
+
+        deckIdList.forEach((deckId, index) => {
+            const numberList = this.getNumberListByDeckId(deckId);
+            if (deckId === firstDeckId) {
+                numberList.forEach((number) => number.setVisibility(true));
+            } else {
+                numberList.forEach((number) => number.setVisibility(false));
+            }
+        });
+    }
+
+    public applyClippingMaskToNumber(): void {
+        const deckIdList = this.getAllDeckIdList();
+        const scrollArea = this.getScrollArea();
+        let clippingPlanes: THREE.Plane[] = [];
+
+        if (scrollArea) {
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+            deckIdList.forEach((deckId) => {
+                const numberGroup = this.getNumberGroupByDeckId(deckId);
+                numberGroup.children.forEach((numberObject) => {
+                    if (numberObject instanceof THREE.Mesh) {
+                        this.applyClippingPlanesToMesh(numberObject, clippingPlanes);
+                    } else {
+                        console.warn("[WARN] Skipping non-mesh object in numberGroup:", numberObject);
+                    }
+                });
+            });
+        }
+    }
+
 }

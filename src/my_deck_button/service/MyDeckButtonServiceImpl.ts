@@ -175,8 +175,13 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
          this.myDeckButtonRepository.deleteAll();
      }
 
-    public saveCurrentClickDeckButtonId(buttonId: number): void {
-        this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(buttonId);
+    public saveCurrentClickDeckButtonId(): void {
+        const myDeckButtonList = this.myDeckButtonRepository.findButtonDeckIdList();
+        const sortedDeckIdList = [...myDeckButtonList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
+        console.log(`%c first Deck Id?${firstDeckId}`, 'color: #FF4500; font-weight: bold;');
+
+        this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(firstDeckId);
     }
 
     public getMyDeckButtonGroups(): THREE.Group {
@@ -193,6 +198,23 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
 
     private applyClippingPlanesToMesh(mesh: THREE.Mesh, clippingPlanes: THREE.Plane[]): void {
         this.clippingMaskManager.applyClippingPlanesToMesh(mesh, clippingPlanes);
+    }
+
+    public applyClippingMaskToDeckButtons(): void {
+        const deckButtonGroup = this.getMyDeckButtonGroups();
+        const scrollArea = this.getScrollArea();
+        let clippingPlanes: THREE.Plane[] = [];
+
+        if (scrollArea) {
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(2, scrollArea);
+            deckButtonGroup.children.forEach((buttonObject) => {
+                if (buttonObject instanceof THREE.Mesh) {
+                    this.applyClippingPlanesToMesh(buttonObject, clippingPlanes);
+                } else {
+                    console.warn("[WARN] Skipping non-mesh object in buttonGroup:", buttonObject);
+                }
+            });
+        }
     }
 
 }

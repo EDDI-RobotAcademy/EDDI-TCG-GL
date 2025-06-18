@@ -206,4 +206,24 @@ export class DeckCardDeleteButtonServiceImpl implements DeckCardDeleteButtonServ
         this.clippingMaskManager.applyClippingPlanesToMesh(mesh, clippingPlanes);
     }
 
+    public applyClippingMaskToButton(): void {
+        const deckIdList = this.getAllDeckIdList();
+        const scrollArea = this.getScrollArea();
+        let clippingPlanes: THREE.Plane[] = [];
+
+        if (scrollArea) {
+            clippingPlanes = this.clippingMaskManager.setClippingPlanes(3, scrollArea);
+            deckIdList.forEach((deckId) => {
+                const buttonGroup = this.getButtonGroupByDeckId(deckId);
+                buttonGroup.children.forEach((buttonObject) => {
+                    if (buttonObject instanceof THREE.Mesh) {
+                        this.applyClippingPlanesToMesh(buttonObject, clippingPlanes);
+                    } else {
+                        console.warn("[WARN] Skipping non-mesh object in buttonGroup:", buttonObject);
+                    }
+                });
+            });
+        }
+    }
+
 }

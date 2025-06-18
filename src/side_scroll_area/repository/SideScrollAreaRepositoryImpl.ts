@@ -25,19 +25,19 @@ export class SideScrollAreaRepositoryImpl implements SideScrollAreaRepository {
     }
 
     public async createSideScrollArea(
-        id: string, type: SideScrollAreaType, width: number, height: number, positionX: number, positionY: number
+        type: SideScrollAreaType, areaId: number, name: string, width: number, height: number, position: THREE.Vector2
     ): Promise<SideScrollArea> {
         const areaWidth = width * window.innerWidth;
         const areaHeight = height * window.innerHeight;
 
-        const areaPositionX = positionX * window.innerWidth;
-        const areaPositionY = positionY * window.innerHeight;
-        const position = new THREE.Vector2(areaPositionX, areaPositionY);
+        const areaPositionX = position.x * window.innerWidth;
+        const areaPositionY = position.y * window.innerHeight;
+        const areaPosition = new THREE.Vector2(areaPositionX, areaPositionY);
 
-        const area = new TransparentRectangle(position, areaWidth, areaHeight, 0xffffff, 0, id);
+        const area = new TransparentRectangle(areaPosition, areaWidth, areaHeight, 0xffffff, 0, name);
         const areaMesh = area.getMesh();
 
-        const newArea = new SideScrollArea(type, areaMesh, position, areaWidth, areaHeight);
+        const newArea = new SideScrollArea(type, areaId, areaMesh, areaPosition, areaWidth, areaHeight);
 
         // areaMap에서 해당 타입의 배열을 가져옴 (없으면 빈 배열 생성)
         if (!this.areaMap.has(type)) {
