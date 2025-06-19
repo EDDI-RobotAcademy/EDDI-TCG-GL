@@ -4,6 +4,7 @@ import {MyDeckCardScrollService} from "./MyDeckCardScrollService";
 import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardRepositoryImpl";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/repository/MyDeckNumberOfCardsRepositoryImpl";
+import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -15,6 +16,7 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
     private myDeckCardRepository: MyDeckCardRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private myDeckNumberOfCardsRepository: MyDeckNumberOfCardsRepositoryImpl;
+    private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
 
     private isScrollEnabled: boolean = true;
 
@@ -24,6 +26,7 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
         this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance();
+        this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer): MyDeckCardScrollServiceImpl {
@@ -45,6 +48,7 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
         const scrollTargets = [
             this.getDeckCardGroup(currentClickDeckId), // scrollTargetDeckCard
             this.getNumberOfCardsGroup(currentClickDeckId),
+            this.getDeckCardCountMarkerGroup(currentClickDeckId),
         ];
 
         if (scrollTargets.every(target => !target)) return;
@@ -80,6 +84,10 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
 
     private getNumberOfCardsGroup(deckId: number): THREE.Group {
         return this.myDeckNumberOfCardsRepository.findNumberGroupByDeckId(deckId);
+    }
+
+    private getDeckCardCountMarkerGroup(deckId: number): THREE.Group {
+        return this.deckCardCountMarkerRepository.findMarkerGroupByDeckId(deckId);
     }
 
     private getCardCountByDeckId(deckId: number): number {

@@ -46,6 +46,7 @@ export class DeckCardCountMarkerServiceImpl implements DeckCardCountMarkerServic
                 console.log(`[Marker] Card ID ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
 
                 const deckCardCountMarker = await this.createDeckCardCountMarker(deckId, cardId, position.position);
+                console.log(`[Marker] Deck ID: ${deckId}, Card ID: ${cardId}`);
                 markerGroup.add(deckCardCountMarker.getMesh());
 
             } else {
