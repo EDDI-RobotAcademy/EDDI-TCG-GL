@@ -24,6 +24,7 @@ import {MyDeckRemainingCardsRepositoryImpl} from "../../my_deck_remaining_cards/
 import {MyDeckRemainingOutOfTotalSlashRepositoryImpl} from "../../my_deck_remaining_out_of_total_slash/repository/MyDeckRemainingOutOfTotalSlashRepositoryImpl";
 import {TotalNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_total_number_of_selected_cards/repository/TotalNumberOfSelectedCardsRepositoryImpl";
 import {MyDeckChosenOutOfTotalSlashRepositoryImpl} from "../../my_deck_chosen_out_of_total_slash/repository/MyDeckChosenOutOfTotalSlashRepositoryImpl";
+import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
 
@@ -46,6 +47,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private myDeckRemainingOutOfTotalSlashRepository: MyDeckRemainingOutOfTotalSlashRepositoryImpl;
     private totalNumberOfSelectedCardsRepository: TotalNumberOfSelectedCardsRepositoryImpl;
     private myDeckChosenOutOfTotalSlashRepository: MyDeckChosenOutOfTotalSlashRepositoryImpl;
+    private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
     private cardStateManager: CardStateManager;
 
     private buttonClickEnabled: boolean = true;
@@ -66,6 +68,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.myDeckRemainingOutOfTotalSlashRepository = MyDeckRemainingOutOfTotalSlashRepositoryImpl.getInstance();
         this.totalNumberOfSelectedCardsRepository = TotalNumberOfSelectedCardsRepositoryImpl.getInstance();
         this.myDeckChosenOutOfTotalSlashRepository = MyDeckChosenOutOfTotalSlashRepositoryImpl.getInstance();
+        this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
 
         this.cardStateManager = CardStateManager.getInstance();
     }
@@ -107,6 +110,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                     this.setMyDeckNumberOfCards(currentClickedDeckButtonId, false);
                     this.showCardBlockersForFullyUsedCards(currentClickedDeckButtonId);
                     this.setTotalNumberOfSelectedCardsVisibility(currentClickedDeckButtonId, true);
+                    this.setDeckCardCountMarkerVisibilityByDeckId(currentClickedDeckButtonId, false);
                 }
 
                 this.setDeckEditButtonVisibility(false);
@@ -223,6 +227,12 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         cardUniqueIdList.forEach((cardUniqueId) => {
             this.setMyDeckCardVisibility(deckId, cardUniqueId, isVisible);
         });
+    }
+
+    private setDeckCardCountMarkerVisibilityByDeckId(deckId: number, isVisible: boolean): void {
+        this.deckCardCountMarkerRepository.findMarkerListByDeckId(deckId)?.forEach(marker =>
+            marker.setVisibility(isVisible)
+        );
     }
 
     private getMyDeckCardUniqueIdListByDeckId(deckId: number): number[] {
