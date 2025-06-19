@@ -56,6 +56,7 @@ import {MyDeckNumberOfSelectedCardsServiceImpl} from "../../src/my_deck_number_o
 import {MyDeckChosenOutOfTotalSlashServiceImpl} from "../../src/my_deck_chosen_out_of_total_slash/service/MyDeckChosenOutOfTotalSlashServiceImpl";
 import {TotalNumberOfSelectedCardsServiceImpl} from "../../src/my_deck_total_number_of_selected_cards/service/TotalNumberOfSelectedCardsServiceImpl";
 import {DeckCardDeleteButtonServiceImpl} from "../../src/deck_card_delete_button/service/DeckCardDeleteButtonServiceImpl";
+import {DeckCardCountMarkerServiceImpl} from "../../src/deck_card_count_marker/service/DeckCardCountMarkerServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -142,6 +143,7 @@ export class TCGJustTestMyDeckView {
     private totalNumberOfSelectedCardsService = TotalNumberOfSelectedCardsServiceImpl.getInstance();
 
     private deckCardDeleteButtonService: DeckCardDeleteButtonServiceImpl;
+    private deckCardCountMarkerService: DeckCardCountMarkerServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -208,6 +210,7 @@ export class TCGJustTestMyDeckView {
         window.addEventListener('click', () => this.initializeAudio(), { once: true });
 
         this.deckCardDeleteButtonService = DeckCardDeleteButtonServiceImpl.getInstance(this.scene);
+        this.deckCardCountMarkerService = DeckCardCountMarkerServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckDeleteButtonClickDetectService = DeckDeleteButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -500,6 +503,7 @@ export class TCGJustTestMyDeckView {
         await this.addChosenOutOfTotalSlash();
         await this.addTotalNumberOfSelectedCards();
         await this.addMyDeckCard();
+        await this.addMyDeckCardCountMarker();
         await this.addMyDeckOwnedCards();
         await this.addMyDeckTotalOwnedCards();
         await this.addMyDeckNumberOfCards();
@@ -692,7 +696,7 @@ export class TCGJustTestMyDeckView {
             }
 
             this.deckDeleteButtonService.initializeDeckDeleteButtonVisibility();
-            this.deckDeleteButtonService.applyClippingMaskToDeckNameEditButtons();
+            this.deckDeleteButtonService.applyClippingMaskToDeckDeleteButtons();
 
             const buttonGroup = this.deckDeleteButtonService.getButtonGroup();
             if (!this.scene.children.includes(buttonGroup)) {
@@ -726,6 +730,33 @@ export class TCGJustTestMyDeckView {
             });
         } catch (error) {
             console.error('Failed to add my deck cards:', error);
+        }
+    }
+
+    private async addMyDeckCardCountMarker(): Promise<void> {
+        try {
+            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardLists();
+            for (const [deckId, cardIdList] of myDeckCardList) {
+                for (const cardId of cardIdList) {
+                    await this.deckCardCountMarkerService.createDeckCardCountMarkerWithPosition(deckId, cardId);
+                }
+                this.deckCardCountMarkerService.saveMarkerGroup(deckId);
+            }
+
+            this.deckCardCountMarkerService.initializeMarkerVisibility();
+            this.deckCardCountMarkerService.applyClippingMaskToMarker();
+
+            const deckIdList = this.deckCardCountMarkerService.getAllDeckIdList();
+            deckIdList.forEach((deckId) => {
+                const markerGroup = this.deckCardCountMarkerService.getMarkerGroupByDeckId(deckId);
+                if (!this.scene.children.includes(markerGroup)) {
+                    this.scene.add(markerGroup);
+                }
+                markerGroup.position.y = 0;
+            });
+
+        } catch (error) {
+            console.error('Failed to add my deck card count marker:', error);
         }
     }
 
@@ -1319,9 +1350,9 @@ export class TCGJustTestMyDeckView {
 
             this.userWindowSize.calculateScaleFactors(newWidth, newHeight);
             const { scaleX, scaleY } = this.userWindowSize.getScaleFactors();
-//             this.sideScrollAreaService.adjustMyDeckSideScrollAreaPosition();
-//             this.sideScrollAreaService.adjustMyDeckCardScrollAreaPosition();
-//             this.sideScrollAreaService.adjustMyDeckBlockScrollAreaPosition();
+            this.sideScrollAreaService.adjustMyDeckSideScrollAreaPosition();
+            this.sideScrollAreaService.adjustMyDeckCardScrollAreaPosition();
+            this.sideScrollAreaService.adjustMyDeckBlockScrollAreaPosition();
             this.myDeckChosenOutOfTotalSlashService.adjustSlashPosition();
             this.totalNumberOfSelectedCardsService.adjustTotalNumberOfSelectedCardsPosition();
             this.myDeckButtonService.adjustMyDeckButtonPosition();
@@ -1329,6 +1360,7 @@ export class TCGJustTestMyDeckView {
             this.deckNameEditButtonService.adjustDeckNameEditButtonPosition();
             this.deckDeleteButtonService.adjustDeckDeleteButtonPosition();
             this.myDeckCardService.adjustMyDeckCardPosition();
+            this.deckCardCountMarkerService.adjustDeckCardCountMarkerPosition();
             this.myDeckOwnedCardsService.adjustMyDeckOwnedCardsPosition();
             this.myDeckTotalOwnedCardsService.adjustMyDeckTotalOwnedCardsPosition();
             this.myDeckNumberOfCardsService.adjustMyDeckNumberOfCardsPosition();
