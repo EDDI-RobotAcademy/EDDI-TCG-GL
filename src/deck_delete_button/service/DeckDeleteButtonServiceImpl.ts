@@ -176,7 +176,7 @@ export class DeckDeleteButtonServiceImpl implements DeckDeleteButtonService {
         }
     }
 
-    public applyClippingMaskToDeckNameEditButtons(): void {
+    public applyClippingMaskToDeckDeleteButtons(): void {
         const buttonGroup = this.getButtonGroup();
         const scrollArea = this.getScrollArea();
         let clippingPlanes: THREE.Plane[] = [];
