@@ -35,8 +35,8 @@ export class DeckCardCountMarkerPositionRepositoryImpl implements DeckCardCountM
 
         if (!isCardAlreadyInDeck) {
             const positionIndex = this.deckPositionIndexMap.get(deckId)!;
-            const col = (positionIndex - 1) % this.maxMarkersPerRow;
-            const row = Math.floor((positionIndex - 1)/ this.maxMarkersPerRow);
+            const col = positionIndex % this.maxMarkersPerRow;
+            const row = Math.floor(positionIndex/ this.maxMarkersPerRow);
 
             const positionX = this.initialX + col * this.incrementX;
             const positionY = this.initialY + row * this.incrementY;
