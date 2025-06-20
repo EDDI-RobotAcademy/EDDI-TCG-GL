@@ -6,7 +6,9 @@ import {DeckEditButton} from "../../deck_edit_button/entity/DeckEditButton";
 export class DeckEditButtonClickDetectRepositoryImpl implements DeckEditButtonClickDetectRepository {
     private static instance: DeckEditButtonClickDetectRepositoryImpl;
     private raycaster = new THREE.Raycaster();
+
     private buttonClickState: boolean = false;
+    private buttonClickEnabled: boolean = true;
 
     public static getInstance(): DeckEditButtonClickDetectRepositoryImpl {
         if (!DeckEditButtonClickDetectRepositoryImpl.instance) {
@@ -43,6 +45,14 @@ export class DeckEditButtonClickDetectRepositoryImpl implements DeckEditButtonCl
 
     public getCurrentButtonClickState(): boolean | null {
         return this.buttonClickState;
+    }
+
+    public setButtonClickEnabled(isEnabled: boolean): void {
+        this.buttonClickEnabled = isEnabled;
+    }
+
+    public isButtonClickEnabled(): boolean {
+        return this.buttonClickEnabled;
     }
 
 }

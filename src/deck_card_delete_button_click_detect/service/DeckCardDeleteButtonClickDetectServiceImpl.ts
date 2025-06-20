@@ -21,8 +21,6 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private cardCountManager: CardCountManager;
 
-    private buttonClickEnabled: boolean = false;
-
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.deckCardDeleteButtonClickDetectRepository = DeckCardDeleteButtonClickDetectRepositoryImpl.getInstance();
@@ -38,12 +36,12 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         return DeckCardDeleteButtonClickDetectServiceImpl.instance;
     }
 
-    public setButtonClickEnabled(isEnabled: boolean): void {
-        this.buttonClickEnabled = isEnabled;
+    private setButtonClickEnabled(isEnabled: boolean): void {
+        this.deckCardDeleteButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
     }
 
-    public isButtonClickEnabled(): boolean {
-        return this.buttonClickEnabled;
+    private isButtonClickEnabled(): boolean {
+        return this.deckCardDeleteButtonClickDetectRepository.isButtonClickEnabled();
     }
 
     async handleButtonClick(clickPoint: { x: number; y: number }): Promise<DeckCardDeleteButton | null> {
@@ -77,6 +75,8 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
     }
 
     public async onMouseDown(event: MouseEvent): Promise<DeckCardDeleteButton | null> {
+        if (!this.isButtonClickEnabled()) return null;
+
         if (event.button === 0) {
             const clickPoint = { x: event.clientX, y: event.clientY };
             return await this.handleButtonClick(clickPoint);

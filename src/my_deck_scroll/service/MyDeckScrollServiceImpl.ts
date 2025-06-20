@@ -6,6 +6,7 @@ import {MyDeckButtonEffectRepositoryImpl} from "../../my_deck_button_effect/repo
 import {MyDeckNameTextRepositoryImpl} from "../../my_deck_name_text/repository/MyDeckNameTextRepositoryImpl";
 import {DeckNameEditButtonRepositoryImpl} from "../../deck_name_edit_button/repository/DeckNameEditButtonRepositoryImpl";
 import {DeckDeleteButtonRepositoryImpl} from "../../deck_delete_button/repository/DeckDeleteButtonRepositoryImpl";
+import {SideScrollAreaDetectRepositoryImpl} from "../../side_scroll_area_detect/repository/SideScrollAreaDetectRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -19,6 +20,7 @@ export class MyDeckScrollServiceImpl implements MyDeckScrollService {
     private myDeckNameTextRepository : MyDeckNameTextRepositoryImpl;
     private deckNameEditButtonRepository: DeckNameEditButtonRepositoryImpl;
     private deckDeleteButtonRepository: DeckDeleteButtonRepositoryImpl;
+    private sideScrollAreaDetectRepository: SideScrollAreaDetectRepositoryImpl;
 
     private scrollState: boolean = true;
 
@@ -30,6 +32,7 @@ export class MyDeckScrollServiceImpl implements MyDeckScrollService {
         this.myDeckNameTextRepository = MyDeckNameTextRepositoryImpl.getInstance();
         this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance();
         this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance();
+        this.sideScrollAreaDetectRepository = SideScrollAreaDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer): MyDeckScrollServiceImpl {
@@ -48,6 +51,9 @@ export class MyDeckScrollServiceImpl implements MyDeckScrollService {
     }
 
     public async onWheelScroll(event: WheelEvent): Promise<void> {
+        if (!this.getMyDeckScrollEnabledById(0)) return;
+        if (this.getDeckCount() < 6) return;
+
         const scrollTargets = [
             this.getDeckButtonGroup(),         // scrollTargetDeckButton
             this.getDeckButtonEffectGroup(),  // scrollTargetDeckButtonEffect
@@ -105,6 +111,10 @@ export class MyDeckScrollServiceImpl implements MyDeckScrollService {
 
     public getDeckCount(): number {
         return this.myDeckButtonRepository.findDeckCount();
+    }
+
+    private getMyDeckScrollEnabledById(areaId: number): boolean {
+        return this.sideScrollAreaDetectRepository.findMyDeckScrollEnabledById(areaId);
     }
 
 }

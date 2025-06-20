@@ -54,12 +54,12 @@ export class SideScrollAreaDetectServiceImpl implements SideScrollAreaDetectServ
         return this.myCardScrollAreaDetectState;
     }
 
-    setMyDeckScrollAreaDetectState(state: boolean): void {
-        this.myDeckScrollAreaDetectState = state;
+    private setMyDeckScrollAreaDetectEnabled(isEnable: boolean): void {
+        this.sideScrollAreaDetectRepository.setMyDeckScrollAreaDetectEnabled(isEnable);
     }
 
-    getMyDeckScrollAreaDetectState(): boolean {
-        return this.myDeckScrollAreaDetectState;
+    private isMyDeckScrollAreaDetectEnabled(): boolean {
+        return this.sideScrollAreaDetectRepository.isMyDeckScrollAreaDetectEnabled();
     }
 
     async detectMakeDeckSideScrollArea(detectPoint: { x: number; y: number }): Promise<SideScrollArea | null> {
@@ -174,6 +174,8 @@ export class SideScrollAreaDetectServiceImpl implements SideScrollAreaDetectServ
     }
 
     public async onMouseMoveMyDeck(event: MouseEvent): Promise<void> {
+        if (!this.isMyDeckScrollAreaDetectEnabled()) return;
+
         if (event.button === 0) {
             const detectPoint = { x: event.clientX, y: event.clientY };
             await this.detectMyDeckSideScrollArea(detectPoint);
@@ -204,6 +206,7 @@ export class SideScrollAreaDetectServiceImpl implements SideScrollAreaDetectServ
         this.sideScrollAreaDetectRepository.setMyDeckScrollEnabled(areaId, enable);
     }
 
+    // 얘를 지워야 함.
     public getMyDeckScrollEnabledById(areaId: number): boolean {
         return this.sideScrollAreaDetectRepository.findMyDeckScrollEnabledById(areaId);
     }

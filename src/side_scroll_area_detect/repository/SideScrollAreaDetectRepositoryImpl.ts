@@ -5,10 +5,14 @@ import {SideScrollArea} from "../../side_scroll_area/entity/SideScrollArea";
 
 export class SideScrollAreaDetectRepositoryImpl implements SideScrollAreaDetectRepository {
     private static instance: SideScrollAreaDetectRepositoryImpl;
+    private raycaster = new THREE.Raycaster();
+
     private isMakeDeckScrollEnabledMap: Map<number, boolean> = new Map(); // scrollAreaId: enable
     private isMyCardScrollEnabledMap: Map<number, boolean> = new Map(); // scrollAreaId, enable
+    private isMyDeckScrollEnabledMap: Map<number, boolean> = new Map();
+
     private isMyCardScrollEnabled: boolean = false;
-    private raycaster = new THREE.Raycaster();
+    private myDeckScrollAreaDetectEnabled: boolean = true;
 
     public static getInstance(): SideScrollAreaDetectRepositoryImpl {
         if (!SideScrollAreaDetectRepositoryImpl.instance) {
@@ -49,20 +53,28 @@ export class SideScrollAreaDetectRepositoryImpl implements SideScrollAreaDetectR
         this.isMyCardScrollEnabled = enable;
     }
 
+    public findMyCardScrollEnabled(): boolean {
+        return this.isMyCardScrollEnabled;
+    }
+
+    public setMyDeckScrollAreaDetectEnabled(isEnabled: boolean): void {
+        this.myDeckScrollAreaDetectEnabled = isEnabled;
+    }
+
+    public isMyDeckScrollAreaDetectEnabled(): boolean {
+        return this.myDeckScrollAreaDetectEnabled;
+    }
+
     public setMakeDeckScrollEnabled(id: number, enable: boolean): void {
         this.isMakeDeckScrollEnabledMap.set(id, enable);
     }
 
     public setMyDeckScrollEnabled(id: number, enable: boolean): void {
-        this.isMyCardScrollEnabledMap.set(id, enable);
-    }
-
-    public findMyCardScrollEnabled(): boolean {
-        return this.isMyCardScrollEnabled;
+        this.isMyDeckScrollEnabledMap.set(id, enable);
     }
 
     public findMyDeckScrollEnabledById(areaId: number): boolean {
-        return this.isMyCardScrollEnabledMap.get(areaId) ?? false;
+        return this.isMyDeckScrollEnabledMap.get(areaId) ?? false;
     }
 
     public findMakeDeckScrollEnabledById(areaId: number): boolean {

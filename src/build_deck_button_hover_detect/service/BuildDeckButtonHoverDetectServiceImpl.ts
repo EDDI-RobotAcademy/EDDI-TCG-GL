@@ -15,7 +15,6 @@ export class BuildDeckButtonHoverDetectServiceImpl implements BuildDeckButtonHov
     private buildDeckButtonRepository: BuildDeckButtonRepositoryImpl;
     private buildDeckButtonStateManager: BuildDeckButtonStateManager;
     private cameraRepository: CameraRepository;
-    private buildDeckButtonDetectState: boolean = true;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.buildDeckButtonHoverDetectRepository = BuildDeckButtonHoverDetectRepositoryImpl.getInstance();
@@ -31,12 +30,12 @@ export class BuildDeckButtonHoverDetectServiceImpl implements BuildDeckButtonHov
         return BuildDeckButtonHoverDetectServiceImpl.instance;
     }
 
-    public setButtonDetectState(state: boolean): void {
-        this.buildDeckButtonDetectState = state;
+    private setButtonHoverEnabled(isEnable: boolean): void {
+        this.buildDeckButtonHoverDetectRepository.setButtonHoverEnabled(isEnable);
     }
 
-    public getButtonDetectState(): boolean {
-        return this.buildDeckButtonDetectState;
+    private isButtonHoverEnabled(): boolean {
+        return this.buildDeckButtonHoverDetectRepository.isButtonHoverEnabled();
     }
 
     public async handleHover(hoverPoint: { x: number; y: number }): Promise<BuildDeckButton | null> {
@@ -62,6 +61,8 @@ export class BuildDeckButtonHoverDetectServiceImpl implements BuildDeckButtonHov
     }
 
     public async onMouseMove(event: MouseEvent): Promise<BuildDeckButton | null> {
+        if (!this.isButtonHoverEnabled()) return null;
+
         if (event.button === 0) {
             const hoverPoint = { x: event.clientX, y: event.clientY };
             return await this.handleHover(hoverPoint);

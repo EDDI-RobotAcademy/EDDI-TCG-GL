@@ -5,8 +5,10 @@ import {MyDeckButton} from "../../my_deck_button/entity/MyDeckButton";
 
 export class MyDeckButtonClickDetectRepositoryImpl implements MyDeckButtonClickDetectRepository {
     private static instance: MyDeckButtonClickDetectRepositoryImpl;
-    private currentClickDeckButtonId: number | null = null;
     private raycaster = new THREE.Raycaster();
+
+    private currentClickDeckButtonId: number | null = null;
+    private buttonClickEnabled: boolean = true;
 
     public static getInstance(): MyDeckButtonClickDetectRepositoryImpl {
         if (!MyDeckButtonClickDetectRepositoryImpl.instance) {
@@ -45,16 +47,24 @@ export class MyDeckButtonClickDetectRepositoryImpl implements MyDeckButtonClickD
         return null;
     }
 
-    saveCurrentClickDeckButtonId(id: number): void {
+    public saveCurrentClickDeckButtonId(id: number): void {
         this.currentClickDeckButtonId = id;
     }
 
-    getCurrentClickDeckButtonId(): number | null {
+    public getCurrentClickDeckButtonId(): number | null {
         return this.currentClickDeckButtonId;
     }
 
-    resetCurrentClickDeckButtonId(): void {
+    public resetCurrentClickDeckButtonId(): void {
         this.currentClickDeckButtonId = null;
+    }
+
+    public setButtonClickEnabled(isEnabled: boolean): void {
+        this.buttonClickEnabled = isEnabled;
+    }
+
+    public isButtonClickEnabled(): boolean {
+        return this.buttonClickEnabled;
     }
 
 }

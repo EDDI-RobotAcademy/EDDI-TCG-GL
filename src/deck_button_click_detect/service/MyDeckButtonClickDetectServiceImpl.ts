@@ -14,6 +14,7 @@ import {DeckDeleteButtonRepositoryImpl} from "../../deck_delete_button/repositor
 import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/repository/MyDeckNumberOfCardsRepositoryImpl";
 import {MyDeckNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_number_of_selected_cards/repository/MyDeckNumberOfSelectedCardsRepositoryImpl";
 import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
+import {DeckDeleteButtonClickDetectRepositoryImpl} from "../../deck_delete_button_click_detect/repository/DeckDeleteButtonClickDetectRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -27,7 +28,7 @@ import * as THREE from "three";
 
 export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDetectService {
     private static instance: MyDeckButtonClickDetectServiceImpl | null = null;
-
+    private cameraRepository: CameraRepository;
     private myDeckButtonRepository: MyDeckButtonRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private myDeckButtonEffectRepository: MyDeckButtonEffectRepositoryImpl;
@@ -39,14 +40,12 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private myDeckNumberOfCardsRepository: MyDeckNumberOfCardsRepositoryImpl;
     private myDeckNumberOfSelectedCardsRepository: MyDeckNumberOfSelectedCardsRepositoryImpl;
     private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
+    private deckDeleteButtonClickDetectRepository: DeckDeleteButtonClickDetectRepositoryImpl;
 
     private buttonStateManager: ButtonStateManager;
     private buttonEffectManager: ButtonEffectManager;
     private buttonPageManager: ButtonPageManager;
     private cardStateManager: CardStateManager;
-
-    private cameraRepository: CameraRepository
-    private buttonClickState: boolean = true;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance();
@@ -61,6 +60,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance();
         this.myDeckNumberOfSelectedCardsRepository = MyDeckNumberOfSelectedCardsRepositoryImpl.getInstance();
         this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
+        this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
 
         this.buttonStateManager = ButtonStateManager.getInstance();
         this.buttonEffectManager = ButtonEffectManager.getInstance();
@@ -75,12 +75,12 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         return MyDeckButtonClickDetectServiceImpl.instance;
     }
 
-    setButtonClickState(state: boolean): void {
-        this.buttonClickState = state;
+    private setButtonClickEnabled(isEnabled: boolean): void {
+        this.myDeckButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
     }
 
-    getButtonClickState(): boolean {
-        return this.buttonClickState;
+    private isButtonClickEnabled(): boolean {
+        return this.myDeckButtonClickDetectRepository.isButtonClickEnabled();
     }
 
     async handleLeftClick(clickPoint: { x: number; y: number }): Promise<MyDeckButton | null> {
@@ -155,9 +155,15 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     }
 
     public async onMouseDown(event: MouseEvent): Promise<MyDeckButton | null> {
+        if (!this.isButtonClickEnabled()) return null;
+
         if (event.button === 0) {
             const clickPoint = { x: event.clientX, y: event.clientY };
-            return await this.handleLeftClick(clickPoint);
+            const result = await this.handleLeftClick(clickPoint);
+            if (result) {
+
+                return result;
+            }
         }
         return null;
     }

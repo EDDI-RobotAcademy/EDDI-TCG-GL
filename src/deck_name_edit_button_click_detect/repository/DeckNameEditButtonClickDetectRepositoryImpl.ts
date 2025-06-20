@@ -6,7 +6,9 @@ import {DeckNameEditButton} from "../../deck_name_edit_button/entity/DeckNameEdi
 export class DeckNameEditButtonClickDetectRepositoryImpl implements DeckNameEditButtonClickDetectRepository {
     private static instance: DeckNameEditButtonClickDetectRepositoryImpl;
     private raycaster = new THREE.Raycaster();
+
     private currentClickedButtonId: number | null = null;
+    private buttonClickEnabled: boolean = false;
 
     public static getInstance(): DeckNameEditButtonClickDetectRepositoryImpl {
         if (!DeckNameEditButtonClickDetectRepositoryImpl.instance) {
@@ -52,6 +54,14 @@ export class DeckNameEditButtonClickDetectRepositoryImpl implements DeckNameEdit
 
     public resetCurrentClickedButtonId(): void {
         this.currentClickedButtonId = null;
+    }
+
+    public setButtonClickEnabled(isEnabled: boolean): void {
+        this.buttonClickEnabled = isEnabled;
+    }
+
+    public isButtonClickEnabled(): boolean {
+        return this.buttonClickEnabled;
     }
 
 }

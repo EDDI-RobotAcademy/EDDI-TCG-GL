@@ -6,6 +6,7 @@ import {CardSelectionBlockerRepositoryImpl} from "../../card_selection_blocker/r
 import {MyDeckTotalOwnedCardsRepositoryImpl} from "../../my_deck_total_owned_cards/repository/MyDeckTotalOwnedCardsRepositoryImpl";
 import {MyDeckRemainingCardsRepositoryImpl} from "../../my_deck_remaining_cards/repository/MyDeckRemainingCardsRepositoryImpl";
 import {MyDeckRemainingOutOfTotalSlashRepositoryImpl} from "../../my_deck_remaining_out_of_total_slash/repository/MyDeckRemainingOutOfTotalSlashRepositoryImpl";
+import {SideScrollAreaDetectRepositoryImpl} from "../../side_scroll_area_detect/repository/SideScrollAreaDetectRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -19,6 +20,7 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
     private myDeckTotalOwnedCardsRepository: MyDeckTotalOwnedCardsRepositoryImpl;
     private myDeckRemainingCardsRepository: MyDeckRemainingCardsRepositoryImpl;
     private myDeckRemainingOutOfTotalSlashRepository: MyDeckRemainingOutOfTotalSlashRepositoryImpl;
+    private sideScrollAreaDetectRepository: SideScrollAreaDetectRepositoryImpl;
 
     private isScrollEnabled: boolean = true;
 
@@ -30,6 +32,7 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
         this.myDeckTotalOwnedCardsRepository = MyDeckTotalOwnedCardsRepositoryImpl.getInstance();
         this.myDeckRemainingCardsRepository = MyDeckRemainingCardsRepositoryImpl.getInstance();
         this.myDeckRemainingOutOfTotalSlashRepository = MyDeckRemainingOutOfTotalSlashRepositoryImpl.getInstance();
+        this.sideScrollAreaDetectRepository = SideScrollAreaDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer): MyDeckOwnedCardsScrollServiceImpl {
@@ -48,6 +51,12 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
     }
 
     public async onWheelScroll(event: WheelEvent): Promise<void> {
+        if (!this.getMyDeckScrollEnabledById(1)) return;
+
+        const cardRowCount = this.getCardRowCount();
+        console.log(`card row count?${cardRowCount}`);
+        if (cardRowCount < 3) return;
+
         const scrollTargets = [
             this.getOwnedCardGroup(), // scrollTargetDeckOwnedCard
             this.getCardSelectionBlocker(),
@@ -65,9 +74,6 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
 
         const scrollSpeed = 0.2;
         const delta = event.deltaY * scrollSpeed;
-
-        const cardRowCount = this.getCardRowCount();
-        console.log(`card row count?${cardRowCount}`);
 
         const lowerLimit = 0.34 * window.innerHeight * (cardRowCount - 2) + (0.096 * (1540 / 952) / 3) * window.innerWidth;
         const upperLimit = 0;
@@ -113,6 +119,10 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
         const rowCount = Math.ceil(cardCount / 4);
 
         return rowCount;
+    }
+
+    private getMyDeckScrollEnabledById(areaId: number): boolean {
+        return this.sideScrollAreaDetectRepository.findMyDeckScrollEnabledById(areaId);
     }
 
 }

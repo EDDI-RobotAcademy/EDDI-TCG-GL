@@ -6,7 +6,9 @@ import {MyDeckBlock} from "../../my_deck_block/entity/MyDeckBlock";
 export class MyDeckBlockHoverDetectRepositoryImpl implements MyDeckBlockHoverDetectRepository {
     private static instance: MyDeckBlockHoverDetectRepositoryImpl;
     private raycaster = new THREE.Raycaster();
+
     private currentHoverBlockId: number | null = null;
+    private blockHoverEnabled: boolean = false;
 
     public static getInstance(): MyDeckBlockHoverDetectRepositoryImpl {
         if (!MyDeckBlockHoverDetectRepositoryImpl.instance) {
@@ -51,6 +53,14 @@ export class MyDeckBlockHoverDetectRepositoryImpl implements MyDeckBlockHoverDet
 
     public resetCurrentHoveredBlockId(): void {
         this.currentHoverBlockId = null;
+    }
+
+    public setBlockHoverEnabled(isEnabled: boolean): void {
+        this.blockHoverEnabled = isEnabled;
+    }
+
+    public isBlockHoverEnabled(): boolean {
+        return this.blockHoverEnabled;
     }
 
 }
