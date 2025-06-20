@@ -5,6 +5,7 @@ import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCard
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/repository/MyDeckNumberOfCardsRepositoryImpl";
 import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
+import {SideScrollAreaDetectRepositoryImpl} from "../../side_scroll_area_detect/repository/SideScrollAreaDetectRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -17,8 +18,7 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private myDeckNumberOfCardsRepository: MyDeckNumberOfCardsRepositoryImpl;
     private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
-
-    private isScrollEnabled: boolean = true;
+    private sideScrollAreaDetectRepository: SideScrollAreaDetectRepositoryImpl;
 
     private constructor(camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer) {
         this.renderer = renderer;
@@ -27,6 +27,7 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance();
         this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
+        this.sideScrollAreaDetectRepository = SideScrollAreaDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer): MyDeckCardScrollServiceImpl {
@@ -36,15 +37,16 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
         return MyDeckCardScrollServiceImpl.instance;
     }
 
-    public setCardScrollEnabled(scrollEnable: boolean): void {
-        this.isScrollEnabled = scrollEnable;
-    }
+    public async onWheelScroll(event: WheelEvent): Promise<void> {
+        if (!this.getMyDeckScrollEnabledById(1)) return;
 
-    public isCardScrollEnabled(): boolean {
-        return this.isScrollEnabled;
-    }
+        const currentClickDeckId = this.getCurrentClickDeckButtonId();
+        if (currentClickDeckId == null) return;
+        console.log(`%c current click deck id?${currentClickDeckId}`, 'color: #0000FF; font-weight: bold;');
 
-    public async onWheelScroll(event: WheelEvent, currentClickDeckId: number): Promise<void> {
+        const cardRowCount = this.getCardRowCount(currentClickDeckId);
+        if (cardRowCount < 3) return;
+
         const scrollTargets = [
             this.getDeckCardGroup(currentClickDeckId), // scrollTargetDeckCard
             this.getNumberOfCardsGroup(currentClickDeckId),
@@ -61,7 +63,6 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
         const scrollSpeed = 0.2;
         const delta = event.deltaY * scrollSpeed;
 
-        const cardRowCount = this.getCardRowCount(currentClickDeckId);
         console.log(`card row count?${cardRowCount}`);
         const lowerLimit = 0.34 * window.innerHeight * (cardRowCount - 2) + (0.096 * (1540 / 952) / 3) * window.innerWidth;
         const upperLimit = 0;
@@ -105,6 +106,10 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
 
     public getCurrentClickDeckButtonId(): number | null {
         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    }
+
+    private getMyDeckScrollEnabledById(areaId: number): boolean {
+        return this.sideScrollAreaDetectRepository.findMyDeckScrollEnabledById(areaId);
     }
 
 }

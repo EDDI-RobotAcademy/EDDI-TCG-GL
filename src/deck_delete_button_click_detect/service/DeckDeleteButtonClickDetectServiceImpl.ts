@@ -12,26 +12,26 @@ import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl
 import {TransparentBackgroundRepositoryImpl} from "../../transparent_background/repository/TransparentBackgroundRepositoryImpl";
 import {DeleteDeckPopupWindowRepositoryImpl} from "../../delete_deck_popup_window/repository/DeleteDeckPopupWindowRepositoryImpl";
 import {DeleteDeckPopupButtonRepositoryImpl} from "../../delete_deck_popup_button/repository/DeleteDeckPopupButtonRepositoryImpl";
-
+import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 
 export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonClickDetectService {
     private static instance: DeckDeleteButtonClickDetectServiceImpl | null = null;
+    private cameraRepository: CameraRepository;
     private deckDeleteButtonClickDetectRepository: DeckDeleteButtonClickDetectRepositoryImpl;
     private deckDeleteButtonRepository: DeckDeleteButtonRepositoryImpl;
     private transparentBackgroundRepository: TransparentBackgroundRepositoryImpl;
     private deleteDeckPopupWindowRepository: DeleteDeckPopupWindowRepositoryImpl;
     private deleteDeckPopupButtonRepository: DeleteDeckPopupButtonRepositoryImpl;
-    private cameraRepository: CameraRepository;
-
-    private buttonClickEnabled: boolean = false;
+    private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
+        this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
         this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance();
         this.transparentBackgroundRepository = TransparentBackgroundRepositoryImpl.getInstance();
         this.deleteDeckPopupWindowRepository = DeleteDeckPopupWindowRepositoryImpl.getInstance();
         this.deleteDeckPopupButtonRepository = DeleteDeckPopupButtonRepositoryImpl.getInstance();
-        this.cameraRepository = CameraRepositoryImpl.getInstance();
+        this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckDeleteButtonClickDetectServiceImpl {
@@ -41,12 +41,12 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
         return DeckDeleteButtonClickDetectServiceImpl.instance;
     }
 
-    public setButtonClickEnabled(isEnabled: boolean): void {
-        this.buttonClickEnabled = isEnabled;
+    private setButtonClickEnabled(isEnabled: boolean): void {
+        this.deckDeleteButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
     }
 
-    public isButtonClickEnabled(): boolean {
-        return this.buttonClickEnabled;
+    private isButtonClickEnabled(): boolean {
+        return this.deckDeleteButtonClickDetectRepository.isButtonClickEnabled();
     }
 
     public async handleButtonClick(clickPoint: { x: number; y: number }): Promise<DeckDeleteButton | null> {
@@ -74,9 +74,24 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
     }
 
     public async onMouseDown(event: MouseEvent): Promise<DeckDeleteButton | null> {
+        if (this.isButtonClickEnabled() == false) return null;
+
+        const currentClickedDeckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+        if (currentClickedDeckId == null) return null;
+
+        const deleteDeckButtonVisible = this.getDeckDeleteButtonVisibility(currentClickedDeckId);
+        if (!deleteDeckButtonVisible) return null;
+
+        this.myDeckButtonClickDetectRepository.setButtonClickEnabled(false);
+
         if (event.button === 0) {
             const clickPoint = { x: event.clientX, y: event.clientY };
-            return await this.handleButtonClick(clickPoint);
+            const result = await this.handleButtonClick(clickPoint);
+            if (result) {
+                this.setButtonClickEnabled(false);
+                this.myDeckButtonClickDetectRepository.setButtonClickEnabled(true);
+                return result;
+            }
         }
         return null;
     }

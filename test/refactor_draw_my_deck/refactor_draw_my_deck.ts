@@ -167,7 +167,7 @@ export class TCGJustTestMyDeckView {
     private buildDeckButtonClickDetectService: BuildDeckButtonClickDetectService;
 //     private myDeckButtonEffectHoverDetectService: MyDeckButtonEffectHoverDetectService;
     private deckDeleteButtonClickDetectService: DeckDeleteButtonClickDetectService;
-    private deleteDeckPopupButtonClickDetectService: DeleteDeckPopupButtonClickDetectService;
+//     private deleteDeckPopupButtonClickDetectService: DeleteDeckPopupButtonClickDetectService;
     private deckNameEditButtonClickDetectService: DeckNameEditButtonClickDetectService;
     private myDeckCardScrollService: MyDeckCardScrollService;
     private myDeckBlockScrollService: MyDeckBlockScrollService;
@@ -213,138 +213,63 @@ export class TCGJustTestMyDeckView {
         this.deckCardCountMarkerService = DeckCardCountMarkerServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
-        this.deckDeleteButtonClickDetectService = DeckDeleteButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
-        this.deckNameEditButtonClickDetectService = DeckNameEditButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
-//         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            const buttonClickState = this.myDeckButtonClickDetectService.getButtonClickState();
-            if (buttonClickState == true) {
-                this.deckDeleteButtonClickDetectService.setButtonClickEnabled(false);
-                this.deckNameEditButtonClickDetectService.setButtonClickState(false);
-                const buttonClick = await this.myDeckButtonClickDetectService.onMouseDown(e);
-            }
+            await this.myDeckButtonClickDetectService.onMouseDown(e);
         }, false);
 
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
         this.renderer.domElement.addEventListener('mousemove', async (e) => {
-            const scrollAreaDetectState = this.sideScrollAreaDetectService.getMyDeckScrollAreaDetectState();
-            if (scrollAreaDetectState == true) {
-                this.sideScrollAreaDetectService.onMouseMoveMyDeck(e);
-            }
+            await this.sideScrollAreaDetectService.onMouseMoveMyDeck(e);
         }, false);
 
         this.buildDeckButtonHoverDetectService = BuildDeckButtonHoverDetectServiceImpl.getInstance(this.camera, this.scene);
         this.renderer.domElement.addEventListener('mousemove', async (e) => {
-            const buildDeckButtonDetectState = this.buildDeckButtonHoverDetectService.getButtonDetectState();
-            if (buildDeckButtonDetectState == true) {
-                this.buildDeckButtonHoverDetectService.onMouseMove(e);
-            }
+            await this.buildDeckButtonHoverDetectService.onMouseMove(e);
         }, false);
 
         this.myDeckScrollService = MyDeckScrollServiceImpl.getInstance(this.camera, this.scene, this.renderer);
         this.renderer.domElement.addEventListener('wheel', async (e) => {
-            const scrollState = this.myDeckScrollService.getScrollState();
-            if (scrollState == true && this.myDeckScrollService.getDeckCount() > 6) {
-                const scrollAreaDetect = this.sideScrollAreaDetectService.getMyDeckScrollEnabledById(0);
-                if (scrollAreaDetect == true) {
-                    this.myDeckScrollService.onWheelScroll(e);
-                }
-            }
-
+            await this.myDeckScrollService.onWheelScroll(e);
         }, false);
 
         this.myDeckCardScrollService = MyDeckCardScrollServiceImpl.getInstance(this.camera, this.scene, this.renderer);
         this.renderer.domElement.addEventListener('wheel', async (e) => {
-            const scrollEnabled = this.myDeckCardScrollService.isCardScrollEnabled();
-            if (scrollEnabled == true) {
-                const currentClickDeckId = this.myDeckCardService.getCurrentClickDeckButtonId();
-                const scrollAreaDetect = this.sideScrollAreaDetectService.getMyDeckScrollEnabledById(1);
-                if (scrollAreaDetect == true && currentClickDeckId !== null) {
-                    console.log(`%c current click deck id?${currentClickDeckId}`, 'color: #0000FF; font-weight: bold;');
-                    const cardRowCount = this.myDeckCardScrollService.getCardRowCount(currentClickDeckId);
-                    if (cardRowCount > 2) {
-                        await this.myDeckCardScrollService.onWheelScroll(e, currentClickDeckId);
-                    }
-                }
-            }
-
+            await this.myDeckCardScrollService.onWheelScroll(e);
         }, false);
 
         this.myDeckOwnedCardsScrollService = MyDeckOwnedCardsScrollServiceImpl.getInstance(this.camera, this.scene, this.renderer);
         this.renderer.domElement.addEventListener('wheel', async (e) => {
-            const isScrollEnabled = this.myDeckOwnedCardsScrollService.isCardScrollEnabled();
-            if (isScrollEnabled == true) {
-                const scrollAreaDetect = this.sideScrollAreaDetectService.getMyDeckScrollEnabledById(1);
-                if (scrollAreaDetect == true) {
-                    const cardRowCount = this.myDeckOwnedCardsScrollService.getCardRowCount();
-                    if (cardRowCount > 2) {
-                        this.myDeckOwnedCardsScrollService.onWheelScroll(e);
-                    }
-                }
-            }
-
+            await this.myDeckOwnedCardsScrollService.onWheelScroll(e);
         }, false);
 
         this.myDeckBlockScrollService = MyDeckBlockScrollServiceImpl.getInstance(this.camera, this.scene, this.renderer);
         this.renderer.domElement.addEventListener('wheel', async (e) => {
-            const scrollState = this.myDeckBlockScrollService.getBlockScrollState();
-            if (scrollState == true) {
-                const currentClickDeckId = this.myDeckBlockScrollService.getCurrentClickDeckButtonId();
-                const scrollAreaDetect = this.sideScrollAreaDetectService.getMyDeckScrollEnabledById(2);
-                if (scrollAreaDetect == true && currentClickDeckId !== null) {
-                    const blockCount = this.myDeckBlockScrollService.getBlockCountByDeckId(currentClickDeckId);
-                    if (blockCount > 8) {
-                        this.myDeckBlockScrollService.onWheelScroll(e, currentClickDeckId);
-                    }
-                }
-            }
-
+            await this.myDeckBlockScrollService.onWheelScroll(e);
         }, false);
 
         this.myDeckBlockHoverDetectService = MyDeckBlockHoverDetectServiceImpl.getInstance(this.camera, this.scene);
         this.renderer.domElement.addEventListener('mousemove', async (e) => {
-            const blockHoverEnable = this.myDeckBlockHoverDetectService.isBlockHoverEnabled();
-            if (blockHoverEnable == true) {
-                await this.myDeckBlockHoverDetectService.onMouseMove(e);
-            }
+            await this.myDeckBlockHoverDetectService.onMouseMove(e);
         }, false);
 
         this.deckCardDeleteButtonClickDetectService = DeckCardDeleteButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            const buttonClickEnable = this.deckCardDeleteButtonClickDetectService.isButtonClickEnabled();
-            if (buttonClickEnable == true) {
-                await this.deckCardDeleteButtonClickDetectService.onMouseDown(e);
-            }
+            await this.deckCardDeleteButtonClickDetectService.onMouseDown(e);
         }, false);
 
         this.buildDeckButtonClickDetectService = BuildDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            const buildDeckButtonClickState = this.buildDeckButtonClickDetectService.getButtonClickState();
-            if (buildDeckButtonClickState == true) {
-                // To-do: 덱 생성 버튼 클릭 했을 때 덱 버튼은 클릭 안 되게 해야 함.
-                const buildDeckButtonClick = await this.buildDeckButtonClickDetectService.onMouseDown(e);
-            }
+            await this.buildDeckButtonClickDetectService.onMouseDown(e);
+        }, false);
+
+        this.deckEditButtonClickDetectService = DeckEditButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.renderer.domElement.addEventListener('mousedown', async (e) => {
+            await this.deckEditButtonClickDetectService.onMouseDown(e);
         }, false);
 
         this.myDeckOwnedCardsClickDetectService = MyDeckOwnedCardsClickDetectServiceImpl.getInstance(this.camera, this.scene);
-        this.deckEditButtonClickDetectService = DeckEditButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            const deckEditButtonClickEnabled = this.deckEditButtonClickDetectService.isButtonClickEnabled();
-            if (deckEditButtonClickEnabled == true) {
-                const deckEditButtonClick = await this.deckEditButtonClickDetectService.onMouseDown(e);
-                if (deckEditButtonClick) {
-                    this.myDeckOwnedCardsClickDetectService.setCardClickEnabled(true);
-                    this.myDeckBlockHoverDetectService.setBlockHoverEnabled(true);
-                    this.deckCardDeleteButtonClickDetectService.setButtonClickEnabled(true);
-                }
-            }
-        }, false);
-
-        this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            const cardClickEnabled = this.myDeckOwnedCardsClickDetectService.isCardClickEnabled();
-            if (cardClickEnabled == true) {
-                await this.myDeckOwnedCardsClickDetectService.onMouseDown(e);
-            }
+            await this.myDeckOwnedCardsClickDetectService.onMouseDown(e);
         }, false);
 
 //         this.myDeckButtonEffectHoverDetectService = MyDeckButtonEffectHoverDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -356,86 +281,40 @@ export class TCGJustTestMyDeckView {
 //         }, false);
 
         // To-do: 덱 버튼 클릭되고 덱 삭제 버튼이 나타날 때만 삭제 버튼 클릭 가능해야 함
+        this.deckDeleteButtonClickDetectService = DeckDeleteButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
-            if (currentClickedDeckId !== null) {
-                const deleteDeckButtonVisible = this.deckDeleteButtonClickDetectService.getDeckDeleteButtonVisibility(currentClickedDeckId);
-                if (deleteDeckButtonVisible == true) {
-                    this.deckDeleteButtonClickDetectService.setButtonClickEnabled(true);
-                }
-            }
-
-            // 덱 삭제 버튼 클릭시 덱 버튼이 클릭되면 안 됨
-            const buttonClickEnable = this.deckDeleteButtonClickDetectService.isButtonClickEnabled();
-            if (buttonClickEnable == true) {
-//                 this.myDeckButtonClickDetectService.setButtonClickState(false);
-                const buttonClick = await this.deckDeleteButtonClickDetectService.onMouseDown(e);
-                if (buttonClick) {
-                    this.deckDeleteButtonClickDetectService.setButtonClickEnabled(false);
-//                     this.myDeckButtonClickDetectService.setButtonClickState(true);
-                }
-            }
+            await this.deckDeleteButtonClickDetectService.onMouseDown(e);
         }, false);
 
         // To-do: 팝업 창이 나타났을 때 팝업 창의 버튼 외의 다른 버튼들은 클릭되면 안 되게 해야 함.
-        this.deleteDeckPopupButtonClickDetectService = DeleteDeckPopupButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+//         this.deleteDeckPopupButtonClickDetectService = DeleteDeckPopupButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+//         this.renderer.domElement.addEventListener('mousedown', async (e) => {
+// //                 await this.deleteAllCard();
+//             await this.deleteAllDeckBlock();
+//             await this.deleteAllDeckCardName();
+//
+//             const popupButtonClick = await this.deleteDeckPopupButtonClickDetectService.onMouseDown(e);
+//             if (popupButtonClick) {
+//                 await this.deleteMyDeckButtons();
+//                 await this.deleteMyDeckButtonEffects();
+//                 await this.deleteDeckNameEditButton();
+//                 await this.deleteDeckDeleteButton();
+//                 await this.deleteDeckNameText();
+//
+//                 await this.addMyDeckCard();
+//                 await this.addMyDeckBlock();
+//                 await this.addMyDeckCardName();
+//                 await this.addMyDeckButton();
+//                 await this.addMyDeckButtonEffect();
+//                 await this.addMyDeckNameText();
+//                 await this.addDeckNameEditButton();
+//                 await this.addDeckDeleteButton();
+//             }
+//         }, false);
+
+        this.deckNameEditButtonClickDetectService = DeckNameEditButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            const buttonsVisibleState = this.deleteDeckPopupButtonService.getButtonsVisibleState();
-            if (buttonsVisibleState.some((state) => state === true)) {
-                this.deleteDeckPopupButtonClickDetectService.setButtonClickState(true);
-            }
-            const buttonClickState = this.deleteDeckPopupButtonClickDetectService.getButtonClickState();
-            if (buttonClickState == true) {
-                this.myDeckButtonClickDetectService.setButtonClickState(false);
-                this.buildDeckButtonClickDetectService.setButtonClickState(false);
-                this.buildDeckButtonHoverDetectService.setButtonDetectState(false);
-                this.sideScrollAreaDetectService.setMyDeckScrollAreaDetectState(false);
-                this.myDeckCardScrollService.setCardScrollEnabled(false);
-
-//                 await this.deleteAllCard();
-                await this.deleteAllDeckBlock();
-                await this.deleteAllDeckCardName();
-
-                const popupButtonClick = await this.deleteDeckPopupButtonClickDetectService.onMouseDown(e);
-                if (popupButtonClick) {
-                    this.deleteDeckPopupButtonClickDetectService.setButtonClickState(false);
-                    this.myDeckButtonClickDetectService.setButtonClickState(true);
-                    this.buildDeckButtonClickDetectService.setButtonClickState(true);
-                    this.buildDeckButtonHoverDetectService.setButtonDetectState(true);
-                    this.sideScrollAreaDetectService.setMyDeckScrollAreaDetectState(true);
-
-                    await this.deleteMyDeckButtons();
-                    await this.deleteMyDeckButtonEffects();
-                    await this.deleteDeckNameEditButton();
-                    await this.deleteDeckDeleteButton();
-                    await this.deleteDeckNameText();
-
-                    await this.addMyDeckCard();
-                    await this.addMyDeckBlock();
-                    await this.addMyDeckCardName();
-                    await this.addMyDeckButton();
-                    await this.addMyDeckButtonEffect();
-                    await this.addMyDeckNameText();
-                    await this.addDeckNameEditButton();
-                    await this.addDeckDeleteButton();
-
-                    this.myDeckCardScrollService.setCardScrollEnabled(true);
-
-                }
-            }
-        }, false);
-
-        // To-do: 기능 수정 필요(편집 버튼 visible true일 때 기능 활성화)
-        this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            const deckNameEditButtonClickState = this.deckNameEditButtonClickDetectService.getButtonClickState();
-            if (deckNameEditButtonClickState == true) {
-                this.myDeckButtonClickDetectService.setButtonClickState(false);
-                const deckNameEditButtonClick = await this.deckNameEditButtonClickDetectService.onMouseDown(e);
-                if (deckNameEditButtonClick) {
-                    this.deckNameEditButtonClickDetectService.setButtonClickState(false);
-                    this.myDeckButtonClickDetectService.setButtonClickState(true);
-                }
-            }
+            await this.deckNameEditButtonClickDetectService.onMouseDown(e);
         }, false);
 
 //         this.deckMakeButtonClickDetectService = DeckMakeButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);

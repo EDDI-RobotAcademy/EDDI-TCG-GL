@@ -8,6 +8,9 @@ import {DeleteDeckPopupWindowRepositoryImpl} from "../../delete_deck_popup_windo
 import {TransparentBackgroundRepositoryImpl} from "../../transparent_background/repository/TransparentBackgroundRepositoryImpl";
 import {DeckDeleteButtonClickDetectRepositoryImpl} from "../../deck_delete_button_click_detect/repository/DeckDeleteButtonClickDetectRepositoryImpl";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
+import {BuildDeckButtonClickDetectRepositoryImpl} from "../../build_deck_button_click_detect/repository/BuildDeckButtonClickDetectRepositoryImpl";
+import {BuildDeckButtonHoverDetectRepositoryImpl} from "../../build_deck_button_hover_detect/repository/BuildDeckButtonHoverDetectRepositoryImpl";
+import {SideScrollAreaDetectRepositoryImpl} from "../../side_scroll_area_detect/repository/SideScrollAreaDetectRepositoryImpl";
 
 import {DeckDeleteButtonRepositoryImpl} from "../../deck_delete_button/repository/DeckDeleteButtonRepositoryImpl";
 import {DeckNameEditButtonRepositoryImpl} from "../../deck_name_edit_button/repository/DeckNameEditButtonRepositoryImpl";
@@ -42,6 +45,9 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     private transparentBackgroundRepository : TransparentBackgroundRepositoryImpl;
     private deckDeleteButtonClickDetectRepository: DeckDeleteButtonClickDetectRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
+    private buildDeckButtonClickDetectRepository: BuildDeckButtonClickDetectRepositoryImpl;
+    private buildDeckButtonHoverDetectRepository: BuildDeckButtonHoverDetectRepositoryImpl;
+    private sideScrollAreaDetectRepository: SideScrollAreaDetectRepositoryImpl;
     private cameraRepository: CameraRepository;
 
     private deckDeleteButtonRepository: DeckDeleteButtonRepositoryImpl;
@@ -66,8 +72,6 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     private myDeckNameTextMapRepository: MyDeckNameTextMapRepositoryImpl;
     private cardStateManager: CardStateManager;
 
-    private buttonClickState: boolean = false;
-
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.deleteDeckPopupButtonClickDetectRepository = DeleteDeckPopupButtonClickDetectRepositoryImpl.getInstance();
         this.deleteDeckPopupButtonRepository = DeleteDeckPopupButtonRepositoryImpl.getInstance();
@@ -75,6 +79,9 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.transparentBackgroundRepository = TransparentBackgroundRepositoryImpl.getInstance();
         this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
+        this.buildDeckButtonClickDetectRepository = BuildDeckButtonClickDetectRepositoryImpl.getInstance();
+        this.buildDeckButtonHoverDetectRepository = BuildDeckButtonHoverDetectRepositoryImpl.getInstance();
+        this.sideScrollAreaDetectRepository = SideScrollAreaDetectRepositoryImpl.getInstance();
         this.cameraRepository = CameraRepositoryImpl.getInstance();
 
         this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance();
@@ -107,12 +114,12 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         return DeleteDeckPopupButtonClickDetectServiceImpl.instance;
     }
 
-    public setButtonClickState(state: boolean): void {
-        this.buttonClickState = state;
+    private setButtonClickEnabled(isEnable: boolean): void {
+        this.deleteDeckPopupButtonClickDetectRepository.setButtonClickEnabled(isEnable);
     }
 
-    public getButtonClickState(): boolean {
-        return this.buttonClickState;
+    private isButtonClickEnabled(): boolean {
+        return this.deleteDeckPopupButtonClickDetectRepository.isButtonClickEnabled();
     }
 
     async handleButtonClick(clickPoint: { x: number; y: number }): Promise<DeleteDeckPopupButton | null> {
@@ -166,11 +173,39 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     }
 
     public async onMouseDown(event: MouseEvent): Promise<DeleteDeckPopupButton | null> {
+        const buttonsVisibleState = this.getPopupButtonsVisibleState();
+        if (buttonsVisibleState.some((state) => state === true)) {
+            this.setButtonClickEnabled(true);
+        }
+
+        if (!this.isButtonClickEnabled()) return null;
+
+        this.setInteractionStatesBeforeClick();
+
         if (event.button === 0) {
             const clickPoint = { x: event.clientX, y: event.clientY };
-            return await this.handleButtonClick(clickPoint);
+            const result = await this.handleButtonClick(clickPoint);
+            if (result) {
+                this.setButtonClickEnabled(false);
+                this.setInteractionStatesAfterClick();
+                return result;
+            }
         }
         return null;
+    }
+
+    private setInteractionStatesBeforeClick(): void {
+        this.myDeckButtonClickDetectRepository.setButtonClickEnabled(false);
+        this.buildDeckButtonClickDetectRepository.setButtonClickEnabled(false);
+        this.buildDeckButtonHoverDetectRepository.setButtonHoverEnabled(false);
+        this.sideScrollAreaDetectRepository.setMyDeckScrollAreaDetectEnabled(false);
+    }
+
+    private setInteractionStatesAfterClick(): void {
+        this.myDeckButtonClickDetectRepository.setButtonClickEnabled(true);
+        this.buildDeckButtonClickDetectRepository.setButtonClickEnabled(true);
+        this.buildDeckButtonHoverDetectRepository.setButtonHoverEnabled(true);
+        this.sideScrollAreaDetectRepository.setMyDeckScrollAreaDetectEnabled(true);
     }
 
     public getAllButtons(): DeleteDeckPopupButton[] {
@@ -217,6 +252,11 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         }
 
         return this.myDeckButtonRepository.findDeckIdByButtonId(buttonId);
+    }
+
+    public getPopupButtonsVisibleState(): boolean[] {
+        const buttons = this.getAllButtons();
+        return buttons.map((button) => button.getVisibility());
     }
 
     private deleteDeckDeleteButton(): void {

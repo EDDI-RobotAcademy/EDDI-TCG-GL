@@ -13,8 +13,6 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
     private deckNameEditButtonRepository: DeckNameEditButtonRepositoryImpl;
     private cameraRepository: CameraRepository;
 
-    private buttonClickState: boolean = false;
-
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.deckNameEditButtonClickDetectRepository = DeckNameEditButtonClickDetectRepositoryImpl.getInstance();
         this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance();
@@ -28,12 +26,12 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
         return DeckNameEditButtonClickDetectServiceImpl.instance;
     }
 
-    public setButtonClickState(state: boolean): void {
-        this.buttonClickState = state;
+    public setButtonClickEnabled(isEnabled: boolean): void {
+        this.deckNameEditButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
     }
 
-    public getButtonClickState(): boolean {
-        return this.buttonClickState;
+    public isButtonClickEnabled(): boolean {
+        return this.deckNameEditButtonClickDetectRepository.isButtonClickEnabled();
     }
 
     public async handleButtonClick(clickPoint: { x: number; y: number }): Promise<DeckNameEditButton | null> {
@@ -57,6 +55,8 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
     }
 
     public async onMouseDown(event: MouseEvent): Promise<DeckNameEditButton | null> {
+        if (this.isButtonClickEnabled() == false) return null;
+
         if (event.button === 0) {
             const clickPoint = { x: event.clientX, y: event.clientY };
             return await this.handleButtonClick(clickPoint);

@@ -19,8 +19,6 @@ export class MyDeckBlockHoverDetectServiceImpl implements MyDeckBlockHoverDetect
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private deckCardDeleteButtonRepository: DeckCardDeleteButtonRepositoryImpl;
 
-    private blockHoverEnabled: boolean = false;
-
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.myDeckBlockHoverDetectRepository = MyDeckBlockHoverDetectRepositoryImpl.getInstance();
@@ -36,12 +34,12 @@ export class MyDeckBlockHoverDetectServiceImpl implements MyDeckBlockHoverDetect
         return MyDeckBlockHoverDetectServiceImpl.instance;
     }
 
-    public setBlockHoverEnabled(isEnabled: boolean): void {
-        this.blockHoverEnabled = isEnabled;
+    private setBlockHoverEnabled(isEnabled: boolean): void {
+        this.myDeckBlockHoverDetectRepository.setBlockHoverEnabled(isEnabled);
     }
 
-    public isBlockHoverEnabled(): boolean {
-        return this.blockHoverEnabled;
+    private isBlockHoverEnabled(): boolean {
+        return this.myDeckBlockHoverDetectRepository.isBlockHoverEnabled();
     }
 
     public async handleHover(hoverPoint: { x: number; y: number }): Promise<MyDeckBlock | null> {
@@ -73,6 +71,8 @@ export class MyDeckBlockHoverDetectServiceImpl implements MyDeckBlockHoverDetect
     }
 
     public async onMouseMove(event: MouseEvent): Promise<MyDeckBlock | null> {
+        if (!this.isBlockHoverEnabled()) return null;
+
         if (event.button === 0) {
             const hoverPoint = { x: event.clientX, y: event.clientY };
             return await this.handleHover(hoverPoint);

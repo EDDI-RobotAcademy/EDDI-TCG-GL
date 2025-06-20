@@ -31,12 +31,12 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
         return BuildDeckButtonClickDetectServiceImpl.instance;
     }
 
-    public setButtonClickState(state: boolean): void {
-        this.buttonClickState = state;
+    private setButtonClickEnabled(isEnable: boolean): void {
+        this.buildDeckButtonClickDetectRepository.setButtonClickEnabled(isEnable);
     }
 
-    public getButtonClickState(): boolean {
-        return this.buttonClickState;
+    private isButtonClickEnabled(): boolean {
+        return this.buildDeckButtonClickDetectRepository.isButtonClickEnabled();
     }
 
     public async handleClick(clickPoint: { x: number; y: number }): Promise<BuildDeckButton | null> {
@@ -57,6 +57,8 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
     }
 
     public async onMouseDown(event: MouseEvent): Promise<BuildDeckButton | null> {
+        if (!this.isButtonClickEnabled()) return null;
+
         if (event.button === 0) {
             const hoverPoint = { x: event.clientX, y: event.clientY };
             return await this.handleClick(hoverPoint);

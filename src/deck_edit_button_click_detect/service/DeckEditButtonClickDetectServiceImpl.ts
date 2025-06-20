@@ -9,6 +9,8 @@ import {MyDeckRemainingOutOfTotalSlash} from "../../my_deck_remaining_out_of_tot
 import {TotalNumberOfSelectedCards} from "../../my_deck_total_number_of_selected_cards/entity/TotalNumberOfSelectedCards";
 import {MyDeckChosenOutOfTotalSlash} from "../../my_deck_chosen_out_of_total_slash/entity/MyDeckChosenOutOfTotalSlash";
 
+import {CameraRepository} from "../../camera/repository/CameraRepository";
+import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
 import {DeckEditButtonClickDetectService} from "./DeckEditButtonClickDetectService";
 import {DeckEditButtonClickDetectRepositoryImpl} from "../repository/DeckEditButtonClickDetectRepositoryImpl";
 import {DeckEditButtonRepositoryImpl} from "../../deck_edit_button/repository/DeckEditButtonRepositoryImpl";
@@ -25,8 +27,9 @@ import {MyDeckRemainingOutOfTotalSlashRepositoryImpl} from "../../my_deck_remain
 import {TotalNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_total_number_of_selected_cards/repository/TotalNumberOfSelectedCardsRepositoryImpl";
 import {MyDeckChosenOutOfTotalSlashRepositoryImpl} from "../../my_deck_chosen_out_of_total_slash/repository/MyDeckChosenOutOfTotalSlashRepositoryImpl";
 import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
-import {CameraRepository} from "../../camera/repository/CameraRepository";
-import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
+import {MyDeckOwnedCardsClickDetectRepositoryImpl} from "../../deck_owned_cards_click_detect/repository/MyDeckOwnedCardsClickDetectRepositoryImpl";
+import {MyDeckBlockHoverDetectRepositoryImpl} from "../../my_deck_block_hover_detect/repository/MyDeckBlockHoverDetectRepositoryImpl";
+import {DeckCardDeleteButtonClickDetectRepositoryImpl} from "../../deck_card_delete_button_click_detect/repository/DeckCardDeleteButtonClickDetectRepositoryImpl";
 
 import {CardStateManager} from "../../my_deck_card_manager/CardStateManager";
 
@@ -48,9 +51,10 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private totalNumberOfSelectedCardsRepository: TotalNumberOfSelectedCardsRepositoryImpl;
     private myDeckChosenOutOfTotalSlashRepository: MyDeckChosenOutOfTotalSlashRepositoryImpl;
     private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
+    private myDeckOwnedCardsClickDetectRepository: MyDeckOwnedCardsClickDetectRepositoryImpl;
+    private myDeckBlockHoverDetectRepository: MyDeckBlockHoverDetectRepositoryImpl;
+    private deckCardDeleteButtonClickDetectRepository: DeckCardDeleteButtonClickDetectRepositoryImpl;
     private cardStateManager: CardStateManager;
-
-    private buttonClickEnabled: boolean = true;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -69,6 +73,9 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.totalNumberOfSelectedCardsRepository = TotalNumberOfSelectedCardsRepositoryImpl.getInstance();
         this.myDeckChosenOutOfTotalSlashRepository = MyDeckChosenOutOfTotalSlashRepositoryImpl.getInstance();
         this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
+        this.myDeckOwnedCardsClickDetectRepository = MyDeckOwnedCardsClickDetectRepositoryImpl.getInstance();
+        this.myDeckBlockHoverDetectRepository = MyDeckBlockHoverDetectRepositoryImpl.getInstance();
+        this.deckCardDeleteButtonClickDetectRepository = DeckCardDeleteButtonClickDetectRepositoryImpl.getInstance();
 
         this.cardStateManager = CardStateManager.getInstance();
     }
@@ -80,12 +87,12 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         return DeckEditButtonClickDetectServiceImpl.instance;
     }
 
-    public setButtonClickEnabled(isEnabled: boolean): void {
-        this.buttonClickEnabled = isEnabled;
+    private setButtonClickEnabled(isEnabled: boolean): void {
+        this.deckEditButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
     }
 
-    public isButtonClickEnabled(): boolean {
-        return this.buttonClickEnabled;
+    private isButtonClickEnabled(): boolean {
+        return this.deckEditButtonClickDetectRepository.isButtonClickEnabled();
     }
 
     public async handleClick(clickPoint: { x: number; y: number }): Promise<DeckEditButton | null> {
@@ -127,11 +134,23 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     }
 
     public async onMouseDown(event: MouseEvent): Promise<DeckEditButton | null> {
+        if (!this.isButtonClickEnabled()) return null;
+
         if (event.button === 0) {
             const clickPoint = { x: event.clientX, y: event.clientY };
-            return await this.handleClick(clickPoint);
+            const result = await this.handleClick(clickPoint);
+            if (result) {
+                this.setInteractionStatesAfterClick();
+                return result;
+            }
         }
         return null;
+    }
+
+    private setInteractionStatesAfterClick(): void {
+        this.myDeckOwnedCardsClickDetectRepository.setCardClickEnabled(true);
+        this.myDeckBlockHoverDetectRepository.setBlockHoverEnabled(true);
+        this.deckCardDeleteButtonClickDetectRepository.setButtonClickEnabled(true);
     }
 
     private getDeckEditButton(): DeckEditButton | null {

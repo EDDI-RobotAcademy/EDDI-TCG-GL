@@ -6,7 +6,9 @@ import {DeckDeleteButton} from "../../deck_delete_button/entity/DeckDeleteButton
 export class DeckDeleteButtonClickDetectRepositoryImpl implements DeckDeleteButtonClickDetectRepository {
     private static instance: DeckDeleteButtonClickDetectRepositoryImpl;
     private raycaster = new THREE.Raycaster();
+
     private currentClickedButtonId: number | null = null;
+    private buttonClickEnabled: boolean = false;
 
     public static getInstance(): DeckDeleteButtonClickDetectRepositoryImpl {
         if (!DeckDeleteButtonClickDetectRepositoryImpl.instance) {
@@ -52,6 +54,14 @@ export class DeckDeleteButtonClickDetectRepositoryImpl implements DeckDeleteButt
 
     public resetCurrentClickedButtonId(): void {
         this.currentClickedButtonId = null;
+    }
+
+    public setButtonClickEnabled(isEnabled: boolean): void {
+        this.buttonClickEnabled = isEnabled;
+    }
+
+    public isButtonClickEnabled(): boolean {
+        return this.buttonClickEnabled;
     }
 
 }

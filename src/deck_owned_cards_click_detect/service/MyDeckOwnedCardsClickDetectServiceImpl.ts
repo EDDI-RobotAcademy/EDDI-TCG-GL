@@ -23,8 +23,6 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private cardCountManager: CardCountManager;
 
-    private cardClickEnabled: boolean = false;
-
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.myDeckOwnedCardsClickDetectRepository = MyDeckOwnedCardsClickDetectRepositoryImpl.getInstance();
@@ -41,12 +39,12 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
         return MyDeckOwnedCardsClickDetectServiceImpl.instance;
     }
 
-    public setCardClickEnabled(isEnabled: boolean): void {
-        this.cardClickEnabled = isEnabled;
+    private setCardClickEnabled(isEnabled: boolean): void {
+        this.myDeckOwnedCardsClickDetectRepository.setCardClickEnabled(isEnabled);
     }
 
-    public isCardClickEnabled(): boolean {
-        return this.cardClickEnabled;
+    private isCardClickEnabled(): boolean {
+        return this.myDeckOwnedCardsClickDetectRepository.isCardClickEnabled();
     }
 
     async handleCardClick(clickPoint: { x: number; y: number }): Promise<MyDeckOwnedCards | null> {
@@ -75,6 +73,8 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
     }
 
     public async onMouseDown(event: MouseEvent): Promise<MyDeckOwnedCards | null> {
+        if (!this.isCardClickEnabled()) return null;
+
         if (event.button === 0) {
             const clickPoint = { x: event.clientX, y: event.clientY };
             return await this.handleCardClick(clickPoint);

@@ -5,8 +5,10 @@ import {DeleteDeckPopupButton} from "../../delete_deck_popup_button/entity/Delet
 
 export class DeleteDeckPopupButtonClickDetectRepositoryImpl implements DeleteDeckPopupButtonClickDetectRepository {
     private static instance: DeleteDeckPopupButtonClickDetectRepositoryImpl;
-    private currentClickedButtonId: number | null = null;
     private raycaster = new THREE.Raycaster();
+
+    private currentClickedButtonId: number | null = null;
+    private buttonClickEnabled: boolean = false;
 
     public static getInstance(): DeleteDeckPopupButtonClickDetectRepositoryImpl {
         if (!DeleteDeckPopupButtonClickDetectRepositoryImpl.instance) {
@@ -51,6 +53,14 @@ export class DeleteDeckPopupButtonClickDetectRepositoryImpl implements DeleteDec
 
     public findCurrentClickedButtonId(): number | null {
         return this.currentClickedButtonId;
+    }
+
+    public setButtonClickEnabled(isEnabled: boolean): void {
+        this.buttonClickEnabled = isEnabled;
+    }
+
+    public isButtonClickEnabled(): boolean {
+        return this.buttonClickEnabled;
     }
 
 }

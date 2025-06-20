@@ -5,8 +5,10 @@ import {MyDeckOwnedCards} from "../../my_deck_owned_cards/entity/MyDeckOwnedCard
 
 export class MyDeckOwnedCardsClickDetectRepositoryImpl implements MyDeckOwnedCardsClickDetectRepository {
     private static instance: MyDeckOwnedCardsClickDetectRepositoryImpl;
-    private currentClickedCardId: number | null = null;
     private raycaster = new THREE.Raycaster();
+
+    private currentClickedCardId: number | null = null;
+    private cardClickEnabled: boolean = false;
 
     public static getInstance(): MyDeckOwnedCardsClickDetectRepositoryImpl {
         if (!MyDeckOwnedCardsClickDetectRepositoryImpl.instance) {
@@ -52,6 +54,14 @@ export class MyDeckOwnedCardsClickDetectRepositoryImpl implements MyDeckOwnedCar
 
     public resetCurrentClickCardId(): void {
         this.currentClickedCardId = null;
+    }
+
+    public setCardClickEnabled(isEnabled: boolean): void {
+        this.cardClickEnabled = isEnabled;
+    }
+
+    public isCardClickEnabled(): boolean {
+        return this.cardClickEnabled;
     }
 
 }
