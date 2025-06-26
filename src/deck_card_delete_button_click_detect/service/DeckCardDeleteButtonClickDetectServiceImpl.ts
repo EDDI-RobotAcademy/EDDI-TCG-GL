@@ -9,6 +9,8 @@ import {DeckCardDeleteButtonRepositoryImpl} from "../../deck_card_delete_button/
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {DeckCardDeleteButtonPositionRepositoryImpl} from "../../deck_card_delete_button_position/repository/DeckCardDeleteButtonPositionRepositoryImpl";
 import {MyDeckCardMapRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardMapRepositoryImpl";
+import {MyDeckBlockRepositoryImpl} from "../../my_deck_block/repository/MyDeckBlockRepositoryImpl";
+import {MyDeckBlockPositionRepositoryImpl} from "../../my_deck_block_position/repository/MyDeckBlockPositionRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -24,6 +26,8 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private deckCardDeleteButtonPositionRepository: DeckCardDeleteButtonPositionRepositoryImpl;
     private myDeckCardMapRepository: MyDeckCardMapRepositoryImpl;
+    private myDeckBlockRepository: MyDeckBlockRepositoryImpl;
+    private myDeckBlockPositionRepository: MyDeckBlockPositionRepositoryImpl;
 
     private cardCountManager: CardCountManager;
     private myDeckElementAdjuster: MyDeckElementAdjuster;
@@ -35,6 +39,8 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.deckCardDeleteButtonPositionRepository = DeckCardDeleteButtonPositionRepositoryImpl.getInstance();
         this.myDeckCardMapRepository = MyDeckCardMapRepositoryImpl.getInstance();
+        this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance(scene);
+        this.myDeckBlockPositionRepository = MyDeckBlockPositionRepositoryImpl.getInstance();
 
         this.cardCountManager = CardCountManager.getInstance();
         this.myDeckElementAdjuster = MyDeckElementAdjuster.getInstance();
@@ -81,8 +87,10 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
 
             const selectedCardCount = this.cardCountManager.findCardCountByDeck(currentClickedDeckButtonId, cardId);
             if (selectedCardCount == 0) {
+                this.myDeckCardMapRepository.deleteCard(currentClickedDeckButtonId, cardId);
                 this.deleteDeckCardDeleteButton(currentClickedDeckButtonId, cardId);
                 this.adjustDeckCardDeleteButton(currentClickedDeckButtonId);
+                this.adjustCardBlock(currentClickedDeckButtonId);
             }
 
             return clickedButton;
@@ -145,13 +153,15 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         this.cardCountManager.decrementCardCountByGrade(deckId, grade);
     }
 
+    // To-do: 메서드명 수정 필요(덱 삭제 버튼, 덱 블록, 카드 이름, 개수 객체 등 한 번에 삭제)
     private deleteDeckCardDeleteButton(deckId: number, cardId: number): void {
         const buttonId = this.deckCardDeleteButtonRepository.findButtonIdByDeckIdAndCardId(deckId, cardId);
         if (buttonId == null) return;
 
-        this.myDeckCardMapRepository.deleteCard(deckId, cardId);
         this.deckCardDeleteButtonRepository.deleteButtonByDeckIdAndButtonId(deckId, buttonId);
         this.deckCardDeleteButtonPositionRepository.deleteById(deckId, buttonId);
+        this.myDeckBlockRepository.deleteBlockByDeckIdAndBlockUniqueId(deckId, buttonId);
+        this.myDeckBlockPositionRepository.deleteById(deckId, buttonId);
     }
 
     private adjustDeckCardDeleteButton(deckId: number): void {
@@ -166,11 +176,32 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
             if (buttonPosition == null) return;
 
             const widthPercent = 0.0295; // 이 부분 나중에 수정 필요
+            const heightPercent = 1;
             const positionX = buttonPosition.getX();
             const positionY = buttonPosition.getY();
 
-            this.myDeckElementAdjuster.adjustElementPosition(buttonMesh, widthPercent, positionX, positionY);
+            this.myDeckElementAdjuster.adjustElementPosition(buttonMesh, widthPercent, heightPercent, positionX, positionY);
 
+        }
+    }
+
+    private adjustCardBlock(deckId: number): void {
+        const blockIdList = this.myDeckBlockRepository.findBlockUniqueIdListByDeckId(deckId);
+        for (const blockId of blockIdList) {
+            const block = this.myDeckBlockRepository.findBlockByBlockUniqueId(blockId);
+            if (block == null) return;
+
+            const blockMesh = block.getMesh();
+            const blockPosition = this.myDeckBlockPositionRepository.findPositionByPositionId(blockId);
+
+            if (blockPosition == null) return;
+
+            const widthPercent = 0.166;
+            const heightPercent = (250/1130);
+            const positionX = blockPosition.getX();
+            const positionY = blockPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(blockMesh, widthPercent, heightPercent, positionX, positionY);
         }
     }
 

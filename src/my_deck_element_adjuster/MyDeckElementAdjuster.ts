@@ -13,9 +13,9 @@ export class MyDeckElementAdjuster {
         return MyDeckElementAdjuster.instance;
     }
 
-    public adjustElementPosition(elementMesh: THREE.Mesh, widthPercent: number, positionX: number, positionY: number): void {
+    public adjustElementPosition(elementMesh: THREE.Mesh, widthPercent: number, heightPercent: number, positionX: number, positionY: number): void {
         const elementWidth = widthPercent * window.innerWidth;
-        const elementHeight = elementWidth;
+        const elementHeight = elementWidth * heightPercent;
         const newPositionX = positionX * window.innerWidth;
         const newPositionY = positionY * window.innerHeight;
 

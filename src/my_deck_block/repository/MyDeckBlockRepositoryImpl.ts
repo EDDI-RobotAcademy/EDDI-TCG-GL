@@ -5,24 +5,28 @@ import {TextureManager} from "../../texture_manager/TextureManager";
 import {MeshGenerator} from "../../mesh/generator";
 import {Vector2d} from "../../common/math/Vector2d";
 import {getCardById} from "../../card/utility";
+import {MeshDestroyer} from "../../mesh/destroyer"
 
 export class MyDeckBlockRepositoryImpl implements MyDeckBlockRepository {
     private static instance: MyDeckBlockRepositoryImpl;
     private blockMap: Map<number, { cardId: number, blockMesh: MyDeckBlock }> = new Map(); // block unique id: {card id: block mesh}
     private deckMap: Map<number, number[]> = new Map(); // deckId: block Unique ID List
-    private textureManager: TextureManager;
     private blockGroupMap: Map<number, THREE.Group> = new Map(); // deckId -> Group
+
+    private textureManager: TextureManager;
+    private meshDestroyer: MeshDestroyer;
 
     private readonly BLOCK_WIDTH: number = 0.166
 
-    private constructor(textureManager: TextureManager) {
+    private constructor(textureManager: TextureManager, scene: THREE.Scene) {
         this.textureManager = textureManager;
+        this.meshDestroyer = new MeshDestroyer(scene);
     }
 
-    public static getInstance(): MyDeckBlockRepositoryImpl {
+    public static getInstance(scene: THREE.Scene): MyDeckBlockRepositoryImpl {
         if (!MyDeckBlockRepositoryImpl.instance) {
             const textureManager = TextureManager.getInstance()
-            MyDeckBlockRepositoryImpl.instance = new MyDeckBlockRepositoryImpl(textureManager);
+            MyDeckBlockRepositoryImpl.instance = new MyDeckBlockRepositoryImpl(textureManager, scene);
         }
         return MyDeckBlockRepositoryImpl.instance;
     }
@@ -184,7 +188,17 @@ export class MyDeckBlockRepositoryImpl implements MyDeckBlockRepository {
 
     // 특정 덱의 특정 block 삭제
     public deleteBlockByDeckIdAndBlockUniqueId(deckId: number, blockUniqueId: number): void {
-        this.blockMap.delete(blockUniqueId);
+        const blockInfo = this.blockMap.get(blockUniqueId);
+        if (blockInfo) {
+            this.meshDestroyer.destroyMesh(blockInfo.blockMesh.getMesh());
+
+            const group = this.blockGroupMap.get(deckId);
+            if (group) {
+                group.remove(blockInfo.blockMesh.getMesh());
+            }
+
+            this.blockMap.delete(blockUniqueId);
+        }
 
         const blockIdList = this.deckMap.get(deckId);
         if (blockIdList) {
