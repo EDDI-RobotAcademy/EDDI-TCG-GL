@@ -202,4 +202,17 @@ export class MyDeckCardMapRepositoryImpl implements MyDeckCardMapRepository {
         return totalCardCountMap;
     }
 
+    public deleteCard(deckId: number, cardId: number): void {
+        const cardList = this.currentMyDeckCardMap.get(deckId);
+        if (!cardList) return;
+
+        const updatedCardList = cardList.filter(card => card.cardId !== cardId);
+
+        if (updatedCardList.length > 0) {
+            this.currentMyDeckCardMap.set(deckId, updatedCardList);
+        } else {
+            this.currentMyDeckCardMap.delete(deckId);
+        }
+    }
+
 }
