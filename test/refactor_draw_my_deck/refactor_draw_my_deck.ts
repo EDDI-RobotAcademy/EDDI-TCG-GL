@@ -213,78 +213,36 @@ export class TCGJustTestMyDeckView {
         this.deckCardCountMarkerService = DeckCardCountMarkerServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
-        this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            await this.myDeckButtonClickDetectService.onMouseDown(e);
-        }, false);
-
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
-        this.renderer.domElement.addEventListener('mousemove', async (e) => {
-            await this.sideScrollAreaDetectService.onMouseMoveMyDeck(e);
-        }, false);
-
         this.buildDeckButtonHoverDetectService = BuildDeckButtonHoverDetectServiceImpl.getInstance(this.camera, this.scene);
-        this.renderer.domElement.addEventListener('mousemove', async (e) => {
-            await this.buildDeckButtonHoverDetectService.onMouseMove(e);
-        }, false);
-
         this.myDeckScrollService = MyDeckScrollServiceImpl.getInstance(this.camera, this.scene, this.renderer);
-        this.renderer.domElement.addEventListener('wheel', async (e) => {
-            await this.myDeckScrollService.onWheelScroll(e);
-        }, false);
-
         this.myDeckCardScrollService = MyDeckCardScrollServiceImpl.getInstance(this.camera, this.scene, this.renderer);
-        this.renderer.domElement.addEventListener('wheel', async (e) => {
-            await this.myDeckCardScrollService.onWheelScroll(e);
-        }, false);
-
         this.myDeckOwnedCardsScrollService = MyDeckOwnedCardsScrollServiceImpl.getInstance(this.camera, this.scene, this.renderer);
-        this.renderer.domElement.addEventListener('wheel', async (e) => {
-            await this.myDeckOwnedCardsScrollService.onWheelScroll(e);
-        }, false);
-
         this.myDeckBlockScrollService = MyDeckBlockScrollServiceImpl.getInstance(this.camera, this.scene, this.renderer);
-        this.renderer.domElement.addEventListener('wheel', async (e) => {
-            await this.myDeckBlockScrollService.onWheelScroll(e);
-        }, false);
-
         this.myDeckBlockHoverDetectService = MyDeckBlockHoverDetectServiceImpl.getInstance(this.camera, this.scene);
-        this.renderer.domElement.addEventListener('mousemove', async (e) => {
-            await this.myDeckBlockHoverDetectService.onMouseMove(e);
-        }, false);
-
         this.deckCardDeleteButtonClickDetectService = DeckCardDeleteButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
-        this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            await this.deckCardDeleteButtonClickDetectService.onMouseDown(e);
-        }, false);
-
         this.buildDeckButtonClickDetectService = BuildDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
-        this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            await this.buildDeckButtonClickDetectService.onMouseDown(e);
-        }, false);
-
         this.deckEditButtonClickDetectService = DeckEditButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
-        this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            await this.deckEditButtonClickDetectService.onMouseDown(e);
-        }, false);
-
         this.myDeckOwnedCardsClickDetectService = MyDeckOwnedCardsClickDetectServiceImpl.getInstance(this.camera, this.scene);
-        this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            await this.myDeckOwnedCardsClickDetectService.onMouseDown(e);
-        }, false);
+        this.deckDeleteButtonClickDetectService = DeckDeleteButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.deckNameEditButtonClickDetectService = DeckNameEditButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
 
-//         this.myDeckButtonEffectHoverDetectService = MyDeckButtonEffectHoverDetectServiceImpl.getInstance(this.camera, this.scene);
-//         this.renderer.domElement.addEventListener('mousemove', async (e) => {
-//             const effectDetectState = this.myDeckButtonEffectHoverDetectService.getEffectDetectState();
-//             if (effectDetectState == true) {
-//                 const buttonEffectHover = await this.myDeckButtonEffectHoverDetectService.onMouseMove(e);
-//             }
-//         }, false);
+        this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckButtonClickDetectService.onMouseDown(e), false);
+        this.renderer.domElement.addEventListener('mousemove', (e) => this.sideScrollAreaDetectService.onMouseMoveMyDeck(e), false);
+        this.renderer.domElement.addEventListener('mousemove', (e) => this.buildDeckButtonHoverDetectService.onMouseMove(e), false);
+        this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckScrollService.onWheelScroll(e), false);
+        this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckCardScrollService.onWheelScroll(e), false);
+        this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckOwnedCardsScrollService.onWheelScroll(e), false);
+        this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckBlockScrollService.onWheelScroll(e), false);
+        this.renderer.domElement.addEventListener('mousemove', (e) => this.myDeckBlockHoverDetectService.onMouseMove(e), false);
+        this.renderer.domElement.addEventListener('mousedown', (e) => this.deckCardDeleteButtonClickDetectService.onMouseDown(e), false);
+        this.renderer.domElement.addEventListener('mousedown', (e) => this.buildDeckButtonClickDetectService.onMouseDown(e), false);
+        this.renderer.domElement.addEventListener('mousedown', (e) => this.deckEditButtonClickDetectService.onMouseDown(e), false);
+        this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckOwnedCardsClickDetectService.onMouseDown(e), false);
 
         // To-do: 덱 버튼 클릭되고 덱 삭제 버튼이 나타날 때만 삭제 버튼 클릭 가능해야 함
-        this.deckDeleteButtonClickDetectService = DeckDeleteButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
-        this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            await this.deckDeleteButtonClickDetectService.onMouseDown(e);
-        }, false);
+        this.renderer.domElement.addEventListener('mousedown', (e) => this.deckDeleteButtonClickDetectService.onMouseDown(e), false);
+        this.renderer.domElement.addEventListener('mousedown', (e) => this.deckNameEditButtonClickDetectService.onMouseDown(e), false);
 
         // To-do: 팝업 창이 나타났을 때 팝업 창의 버튼 외의 다른 버튼들은 클릭되면 안 되게 해야 함.
 //         this.deleteDeckPopupButtonClickDetectService = DeleteDeckPopupButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -311,11 +269,6 @@ export class TCGJustTestMyDeckView {
 //                 await this.addDeckDeleteButton();
 //             }
 //         }, false);
-
-        this.deckNameEditButtonClickDetectService = DeckNameEditButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
-        this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            await this.deckNameEditButtonClickDetectService.onMouseDown(e);
-        }, false);
 
 //         this.deckMakeButtonClickDetectService = DeckMakeButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
 // //         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckMakeButtonClickDetectService.onMouseDown(e), false);

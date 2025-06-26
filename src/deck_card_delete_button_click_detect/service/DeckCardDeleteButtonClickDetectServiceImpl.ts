@@ -7,11 +7,14 @@ import {DeckCardDeleteButtonClickDetectRepositoryImpl} from "../repository/DeckC
 import {DeckCardDeleteButton} from "../../deck_card_delete_button/entity/DeckCardDeleteButton";
 import {DeckCardDeleteButtonRepositoryImpl} from "../../deck_card_delete_button/repository/DeckCardDeleteButtonRepositoryImpl";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
+import {DeckCardDeleteButtonPositionRepositoryImpl} from "../../deck_card_delete_button_position/repository/DeckCardDeleteButtonPositionRepositoryImpl";
+import {MyDeckCardMapRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardMapRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
 
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
+import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
 
 export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDeleteButtonClickDetectService {
     private static instance: DeckCardDeleteButtonClickDetectServiceImpl | null = null;
@@ -19,14 +22,22 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
     private deckCardDeleteButtonClickDetectRepository: DeckCardDeleteButtonClickDetectRepositoryImpl;
     private deckCardDeleteButtonRepository: DeckCardDeleteButtonRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
+    private deckCardDeleteButtonPositionRepository: DeckCardDeleteButtonPositionRepositoryImpl;
+    private myDeckCardMapRepository: MyDeckCardMapRepositoryImpl;
+
     private cardCountManager: CardCountManager;
+    private myDeckElementAdjuster: MyDeckElementAdjuster;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.deckCardDeleteButtonClickDetectRepository = DeckCardDeleteButtonClickDetectRepositoryImpl.getInstance();
         this.deckCardDeleteButtonRepository = DeckCardDeleteButtonRepositoryImpl.getInstance(scene);
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
+        this.deckCardDeleteButtonPositionRepository = DeckCardDeleteButtonPositionRepositoryImpl.getInstance();
+        this.myDeckCardMapRepository = MyDeckCardMapRepositoryImpl.getInstance();
+
         this.cardCountManager = CardCountManager.getInstance();
+        this.myDeckElementAdjuster = MyDeckElementAdjuster.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckCardDeleteButtonClickDetectServiceImpl {
@@ -68,6 +79,11 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
             if (cardId == null) return null;
             this.saveClickedCardCount(currentClickedDeckButtonId, cardId);
 
+            const selectedCardCount = this.cardCountManager.findCardCountByDeck(currentClickedDeckButtonId, cardId);
+            if (selectedCardCount == 0) {
+                this.deleteDeckCardDeleteButton(currentClickedDeckButtonId, cardId);
+                this.adjustDeckCardDeleteButton(currentClickedDeckButtonId);
+            }
 
             return clickedButton;
         }
@@ -127,6 +143,35 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         this.cardCountManager.incrementRemainingCardCount(cardId);
         this.cardCountManager.decrementCardCountByDeck(deckId, cardId);
         this.cardCountManager.decrementCardCountByGrade(deckId, grade);
+    }
+
+    private deleteDeckCardDeleteButton(deckId: number, cardId: number): void {
+        const buttonId = this.deckCardDeleteButtonRepository.findButtonIdByDeckIdAndCardId(deckId, cardId);
+        if (buttonId == null) return;
+
+        this.myDeckCardMapRepository.deleteCard(deckId, cardId);
+        this.deckCardDeleteButtonRepository.deleteButtonByDeckIdAndButtonId(deckId, buttonId);
+        this.deckCardDeleteButtonPositionRepository.deleteById(deckId, buttonId);
+    }
+
+    private adjustDeckCardDeleteButton(deckId: number): void {
+        const buttonIdList = this.deckCardDeleteButtonRepository.findButtonIdListByDeckId(deckId);
+        for (const buttonId of buttonIdList) {
+            const button = this.deckCardDeleteButtonRepository.findButtonByButtonUniqueId(buttonId);
+            if (button == null) return;
+
+            const buttonMesh = button.getMesh();
+            const buttonPosition = this.deckCardDeleteButtonPositionRepository.findPositionByPositionId(buttonId);
+
+            if (buttonPosition == null) return;
+
+            const widthPercent = 0.0295; // 이 부분 나중에 수정 필요
+            const positionX = buttonPosition.getX();
+            const positionY = buttonPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(buttonMesh, widthPercent, positionX, positionY);
+
+        }
     }
 
 }

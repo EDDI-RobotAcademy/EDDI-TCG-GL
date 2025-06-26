@@ -3,7 +3,7 @@ import {DeckCardDeleteButtonPosition} from "../entity/DeckCardDeleteButtonPositi
 export interface DeckCardDeleteButtonPositionRepository {
     findPositionByPositionId(positionId: number): DeckCardDeleteButtonPosition | null;
     findPositionIdListByDeckId(deckId: number): number[];
-    deleteById(positionId: number): boolean;
+    deleteById(deckId: number, positionId: number): void;
     deleteAll(): void;
     count(): number;
 }

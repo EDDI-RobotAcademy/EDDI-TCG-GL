@@ -175,6 +175,12 @@ export class DeckCardDeleteButtonRepositoryImpl implements DeckCardDeleteButtonR
         const buttonInfo = this.buttonMap.get(buttonUniqueId);
         if (buttonInfo) {
             this.meshDestroyer.destroyMesh(buttonInfo.buttonMesh.getMesh());
+
+            const group = this.buttonGroupMap.get(deckId);
+            if (group) {
+                group.remove(buttonInfo.buttonMesh.getMesh());
+            }
+
             this.buttonMap.delete(buttonUniqueId);
         }
 
