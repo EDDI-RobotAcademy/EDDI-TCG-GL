@@ -129,7 +129,6 @@ export class TCGJustTestMyDeckView {
     private deleteDeckPopupWindowService = DeleteDeckPopupWindowServiceImpl.getInstance();
     private deleteDeckPopupButtonService = DeleteDeckPopupButtonServiceImpl.getInstance();
     private deckEditButtonService = DeckEditButtonServiceImpl.getInstance();
-    private myDeckBlockService = MyDeckBlockServiceImpl.getInstance();
     private myDeckCardNameService = MyDeckCardNameServiceImpl.getInstance();
     private myDeckOwnedCardsService = MyDeckOwnedCardsServiceImpl.getInstance();
     private deckEditDoneButtonService = DeckEditDoneButtonServiceImpl.getInstance();
@@ -144,6 +143,7 @@ export class TCGJustTestMyDeckView {
 
     private deckCardDeleteButtonService: DeckCardDeleteButtonServiceImpl;
     private deckCardCountMarkerService: DeckCardCountMarkerServiceImpl;
+    private myDeckBlockService: MyDeckBlockServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -211,6 +211,7 @@ export class TCGJustTestMyDeckView {
 
         this.deckCardDeleteButtonService = DeckCardDeleteButtonServiceImpl.getInstance(this.scene);
         this.deckCardCountMarkerService = DeckCardCountMarkerServiceImpl.getInstance(this.scene);
+        this.myDeckBlockService = MyDeckBlockServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -744,7 +745,9 @@ export class TCGJustTestMyDeckView {
         try {
             const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardLists();
             for (const [deckId, cardIdList] of myDeckCardList) {
-                await this.myDeckBlockService.createMyDeckBlockWithPosition(deckId, cardIdList);
+                for (const cardId of cardIdList) {
+                    await this.myDeckBlockService.createMyDeckBlockWithPosition(deckId, cardId);
+                }
                 this.myDeckBlockService.saveBlockGroup(deckId);
             }
 

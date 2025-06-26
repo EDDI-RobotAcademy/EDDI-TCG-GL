@@ -19,50 +19,45 @@ export class MyDeckBlockServiceImpl implements MyDeckBlockService {
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
     private clippingMaskManager: ClippingMaskManager;
 
-    private constructor() {
-        this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance();
+    private constructor(scene: THREE.Scene) {
+        this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance(scene);
         this.myDeckBlockPositionRepository = MyDeckBlockPositionRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
     }
 
-    public static getInstance(): MyDeckBlockServiceImpl {
+    public static getInstance(scene: THREE.Scene): MyDeckBlockServiceImpl {
         if (!MyDeckBlockServiceImpl.instance) {
-            MyDeckBlockServiceImpl.instance = new MyDeckBlockServiceImpl();
+            MyDeckBlockServiceImpl.instance = new MyDeckBlockServiceImpl(scene);
         }
         return MyDeckBlockServiceImpl.instance;
     }
 
-    public async createMyDeckBlockWithPosition(deckId: number, cardIdList: number[]): Promise<THREE.Group | null> {
+    public async createMyDeckBlockWithPosition(deckId: number, cardId: number): Promise<THREE.Group | null> {
         const blockGroup = new THREE.Group();
         try {
-            await Promise.all(
-                cardIdList.map(async (cardId, index) => {
-                    const blockId = this.getBlockIdByDeckIdAndCardId(deckId, cardId);
-                    if (blockId == null){
-                        const position = this.myDeckBlockPosition(deckId, index);
-                        console.log(`[Block] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
+            const blockId = this.getBlockIdByDeckIdAndCardId(deckId, cardId);
+            if (blockId == null){
+                const position = this.createMyDeckBlockPosition(deckId, cardId);
+                console.log(`[Block] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
 
-                        const myDeckBlock = await this.createMyDeckBlock(deckId, cardId, position.position);
-                        blockGroup.add(myDeckBlock.getMesh());
+                const myDeckBlock = await this.createMyDeckBlock(deckId, cardId, position.position);
+                blockGroup.add(myDeckBlock.getMesh());
 
-                    } else {
-                        const existingPosition = this.getPositionByBlockUniqueId(blockId);
-                        const existingBlockMesh = this.getBlockMeshByDeckIdAndCardId(deckId, cardId);
+            } else {
+                const existingPosition = this.getPositionByBlockUniqueId(blockId);
+                const existingBlockMesh = this.getBlockMeshByDeckIdAndCardId(deckId, cardId);
 
-                        if (existingPosition && existingBlockMesh) {
-                            const positionX = existingPosition.getX() * window.innerWidth;
-                            const positionY = existingPosition.getY() * window.innerHeight;
+                if (existingPosition && existingBlockMesh) {
+                    const positionX = existingPosition.getX() * window.innerWidth;
+                    const positionY = existingPosition.getY() * window.innerHeight;
 
-                            existingBlockMesh.position.set(positionX, positionY, 0);
-                            blockGroup.add(existingBlockMesh);
-                        }
+                    existingBlockMesh.position.set(positionX, positionY, 0);
+                    blockGroup.add(existingBlockMesh);
+                }
+            }
 
-                    }
-
-                })
-            );
         } catch (error) {
             console.error(`[Error] Failed to create My Deck Block: ${error}`);
             return null;
@@ -133,8 +128,8 @@ export class MyDeckBlockServiceImpl implements MyDeckBlockService {
         return await this.myDeckBlockRepository.createMyDeckBlock(deckId, cardId, position);
     }
 
-    private myDeckBlockPosition(deckId: number, cardIndex: number): MyDeckBlockPosition {
-        return this.myDeckBlockPositionRepository.addMyDeckBlockPosition(deckId, cardIndex);
+    private createMyDeckBlockPosition(deckId: number, cardId: number): MyDeckBlockPosition {
+        return this.myDeckBlockPositionRepository.addMyDeckBlockPosition(deckId, cardId);
     }
 
     public getCurrentClickDeckButton(): number | null {
