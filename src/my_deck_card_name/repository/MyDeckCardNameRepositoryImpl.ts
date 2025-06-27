@@ -6,24 +6,28 @@ import {MeshGenerator} from "../../mesh/generator";
 import {TextGenerator} from "../../text/generator";
 import {Vector2d} from "../../common/math/Vector2d";
 import {getCardById} from "../../card/utility";
+import {MeshDestroyer} from "../../mesh/destroyer"
 
 export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
     private static instance: MyDeckCardNameRepositoryImpl;
     private cardNameMap: Map<number, { cardId: number, cardNameMesh: MyDeckCardName }> = new Map(); // card name unique id: {card id: mesh}
     private deckMap: Map<number, number[]> = new Map(); // deckId: card name unique ID List
-    private textureManager: TextureManager;
     private nameGroupMap: Map<number, THREE.Group> = new Map(); // deckId -> Group
+
+    private textureManager: TextureManager;
+    private meshDestroyer: MeshDestroyer;
 
     private readonly CARD_NAME_WIDTH: number = 0.166
 
-    private constructor(textureManager: TextureManager) {
+    private constructor(textureManager: TextureManager, scene: THREE.Scene) {
         this.textureManager = textureManager;
+        this.meshDestroyer = new MeshDestroyer(scene);
     }
 
-    public static getInstance(): MyDeckCardNameRepositoryImpl {
+    public static getInstance(scene: THREE.Scene): MyDeckCardNameRepositoryImpl {
         if (!MyDeckCardNameRepositoryImpl.instance) {
-            const textureManager = TextureManager.getInstance()
-            MyDeckCardNameRepositoryImpl.instance = new MyDeckCardNameRepositoryImpl(textureManager);
+            const textureManager = TextureManager.getInstance();
+            MyDeckCardNameRepositoryImpl.instance = new MyDeckCardNameRepositoryImpl(textureManager, scene);
         }
         return MyDeckCardNameRepositoryImpl.instance;
     }
@@ -187,7 +191,17 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
 
     // 특정 덱의 특정 card name 삭제
     public deleteCardNameByDeckIdAndCardNameId(deckId: number, cardNameId: number): void {
-        this.cardNameMap.delete(cardNameId);
+        const nameInfo = this.cardNameMap.get(cardNameId);
+        if (nameInfo) {
+            this.meshDestroyer.destroyMesh(nameInfo.cardNameMesh.getMesh());
+
+            const group = this.nameGroupMap.get(deckId);
+            if (group) {
+                group.remove(nameInfo.cardNameMesh.getMesh());
+            }
+
+            this.cardNameMap.delete(cardNameId);
+        }
 
         const cardNameIdList = this.deckMap.get(deckId);
         if (cardNameIdList) {
@@ -208,6 +222,12 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
 
     // 특정 덱 삭제
     public deleteDeckByDeckId(deckId: number): void {
+        const group = this.nameGroupMap.get(deckId);
+        if (group) {
+            this.meshDestroyer.destroyGroup(group);
+            this.nameGroupMap.delete(deckId);
+        }
+
         const cardNameIdList = this.findCardNameIdListByDeckId(deckId);
         if (cardNameIdList) {
             cardNameIdList.forEach((cardNameId) => {

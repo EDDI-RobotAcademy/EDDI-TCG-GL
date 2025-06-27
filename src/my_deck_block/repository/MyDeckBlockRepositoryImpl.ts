@@ -219,6 +219,12 @@ export class MyDeckBlockRepositoryImpl implements MyDeckBlockRepository {
 
     // 특정 덱 삭제
     public deleteDeckByDeckId(deckId: number): void {
+        const group = this.blockGroupMap.get(deckId);
+        if (group) {
+            this.meshDestroyer.destroyGroup(group);
+            this.blockGroupMap.delete(deckId);
+        }
+
         const blockUniqueIdList = this.findBlockUniqueIdListByDeckId(deckId);
         if (blockUniqueIdList) {
             blockUniqueIdList.forEach((blockId) => {

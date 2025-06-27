@@ -129,7 +129,6 @@ export class TCGJustTestMyDeckView {
     private deleteDeckPopupWindowService = DeleteDeckPopupWindowServiceImpl.getInstance();
     private deleteDeckPopupButtonService = DeleteDeckPopupButtonServiceImpl.getInstance();
     private deckEditButtonService = DeckEditButtonServiceImpl.getInstance();
-    private myDeckCardNameService = MyDeckCardNameServiceImpl.getInstance();
     private myDeckOwnedCardsService = MyDeckOwnedCardsServiceImpl.getInstance();
     private deckEditDoneButtonService = DeckEditDoneButtonServiceImpl.getInstance();
     private cardSelectionBlockerService = CardSelectionBlockerServiceImpl.getInstance();
@@ -144,6 +143,7 @@ export class TCGJustTestMyDeckView {
     private deckCardDeleteButtonService: DeckCardDeleteButtonServiceImpl;
     private deckCardCountMarkerService: DeckCardCountMarkerServiceImpl;
     private myDeckBlockService: MyDeckBlockServiceImpl;
+    private myDeckCardNameService: MyDeckCardNameServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -212,6 +212,7 @@ export class TCGJustTestMyDeckView {
         this.deckCardDeleteButtonService = DeckCardDeleteButtonServiceImpl.getInstance(this.scene);
         this.deckCardCountMarkerService = DeckCardCountMarkerServiceImpl.getInstance(this.scene);
         this.myDeckBlockService = MyDeckBlockServiceImpl.getInstance(this.scene);
+        this.myDeckCardNameService = MyDeckCardNameServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -772,7 +773,9 @@ export class TCGJustTestMyDeckView {
         try {
             const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardLists();
             for (const [deckId, cardIdList] of myDeckCardList) {
-                await this.myDeckCardNameService.createMyDeckCardNameWithPosition(deckId, cardIdList);
+                for (const cardId of cardIdList) {
+                    await this.myDeckCardNameService.createMyDeckCardNameWithPosition(deckId, cardId);
+                }
                 this.myDeckCardNameService.saveCardNameGroup(deckId);
             }
 
