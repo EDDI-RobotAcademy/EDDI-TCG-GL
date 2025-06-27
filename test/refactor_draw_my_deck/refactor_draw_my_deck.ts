@@ -136,7 +136,6 @@ export class TCGJustTestMyDeckView {
     private myDeckTotalOwnedCardsService = MyDeckTotalOwnedCardsServiceImpl.getInstance();
     private myDeckRemainingCardsService = MyDeckRemainingCardsServiceImpl.getInstance();
     private myDeckRemainingOutOfTotalSlashService = MyDeckRemainingOutOfTotalSlashServiceImpl.getInstance();
-    private myDeckNumberOfSelectedCardsService = MyDeckNumberOfSelectedCardsServiceImpl.getInstance();
     private myDeckChosenOutOfTotalSlashService = MyDeckChosenOutOfTotalSlashServiceImpl.getInstance();
     private totalNumberOfSelectedCardsService = TotalNumberOfSelectedCardsServiceImpl.getInstance();
 
@@ -144,6 +143,7 @@ export class TCGJustTestMyDeckView {
     private deckCardCountMarkerService: DeckCardCountMarkerServiceImpl;
     private myDeckBlockService: MyDeckBlockServiceImpl;
     private myDeckCardNameService: MyDeckCardNameServiceImpl;
+    private myDeckNumberOfSelectedCardsService: MyDeckNumberOfSelectedCardsServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -213,6 +213,7 @@ export class TCGJustTestMyDeckView {
         this.deckCardCountMarkerService = DeckCardCountMarkerServiceImpl.getInstance(this.scene);
         this.myDeckBlockService = MyDeckBlockServiceImpl.getInstance(this.scene);
         this.myDeckCardNameService = MyDeckCardNameServiceImpl.getInstance(this.scene);
+        this.myDeckNumberOfSelectedCardsService = MyDeckNumberOfSelectedCardsServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);

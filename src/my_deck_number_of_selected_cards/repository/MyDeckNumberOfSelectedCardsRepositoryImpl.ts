@@ -5,25 +5,29 @@ import {TextureManager} from "../../texture_manager/TextureManager";
 import {MeshGenerator} from "../../mesh/generator";
 import {Vector2d} from "../../common/math/Vector2d";
 import {getCardById} from "../../card/utility";
+import {MeshDestroyer} from "../../mesh/destroyer"
 
 export class MyDeckNumberOfSelectedCardsRepositoryImpl implements MyDeckNumberOfSelectedCardsRepository {
     private static instance: MyDeckNumberOfSelectedCardsRepositoryImpl;
     // number unique id: {card id, card count, number mesh}
     private numberMap: Map<number, { cardId: number, cardCount: number, numberMesh: MyDeckNumberOfSelectedCards }> = new Map();
     private deckMap: Map<number, number[]> = new Map(); // deckId: number ID List
-    private textureManager: TextureManager;
     private numberGroupMap: Map<number, THREE.Group> = new Map(); // deckId -> Group
+
+    private textureManager: TextureManager;
+    private meshDestroyer: MeshDestroyer;
 
     private readonly NUMBER_WIDTH: number = 0.015
 
-    private constructor(textureManager: TextureManager) {
+    private constructor(textureManager: TextureManager, scene: THREE.Scene) {
         this.textureManager = textureManager;
+        this.meshDestroyer = new MeshDestroyer(scene);
     }
 
-    public static getInstance(): MyDeckNumberOfSelectedCardsRepositoryImpl {
+    public static getInstance(scene: THREE.Scene): MyDeckNumberOfSelectedCardsRepositoryImpl {
         if (!MyDeckNumberOfSelectedCardsRepositoryImpl.instance) {
             const textureManager = TextureManager.getInstance()
-            MyDeckNumberOfSelectedCardsRepositoryImpl.instance = new MyDeckNumberOfSelectedCardsRepositoryImpl(textureManager);
+            MyDeckNumberOfSelectedCardsRepositoryImpl.instance = new MyDeckNumberOfSelectedCardsRepositoryImpl(textureManager, scene);
         }
         return MyDeckNumberOfSelectedCardsRepositoryImpl.instance;
     }
@@ -160,7 +164,17 @@ export class MyDeckNumberOfSelectedCardsRepositoryImpl implements MyDeckNumberOf
 
     // 특정 덱의 특정 number of cards 삭제
     public deleteNumberByDeckIdAndNumberId(deckId: number, numberId: number): void {
-        this.numberMap.delete(numberId);
+        const numberInfo = this.numberMap.get(numberId);
+        if (numberInfo) {
+            this.meshDestroyer.destroyMesh(numberInfo.numberMesh.getMesh());
+
+            const group = this.numberGroupMap.get(deckId);
+            if (group) {
+                group.remove(numberInfo.numberMesh.getMesh());
+            }
+
+            this.numberMap.delete(numberId);
+        }
 
         const numberIdList = this.deckMap.get(deckId);
         if (numberIdList) {
@@ -181,6 +195,12 @@ export class MyDeckNumberOfSelectedCardsRepositoryImpl implements MyDeckNumberOf
 
     // 특정 덱 삭제
     public deleteDeckByDeckId(deckId: number): void {
+        const group = this.numberGroupMap.get(deckId);
+        if (group) {
+            this.meshDestroyer.destroyGroup(group);
+            this.numberGroupMap.delete(deckId);
+        }
+
         const numberIdList = this.findNumberIdListByDeckId(deckId);
         if (numberIdList) {
             numberIdList.forEach((numberId) => {
