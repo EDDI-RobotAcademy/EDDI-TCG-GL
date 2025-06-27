@@ -91,7 +91,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance();
         this.myDeckNameTextRepository = MyDeckNameTextRepositoryImpl.getInstance();
         this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance(scene);
-        this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance();
+        this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance(scene);
 
         this.deckDeleteButtonPositionRepository = DeckDeleteButtonPositionRepositoryImpl.getInstance();
         this.deckNameEditButtonPositionRepository = DeckNameEditButtonPositionRepositoryImpl.getInstance();

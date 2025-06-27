@@ -28,7 +28,7 @@ export class MyDeckBlockScrollServiceImpl implements MyDeckBlockScrollService {
         this.renderer = renderer;
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance(scene);
-        this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance();
+        this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance(scene);
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckNumberOfSelectedCardsRepository = MyDeckNumberOfSelectedCardsRepositoryImpl.getInstance();
         this.deckCardDeleteButtonRepository = DeckCardDeleteButtonRepositoryImpl.getInstance(scene);

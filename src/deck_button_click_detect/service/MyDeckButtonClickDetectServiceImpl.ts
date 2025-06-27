@@ -54,7 +54,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance();
         this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance();
         this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance(scene);
-        this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance();
+        this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance(scene);
         this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance();
         this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance();
         this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance();

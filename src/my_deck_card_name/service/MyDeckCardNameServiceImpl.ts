@@ -19,49 +19,44 @@ export class MyDeckCardNameServiceImpl implements MyDeckCardNameService {
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
     private clippingMaskManager: ClippingMaskManager;
 
-    private constructor() {
-        this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance();
+    private constructor(scene: THREE.Scene) {
+        this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance(scene);
         this.myDeckCardNamePositionRepository = MyDeckCardNamePositionRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
     }
 
-    public static getInstance(): MyDeckCardNameServiceImpl {
+    public static getInstance(scene: THREE.Scene): MyDeckCardNameServiceImpl {
         if (!MyDeckCardNameServiceImpl.instance) {
-            MyDeckCardNameServiceImpl.instance = new MyDeckCardNameServiceImpl();
+            MyDeckCardNameServiceImpl.instance = new MyDeckCardNameServiceImpl(scene);
         }
         return MyDeckCardNameServiceImpl.instance;
     }
 
-    public async createMyDeckCardNameWithPosition(deckId: number, cardIdList: number[]): Promise<THREE.Group | null> {
+    public async createMyDeckCardNameWithPosition(deckId: number, cardId: number): Promise<THREE.Group | null> {
         const cardNameGroup = new THREE.Group();
         try {
-            await Promise.all(
-                cardIdList.map(async (cardId, index) => {
-                    const cardNameId = this.getCardNameIdByDeckIdAndCardId(deckId, cardId);
-                    if (cardNameId == null) {
-                        const position = this.myMyDeckCardNamePosition(deckId, index);
-                        console.log(`[Block] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
+            const cardNameId = this.getCardNameIdByDeckIdAndCardId(deckId, cardId);
+            if (cardNameId == null) {
+                const position = this.createMyDeckCardNamePosition(deckId, cardId);
+                console.log(`[Block] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
 
-                        const myDeckBlock = await this.createMyDeckCardName(deckId, cardId, position.position);
-                        cardNameGroup.add(myDeckBlock.getMesh());
+                const myDeckBlock = await this.createMyDeckCardName(deckId, cardId, position.position);
+                cardNameGroup.add(myDeckBlock.getMesh());
 
-                    } else {
-                        const existingPosition = this.getPositionByCardNameId(cardNameId);
-                        const existingCardNameMesh = this.getCardNameMeshByDeckIdAndCardId(deckId, cardId);
+            } else {
+                const existingPosition = this.getPositionByCardNameId(cardNameId);
+                const existingCardNameMesh = this.getCardNameMeshByDeckIdAndCardId(deckId, cardId);
 
-                        if (existingPosition && existingCardNameMesh) {
-                            const positionX = existingPosition.getX() * window.innerWidth;
-                            const positionY = existingPosition.getY() * window.innerHeight;
+                if (existingPosition && existingCardNameMesh) {
+                    const positionX = existingPosition.getX() * window.innerWidth;
+                    const positionY = existingPosition.getY() * window.innerHeight;
 
-                            existingCardNameMesh.position.set(positionX, positionY, 0);
-                            cardNameGroup.add(existingCardNameMesh);
-                        }
-                    }
-
-                })
-            );
+                    existingCardNameMesh.position.set(positionX, positionY, 0);
+                    cardNameGroup.add(existingCardNameMesh);
+                }
+            }
         } catch (error) {
             console.error(`[Error] Failed to create My Deck Card Name: ${error}`);
             return null;
@@ -133,8 +128,8 @@ export class MyDeckCardNameServiceImpl implements MyDeckCardNameService {
         return await this.myDeckCardNameRepository.createMyDeckCardName(deckId, cardId, position);
     }
 
-    private myMyDeckCardNamePosition(deckId: number, cardIndex: number): MyDeckCardNamePosition {
-        return this.myDeckCardNamePositionRepository.addMyDeckCardNamePosition(deckId, cardIndex);
+    private createMyDeckCardNamePosition(deckId: number, cardId: number): MyDeckCardNamePosition {
+        return this.myDeckCardNamePositionRepository.addMyDeckCardNamePosition(deckId, cardId);
     }
 
     public getCurrentClickDeckButton(): number | null {
