@@ -20,17 +20,17 @@ export class MyDeckNumberOfSelectedCardsServiceImpl implements MyDeckNumberOfSel
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
     private clippingMaskManager: ClippingMaskManager;
 
-    private constructor() {
-        this.myDeckNumberOfSelectedCardsRepository = MyDeckNumberOfSelectedCardsRepositoryImpl.getInstance();
+    private constructor(scene: THREE.Scene) {
+        this.myDeckNumberOfSelectedCardsRepository = MyDeckNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
         this.myDeckNumberOfSelectedCardsPositionRepository = MyDeckNumberOfSelectedCardsPositionRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
     }
 
-    public static getInstance(): MyDeckNumberOfSelectedCardsServiceImpl {
+    public static getInstance(scene: THREE.Scene): MyDeckNumberOfSelectedCardsServiceImpl {
         if (!MyDeckNumberOfSelectedCardsServiceImpl.instance) {
-            MyDeckNumberOfSelectedCardsServiceImpl.instance = new MyDeckNumberOfSelectedCardsServiceImpl();
+            MyDeckNumberOfSelectedCardsServiceImpl.instance = new MyDeckNumberOfSelectedCardsServiceImpl(scene);
         }
         return MyDeckNumberOfSelectedCardsServiceImpl.instance;
     }
