@@ -5,23 +5,27 @@ import {TextureManager} from "../../texture_manager/TextureManager";
 import {MeshGenerator} from "../../mesh/generator";
 import {Vector2d} from "../../common/math/Vector2d";
 import {getCardById} from "../../card/utility";
+import {MeshDestroyer} from "../../mesh/destroyer"
 
 export class MyDeckRemainingCardsRepositoryImpl implements MyDeckRemainingCardsRepository {
     private static instance: MyDeckRemainingCardsRepositoryImpl;
     private remainingCardsMap: Map<number, { cardId: number, cardCount: number, remainingCardsMesh: MyDeckRemainingCards }> = new Map();
-    private textureManager: TextureManager;
     private remainingCardsGroup: THREE.Group | null = null;
+
+    private textureManager: TextureManager;
+    private meshDestroyer: MeshDestroyer;
 
     private readonly REMAINING_CARDS_WIDTH: number = 0.013
 
-    private constructor(textureManager: TextureManager) {
+    private constructor(textureManager: TextureManager, scene: THREE.Scene) {
         this.textureManager = textureManager;
+        this.meshDestroyer = new MeshDestroyer(scene);
     }
 
-    public static getInstance(): MyDeckRemainingCardsRepositoryImpl {
+    public static getInstance(scene: THREE.Scene): MyDeckRemainingCardsRepositoryImpl {
         if (!MyDeckRemainingCardsRepositoryImpl.instance) {
             const textureManager = TextureManager.getInstance();
-            MyDeckRemainingCardsRepositoryImpl.instance = new MyDeckRemainingCardsRepositoryImpl(textureManager);
+            MyDeckRemainingCardsRepositoryImpl.instance = new MyDeckRemainingCardsRepositoryImpl(textureManager, scene);
         }
         return MyDeckRemainingCardsRepositoryImpl.instance;
     }
@@ -70,6 +74,16 @@ export class MyDeckRemainingCardsRepositoryImpl implements MyDeckRemainingCardsR
         return null;
     }
 
+    public findRemainingCardByCardId(cardId: number): MyDeckRemainingCards | null {
+        for (const [remainingCardsId, { cardId: storedCardId, remainingCardsMesh}] of this.remainingCardsMap.entries()) {
+            if (storedCardId === cardId) {
+                console.log(`Match found! Returning Remaining Cards Id: ${remainingCardsId}`);
+                return remainingCardsMesh;
+            }
+        }
+        return null;
+    }
+
     public findAllRemainingCardsList(): MyDeckRemainingCards[] {
         return Array.from(this.remainingCardsMap.values()).map(({ remainingCardsMesh }) => remainingCardsMesh);
     }
@@ -96,6 +110,20 @@ export class MyDeckRemainingCardsRepositoryImpl implements MyDeckRemainingCardsR
         if (remainingCards && this.remainingCardsGroup) {
             this.remainingCardsGroup.remove(remainingCards.remainingCardsMesh.getMesh());
         }
+        this.remainingCardsMap.delete(remainingCardsId);
+    }
+
+    public deleteRemainingCardsByCardId(cardId: number): void {
+        const remainingCardsId = this.findRemainingCardIdByCardId(cardId);
+        if (remainingCardsId === null) return;
+
+        const remainingCardEntry = this.remainingCardsMap.get(remainingCardsId);
+        if (!remainingCardEntry) return;
+
+        const mesh = remainingCardEntry.remainingCardsMesh.getMesh();
+
+        this.meshDestroyer.destroyMesh(mesh);
+        this.remainingCardsGroup?.remove(mesh);
         this.remainingCardsMap.delete(remainingCardsId);
     }
 

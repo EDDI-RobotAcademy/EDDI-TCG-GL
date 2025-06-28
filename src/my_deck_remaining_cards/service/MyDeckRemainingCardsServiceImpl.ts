@@ -21,17 +21,17 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
     private clippingMaskManager: ClippingMaskManager;
     private cardCountManager: CardCountManager;
 
-    private constructor() {
-        this.myDeckRemainingCardsRepository = MyDeckRemainingCardsRepositoryImpl.getInstance();
+    private constructor(scene: THREE.Scene) {
+        this.myDeckRemainingCardsRepository = MyDeckRemainingCardsRepositoryImpl.getInstance(scene);
         this.myDeckRemainingCardsPositionRepository = MyDeckRemainingCardsPositionRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
         this.cardCountManager = CardCountManager.getInstance();
     }
 
-    public static getInstance(): MyDeckRemainingCardsServiceImpl {
+    public static getInstance(scene: THREE.Scene): MyDeckRemainingCardsServiceImpl {
         if (!MyDeckRemainingCardsServiceImpl.instance) {
-            MyDeckRemainingCardsServiceImpl.instance = new MyDeckRemainingCardsServiceImpl();
+            MyDeckRemainingCardsServiceImpl.instance = new MyDeckRemainingCardsServiceImpl(scene);
         }
         return MyDeckRemainingCardsServiceImpl.instance;
     }
