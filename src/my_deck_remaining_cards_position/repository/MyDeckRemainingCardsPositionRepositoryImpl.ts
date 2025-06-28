@@ -60,7 +60,7 @@ export class MyDeckRemainingCardsPositionRepositoryImpl implements MyDeckRemaini
         return Array.from(this.positionMap.values()).map(({ position }) => position);
     }
 
-    // To-do: 삭제 부분 후에 수정해야 함(재정렬 필요)
+    // To-do(later): 소지한 카드도 삭제하는 기능을 추가한다면 position 재정렬 필요
     public deleteById(positionId: number): boolean {
         return this.positionMap.delete(positionId);
     }
