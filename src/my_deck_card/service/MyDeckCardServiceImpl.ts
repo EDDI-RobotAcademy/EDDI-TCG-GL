@@ -12,8 +12,6 @@ import {MyDeckCardPositionRepositoryImpl} from "../../my_deck_card_position/repo
 import {MyDeckCardPosition} from "../../my_deck_card_position/entity/MyDeckCardPosition";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
-
-import {CardStateManager} from "../../my_deck_card_manager/CardStateManager";
 import {ClippingMaskManager} from "../../clipping_mask_manager/ClippingMaskManager";
 
 export class MyDeckCardServiceImpl implements MyDeckCardService {
@@ -22,56 +20,46 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
     private myDeckCardRepository: MyDeckCardRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
-
-    private cardStateManager: CardStateManager;
     private clippingMaskManager: ClippingMaskManager;
 
-    private constructor(myDeckCardRepository: MyDeckCardRepository) {
+    private constructor(scene: THREE.Scene) {
         this.myDeckCardPositionRepository = MyDeckCardPositionRepositoryImpl.getInstance();
-        this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance();
+        this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance(scene);
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
-
-        this.cardStateManager = CardStateManager.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
     }
 
-    public static getInstance(): MyDeckCardServiceImpl {
+    public static getInstance(scene: THREE.Scene): MyDeckCardServiceImpl {
         if (!MyDeckCardServiceImpl.instance) {
-            const repository = MyDeckCardRepositoryImpl.getInstance();
-            MyDeckCardServiceImpl.instance = new MyDeckCardServiceImpl(repository);
+            MyDeckCardServiceImpl.instance = new MyDeckCardServiceImpl(scene);
         }
         return MyDeckCardServiceImpl.instance;
     }
 
-    public async createMyDeckCardWithPosition(deckId: number, cardIdList: number[]): Promise<THREE.Group | null> {
+    public async createMyDeckCardWithPosition(deckId: number, cardId: number): Promise<THREE.Group | null> {
         const cardGroup = new THREE.Group();
         try {
-            await Promise.all(
-                cardIdList.map(async (cardId, index) => {
-                    const cardUniqueId = this.getCardUniqueIdByDeckIdAndCardId(deckId, cardId);
-                    if (cardUniqueId == null) {
-                        const position = this.myDeckCardPosition(deckId, index);
-                        console.log(`[DEBUG] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
+            const cardUniqueId = this.getCardUniqueIdByDeckIdAndCardId(deckId, cardId);
+            if (cardUniqueId == null) {
+                const position = this.createMyDeckCardPosition(deckId, cardId);
+                console.log(`[DEBUG] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
 
-                        const myDeckCard = await this.createMyDeckCard(deckId, cardId, position.position);
-                        cardGroup.add(myDeckCard.getMesh());
+                const myDeckCard = await this.createMyDeckCard(deckId, cardId, position.position);
+                cardGroup.add(myDeckCard.getMesh());
 
-                    } else {
-                        const existingPosition = this.getPositionByCardUniqueId(cardUniqueId);
-                        const existingCardMesh = this.getCardMeshByDeckIdAndCardId(deckId, cardId);
+            } else {
+                const existingPosition = this.getPositionByCardUniqueId(cardUniqueId);
+                const existingCardMesh = this.getCardMeshByDeckIdAndCardId(deckId, cardId);
 
-                        if (existingPosition && existingCardMesh) {
-                            const positionX = existingPosition.getX() * window.innerWidth;
-                            const positionY = existingPosition.getY() * window.innerHeight;
+                if (existingPosition && existingCardMesh) {
+                    const positionX = existingPosition.getX() * window.innerWidth;
+                    const positionY = existingPosition.getY() * window.innerHeight;
 
-                            existingCardMesh.position.set(positionX, positionY, 0);
-                            cardGroup.add(existingCardMesh);
-
-                        }
-                    }
-                })
-            );
+                    existingCardMesh.position.set(positionX, positionY, 0);
+                    cardGroup.add(existingCardMesh);
+                }
+            }
         } catch (error) {
             console.error(`[Error] Failed to create MyDeckCard: ${error}`);
             return null;
@@ -141,8 +129,8 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
         return await this.myDeckCardRepository.createMyDeckCard(deckId, cardId, position);
     }
 
-    private myDeckCardPosition(deckId: number, cardIndex: number): MyDeckCardPosition {
-        return this.myDeckCardPositionRepository.addMyDeckCardPosition(deckId, cardIndex);
+    private createMyDeckCardPosition(deckId: number, cardId: number): MyDeckCardPosition {
+        return this.myDeckCardPositionRepository.addMyDeckCardPosition(deckId, cardId);
     }
 
     public getAllDeckIdList(): number[] {
@@ -185,30 +173,27 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
         return cardUniqueId;
     }
 
-    // 이름 변경 필요
-    public setAllCardVisibilityByDeckId(deckId: number, isVisible: boolean): void {
-        this.cardStateManager.setAllCardVisibility(deckId, isVisible);
-    }
-
     public initializeDeckCardVisibility(): void {
         const deckIdList = this.getAllDeckIdList();
         const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
         const firstDeckId = sortedDeckIdList[0];
+
         deckIdList.forEach((deckId, index) => {
+            const cardList = this.getCardListByDeckId(deckId);
             if (deckId === firstDeckId) {
-                this.setAllCardVisibilityByDeckId(deckId, true);
+                cardList.forEach((card) => card.setVisibility(true));
             } else {
-                this.setAllCardVisibilityByDeckId(deckId, false);
+                cardList.forEach((card) => card.setVisibility(false));
             }
         });
     }
 
-    public getCardListByDeckId(deckId: number): THREE.Mesh[] {
+    public getCardListByDeckId(deckId: number): MyDeckCard[] {
         const cardList = this.myDeckCardRepository.findCardListByDeckId(deckId);
         if (!cardList) {
             return [];
         }
-        return cardList.map((card) => card.getMesh());
+        return cardList;
     }
 
     public getCurrentClickDeckButtonId(): number | null {
@@ -217,10 +202,6 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
 
     public saveCurrentClickDeckButtonId(deckId: number): void {
         this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(deckId);
-    }
-
-    public resetCardVisibility(): void {
-        this.cardStateManager.resetVisibility();
     }
 
     public saveCardGroup(deckId: number): void {

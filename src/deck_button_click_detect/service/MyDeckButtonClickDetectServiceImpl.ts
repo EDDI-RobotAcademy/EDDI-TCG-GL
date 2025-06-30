@@ -21,8 +21,6 @@ import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl
 
 import {ButtonStateManager} from "../../my_deck_button_manager/ButtonStateManager";
 import {ButtonEffectManager} from "../../my_deck_button_manager/ButtonEffectManager";
-import {ButtonPageManager} from "../../my_deck_button_manager/ButtonPageManager";
-import {CardStateManager} from "../../my_deck_card_manager/CardStateManager";
 
 import * as THREE from "three";
 
@@ -44,15 +42,13 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
 
     private buttonStateManager: ButtonStateManager;
     private buttonEffectManager: ButtonEffectManager;
-    private buttonPageManager: ButtonPageManager;
-    private cardStateManager: CardStateManager;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance();
-        this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance();
+        this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance(scene);
         this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance(scene);
         this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance(scene);
         this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance();
@@ -64,8 +60,6 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
 
         this.buttonStateManager = ButtonStateManager.getInstance();
         this.buttonEffectManager = ButtonEffectManager.getInstance();
-        this.cardStateManager = CardStateManager.getInstance();
-        this.buttonPageManager = ButtonPageManager.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckButtonClickDetectServiceImpl {
@@ -208,19 +202,10 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         return this.myDeckButtonEffectRepository.findById(buttonId);
     }
 
-    private setCardVisibility(deckId: number, cardId: number, isVisible: boolean): void {
-        this.cardStateManager.setCardVisibility(deckId, cardId, isVisible);
-    }
-
-    private getCardUniqueIdListByDeckId(deckId: number): number[] {
-        return this.myDeckCardRepository.findCardUniqueIdListByDeckId(deckId);
-    }
-
     private setCardVisibilityByDeckId(deckId: number, isVisible: boolean): void {
-        const cardUniqueIdList = this.getCardUniqueIdListByDeckId(deckId);
-        cardUniqueIdList.forEach((cardUniqueId) => {
-            this.setCardVisibility(deckId, cardUniqueId, isVisible);
-        });
+        this.myDeckCardRepository.findCardListByDeckId(deckId)?.forEach(card =>
+            card.setVisibility(isVisible)
+        );
     }
 
     private setBlockVisibilityByDeckId(deckId: number, isVisible: boolean): void {
