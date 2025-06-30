@@ -11,10 +11,19 @@ export class MyDeckCard {
         this.id = IdGenerator.generateId("MyDeckCard");
         this.mesh = mesh;
         this.position = position;
+        this.mesh.visible = true;
     }
 
     public getMesh(): THREE.Mesh {
         return this.mesh;
+    }
+
+    public getVisibility(): boolean {
+        return this.mesh.visible;
+    }
+
+    public setVisibility(state: boolean): void {
+        this.mesh.visible = state;
     }
 
 }

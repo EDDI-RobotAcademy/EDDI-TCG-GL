@@ -32,7 +32,6 @@ import {MyDeckCardNamePositionRepositoryImpl} from "../../my_deck_card_name_posi
 import {MyDeckButtonMapRepositoryImpl} from "../../my_deck_button/repository/MyDeckButtonMapRepositoryImpl";
 import {MyDeckCardMapRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardMapRepositoryImpl";
 import {MyDeckNameTextMapRepositoryImpl} from "../../my_deck_name_text/repository/MyDeckNameTextMapRepositoryImpl";
-import {CardStateManager} from "../../my_deck_card_manager/CardStateManager";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -70,7 +69,6 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     private myDeckButtonMapRepository: MyDeckButtonMapRepositoryImpl;
     private myDeckCardMapRepository: MyDeckCardMapRepositoryImpl;
     private myDeckNameTextMapRepository: MyDeckNameTextMapRepositoryImpl;
-    private cardStateManager: CardStateManager;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.deleteDeckPopupButtonClickDetectRepository = DeleteDeckPopupButtonClickDetectRepositoryImpl.getInstance();
@@ -88,7 +86,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance();
         this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance();
         this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance();
-        this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance();
+        this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance(scene);
         this.myDeckNameTextRepository = MyDeckNameTextRepositoryImpl.getInstance();
         this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance(scene);
         this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance(scene);
@@ -104,7 +102,6 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.myDeckButtonMapRepository = MyDeckButtonMapRepositoryImpl.getInstance();
         this.myDeckCardMapRepository = MyDeckCardMapRepositoryImpl.getInstance();
         this.myDeckNameTextMapRepository = MyDeckNameTextMapRepositoryImpl.getInstance();
-        this.cardStateManager = CardStateManager.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeleteDeckPopupButtonClickDetectServiceImpl {
@@ -388,7 +385,6 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
             });
 
             this.myDeckCardRepository.resetCardGroup();
-            this.cardStateManager.resetVisibility();
 
             console.log(`[INFO] All deck cards and groups removed from scene.`);
         } catch (error) {

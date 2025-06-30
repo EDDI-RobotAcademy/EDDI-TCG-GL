@@ -115,7 +115,6 @@ export class TCGJustTestMyDeckView {
 
     private myDeckButtonService = MyDeckButtonServiceImpl.getInstance();
     private myDeckButtonEffectService = MyDeckButtonEffectServiceImpl.getInstance();
-    private myDeckCardService = MyDeckCardServiceImpl.getInstance();
     private myDeckNameTextService = MyDeckNameTextServiceImpl.getInstance();
 //     private deckMakeButtonService = DeckMakeButtonServiceImpl.getInstance();
     private transparentBackgroundService = TransparentBackgroundServiceImpl.getInstance();
@@ -144,6 +143,7 @@ export class TCGJustTestMyDeckView {
     private myDeckCardNameService: MyDeckCardNameServiceImpl;
     private myDeckNumberOfSelectedCardsService: MyDeckNumberOfSelectedCardsServiceImpl;
     private myDeckRemainingCardsService: MyDeckRemainingCardsServiceImpl;
+    private myDeckCardService: MyDeckCardServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -215,6 +215,7 @@ export class TCGJustTestMyDeckView {
         this.myDeckCardNameService = MyDeckCardNameServiceImpl.getInstance(this.scene);
         this.myDeckNumberOfSelectedCardsService = MyDeckNumberOfSelectedCardsServiceImpl.getInstance(this.scene);
         this.myDeckRemainingCardsService = MyDeckRemainingCardsServiceImpl.getInstance(this.scene);
+        this.myDeckCardService = MyDeckCardServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -549,7 +550,9 @@ export class TCGJustTestMyDeckView {
         try {
             const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardLists();
             for (const [deckId, cardIdList] of myDeckCardList) {
-                await this.myDeckCardService.createMyDeckCardWithPosition(deckId, cardIdList);
+                for (const cardId of cardIdList) {
+                    await this.myDeckCardService.createMyDeckCardWithPosition(deckId, cardId);
+                }
                 this.myDeckCardService.saveCardGroup(deckId);
             }
 
@@ -1105,28 +1108,27 @@ export class TCGJustTestMyDeckView {
         }
     }
 
-    private async deleteAllCard(): Promise<void> {
-        try {
-            const allDeckIdList = this.myDeckCardService.getAllDeckIdList();
-            allDeckIdList.forEach((deckId) => {
-                const cardMeshList = this.myDeckCardService.getCardListByDeckId(deckId);
-                for (const cardMesh of cardMeshList) {
-                    cardMesh.visible = false;
-                    this.scene.remove(cardMesh);
-                }
-
-                const cardGroup = this.myDeckCardService.getCardGroupByDeckId(deckId);
-                this.scene.remove(cardGroup);
-                cardGroup.clear();
-            });
-
-            this.myDeckCardService.resetCardGroup();
-            this.myDeckCardService.resetCardVisibility();
-
-        } catch (error) {
-            console.error('Failed to delete Card:', error);
-        }
-    }
+//     private async deleteAllCard(): Promise<void> {
+//         try {
+//             const allDeckIdList = this.myDeckCardService.getAllDeckIdList();
+//             allDeckIdList.forEach((deckId) => {
+//                 const cardMeshList = this.myDeckCardService.getCardListByDeckId(deckId);
+//                 for (const cardMesh of cardMeshList) {
+//                     cardMesh.visible = false;
+//                     this.scene.remove(cardMesh);
+//                 }
+//
+//                 const cardGroup = this.myDeckCardService.getCardGroupByDeckId(deckId);
+//                 this.scene.remove(cardGroup);
+//                 cardGroup.clear();
+//             });
+//
+//             this.myDeckCardService.resetCardGroup();
+//
+//         } catch (error) {
+//             console.error('Failed to delete Card:', error);
+//         }
+//     }
 
     private async deleteAllDeckBlock(): Promise<void> {
         try {

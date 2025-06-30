@@ -31,8 +31,6 @@ import {MyDeckOwnedCardsClickDetectRepositoryImpl} from "../../deck_owned_cards_
 import {MyDeckBlockHoverDetectRepositoryImpl} from "../../my_deck_block_hover_detect/repository/MyDeckBlockHoverDetectRepositoryImpl";
 import {DeckCardDeleteButtonClickDetectRepositoryImpl} from "../../deck_card_delete_button_click_detect/repository/DeckCardDeleteButtonClickDetectRepositoryImpl";
 
-import {CardStateManager} from "../../my_deck_card_manager/CardStateManager";
-
 export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClickDetectService {
     private static instance: DeckEditButtonClickDetectServiceImpl | null = null;
     private cameraRepository: CameraRepository;
@@ -54,7 +52,6 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private myDeckOwnedCardsClickDetectRepository: MyDeckOwnedCardsClickDetectRepositoryImpl;
     private myDeckBlockHoverDetectRepository: MyDeckBlockHoverDetectRepositoryImpl;
     private deckCardDeleteButtonClickDetectRepository: DeckCardDeleteButtonClickDetectRepositoryImpl;
-    private cardStateManager: CardStateManager;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -62,7 +59,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.deckEditButtonRepository = DeckEditButtonRepositoryImpl.getInstance();
         this.myDeckOwnedCardsRepository = MyDeckOwnedCardsRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
-        this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance();
+        this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance(scene);
         this.deckEditDoneButtonRepository = DeckEditDoneButtonRepositoryImpl.getInstance();
         this.myDeckCardMapRepository = MyDeckCardMapRepositoryImpl.getInstance();
         this.cardSelectionBlockerRepository = CardSelectionBlockerRepositoryImpl.getInstance();
@@ -76,8 +73,6 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.myDeckOwnedCardsClickDetectRepository = MyDeckOwnedCardsClickDetectRepositoryImpl.getInstance();
         this.myDeckBlockHoverDetectRepository = MyDeckBlockHoverDetectRepositoryImpl.getInstance();
         this.deckCardDeleteButtonClickDetectRepository = DeckCardDeleteButtonClickDetectRepositoryImpl.getInstance();
-
-        this.cardStateManager = CardStateManager.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckEditButtonClickDetectServiceImpl {
@@ -161,14 +156,6 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         return this.deckEditDoneButtonRepository.findButtonById(0);
     }
 
-    private setDeckEditButtonVisibility(isVisible: boolean): void {
-        this.getDeckEditButton()?.setVisibility(isVisible);
-    }
-
-    private setDeckEditDoneButtonVisibility(isVisible: boolean): void {
-        this.getDeckEditDoneButton()?.setVisibility(isVisible);
-    }
-
     private saveCurrentButtonClickState(state: boolean): void {
         this.deckEditButtonClickDetectRepository.saveCurrentButtonClickState(state);
     }
@@ -195,6 +182,30 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
 
     private getTotalNumberOfSelectedCardsByDeckId(deckId: number): TotalNumberOfSelectedCards | null {
         return this.totalNumberOfSelectedCardsRepository.findNumberByDeckId(deckId);
+    }
+
+    private getCurrentClickedDeckButtonId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    }
+
+    private getRemainingCardCount(remainingCardsId: number): number {
+        return this.myDeckRemainingCardsRepository.findRemainingCardCountById(remainingCardsId);
+    }
+
+    private getOwnedCardCountByCardUniqueId(cardUniqueId: number): number | null {
+        return this.myDeckOwnedCardsRepository.getCardCountByCardUniqueId(cardUniqueId);
+    }
+
+    private getCardIdByCardUniqueId(cardUniqueId: number): number | null {
+        return this.myDeckOwnedCardsRepository.findCardIdByCardUniqueId(cardUniqueId);
+    }
+
+    private setDeckEditButtonVisibility(isVisible: boolean): void {
+        this.getDeckEditButton()?.setVisibility(isVisible);
+    }
+
+    private setDeckEditDoneButtonVisibility(isVisible: boolean): void {
+        this.getDeckEditDoneButton()?.setVisibility(isVisible);
     }
 
     private setChosenOutOfTotalSlashVisibility(isVisible: boolean): void {
@@ -237,45 +248,16 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.getAllRemainingOutOfTotalSlash().forEach((slash) => slash.setVisibility(isVisible));
     }
 
-    private setMyDeckCardVisibility(deckId: number, cardId: number, isVisible: boolean): void {
-        this.cardStateManager.setCardVisibility(deckId, cardId, isVisible);
-    }
-
     private setMyDeckCardVisibilityByDeckId(deckId: number, isVisible: boolean): void {
-        const cardUniqueIdList = this.getMyDeckCardUniqueIdListByDeckId(deckId);
-        cardUniqueIdList.forEach((cardUniqueId) => {
-            this.setMyDeckCardVisibility(deckId, cardUniqueId, isVisible);
-        });
+        this.myDeckCardRepository.findCardListByDeckId(deckId)?.forEach(card =>
+            card.setVisibility(isVisible)
+        );
     }
 
     private setDeckCardCountMarkerVisibilityByDeckId(deckId: number, isVisible: boolean): void {
         this.deckCardCountMarkerRepository.findMarkerListByDeckId(deckId)?.forEach(marker =>
             marker.setVisibility(isVisible)
         );
-    }
-
-    private getMyDeckCardUniqueIdListByDeckId(deckId: number): number[] {
-        return this.myDeckCardRepository.findCardUniqueIdListByDeckId(deckId);
-    }
-
-    private getCurrentClickedDeckButtonId(): number | null {
-        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
-    }
-
-    private getRemainingCardCount(remainingCardsId: number): number {
-        return this.myDeckRemainingCardsRepository.findRemainingCardCountById(remainingCardsId);
-    }
-
-    private getOwnedCardCountByCardUniqueId(cardUniqueId: number): number | null {
-        return this.myDeckOwnedCardsRepository.getCardCountByCardUniqueId(cardUniqueId);
-    }
-
-    private getCardUniqueIdListByDeckId(deckId: number): number[] {
-        return this.myDeckCardRepository.findCardUniqueIdListByDeckId(deckId);
-    }
-
-    private getCardIdByCardUniqueId(cardUniqueId: number): number | null {
-        return this.myDeckOwnedCardsRepository.findCardIdByCardUniqueId(cardUniqueId);
     }
 
     // 덱에 이미 최대한으로 사용된 카드들에 대해 선택을 막는 blocker 를 표시

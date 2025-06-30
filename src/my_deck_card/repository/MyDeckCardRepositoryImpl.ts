@@ -5,6 +5,7 @@ import {TextureManager} from "../../texture_manager/TextureManager";
 import {MeshGenerator} from "../../mesh/generator";
 import {Vector2d} from "../../common/math/Vector2d";
 import {getCardById} from "../../card/utility";
+import {MeshDestroyer} from "../../mesh/destroyer"
 
 export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
     private static instance: MyDeckCardRepositoryImpl;
@@ -12,21 +13,21 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
     private deckMap: Map<number, number[]> = new Map(); // deckId: card Unique ID List
     private deckGroupMap: Map<number, THREE.Group> = new Map(); // deckId -> Group
 
-    // To-do: 별도로 관리할 필요 있음. 카드 개수 객체 repository 에서 관리 필요
-    private cardCountMap: Map<number, number> = new Map(); // Todo: deck id: [ card id: count] 형태로 변경 필요
     private textureManager: TextureManager;
+    private meshDestroyer: MeshDestroyer;
 
     private readonly CARD_WIDTH: number = 0.096
     private readonly CARD_HEIGHT: number = 0.365
 
-    private constructor(textureManager: TextureManager) {
+    private constructor(textureManager: TextureManager, scene: THREE.Scene) {
         this.textureManager = textureManager;
+        this.meshDestroyer = new MeshDestroyer(scene);
     }
 
-    public static getInstance(): MyDeckCardRepositoryImpl {
+    public static getInstance(scene: THREE.Scene): MyDeckCardRepositoryImpl {
         if (!MyDeckCardRepositoryImpl.instance) {
             const textureManager = TextureManager.getInstance()
-            MyDeckCardRepositoryImpl.instance = new MyDeckCardRepositoryImpl(textureManager);
+            MyDeckCardRepositoryImpl.instance = new MyDeckCardRepositoryImpl(textureManager, scene);
         }
         return MyDeckCardRepositoryImpl.instance;
     }
@@ -43,7 +44,6 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
         }
 
         const cardWidth = this.CARD_WIDTH * window.innerWidth;
-//         const cardHeight = cardWidth * 1.6176;
         const cardHeight = cardWidth * (1540 / 952);
 
         const cardPositionX = position.getX() * window.innerWidth;
@@ -185,7 +185,17 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
 
     // 특정 덱의 특정 카드 삭제
     public deleteCardByDeckIdAndCardUniqueId(deckId: number, cardUniqueId: number): void {
-        this.cardMap.delete(cardUniqueId);
+        const cardInfo = this.cardMap.get(cardUniqueId);
+        if (cardInfo) {
+            this.meshDestroyer.destroyMesh(cardInfo.cardMesh.getMesh());
+
+            const group = this.deckGroupMap.get(deckId);
+            if (group) {
+                group.remove(cardInfo.cardMesh.getMesh());
+            }
+
+            this.cardMap.delete(cardUniqueId);
+        }
 
         const cardIdList = this.deckMap.get(deckId);
         if (cardIdList) {
@@ -210,6 +220,12 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
 
     // 특정 덱 삭제
     public deleteDeckByDeckId(deckId: number): void {
+        const group = this.deckGroupMap.get(deckId);
+        if (group) {
+            this.meshDestroyer.destroyGroup(group);
+            this.deckGroupMap.delete(deckId);
+        }
+
         const cardUniqueIdList = this.findCardUniqueIdListByDeckId(deckId);
         if (cardUniqueIdList) {
             cardUniqueIdList.forEach((cardId) => {
@@ -219,20 +235,6 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
         this.deckMap.delete(deckId);
         const deckIdList = this.findDeckIdList();
         console.log(`%c삭제 후 남은 덱 id 리스트는? ${deckIdList}`, 'color: #FE2EF7; font-weight: bold;');
-    }
-
-    public showCard(cardUniqueId: number): void {
-        const card = this.findCardByCardUniqueId(cardUniqueId);
-        if (card) {
-            card.getMesh().visible = true;
-        }
-    }
-
-    public hideCard(cardUniqueId: number): void {
-        const card = this.findCardByCardUniqueId(cardUniqueId);
-        if (card) {
-            card.getMesh().visible = false;
-        }
     }
 
 }
