@@ -6,21 +6,25 @@ import {IdGenerator} from "../../common/id_generator/IdGenerator";
 export class MyDeckButton {
     id: number;
     mesh: THREE.Mesh;
-    private position: Vector2d;
-    private width: number;
-    private height: number;
+    position: Vector2d;
 
-    constructor(width: number, height: number, mesh: THREE.Mesh, position: Vector2d) {
-        this.id = IdGenerator.generateId("MyDeckButtonScene");
-//         console.log(`[DEBUG] MyDeckButtonScene constructor called with id: ${this.id}`);
-        this.width = width;
-        this.height = height;
+    constructor(mesh: THREE.Mesh, position: Vector2d) {
+        this.id = IdGenerator.generateId("MyDeckButton");
         this.mesh = mesh;
         this.position = position;
+        this.mesh.visible = true;
     }
 
     public getMesh(): THREE.Mesh {
         return this.mesh;
+    }
+
+    public getVisibility(): boolean {
+        return this.mesh.visible;
+    }
+
+    public setVisibility(state: boolean): void {
+        this.mesh.visible = state;
     }
 
 }

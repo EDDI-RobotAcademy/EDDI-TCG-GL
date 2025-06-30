@@ -12,8 +12,6 @@ import {MyDeckButtonPositionRepositoryImpl} from "../../my_deck_button_position/
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {SideScrollArea} from "../../side_scroll_area/entity/SideScrollArea";
 import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
-
-import {ButtonStateManager} from "../../my_deck_button_manager/ButtonStateManager";
 import {ClippingMaskManager} from "../../clipping_mask_manager/ClippingMaskManager";
 
 export class MyDeckButtonServiceImpl implements MyDeckButtonService {
@@ -22,24 +20,19 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
     private myDeckButtonPositionRepository: MyDeckButtonPositionRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
-
-    private buttonStateManager: ButtonStateManager;
     private clippingMaskManager: ClippingMaskManager;
 
-    private constructor(myDeckButtonRepository: MyDeckButtonRepository) {
-        this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance();
+    private constructor(scene: THREE.Scene) {
+        this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance(scene);
         this.myDeckButtonPositionRepository = MyDeckButtonPositionRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
-
-        this.buttonStateManager = ButtonStateManager.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
     }
 
-    public static getInstance(): MyDeckButtonServiceImpl {
+    public static getInstance(scene: THREE.Scene): MyDeckButtonServiceImpl {
         if (!MyDeckButtonServiceImpl.instance) {
-            const repository = MyDeckButtonRepositoryImpl.getInstance();
-            MyDeckButtonServiceImpl.instance = new MyDeckButtonServiceImpl(repository);
+            MyDeckButtonServiceImpl.instance = new MyDeckButtonServiceImpl(scene);
         }
         return MyDeckButtonServiceImpl.instance;
     }
@@ -143,12 +136,18 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
 
     }
 
-    public initializeDeckButton(): void {
-        this.buttonStateManager.initializeButtonState();
-    }
+    public initializeDeckButtonVisibility(): void {
+        const deckIdList = this.myDeckButtonRepository.findButtonDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
 
-    public resetButtonVisibility(): void {
-        this.buttonStateManager.resetVisibility();
+        deckIdList.forEach((deckId, index) => {
+            if (deckId === firstDeckId) {
+                this.getMyDeckButtonByDeckId(deckId)?.setVisibility(false);
+            } else {
+                this.getMyDeckButtonByDeckId(deckId)?.setVisibility(true);
+            }
+        });
     }
 
     public getMyDeckButtonByDeckId(deckId: number): MyDeckButton | null {

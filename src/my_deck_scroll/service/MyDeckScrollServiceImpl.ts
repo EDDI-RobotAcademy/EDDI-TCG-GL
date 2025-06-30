@@ -27,8 +27,8 @@ export class MyDeckScrollServiceImpl implements MyDeckScrollService {
     private constructor(camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer) {
         this.renderer = renderer;
         this.cameraRepository = CameraRepositoryImpl.getInstance();
-        this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance();
-        this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance();
+        this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance(scene);
+        this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance(scene);
         this.myDeckNameTextRepository = MyDeckNameTextRepositoryImpl.getInstance();
         this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance();
         this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance();

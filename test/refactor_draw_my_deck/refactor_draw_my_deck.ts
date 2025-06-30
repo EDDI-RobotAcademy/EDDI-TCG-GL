@@ -113,8 +113,6 @@ export class TCGJustTestMyDeckView {
     private background: NonBackgroundImage | null = null;
     private backgroundService = BackgroundServiceImpl.getInstance();
 
-    private myDeckButtonService = MyDeckButtonServiceImpl.getInstance();
-    private myDeckButtonEffectService = MyDeckButtonEffectServiceImpl.getInstance();
     private myDeckNameTextService = MyDeckNameTextServiceImpl.getInstance();
 //     private deckMakeButtonService = DeckMakeButtonServiceImpl.getInstance();
     private transparentBackgroundService = TransparentBackgroundServiceImpl.getInstance();
@@ -144,6 +142,8 @@ export class TCGJustTestMyDeckView {
     private myDeckNumberOfSelectedCardsService: MyDeckNumberOfSelectedCardsServiceImpl;
     private myDeckRemainingCardsService: MyDeckRemainingCardsServiceImpl;
     private myDeckCardService: MyDeckCardServiceImpl;
+    private myDeckButtonService: MyDeckButtonServiceImpl;
+    private myDeckButtonEffectService: MyDeckButtonEffectServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -216,6 +216,8 @@ export class TCGJustTestMyDeckView {
         this.myDeckNumberOfSelectedCardsService = MyDeckNumberOfSelectedCardsServiceImpl.getInstance(this.scene);
         this.myDeckRemainingCardsService = MyDeckRemainingCardsServiceImpl.getInstance(this.scene);
         this.myDeckCardService = MyDeckCardServiceImpl.getInstance(this.scene);
+        this.myDeckButtonService = MyDeckButtonServiceImpl.getInstance(this.scene);
+        this.myDeckButtonEffectService = MyDeckButtonEffectServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -258,8 +260,6 @@ export class TCGJustTestMyDeckView {
 //
 //             const popupButtonClick = await this.deleteDeckPopupButtonClickDetectService.onMouseDown(e);
 //             if (popupButtonClick) {
-//                 await this.deleteMyDeckButtons();
-//                 await this.deleteMyDeckButtonEffects();
 //                 await this.deleteDeckNameEditButton();
 //                 await this.deleteDeckDeleteButton();
 //                 await this.deleteDeckNameText();
@@ -466,7 +466,7 @@ export class TCGJustTestMyDeckView {
                 await this.myDeckButtonService.createMyDeckButtonWithPosition(deckId);
             }
 
-            this.myDeckButtonService.initializeDeckButton();
+            this.myDeckButtonService.initializeDeckButtonVisibility();
             this.myDeckButtonService.saveCurrentClickDeckButtonId();
             this.myDeckButtonService.applyClippingMaskToDeckButtons();
 
@@ -488,7 +488,7 @@ export class TCGJustTestMyDeckView {
             for (const [index, deckId] of myDeckButtonList.entries()) {
                 await this.myDeckButtonEffectService.createDeckButtonEffectWithPosition(deckId);
             }
-            this.myDeckButtonEffectService.initializeDeckButtonEffect();
+            this.myDeckButtonEffectService.initializeDeckButtonEffectVisibility();
             this.myDeckButtonEffectService.applyClippingMaskToDeckButtonEffects();
 
             const deckButtonEffectGroup = this.myDeckButtonEffectService.getMyDeckButtonEffectGroups();
@@ -1010,46 +1010,6 @@ export class TCGJustTestMyDeckView {
 //             console.error('Failed to add DeckMakePopupInputContainer:', error);
 //         }
 //     }
-
-    private async deleteMyDeckButtons(): Promise<void> {
-        try {
-            const allButton = this.myDeckButtonService.getAllMyDeckButton();
-            const buttonGroup = this.myDeckButtonService.getMyDeckButtonGroups();
-            allButton.forEach((buttonMesh) => {
-                if (buttonMesh) {
-                    this.scene.remove(buttonMesh.getMesh());
-                }
-            });
-            if (buttonGroup) {
-                this.scene.remove(buttonGroup);
-                buttonGroup.clear();
-                this.myDeckButtonService.resetMyDeckButtonGroups();
-            }
-            this.myDeckButtonService.resetButtonVisibility();
-        } catch (error) {
-            console.error('Failed to delete My Deck Button:', error);
-        }
-    }
-
-    private async deleteMyDeckButtonEffects(): Promise<void> {
-        try {
-            const allEffect = this.myDeckButtonEffectService.getAllMyButtonEffect();
-            const effectGroup = this.myDeckButtonEffectService.getMyDeckButtonEffectGroups();
-            allEffect.forEach((effectMesh) => {
-                if (effectMesh) {
-                    this.scene.remove(effectMesh.getMesh());
-                }
-            });
-            if (effectGroup) {
-                this.scene.remove(effectGroup);
-                effectGroup.clear();
-                this.myDeckButtonEffectService.resetMyDeckButtonEffectGroups();
-            }
-            this.myDeckButtonEffectService.resetEffectVisibility();
-        } catch (error) {
-            console.error('Failed to delete My Deck Button Effect:', error);
-        }
-    }
 
     private async deleteDeckNameEditButton(): Promise<void> {
         try {

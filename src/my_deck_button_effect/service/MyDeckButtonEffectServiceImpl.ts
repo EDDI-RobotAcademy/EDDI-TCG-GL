@@ -12,7 +12,6 @@ import {MyDeckButtonPositionRepositoryImpl} from "../../my_deck_button_position/
 import {SideScrollArea} from "../../side_scroll_area/entity/SideScrollArea";
 import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
 
-import {ButtonEffectManager} from "../../my_deck_button_manager/ButtonEffectManager";
 import {ClippingMaskManager} from "../../clipping_mask_manager/ClippingMaskManager";
 
 export class MyDeckButtonEffectServiceImpl implements MyDeckButtonEffectService {
@@ -21,22 +20,18 @@ export class MyDeckButtonEffectServiceImpl implements MyDeckButtonEffectService 
     private myDeckButtonEffectRepository: MyDeckButtonEffectRepositoryImpl;
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
 
-    private buttonEffectManger: ButtonEffectManager;
     private clippingMaskManager: ClippingMaskManager;
 
-    private constructor(myDeckButtonEffectRepository: MyDeckButtonEffectRepository) {
-        this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance();
+    private constructor(scene: THREE.Scene) {
+        this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance(scene);
         this.myDeckButtonPositionRepository = MyDeckButtonPositionRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
-
-        this.buttonEffectManger = ButtonEffectManager.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
     }
 
-    public static getInstance(): MyDeckButtonEffectServiceImpl {
+    public static getInstance(scene: THREE.Scene): MyDeckButtonEffectServiceImpl {
         if (!MyDeckButtonEffectServiceImpl.instance) {
-            const repository = MyDeckButtonEffectRepositoryImpl.getInstance();
-            MyDeckButtonEffectServiceImpl.instance = new MyDeckButtonEffectServiceImpl(repository);
+            MyDeckButtonEffectServiceImpl.instance = new MyDeckButtonEffectServiceImpl(scene);
         }
         return MyDeckButtonEffectServiceImpl.instance;
     }
@@ -132,12 +127,18 @@ export class MyDeckButtonEffectServiceImpl implements MyDeckButtonEffectService 
 
     }
 
-    public initializeDeckButtonEffect(): void {
-        this.buttonEffectManger.initializeEffectState();
-    }
+    public initializeDeckButtonEffectVisibility(): void {
+        const deckIdList = this.myDeckButtonEffectRepository.findEffectDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
 
-    public resetEffectVisibility(): void {
-        this.buttonEffectManger.resetVisibility();
+        deckIdList.forEach((deckId, index) => {
+            if (deckId === firstDeckId) {
+                this.getMyDeckButtonEffectByDeckId(deckId)?.setVisibility(true);
+            } else {
+                this.getMyDeckButtonEffectByDeckId(deckId)?.setVisibility(false);
+            }
+        });
     }
 
     public getMyDeckButtonEffectByDeckId(deckId: number): MyDeckButtonEffect | null {

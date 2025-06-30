@@ -19,9 +19,6 @@ import {DeckDeleteButtonClickDetectRepositoryImpl} from "../../deck_delete_butto
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
 
-import {ButtonStateManager} from "../../my_deck_button_manager/ButtonStateManager";
-import {ButtonEffectManager} from "../../my_deck_button_manager/ButtonEffectManager";
-
 import * as THREE from "three";
 
 export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDetectService {
@@ -40,14 +37,11 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
     private deckDeleteButtonClickDetectRepository: DeckDeleteButtonClickDetectRepositoryImpl;
 
-    private buttonStateManager: ButtonStateManager;
-    private buttonEffectManager: ButtonEffectManager;
-
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
-        this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance();
+        this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance(scene);
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.cameraRepository = CameraRepositoryImpl.getInstance();
-        this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance();
+        this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance(scene);
         this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance(scene);
         this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance(scene);
         this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance(scene);
@@ -57,9 +51,6 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.myDeckNumberOfSelectedCardsRepository = MyDeckNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
         this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
         this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
-
-        this.buttonStateManager = ButtonStateManager.getInstance();
-        this.buttonEffectManager = ButtonEffectManager.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckButtonClickDetectServiceImpl {
@@ -178,20 +169,20 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         return this.myDeckButtonRepository.findButtonDeckIdList();
     }
 
-    public getButtonVisibility(deckId: number): boolean {
-        return this.buttonStateManager.findButtonVisibility(deckId);
+    public getButtonVisibility(deckId: number): boolean | undefined {
+        return this.myDeckButtonRepository.findButtonByDeckId(deckId)?.getVisibility();
     }
 
     public setButtonVisibility(deckId: number, isVisible: boolean): void {
-        this.buttonStateManager.setButtonVisibility(deckId, isVisible);
+        this.myDeckButtonRepository.findButtonByDeckId(deckId)?.setVisibility(isVisible);
     }
 
-    public getEffectVisibility(deckId: number): boolean {
-        return this.buttonEffectManager.findVisibility(deckId);
+    public getEffectVisibility(deckId: number): boolean | undefined {
+        return this.myDeckButtonEffectRepository.findEffectByDeckId(deckId)?.getVisibility();
     }
 
     public setEffectVisibility(deckId: number, isVisible: boolean): void {
-        this.buttonEffectManager.setEffectVisibility(deckId, isVisible);
+        this.myDeckButtonEffectRepository.findEffectByDeckId(deckId)?.setVisibility(isVisible);
     }
 
     private getDeckButtonById(buttonId: number): MyDeckButton | null {

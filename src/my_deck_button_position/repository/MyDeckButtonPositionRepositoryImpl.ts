@@ -4,21 +4,14 @@ import { MyDeckButtonPositionRepository } from "./MyDeckButtonPositionRepository
 
 export class MyDeckButtonPositionRepositoryImpl implements MyDeckButtonPositionRepository {
     private static instance: MyDeckButtonPositionRepositoryImpl;
-//     private positionMap: Map<number, MyDeckButtonPosition>;
-//     private deckToPositionMap: Map<number, number>;
-    private positionMap: Map<number, { deckId: number, position: MyDeckButtonPosition}> = new Map();;
-
+    private positionMap: Map<number, { deckId: number, position: MyDeckButtonPosition}> = new Map();
 
     private initialX = - 0.38;
     private initialY = 0.153;
     private incrementY = - 0.075;
-    private maxButtonsPerPage = 6;
     private positionIndex = 0;
 
-    private constructor() {
-//         this.positionMap = new Map<number, MyDeckButtonPosition>();
-//         this.deckToPositionMap = new Map<number, number>();
-    }
+    private constructor() {}
 
     public static getInstance(): MyDeckButtonPositionRepositoryImpl {
         if (!MyDeckButtonPositionRepositoryImpl.instance) {
@@ -28,29 +21,27 @@ export class MyDeckButtonPositionRepositoryImpl implements MyDeckButtonPositionR
     }
 
     public addMyDeckButtonPosition(deckId: number): MyDeckButtonPosition {
-        if (this.containsDeckIdInMap(deckId) == false) {
-            this.positionIndex++;
+        if (this.containsDeckIdInMap(deckId)) {
+            return this.findPositionByDeckId(deckId)!;
         }
+
         const positionX = this.initialX;
-//         const positionY = this.initialY + ((deckId - 1) % this.maxButtonsPerPage) * this.incrementY;
-        const positionY = this.initialY + (this.positionIndex - 1) * this.incrementY;
+        const positionY = this.initialY + this.positionMap.size * this.incrementY;
 
         const position = new MyDeckButtonPosition(positionX, positionY);
         return position;
     }
 
-    save(deckId: number, position: MyDeckButtonPosition): void {
-//         this.positionMap.set(position.id, position);
-//         this.deckToPositionMap.set(deckId, position.id);
+    public save(deckId: number, position: MyDeckButtonPosition): void {
         this.positionMap.set(position.id, {deckId, position: position});
     }
 
-    findById(positionId: number): MyDeckButtonPosition | undefined {
+    public findById(positionId: number): MyDeckButtonPosition | undefined {
         const position = this.positionMap.get(positionId);
         return position ? position.position : undefined;
     }
 
-    findAll(): MyDeckButtonPosition[] {
+    public findAll(): MyDeckButtonPosition[] {
         return Array.from(this.positionMap.values()).map(({ position }) => position);
     }
 
@@ -63,7 +54,7 @@ export class MyDeckButtonPositionRepositoryImpl implements MyDeckButtonPositionR
         return null;
     }
 
-    deleteById(positionId: number): void {
+    public deleteById(positionId: number): void {
         this.positionMap.delete(positionId);
 
         let newPositionIndex = 0;
@@ -77,14 +68,13 @@ export class MyDeckButtonPositionRepositoryImpl implements MyDeckButtonPositionR
         }
 
         this.positionMap = updatedPositionMap; // 업데이트된 맵을 적용
-        this.positionIndex = this.positionMap.size; // 인덱스 감소 처리
     }
 
-    deleteAll(): void {
+    public deleteAll(): void {
         this.positionMap.clear();
     }
 
-    count(): number {
+    public count(): number {
         return this.positionMap.size;
     }
 
