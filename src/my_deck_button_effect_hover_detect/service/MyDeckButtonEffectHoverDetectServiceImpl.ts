@@ -25,7 +25,7 @@ export class MyDeckButtonEffectHoverDetectServiceImpl implements MyDeckButtonEff
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.myDeckButtonEffectHoverDetectRepository = MyDeckButtonEffectHoverDetectRepositoryImpl.getInstance();
-        this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance();
+        this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance(scene);
         this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance();
         this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();

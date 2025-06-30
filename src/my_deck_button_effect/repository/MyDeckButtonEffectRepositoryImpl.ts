@@ -4,24 +4,28 @@ import {MyDeckButtonEffect} from "../entity/MyDeckButtonEffect";
 import {TextureManager} from "../../texture_manager/TextureManager";
 import {MeshGenerator} from "../../mesh/generator";
 import {Vector2d} from "../../common/math/Vector2d";
+import {MeshDestroyer} from "../../mesh/destroyer";
 
 export class MyDeckButtonEffectRepositoryImpl implements MyDeckButtonEffectRepository {
     private static instance: MyDeckButtonEffectRepositoryImpl;
     private deckButtonEffectMap: Map<number, { deckId: number, effectMesh: MyDeckButtonEffect }> = new Map(); // effect unique id: {deck id: button mesh}
     private deckButtonEffectGroup: THREE.Group | null = null;
+
     private textureManager: TextureManager;
+    private meshDestroyer: MeshDestroyer;
 
     private readonly BUTTON_WIDTH: number = 0.18 //0.257
     private readonly BUTTON_HEIGHT: number = 90 / 1080
 
-    private constructor(textureManager: TextureManager) {
+    private constructor(textureManager: TextureManager, scene: THREE.Scene) {
         this.textureManager = textureManager;
+        this.meshDestroyer = new MeshDestroyer(scene);
     }
 
-    public static getInstance(): MyDeckButtonEffectRepositoryImpl {
+    public static getInstance(scene: THREE.Scene): MyDeckButtonEffectRepositoryImpl {
         if (!MyDeckButtonEffectRepositoryImpl.instance) {
             const textureManager = TextureManager.getInstance()
-            MyDeckButtonEffectRepositoryImpl.instance = new MyDeckButtonEffectRepositoryImpl(textureManager);
+            MyDeckButtonEffectRepositoryImpl.instance = new MyDeckButtonEffectRepositoryImpl(textureManager, scene);
         }
         return MyDeckButtonEffectRepositoryImpl.instance;
     }
@@ -34,8 +38,6 @@ export class MyDeckButtonEffectRepositoryImpl implements MyDeckButtonEffectRepos
         }
 
         const buttonWidth = this.BUTTON_WIDTH * window.innerWidth;
-//         const buttonHeight = this.BUTTON_HEIGHT * window.innerHeight;
-//         const buttonHeight = buttonWidth * 0.3;
         const buttonHeight = buttonWidth * (240/1040);
 
         const buttonPositionX = position.getX() * window.innerWidth;
@@ -44,19 +46,14 @@ export class MyDeckButtonEffectRepositoryImpl implements MyDeckButtonEffectRepos
         const buttonMesh = MeshGenerator.createMesh(texture, buttonWidth, buttonHeight, position);
         buttonMesh.position.set(buttonPositionX, buttonPositionY, 0);
 
-        const newButtonEffect = new MyDeckButtonEffect(buttonWidth, buttonHeight, buttonMesh, position);
+        const newButtonEffect = new MyDeckButtonEffect(buttonMesh, position);
         this.deckButtonEffectMap.set(newButtonEffect.id, { deckId, effectMesh: newButtonEffect });
 
         return newButtonEffect;
     }
 
     public findById(effectId: number): MyDeckButtonEffect | null {
-        const effect = this.deckButtonEffectMap.get(effectId);
-        if (effect) {
-            return effect.effectMesh;
-        } else {
-            return null;
-        }
+        return this.deckButtonEffectMap.get(effectId)?.effectMesh ?? null;
     }
 
     public findAll(): MyDeckButtonEffect[] {
@@ -91,36 +88,38 @@ export class MyDeckButtonEffectRepositoryImpl implements MyDeckButtonEffectRepos
     }
 
     public deleteById(effectId: number): void {
+        const effect = this.findById(effectId);
+        if (!effect) return;
+
+        const mesh = effect.getMesh();
+        this.meshDestroyer.destroyMesh(mesh);
+
+        if (this.deckButtonEffectGroup) {
+            this.deckButtonEffectGroup.remove(mesh);
+        }
+
         this.deckButtonEffectMap.delete(effectId);
     }
 
     public deleteEffectByDeckId(deckId: number): void {
         const effectId = this.findEffectIdByDeckId(deckId);
-        if (effectId) {
-            this.deckButtonEffectMap.delete(effectId);
+        if (effectId === null) return;
+
+        const effect = this.findById(effectId);
+        if (!effect) return;
+
+        const mesh = effect.getMesh();
+        this.meshDestroyer.destroyMesh(mesh);
+
+        if (this.deckButtonEffectGroup) {
+            this.deckButtonEffectGroup.remove(mesh);
         }
+
+        this.deckButtonEffectMap.delete(effectId);
     }
 
     public deleteAll(): void {
         this.deckButtonEffectMap.clear();
-    }
-
-    hideById(id: number): boolean {
-        const effect = this.findById(id);
-        if (effect) {
-            effect.getMesh().visible = false;
-            return true;
-        }
-        return false;
-    }
-
-    showById(id: number): boolean {
-        const button = this.findById(id);
-        if (button) {
-            button.getMesh().visible = true;
-            return true;
-        }
-        return false;
     }
 
     public findAllEffectGroups(): THREE.Group {
@@ -135,20 +134,6 @@ export class MyDeckButtonEffectRepositoryImpl implements MyDeckButtonEffectRepos
 
     public resetEffectGroups(): void {
         this.deckButtonEffectGroup = null;
-    }
-
-    public hideEffect(deckId: number): void {
-        const effect = this.findEffectByDeckId(deckId);
-        if (effect) {
-            effect.getMesh().visible = false;
-        }
-    }
-
-    public showEffect(deckId: number): void {
-        const effect = this.findEffectByDeckId(deckId);
-        if (effect) {
-            effect.getMesh().visible = true;
-        }
     }
 
 }

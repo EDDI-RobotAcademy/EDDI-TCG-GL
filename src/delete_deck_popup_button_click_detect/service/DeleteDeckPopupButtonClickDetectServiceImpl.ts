@@ -84,8 +84,8 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
 
         this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance();
         this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance();
-        this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance();
-        this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance();
+        this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance(scene);
+        this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance(scene);
         this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance(scene);
         this.myDeckNameTextRepository = MyDeckNameTextRepositoryImpl.getInstance();
         this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance(scene);
@@ -148,14 +148,15 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
                     this.deleteCard();
                     this.deleteBlock();
                     this.deleteDeckCardName();
-                    this.deleteCardMapData();
-                    this.deleteDeckButtonMapData();
-                    this.deleteTextMapData();
                     this.deleteDeckDeleteButton();
                     this.deleteDeckNameEditButton();
                     this.deleteDeckButton();
                     this.deleteDeckButtonEffect();
                     this.deleteDeckNameText();
+
+                    this.deleteCardMapData();
+                    this.deleteDeckButtonMapData();
+                    this.deleteTextMapData();
 
                     break;
                 default:
