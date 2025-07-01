@@ -113,7 +113,6 @@ export class TCGJustTestMyDeckView {
     private background: NonBackgroundImage | null = null;
     private backgroundService = BackgroundServiceImpl.getInstance();
 
-    private myDeckNameTextService = MyDeckNameTextServiceImpl.getInstance();
 //     private deckMakeButtonService = DeckMakeButtonServiceImpl.getInstance();
     private transparentBackgroundService = TransparentBackgroundServiceImpl.getInstance();
 //     private decKMakePopupBackgroundService = DeckMakePopupBackgroundServiceImpl.getInstance();
@@ -144,6 +143,7 @@ export class TCGJustTestMyDeckView {
     private myDeckButtonEffectService: MyDeckButtonEffectServiceImpl;
     private deckDeleteButtonService: DeckDeleteButtonServiceImpl;
     private deckNameEditButtonService: DeckNameEditButtonServiceImpl;
+    private myDeckNameTextService: MyDeckNameTextServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -220,6 +220,7 @@ export class TCGJustTestMyDeckView {
         this.myDeckButtonEffectService = MyDeckButtonEffectServiceImpl.getInstance(this.scene);
         this.deckDeleteButtonService = DeckDeleteButtonServiceImpl.getInstance(this.scene);
         this.deckNameEditButtonService = DeckNameEditButtonServiceImpl.getInstance(this.scene);
+        this.myDeckNameTextService = MyDeckNameTextServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -258,9 +259,6 @@ export class TCGJustTestMyDeckView {
 //         this.renderer.domElement.addEventListener('mousedown', async (e) => {
 //             const popupButtonClick = await this.deleteDeckPopupButtonClickDetectService.onMouseDown(e);
 //             if (popupButtonClick) {
-//                 await this.deleteDeckNameEditButton();
-//                 await this.deleteDeckNameText();
-//
 //                 await this.addMyDeckCard();
 //                 await this.addMyDeckBlock();
 //                 await this.addMyDeckCardName();
@@ -1007,44 +1005,6 @@ export class TCGJustTestMyDeckView {
 //             console.error('Failed to add DeckMakePopupInputContainer:', error);
 //         }
 //     }
-
-    private async deleteDeckNameEditButton(): Promise<void> {
-        try {
-            const allButton = this.deckNameEditButtonService.getAllButton();
-            const buttonGroup = this.deckNameEditButtonService.getButtonGroup();
-            allButton.forEach((buttonMesh) => {
-                if (buttonMesh) {
-                    this.scene.remove(buttonMesh.getMesh());
-                }
-            });
-            if (buttonGroup) {
-                this.scene.remove(buttonGroup);
-                buttonGroup.clear();
-                this.deckNameEditButtonService.resetButtonGroup();
-            }
-        } catch (error) {
-            console.error('Failed to delete Deck Name Edit Button:', error);
-        }
-    }
-
-    private async deleteDeckNameText(): Promise<void> {
-        try {
-            const allText = this.myDeckNameTextService.getAllMyDeckNameText();
-            const textGroup = this.myDeckNameTextService.getMyDeckTextGroups();
-            allText.forEach((text) => {
-                if (text) {
-                    this.scene.remove(text.getMesh());
-                }
-            });
-            if (textGroup) {
-                this.scene.remove(textGroup);
-                textGroup.clear();
-                this.myDeckNameTextService.resetMyDeckTextGroups();
-            }
-        } catch (error) {
-            console.error('Failed to delete Deck Name Text:', error);
-        }
-    }
 
     private onWindowResize(): void {
         const newWidth = window.innerWidth;

@@ -4,20 +4,25 @@ import {MyDeckNameText} from "../entity/MyDeckNameText";
 import {TextGenerator} from "../../text/generator";
 import {MeshGenerator} from "../../mesh/generator";
 import {Vector2d} from "../../common/math/Vector2d";
+import {MeshDestroyer} from "../../mesh/destroyer";
 
 export class MyDeckNameTextRepositoryImpl implements MyDeckNameTextRepository {
     private static instance: MyDeckNameTextRepositoryImpl;
     private deckNameTextMap: Map<number, { deckId: number, textMesh: MyDeckNameText }> = new Map(); // text unique id: {deck id: text mesh}
     private deckNameTextGroup: THREE.Group | null = null;
 
+    private meshDestroyer: MeshDestroyer;
+
     private readonly NAME_WIDTH: number = 0.09375
     private readonly NAME_HEIGHT: number = 0.046296
 
-    private constructor() {}
+    private constructor(scene: THREE.Scene) {
+        this.meshDestroyer = new MeshDestroyer(scene);
+    }
 
-    public static getInstance(): MyDeckNameTextRepositoryImpl {
+    public static getInstance(scene: THREE.Scene): MyDeckNameTextRepositoryImpl {
         if (!MyDeckNameTextRepositoryImpl.instance) {
-            MyDeckNameTextRepositoryImpl.instance = new MyDeckNameTextRepositoryImpl();
+            MyDeckNameTextRepositoryImpl.instance = new MyDeckNameTextRepositoryImpl(scene);
         }
         return MyDeckNameTextRepositoryImpl.instance;
     }
@@ -51,12 +56,7 @@ export class MyDeckNameTextRepositoryImpl implements MyDeckNameTextRepository {
     }
 
     public findById(textUniqueId: number): MyDeckNameText | null {
-        const text = this.deckNameTextMap.get(textUniqueId);
-        if (text) {
-            return text.textMesh;
-        } else {
-            return null;
-        }
+        return this.deckNameTextMap.get(textUniqueId)?.textMesh ?? null;
     }
 
     public findAll(): MyDeckNameText[] {
@@ -91,23 +91,38 @@ export class MyDeckNameTextRepositoryImpl implements MyDeckNameTextRepository {
     }
 
     public findDeckIdByTextId(textUniqueId: number): number | null {
-        const text = this.deckNameTextMap.get(textUniqueId);
-        if (text) {
-            return text.deckId;
-        } else {
-            return null;
-        }
+        return this.deckNameTextMap.get(textUniqueId)?.deckId ?? null;
     }
 
     public deleteById(textUniqueId: number): void {
+        const text = this.findById(textUniqueId);
+        if (!text) return;
+
+        const mesh = text.getMesh();
+        this.meshDestroyer.destroyMesh(mesh);
+
+        if (this.deckNameTextGroup) {
+            this.deckNameTextGroup.remove(mesh);
+        }
+
         this.deckNameTextMap.delete(textUniqueId);
     }
 
     public deleteTextByDeckId(deckId: number): void {
         const textId = this.findNameTextIdByDeckId(deckId);
-        if (textId) {
-            this.deckNameTextMap.delete(textId);
+        if (textId == null) return;
+
+        const text = this.findById(textId);
+        if (!text) return;
+
+        const mesh = text.getMesh();
+        this.meshDestroyer.destroyMesh(mesh);
+
+        if (this.deckNameTextGroup) {
+            this.deckNameTextGroup.remove(mesh);
         }
+
+        this.deckNameTextMap.delete(textId);
     }
 
     public deleteAll(): void {
@@ -127,20 +142,6 @@ export class MyDeckNameTextRepositoryImpl implements MyDeckNameTextRepository {
 
     public resetTextGroups(): void {
         this.deckNameTextGroup = null;
-    }
-
-    public hideText(deckId: number): void {
-        const text = this.findNameTextByDeckId(deckId);
-        if (text) {
-            text.getMesh().visible = false;
-        }
-    }
-
-    public showText(deckId: number): void {
-        const text = this.findNameTextByDeckId(deckId);
-        if (text) {
-            text.getMesh().visible = true;
-        }
     }
 
 }

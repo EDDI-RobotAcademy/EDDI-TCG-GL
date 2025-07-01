@@ -22,27 +22,27 @@ export class MyDeckNameTextPositionRepositoryImpl implements MyDeckNameTextPosit
     }
 
     public addMyDeckNameTextPosition(deckId: number): MyDeckNameTextPosition {
-        if (this.containsDeckIdInMap(deckId) == false) {
-            this.positionIndex++;
+        if (this.containsDeckIdInMap(deckId)) {
+            this.findPositionByDeckId(deckId);
         }
 
         const positionX = this.initialX;
-        const positionY = this.initialY + (this.positionIndex - 1) * this.incrementY;
+        const positionY = this.initialY + this.positionMap.size * this.incrementY;
 
         const position = new MyDeckNameTextPosition(positionX, positionY);
         return position;
     }
 
-    save(deckId: number, position: MyDeckNameTextPosition): void {
+    public save(deckId: number, position: MyDeckNameTextPosition): void {
         this.positionMap.set(position.id, {deckId, position: position});
     }
 
-    findById(positionId: number): MyDeckNameTextPosition | undefined {
+    public findById(positionId: number): MyDeckNameTextPosition | undefined {
         const position = this.positionMap.get(positionId);
         return position ? position.position : undefined;
     }
 
-    findAll(): MyDeckNameTextPosition[] {
+    public findAll(): MyDeckNameTextPosition[] {
         return Array.from(this.positionMap.values()).map(({ position }) => position);
     }
 
@@ -55,7 +55,7 @@ export class MyDeckNameTextPositionRepositoryImpl implements MyDeckNameTextPosit
         return null;
     }
 
-    deleteById(positionId: number): void {
+    public deleteById(positionId: number): void {
         this.positionMap.delete(positionId);
 
         let newPositionIndex = 0;
@@ -69,14 +69,13 @@ export class MyDeckNameTextPositionRepositoryImpl implements MyDeckNameTextPosit
         }
 
         this.positionMap = updatedPositionMap; // 업데이트된 맵을 적용
-        this.positionIndex = this.positionMap.size; // 인덱스 감소 처리
     }
 
-    deleteAll(): void {
+    public deleteAll(): void {
         this.positionMap.clear();
     }
 
-    count(): number {
+    public count(): number {
         return this.positionMap.size;
     }
 
