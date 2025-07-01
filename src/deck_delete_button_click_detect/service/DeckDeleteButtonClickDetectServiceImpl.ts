@@ -27,7 +27,7 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
-        this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance();
+        this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance(scene);
         this.transparentBackgroundRepository = TransparentBackgroundRepositoryImpl.getInstance();
         this.deleteDeckPopupWindowRepository = DeleteDeckPopupWindowRepositoryImpl.getInstance();
         this.deleteDeckPopupButtonRepository = DeleteDeckPopupButtonRepositoryImpl.getInstance();

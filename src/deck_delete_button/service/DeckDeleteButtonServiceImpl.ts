@@ -19,16 +19,16 @@ export class DeckDeleteButtonServiceImpl implements DeckDeleteButtonService {
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
     private clippingMaskManager: ClippingMaskManager;
 
-    private constructor() {
-        this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance();
+    private constructor(scene: THREE.Scene) {
+        this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance(scene);
         this.deckDeleteButtonPositionRepository = DeckDeleteButtonPositionRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
     }
 
-    public static getInstance(): DeckDeleteButtonServiceImpl {
+    public static getInstance(scene: THREE.Scene): DeckDeleteButtonServiceImpl {
         if (!DeckDeleteButtonServiceImpl.instance) {
-            DeckDeleteButtonServiceImpl.instance = new DeckDeleteButtonServiceImpl();
+            DeckDeleteButtonServiceImpl.instance = new DeckDeleteButtonServiceImpl(scene);
         }
         return DeckDeleteButtonServiceImpl.instance;
     }
@@ -130,15 +130,15 @@ export class DeckDeleteButtonServiceImpl implements DeckDeleteButtonService {
     }
 
     private getPositionByDeckId(deckId: number): DeckDeleteButtonPosition | null {
-        return this.deckDeleteButtonPositionRepository.findPositionByDeckId(deckId) || null;
+        return this.deckDeleteButtonPositionRepository.findPositionByDeckId(deckId) ?? null;
     }
 
     private getPositionByPositionId(positionId: number): DeckDeleteButtonPosition | null {
-        return this.deckDeleteButtonPositionRepository.findPositionByPositionId(positionId) || null;
+        return this.deckDeleteButtonPositionRepository.findPositionByPositionId(positionId) ?? null;
     }
 
     private getDeckIdByButtonId(buttonId: number): number | null {
-        return this.deckDeleteButtonRepository.findDeckIdByButtonUniqueId(buttonId) || null;
+        return this.deckDeleteButtonRepository.findDeckIdByButtonUniqueId(buttonId) ?? null;
     }
 
     public getAllButton(): DeckDeleteButton[] {

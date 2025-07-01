@@ -31,7 +31,7 @@ export class MyDeckScrollServiceImpl implements MyDeckScrollService {
         this.myDeckButtonEffectRepository = MyDeckButtonEffectRepositoryImpl.getInstance(scene);
         this.myDeckNameTextRepository = MyDeckNameTextRepositoryImpl.getInstance();
         this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance();
-        this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance();
+        this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance(scene);
         this.sideScrollAreaDetectRepository = SideScrollAreaDetectRepositoryImpl.getInstance();
     }
 
