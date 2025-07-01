@@ -4,23 +4,27 @@ import {DeckNameEditButton} from "../entity/DeckNameEditButton";
 import {TextureManager} from "../../texture_manager/TextureManager";
 import {MeshGenerator} from "../../mesh/generator";
 import {Vector2d} from "../../common/math/Vector2d";
+import {MeshDestroyer} from "../../mesh/destroyer";
 
 export class DeckNameEditButtonRepositoryImpl implements DeckNameEditButtonRepository {
     private static instance: DeckNameEditButtonRepositoryImpl;
     private buttonMap: Map<number, { deckId: number, buttonMesh: DeckNameEditButton }> = new Map(); // button Unique ID: [deck ID: button mesh]
-    private textureManager: TextureManager;
     private buttonGroup: THREE.Group | null = null;
+
+    private textureManager: TextureManager;
+    private meshDestroyer: MeshDestroyer;
 
     private readonly BUTTON_WIDTH: number = 0.034
 
-    private constructor(textureManager: TextureManager) {
+    private constructor(textureManager: TextureManager, scene: THREE.Scene) {
         this.textureManager = textureManager;
+        this.meshDestroyer = new MeshDestroyer(scene);
     }
 
-    public static getInstance(): DeckNameEditButtonRepositoryImpl {
+    public static getInstance(scene: THREE.Scene): DeckNameEditButtonRepositoryImpl {
         if (!DeckNameEditButtonRepositoryImpl.instance) {
             const textureManager = TextureManager.getInstance()
-            DeckNameEditButtonRepositoryImpl.instance = new DeckNameEditButtonRepositoryImpl(textureManager);
+            DeckNameEditButtonRepositoryImpl.instance = new DeckNameEditButtonRepositoryImpl(textureManager, scene);
         }
         return DeckNameEditButtonRepositoryImpl.instance;
     }
@@ -60,21 +64,11 @@ export class DeckNameEditButtonRepositoryImpl implements DeckNameEditButtonRepos
     }
 
     public findButtonByButtonUniqueId(buttonUniqueId: number): DeckNameEditButton | null {
-        const button = this.buttonMap.get(buttonUniqueId);
-        if (button) {
-            return button.buttonMesh;
-        } else {
-            return null;
-        }
+        return this.buttonMap.get(buttonUniqueId)?.buttonMesh ?? null;
     }
 
     public findDeckIdByButtonUniqueId(buttonUniqueId: number): number | null {
-        const button = this.buttonMap.get(buttonUniqueId);
-        if (button) {
-            return button.deckId;
-        } else {
-            return null;
-        }
+        return this.buttonMap.get(buttonUniqueId)?.deckId ?? null;
     }
 
     public findButtonDeckIdList(): number[] {
@@ -82,6 +76,16 @@ export class DeckNameEditButtonRepositoryImpl implements DeckNameEditButtonRepos
     }
 
     public deleteButtonByButtonUniqueId(buttonUniqueId: number): void {
+        const button = this.findButtonByButtonUniqueId(buttonUniqueId);
+        if (!button) return;
+
+        const mesh = button.getMesh();
+        this.meshDestroyer.destroyMesh(mesh);
+
+        if (this.buttonGroup) {
+            this.buttonGroup.remove(mesh);
+        }
+
         this.buttonMap.delete(buttonUniqueId);
     }
 

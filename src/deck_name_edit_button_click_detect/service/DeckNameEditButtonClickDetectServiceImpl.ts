@@ -15,7 +15,7 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.deckNameEditButtonClickDetectRepository = DeckNameEditButtonClickDetectRepositoryImpl.getInstance();
-        this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance();
+        this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance(scene);
         this.cameraRepository = CameraRepositoryImpl.getInstance();
     }
 

@@ -9,8 +9,6 @@ import {MyDeckNameTextPosition} from "../../my_deck_name_text_position/entity/My
 import {MyDeckNameTextPositionRepositoryImpl} from "../../my_deck_name_text_position/repository/MyDeckNameTextPositionRepositoryImpl";
 import {SideScrollArea} from "../../side_scroll_area/entity/SideScrollArea";
 import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
-
-import {NameTextStateManager} from "../../my_deck_name_text_manager/NameTextStateManager";
 import {ClippingMaskManager} from "../../clipping_mask_manager/ClippingMaskManager";
 
 export class MyDeckNameTextServiceImpl implements MyDeckNameTextService {
@@ -18,23 +16,18 @@ export class MyDeckNameTextServiceImpl implements MyDeckNameTextService {
     private myDeckNameTextRepository: MyDeckNameTextRepositoryImpl;
     private myDeckNameTextPositionRepository: MyDeckNameTextPositionRepositoryImpl;
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
-
-    private nameTextStateManager: NameTextStateManager;
     private clippingMaskManager: ClippingMaskManager;
 
-    private constructor(myDeckNameTextRepository: MyDeckNameTextRepository) {
-        this.myDeckNameTextRepository = MyDeckNameTextRepositoryImpl.getInstance();
+    private constructor(scene: THREE.Scene) {
+        this.myDeckNameTextRepository = MyDeckNameTextRepositoryImpl.getInstance(scene);
         this.myDeckNameTextPositionRepository = MyDeckNameTextPositionRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
-
-        this.nameTextStateManager = NameTextStateManager.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
     }
 
-    public static getInstance(): MyDeckNameTextServiceImpl {
+    public static getInstance(scene: THREE.Scene): MyDeckNameTextServiceImpl {
         if (!MyDeckNameTextServiceImpl.instance) {
-            const repository = MyDeckNameTextRepositoryImpl.getInstance();
-            MyDeckNameTextServiceImpl.instance = new MyDeckNameTextServiceImpl(repository);
+            MyDeckNameTextServiceImpl.instance = new MyDeckNameTextServiceImpl(scene);
         }
         return MyDeckNameTextServiceImpl.instance;
     }

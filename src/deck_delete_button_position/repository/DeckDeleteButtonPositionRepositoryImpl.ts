@@ -9,7 +9,6 @@ export class DeckDeleteButtonPositionRepositoryImpl implements DeckDeleteButtonP
     private positionX = - 0.31;
     private initialY = 0.153;
     private incrementY = - 0.075;
-    private positionIndex = 0;
 
     private constructor() {}
 
@@ -21,11 +20,11 @@ export class DeckDeleteButtonPositionRepositoryImpl implements DeckDeleteButtonP
     }
 
     public addDeckDeleteButtonPosition(deckId: number): DeckDeleteButtonPosition {
-        if (this.containsDeckIdInMap(deckId) == false) {
-            this.positionIndex++;
+        if (this.containsDeckIdInMap(deckId)) {
+            this.findPositionByPositionId(deckId)!;
         }
         const positionX = this.positionX;
-        const positionY = this.initialY + (this.positionIndex - 1) * this.incrementY;
+        const positionY = this.initialY + this.positionMap.size * this.incrementY;
 
         const newPosition = new DeckDeleteButtonPosition(positionX, positionY);
         this.positionMap.set(newPosition.id, { deckId, position: newPosition });
@@ -34,12 +33,7 @@ export class DeckDeleteButtonPositionRepositoryImpl implements DeckDeleteButtonP
     }
 
     public findPositionByPositionId(positionId: number): DeckDeleteButtonPosition | null {
-        const position = this.positionMap.get(positionId);
-        if (position) {
-            return position.position;
-        } else {
-            return null;
-        }
+        return this.positionMap.get(positionId)?.position ?? null;
     }
 
     public findPositionByDeckId(deckId: number): DeckDeleteButtonPosition | null {
@@ -81,7 +75,6 @@ export class DeckDeleteButtonPositionRepositoryImpl implements DeckDeleteButtonP
             newPositionIndex++;
         }
         this.positionMap = newPositionMap;
-        this.positionIndex = this.positionMap.size; // 인덱스 감소 처리
     }
 
     public count(): number {

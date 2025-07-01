@@ -113,7 +113,6 @@ export class TCGJustTestMyDeckView {
     private background: NonBackgroundImage | null = null;
     private backgroundService = BackgroundServiceImpl.getInstance();
 
-    private myDeckNameTextService = MyDeckNameTextServiceImpl.getInstance();
 //     private deckMakeButtonService = DeckMakeButtonServiceImpl.getInstance();
     private transparentBackgroundService = TransparentBackgroundServiceImpl.getInstance();
 //     private decKMakePopupBackgroundService = DeckMakePopupBackgroundServiceImpl.getInstance();
@@ -121,8 +120,6 @@ export class TCGJustTestMyDeckView {
 //     private deckMakePopupInputContainerService = DeckMakePopupInputContainerServiceImpl.getInstance();
     private sideScrollAreaService = SideScrollAreaServiceImpl.getInstance();
     private buildDeckButtonService = BuildDeckButtonServiceImpl.getInstance();
-    private deckNameEditButtonService = DeckNameEditButtonServiceImpl.getInstance();
-    private deckDeleteButtonService = DeckDeleteButtonServiceImpl.getInstance();
     private deleteDeckPopupWindowService = DeleteDeckPopupWindowServiceImpl.getInstance();
     private deleteDeckPopupButtonService = DeleteDeckPopupButtonServiceImpl.getInstance();
     private deckEditButtonService = DeckEditButtonServiceImpl.getInstance();
@@ -144,6 +141,9 @@ export class TCGJustTestMyDeckView {
     private myDeckCardService: MyDeckCardServiceImpl;
     private myDeckButtonService: MyDeckButtonServiceImpl;
     private myDeckButtonEffectService: MyDeckButtonEffectServiceImpl;
+    private deckDeleteButtonService: DeckDeleteButtonServiceImpl;
+    private deckNameEditButtonService: DeckNameEditButtonServiceImpl;
+    private myDeckNameTextService: MyDeckNameTextServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -218,6 +218,9 @@ export class TCGJustTestMyDeckView {
         this.myDeckCardService = MyDeckCardServiceImpl.getInstance(this.scene);
         this.myDeckButtonService = MyDeckButtonServiceImpl.getInstance(this.scene);
         this.myDeckButtonEffectService = MyDeckButtonEffectServiceImpl.getInstance(this.scene);
+        this.deckDeleteButtonService = DeckDeleteButtonServiceImpl.getInstance(this.scene);
+        this.deckNameEditButtonService = DeckNameEditButtonServiceImpl.getInstance(this.scene);
+        this.myDeckNameTextService = MyDeckNameTextServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -254,16 +257,8 @@ export class TCGJustTestMyDeckView {
         // To-do: 팝업 창이 나타났을 때 팝업 창의 버튼 외의 다른 버튼들은 클릭되면 안 되게 해야 함.
 //         this.deleteDeckPopupButtonClickDetectService = DeleteDeckPopupButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
 //         this.renderer.domElement.addEventListener('mousedown', async (e) => {
-// //                 await this.deleteAllCard();
-//             await this.deleteAllDeckBlock();
-//             await this.deleteAllDeckCardName();
-//
 //             const popupButtonClick = await this.deleteDeckPopupButtonClickDetectService.onMouseDown(e);
 //             if (popupButtonClick) {
-//                 await this.deleteDeckNameEditButton();
-//                 await this.deleteDeckDeleteButton();
-//                 await this.deleteDeckNameText();
-//
 //                 await this.addMyDeckCard();
 //                 await this.addMyDeckBlock();
 //                 await this.addMyDeckCardName();
@@ -1010,127 +1005,6 @@ export class TCGJustTestMyDeckView {
 //             console.error('Failed to add DeckMakePopupInputContainer:', error);
 //         }
 //     }
-
-    private async deleteDeckNameEditButton(): Promise<void> {
-        try {
-            const allButton = this.deckNameEditButtonService.getAllButton();
-            const buttonGroup = this.deckNameEditButtonService.getButtonGroup();
-            allButton.forEach((buttonMesh) => {
-                if (buttonMesh) {
-                    this.scene.remove(buttonMesh.getMesh());
-                }
-            });
-            if (buttonGroup) {
-                this.scene.remove(buttonGroup);
-                buttonGroup.clear();
-                this.deckNameEditButtonService.resetButtonGroup();
-            }
-        } catch (error) {
-            console.error('Failed to delete Deck Name Edit Button:', error);
-        }
-    }
-
-    private async deleteDeckDeleteButton(): Promise<void> {
-        try {
-            const allButton = this.deckDeleteButtonService.getAllButton();
-            const buttonGroup = this.deckDeleteButtonService.getButtonGroup();
-            allButton.forEach((buttonMesh) => {
-                if (buttonMesh) {
-                    this.scene.remove(buttonMesh.getMesh());
-                }
-            });
-            if (buttonGroup) {
-                this.scene.remove(buttonGroup);
-                buttonGroup.clear();
-                this.deckDeleteButtonService.resetButtonGroup();
-            }
-        } catch (error) {
-            console.error('Failed to delete Deck Delete Button:', error);
-        }
-    }
-
-    private async deleteDeckNameText(): Promise<void> {
-        try {
-            const allText = this.myDeckNameTextService.getAllMyDeckNameText();
-            const textGroup = this.myDeckNameTextService.getMyDeckTextGroups();
-            allText.forEach((text) => {
-                if (text) {
-                    this.scene.remove(text.getMesh());
-                }
-            });
-            if (textGroup) {
-                this.scene.remove(textGroup);
-                textGroup.clear();
-                this.myDeckNameTextService.resetMyDeckTextGroups();
-            }
-        } catch (error) {
-            console.error('Failed to delete Deck Name Text:', error);
-        }
-    }
-
-//     private async deleteAllCard(): Promise<void> {
-//         try {
-//             const allDeckIdList = this.myDeckCardService.getAllDeckIdList();
-//             allDeckIdList.forEach((deckId) => {
-//                 const cardMeshList = this.myDeckCardService.getCardListByDeckId(deckId);
-//                 for (const cardMesh of cardMeshList) {
-//                     cardMesh.visible = false;
-//                     this.scene.remove(cardMesh);
-//                 }
-//
-//                 const cardGroup = this.myDeckCardService.getCardGroupByDeckId(deckId);
-//                 this.scene.remove(cardGroup);
-//                 cardGroup.clear();
-//             });
-//
-//             this.myDeckCardService.resetCardGroup();
-//
-//         } catch (error) {
-//             console.error('Failed to delete Card:', error);
-//         }
-//     }
-
-    private async deleteAllDeckBlock(): Promise<void> {
-        try {
-            const allDeckIdList = this.myDeckBlockService.getAllDeckIdList();
-            allDeckIdList.forEach((deckId) => {
-                const blockList = this.myDeckBlockService.getBlockListByDeckId(deckId);
-                for (const block of blockList) {
-                    block.setVisibility(false);
-                    this.scene.remove(block.getMesh());
-                }
-                const blockGroup = this.myDeckBlockService.getBlockGroupByDeckId(deckId);
-                this.scene.remove(blockGroup);
-                blockGroup.clear();
-            });
-
-            this.myDeckBlockService.resetBlockGroup();
-
-        } catch (error) {
-            console.error('Failed to delete My Deck Block:', error);
-        }
-    }
-
-    private async deleteAllDeckCardName(): Promise<void> {
-        try {
-            const allDeckIdList = this.myDeckCardNameService.getAllDeckIdList();
-            allDeckIdList.forEach((deckId) => {
-                const cardNameList = this.myDeckCardNameService.getCardNameListByDeckId(deckId);
-                for (const cardName of cardNameList) {
-                    cardName.setVisibility(false);
-                    this.scene.remove(cardName.getMesh());
-                }
-                const cardNameGroup = this.myDeckCardNameService.getCardNameGroupByDeckId(deckId);
-                this.scene.remove(cardNameGroup);
-                cardNameGroup.clear();
-            });
-
-            this.myDeckCardNameService.resetCardNameGroup();
-
-        } catch (error) {
-            console.error('Failed to delete My Deck Card Name:', error);
-        }
-    }
 
     private onWindowResize(): void {
         const newWidth = window.innerWidth;

@@ -5,7 +5,7 @@ import {IdGenerator} from "../../common/id_generator/IdGenerator";
 export class MyDeckNameText {
     id: number;
     mesh: THREE.Mesh;
-    private position: Vector2d;
+    position: Vector2d;
     width: number;
     height: number;
 
@@ -15,10 +15,19 @@ export class MyDeckNameText {
         this.position = position;
         this.width = width;
         this.height = height;
+        this.mesh.visible = true;
     }
 
     public getMesh(): THREE.Mesh {
         return this.mesh;
+    }
+
+    public getVisibility(): boolean {
+        return this.mesh.visible;
+    }
+
+    public setVisibility(state: boolean): void {
+        this.mesh.visible = state;
     }
 
 }

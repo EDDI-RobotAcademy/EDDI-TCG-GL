@@ -4,23 +4,27 @@ import {DeckDeleteButton} from "../entity/DeckDeleteButton";
 import {TextureManager} from "../../texture_manager/TextureManager";
 import {MeshGenerator} from "../../mesh/generator";
 import {Vector2d} from "../../common/math/Vector2d";
+import {MeshDestroyer} from "../../mesh/destroyer";
 
 export class DeckDeleteButtonRepositoryImpl implements DeckDeleteButtonRepository {
     private static instance: DeckDeleteButtonRepositoryImpl;
     private buttonMap: Map<number, { deckId: number, buttonMesh: DeckDeleteButton }> = new Map(); // button Unique ID: [deck ID: card mesh]
-    private textureManager: TextureManager;
     private buttonGroup: THREE.Group | null = null;
+
+    private textureManager: TextureManager;
+    private meshDestroyer: MeshDestroyer;
 
     private readonly BUTTON_WIDTH: number = 0.034
 
-    private constructor(textureManager: TextureManager) {
+    private constructor(textureManager: TextureManager, scene: THREE.Scene) {
         this.textureManager = textureManager;
+        this.meshDestroyer = new MeshDestroyer(scene);
     }
 
-    public static getInstance(): DeckDeleteButtonRepositoryImpl {
+    public static getInstance(scene: THREE.Scene): DeckDeleteButtonRepositoryImpl {
         if (!DeckDeleteButtonRepositoryImpl.instance) {
             const textureManager = TextureManager.getInstance()
-            DeckDeleteButtonRepositoryImpl.instance = new DeckDeleteButtonRepositoryImpl(textureManager);
+            DeckDeleteButtonRepositoryImpl.instance = new DeckDeleteButtonRepositoryImpl(textureManager, scene);
         }
         return DeckDeleteButtonRepositoryImpl.instance;
     }
@@ -60,21 +64,11 @@ export class DeckDeleteButtonRepositoryImpl implements DeckDeleteButtonRepositor
     }
 
     public findButtonByButtonUniqueId(buttonUniqueId: number): DeckDeleteButton | null {
-        const button = this.buttonMap.get(buttonUniqueId);
-        if (button) {
-            return button.buttonMesh;
-        } else {
-            return null;
-        }
+        return this.buttonMap.get(buttonUniqueId)?.buttonMesh ?? null;
     }
 
     public findDeckIdByButtonUniqueId(buttonUniqueId: number): number | null {
-        const button = this.buttonMap.get(buttonUniqueId);
-        if (button) {
-            return button.deckId;
-        } else {
-            return null;
-        }
+        return this.buttonMap.get(buttonUniqueId)?.deckId ?? null;
     }
 
     public findButtonDeckIdList(): number[] {
@@ -82,6 +76,15 @@ export class DeckDeleteButtonRepositoryImpl implements DeckDeleteButtonRepositor
     }
 
     public deleteButtonByButtonUniqueId(buttonUniqueId: number): void {
+        const button = this.findButtonByButtonUniqueId(buttonUniqueId);
+        if (!button) return;
+
+        const mesh = button.getMesh();
+        this.meshDestroyer.destroyMesh(mesh);
+
+        if (this.buttonGroup) {
+            this.buttonGroup.remove(mesh);
+        }
         this.buttonMap.delete(buttonUniqueId);
     }
 
