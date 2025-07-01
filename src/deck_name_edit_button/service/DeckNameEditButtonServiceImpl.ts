@@ -19,16 +19,16 @@ export class DeckNameEditButtonServiceImpl implements DeckNameEditButtonService 
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
     private clippingMaskManager: ClippingMaskManager;
 
-    private constructor() {
-        this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance();
+    private constructor(scene: THREE.Scene) {
+        this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance(scene);
         this.deckNameEditButtonPositionRepository = DeckNameEditButtonPositionRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
     }
 
-    public static getInstance(): DeckNameEditButtonServiceImpl {
+    public static getInstance(scene: THREE.Scene): DeckNameEditButtonServiceImpl {
         if (!DeckNameEditButtonServiceImpl.instance) {
-            DeckNameEditButtonServiceImpl.instance = new DeckNameEditButtonServiceImpl();
+            DeckNameEditButtonServiceImpl.instance = new DeckNameEditButtonServiceImpl(scene);
         }
         return DeckNameEditButtonServiceImpl.instance;
     }

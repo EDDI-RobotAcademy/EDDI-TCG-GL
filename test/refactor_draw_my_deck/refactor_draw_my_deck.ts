@@ -121,7 +121,6 @@ export class TCGJustTestMyDeckView {
 //     private deckMakePopupInputContainerService = DeckMakePopupInputContainerServiceImpl.getInstance();
     private sideScrollAreaService = SideScrollAreaServiceImpl.getInstance();
     private buildDeckButtonService = BuildDeckButtonServiceImpl.getInstance();
-    private deckNameEditButtonService = DeckNameEditButtonServiceImpl.getInstance();
     private deleteDeckPopupWindowService = DeleteDeckPopupWindowServiceImpl.getInstance();
     private deleteDeckPopupButtonService = DeleteDeckPopupButtonServiceImpl.getInstance();
     private deckEditButtonService = DeckEditButtonServiceImpl.getInstance();
@@ -144,6 +143,7 @@ export class TCGJustTestMyDeckView {
     private myDeckButtonService: MyDeckButtonServiceImpl;
     private myDeckButtonEffectService: MyDeckButtonEffectServiceImpl;
     private deckDeleteButtonService: DeckDeleteButtonServiceImpl;
+    private deckNameEditButtonService: DeckNameEditButtonServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -219,6 +219,7 @@ export class TCGJustTestMyDeckView {
         this.myDeckButtonService = MyDeckButtonServiceImpl.getInstance(this.scene);
         this.myDeckButtonEffectService = MyDeckButtonEffectServiceImpl.getInstance(this.scene);
         this.deckDeleteButtonService = DeckDeleteButtonServiceImpl.getInstance(this.scene);
+        this.deckNameEditButtonService = DeckNameEditButtonServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
