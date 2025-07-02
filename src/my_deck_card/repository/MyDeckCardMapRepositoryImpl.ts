@@ -215,4 +215,8 @@ export class MyDeckCardMapRepositoryImpl implements MyDeckCardMapRepository {
         }
     }
 
+    public findDeckIdList(): number[] {
+        return Array.from(this.currentMyDeckCardMap.keys());
+    }
+
 }

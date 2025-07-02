@@ -63,6 +63,15 @@ export class DeckNameEditButtonRepositoryImpl implements DeckNameEditButtonRepos
         return null;
     }
 
+    public findButtonIdByDeckId(deckId: number): number | null {
+        for (const [buttonId, { deckId: storedDeckId }] of this.buttonMap.entries()) {
+            if (storedDeckId === deckId) {
+                return buttonId;
+            }
+        }
+        return null;
+    }
+
     public findButtonByButtonUniqueId(buttonUniqueId: number): DeckNameEditButton | null {
         return this.buttonMap.get(buttonUniqueId)?.buttonMesh ?? null;
     }
@@ -87,6 +96,13 @@ export class DeckNameEditButtonRepositoryImpl implements DeckNameEditButtonRepos
         }
 
         this.buttonMap.delete(buttonUniqueId);
+    }
+
+    public deleteButtonByDeckId(deckId: number): void {
+        const buttonId = this.findButtonIdByDeckId(deckId);
+        if (buttonId == null) return;
+
+        this.deleteButtonByButtonUniqueId(buttonId);
     }
 
     public deleteAllButton(): void {
