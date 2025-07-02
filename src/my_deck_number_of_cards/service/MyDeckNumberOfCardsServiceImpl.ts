@@ -23,8 +23,8 @@ export class MyDeckNumberOfCardsServiceImpl implements MyDeckNumberOfCardsServic
     private clippingMaskManager: ClippingMaskManager;
     private cardCountManager: CardCountManager;
 
-    private constructor() {
-        this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance();
+    private constructor(scene: THREE.Scene) {
+        this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance(scene);
         this.myDeckNumberOfCardsPositionRepository = MyDeckNumberOfCardsPositionRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
@@ -32,9 +32,9 @@ export class MyDeckNumberOfCardsServiceImpl implements MyDeckNumberOfCardsServic
         this.cardCountManager = CardCountManager.getInstance();
     }
 
-    public static getInstance(): MyDeckNumberOfCardsServiceImpl {
+    public static getInstance(scene: THREE.Scene): MyDeckNumberOfCardsServiceImpl {
         if (!MyDeckNumberOfCardsServiceImpl.instance) {
-            MyDeckNumberOfCardsServiceImpl.instance = new MyDeckNumberOfCardsServiceImpl();
+            MyDeckNumberOfCardsServiceImpl.instance = new MyDeckNumberOfCardsServiceImpl(scene);
         }
         return MyDeckNumberOfCardsServiceImpl.instance;
     }

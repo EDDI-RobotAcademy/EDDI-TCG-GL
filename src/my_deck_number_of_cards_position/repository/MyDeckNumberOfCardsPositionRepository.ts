@@ -3,7 +3,7 @@ import {MyDeckNumberOfCardsPosition} from "../entity/MyDeckNumberOfCardsPosition
 export interface MyDeckNumberOfCardsPositionRepository {
     findPositionByPositionId(positionId: number): MyDeckNumberOfCardsPosition | null;
     findPositionIdListByDeckId(deckId: number): number[];
-    deleteById(positionId: number): boolean;
+    deletePositionAndReorder(deckId: number, positionId: number): void;
     deleteAll(): void;
     count(): number;
 }

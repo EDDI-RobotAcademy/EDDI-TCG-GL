@@ -47,7 +47,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance(scene);
         this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance(scene);
         this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance(scene);
-        this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance();
+        this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance(scene);
         this.myDeckNumberOfSelectedCardsRepository = MyDeckNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
         this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
         this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
@@ -146,7 +146,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
             const clickPoint = { x: event.clientX, y: event.clientY };
             const result = await this.handleLeftClick(clickPoint);
             if (result) {
-
+                this.deckDeleteButtonClickDetectRepository.setButtonClickEnabled(true);
                 return result;
             }
         }

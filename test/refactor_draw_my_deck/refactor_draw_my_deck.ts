@@ -62,8 +62,8 @@ import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_de
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
 import {DeckMakeButtonClickDetectServiceImpl} from "../../src/deck_make_button_click_detect/service/DeckMakeButtonClickDetectServiceImpl";
 import {DeckMakeButtonClickDetectService} from "../../src/deck_make_button_click_detect/service/DeckMakeButtonClickDetectService";
-// import {DeckMakePopupButtonsClickDetectServiceImpl} from "../../src/deck_make_pop_up_buttons_click_detect/service/DeckMakePopupButtonsClickDetectServiceImpl";
-// import {DeckMakePopupButtonsClickDetectService} from "../../src/deck_make_pop_up_buttons_click_detect/service/DeckMakePopupButtonsClickDetectService";
+import {DeckMakePopupButtonsClickDetectServiceImpl} from "../../src/deck_make_pop_up_buttons_click_detect/service/DeckMakePopupButtonsClickDetectServiceImpl";
+import {DeckMakePopupButtonsClickDetectService} from "../../src/deck_make_pop_up_buttons_click_detect/service/DeckMakePopupButtonsClickDetectService";
 import {MyDeckScrollService} from "../../src/my_deck_scroll/service/MyDeckScrollService";
 import {MyDeckScrollServiceImpl} from "../../src/my_deck_scroll/service/MyDeckScrollServiceImpl";
 import {SideScrollAreaDetectService} from "../../src/side_scroll_area_detect/service/SideScrollAreaDetectService";
@@ -126,7 +126,6 @@ export class TCGJustTestMyDeckView {
     private myDeckOwnedCardsService = MyDeckOwnedCardsServiceImpl.getInstance();
     private deckEditDoneButtonService = DeckEditDoneButtonServiceImpl.getInstance();
     private cardSelectionBlockerService = CardSelectionBlockerServiceImpl.getInstance();
-    private myDeckNumberOfCardsService = MyDeckNumberOfCardsServiceImpl.getInstance();
     private myDeckTotalOwnedCardsService = MyDeckTotalOwnedCardsServiceImpl.getInstance();
     private myDeckRemainingOutOfTotalSlashService = MyDeckRemainingOutOfTotalSlashServiceImpl.getInstance();
     private myDeckChosenOutOfTotalSlashService = MyDeckChosenOutOfTotalSlashServiceImpl.getInstance();
@@ -144,6 +143,7 @@ export class TCGJustTestMyDeckView {
     private deckDeleteButtonService: DeckDeleteButtonServiceImpl;
     private deckNameEditButtonService: DeckNameEditButtonServiceImpl;
     private myDeckNameTextService: MyDeckNameTextServiceImpl;
+    private myDeckNumberOfCardsService: MyDeckNumberOfCardsServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -167,7 +167,7 @@ export class TCGJustTestMyDeckView {
     private buildDeckButtonClickDetectService: BuildDeckButtonClickDetectService;
 //     private myDeckButtonEffectHoverDetectService: MyDeckButtonEffectHoverDetectService;
     private deckDeleteButtonClickDetectService: DeckDeleteButtonClickDetectService;
-//     private deleteDeckPopupButtonClickDetectService: DeleteDeckPopupButtonClickDetectService;
+    private deleteDeckPopupButtonClickDetectService: DeleteDeckPopupButtonClickDetectService;
     private deckNameEditButtonClickDetectService: DeckNameEditButtonClickDetectService;
     private myDeckCardScrollService: MyDeckCardScrollService;
     private myDeckBlockScrollService: MyDeckBlockScrollService;
@@ -221,6 +221,7 @@ export class TCGJustTestMyDeckView {
         this.deckDeleteButtonService = DeckDeleteButtonServiceImpl.getInstance(this.scene);
         this.deckNameEditButtonService = DeckNameEditButtonServiceImpl.getInstance(this.scene);
         this.myDeckNameTextService = MyDeckNameTextServiceImpl.getInstance(this.scene);
+        this.myDeckNumberOfCardsService = MyDeckNumberOfCardsServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -236,6 +237,7 @@ export class TCGJustTestMyDeckView {
         this.myDeckOwnedCardsClickDetectService = MyDeckOwnedCardsClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckDeleteButtonClickDetectService = DeckDeleteButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckNameEditButtonClickDetectService = DeckNameEditButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.deleteDeckPopupButtonClickDetectService = DeleteDeckPopupButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
 
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousemove', (e) => this.sideScrollAreaDetectService.onMouseMoveMyDeck(e), false);
@@ -253,22 +255,7 @@ export class TCGJustTestMyDeckView {
         // To-do: 덱 버튼 클릭되고 덱 삭제 버튼이 나타날 때만 삭제 버튼 클릭 가능해야 함
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckDeleteButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckNameEditButtonClickDetectService.onMouseDown(e), false);
-
-        // To-do: 팝업 창이 나타났을 때 팝업 창의 버튼 외의 다른 버튼들은 클릭되면 안 되게 해야 함.
-//         this.deleteDeckPopupButtonClickDetectService = DeleteDeckPopupButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
-//         this.renderer.domElement.addEventListener('mousedown', async (e) => {
-//             const popupButtonClick = await this.deleteDeckPopupButtonClickDetectService.onMouseDown(e);
-//             if (popupButtonClick) {
-//                 await this.addMyDeckCard();
-//                 await this.addMyDeckBlock();
-//                 await this.addMyDeckCardName();
-//                 await this.addMyDeckButton();
-//                 await this.addMyDeckButtonEffect();
-//                 await this.addMyDeckNameText();
-//                 await this.addDeckNameEditButton();
-//                 await this.addDeckDeleteButton();
-//             }
-//         }, false);
+        this.renderer.domElement.addEventListener('mousedown', (e) => this.deleteDeckPopupButtonClickDetectService.onMouseDown(e), false);
 
 //         this.deckMakeButtonClickDetectService = DeckMakeButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
 // //         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckMakeButtonClickDetectService.onMouseDown(e), false);

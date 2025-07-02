@@ -175,6 +175,12 @@ export class DeckCardCountMarkerRepositoryImpl implements DeckCardCountMarkerRep
         const markerInfo = this.markerMap.get(markerId);
         if (markerInfo) {
             this.meshDestroyer.destroyMesh(markerInfo.markerMesh.getMesh());
+
+            const group = this.markerGroupMap.get(deckId);
+            if (group) {
+                group.remove(markerInfo.markerMesh.getMesh());
+            }
+
             this.markerMap.delete(markerId);
         }
 
@@ -208,8 +214,8 @@ export class DeckCardCountMarkerRepositoryImpl implements DeckCardCountMarkerRep
                 this.markerMap.delete(markerId);
             });
         }
-        this.deckMap.delete(deckId);
 
+        this.deckMap.delete(deckId);
     }
 
 }
