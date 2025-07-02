@@ -4,7 +4,7 @@ import {MyDeckNameTextPositionRepository} from "./MyDeckNameTextPositionReposito
 
 export class MyDeckNameTextPositionRepositoryImpl implements MyDeckNameTextPositionRepository {
     private static instance: MyDeckNameTextPositionRepositoryImpl;
-    private positionMap: Map<number, { deckId: number, position: MyDeckNameTextPosition}> = new Map();;
+    private positionMap: Map<number, { deckId: number, position: MyDeckNameTextPosition}> = new Map();
 
     private initialX = - 0.37;
     private initialY = 0.153;
@@ -55,6 +55,15 @@ export class MyDeckNameTextPositionRepositoryImpl implements MyDeckNameTextPosit
         return null;
     }
 
+    public findPositionIdByDeckId(deckId: number): number | null {
+        for (const [positionId, { deckId: storedDeckId }] of this.positionMap.entries()) {
+            if (storedDeckId === deckId) {
+                return positionId;
+            }
+        }
+        return null;
+    }
+
     public deleteById(positionId: number): void {
         this.positionMap.delete(positionId);
 
@@ -69,6 +78,13 @@ export class MyDeckNameTextPositionRepositoryImpl implements MyDeckNameTextPosit
         }
 
         this.positionMap = updatedPositionMap; // 업데이트된 맵을 적용
+    }
+
+    public deleteByDeckId(deckId: number): void {
+        const positionId = this.findPositionIdByDeckId(deckId);
+        if (positionId == null) return;
+
+        this.deleteById(positionId);
     }
 
     public deleteAll(): void {

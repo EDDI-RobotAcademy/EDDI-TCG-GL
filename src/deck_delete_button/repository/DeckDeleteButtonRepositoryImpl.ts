@@ -63,6 +63,16 @@ export class DeckDeleteButtonRepositoryImpl implements DeckDeleteButtonRepositor
         return null;
     }
 
+    public findButtonIdByDeckId(deckId: number): number | null {
+        for (const [buttonId, { deckId: storedDeckId }] of this.buttonMap.entries()) {
+            if (storedDeckId === deckId) {
+                console.log(`Match found! Returning buttonId: ${buttonId}`);
+                return buttonId;
+            }
+        }
+        return null;
+    }
+
     public findButtonByButtonUniqueId(buttonUniqueId: number): DeckDeleteButton | null {
         return this.buttonMap.get(buttonUniqueId)?.buttonMesh ?? null;
     }
@@ -86,6 +96,13 @@ export class DeckDeleteButtonRepositoryImpl implements DeckDeleteButtonRepositor
             this.buttonGroup.remove(mesh);
         }
         this.buttonMap.delete(buttonUniqueId);
+    }
+
+    public deleteButtonByDeckId(deckId: number): void {
+        const buttonId = this.findButtonIdByDeckId(deckId);
+        if (buttonId == null) return;
+
+        this.deleteButtonByButtonUniqueId(buttonId);
     }
 
     public deleteAllButton(): void {

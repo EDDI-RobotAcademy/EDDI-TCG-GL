@@ -20,6 +20,9 @@ import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCard
 import {MyDeckNameTextRepositoryImpl} from "../../my_deck_name_text/repository/MyDeckNameTextRepositoryImpl";
 import {MyDeckBlockRepositoryImpl} from "../../my_deck_block/repository/MyDeckBlockRepositoryImpl";
 import {MyDeckCardNameRepositoryImpl} from "../../my_deck_card_name/repository/MyDeckCardNameRepositoryImpl";
+import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/repository/MyDeckNumberOfCardsRepositoryImpl";
+import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
+import {MyDeckNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_number_of_selected_cards/repository/MyDeckNumberOfSelectedCardsRepositoryImpl";
 
 import {DeckDeleteButtonPositionRepositoryImpl} from "../../deck_delete_button_position/repository/DeckDeleteButtonPositionRepositoryImpl";
 import {DeckNameEditButtonPositionRepositoryImpl} from "../../deck_name_edit_button_position/repository/DeckNameEditButtonPositionRepositoryImpl";
@@ -28,10 +31,15 @@ import {MyDeckCardPositionRepositoryImpl} from "../../my_deck_card_position/repo
 import {MyDeckNameTextPositionRepositoryImpl} from "../../my_deck_name_text_position/repository/MyDeckNameTextPositionRepositoryImpl";
 import {MyDeckBlockPositionRepositoryImpl} from "../../my_deck_block_position/repository/MyDeckBlockPositionRepositoryImpl";
 import {MyDeckCardNamePositionRepositoryImpl} from "../../my_deck_card_name_position/repository/MyDeckCardNamePositionRepositoryImpl";
+import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of_cards_position/repository/MyDeckNumberOfCardsPositionRepositoryImpl";
+import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_marker_position/repository/DeckCardCountMarkerPositionRepositoryImpl";
+import {MyDeckNumberOfSelectedCardsPositionRepositoryImpl} from "../../my_deck_number_of_selected_cards_position/repository/MyDeckNumberOfSelectedCardsPositionRepositoryImpl";
 
 import {MyDeckButtonMapRepositoryImpl} from "../../my_deck_button/repository/MyDeckButtonMapRepositoryImpl";
 import {MyDeckCardMapRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardMapRepositoryImpl";
 import {MyDeckNameTextMapRepositoryImpl} from "../../my_deck_name_text/repository/MyDeckNameTextMapRepositoryImpl";
+
+import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -57,6 +65,9 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     private myDeckNameTextRepository: MyDeckNameTextRepositoryImpl;
     private myDeckBlockRepository: MyDeckBlockRepositoryImpl;
     private myDeckCardNameRepository: MyDeckCardNameRepositoryImpl;
+    private myDeckNumberOfCardsRepository: MyDeckNumberOfCardsRepositoryImpl;
+    private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
+    private myDeckNumberOfSelectedCardsRepository: MyDeckNumberOfSelectedCardsRepositoryImpl;
 
     private deckDeleteButtonPositionRepository: DeckDeleteButtonPositionRepositoryImpl;
     private deckNameEditButtonPositionRepository: DeckNameEditButtonPositionRepositoryImpl;
@@ -65,10 +76,15 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     private myDeckNameTextPositionRepository: MyDeckNameTextPositionRepositoryImpl;
     private myDeckBlockPositionRepository: MyDeckBlockPositionRepositoryImpl;
     private myDeckCardNamePositionRepository: MyDeckCardNamePositionRepositoryImpl;
+    private myDeckNumberOfCardsPositionRepository: MyDeckNumberOfCardsPositionRepositoryImpl;
+    private deckCardCountMarkerPositionRepository: DeckCardCountMarkerPositionRepositoryImpl;
+    private myDeckNumberOfSelectedCardsPositionRepository: MyDeckNumberOfSelectedCardsPositionRepositoryImpl;
 
     private myDeckButtonMapRepository: MyDeckButtonMapRepositoryImpl;
     private myDeckCardMapRepository: MyDeckCardMapRepositoryImpl;
     private myDeckNameTextMapRepository: MyDeckNameTextMapRepositoryImpl;
+
+    private myDeckElementAdjuster: MyDeckElementAdjuster;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.deleteDeckPopupButtonClickDetectRepository = DeleteDeckPopupButtonClickDetectRepositoryImpl.getInstance();
@@ -90,6 +106,9 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.myDeckNameTextRepository = MyDeckNameTextRepositoryImpl.getInstance(scene);
         this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance(scene);
         this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance(scene);
+        this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance(scene);
+        this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
+        this.myDeckNumberOfSelectedCardsRepository = MyDeckNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
 
         this.deckDeleteButtonPositionRepository = DeckDeleteButtonPositionRepositoryImpl.getInstance();
         this.deckNameEditButtonPositionRepository = DeckNameEditButtonPositionRepositoryImpl.getInstance();
@@ -98,10 +117,15 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.myDeckNameTextPositionRepository = MyDeckNameTextPositionRepositoryImpl.getInstance();
         this.myDeckBlockPositionRepository = MyDeckBlockPositionRepositoryImpl.getInstance();
         this.myDeckCardNamePositionRepository = MyDeckCardNamePositionRepositoryImpl.getInstance();
+        this.myDeckNumberOfCardsPositionRepository = MyDeckNumberOfCardsPositionRepositoryImpl.getInstance();
+        this.deckCardCountMarkerPositionRepository = DeckCardCountMarkerPositionRepositoryImpl.getInstance();
+        this.myDeckNumberOfSelectedCardsPositionRepository = MyDeckNumberOfSelectedCardsPositionRepositoryImpl.getInstance();
 
         this.myDeckButtonMapRepository = MyDeckButtonMapRepositoryImpl.getInstance();
         this.myDeckCardMapRepository = MyDeckCardMapRepositoryImpl.getInstance();
         this.myDeckNameTextMapRepository = MyDeckNameTextMapRepositoryImpl.getInstance();
+
+        this.myDeckElementAdjuster = MyDeckElementAdjuster.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeleteDeckPopupButtonClickDetectServiceImpl {
@@ -144,19 +168,26 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
                     break;
                 case 1:
                     console.log(`Deck Delete!`);
-                    await this.clearAllDeckCardsFromScene();
-                    this.deleteCard();
-                    this.deleteBlock();
-                    this.deleteDeckCardName();
-                    this.deleteDeckDeleteButton();
-                    this.deleteDeckNameEditButton();
-                    this.deleteDeckButton();
-                    this.deleteDeckButtonEffect();
-                    this.deleteDeckNameText();
+                    const deleteDeckId = this.getCurrentDeleteDeckId();
+                    if (deleteDeckId == null) return null;
 
-                    this.deleteCardMapData();
-                    this.deleteDeckButtonMapData();
-                    this.deleteTextMapData();
+                    this.deleteAllDeckRelatedObjects(deleteDeckId);
+                    this.adjustDeckButton();
+                    this.adjustDeckButtonEffect();
+                    this.adjustDeckNameText();
+                    this.adjustDeckDeleteButton();
+                    this.adjustDeckNameEditButton();
+
+                    this.setCurrentClickDeckButton();
+                    this.initializeDeckCardVisibility();
+                    this.initializeDeckButtonVisibility();
+                    this.initializeDeckButtonEffectVisibility();
+                    this.initializeBlockVisibility();
+                    this.initializeCardNameVisibility();
+                    this.initializeDeckDeleteButtonVisibility();
+                    this.initializeDeckNameEditButtonVisibility();
+                    this.initializeNumberOfDeckCardsVisibility();
+                    this.initializeNumberOfSelectedCardsVisibility();
 
                     break;
                 default:
@@ -252,145 +283,363 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         return this.myDeckButtonRepository.findDeckIdByButtonId(buttonId);
     }
 
+    // 삭제할 덱의 ID
+    private getCurrentDeleteDeckId(): number | null {
+//         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId() ?? null;
+        const deckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+        if (deckId == null) {
+            console.warn(`삭제할 덱의 ID가 존재하지 않습니다.`);
+            return null;
+        } else {
+            return deckId;
+        }
+    }
+
     public getPopupButtonsVisibleState(): boolean[] {
         const buttons = this.getAllButtons();
         return buttons.map((button) => button.getVisibility());
     }
 
-    private deleteDeckDeleteButton(): void {
-        const buttonId = this.getCurrentClickDeckDeleteButtonId();
-        if (buttonId === null) {
-            console.warn("삭제할 버튼의 ID가 존재하지 않습니다.");
-            return;
-        }
-        this.deckDeleteButtonRepository.deleteButtonByButtonUniqueId(buttonId);
-        this.deckDeleteButtonPositionRepository.deleteByPositionId(buttonId);
+    private deleteAllDeckRelatedObjects(deckId: number): void {
+        this.deleteCard(deckId);
+        this.deleteBlock(deckId);
+        this.deleteDeckCardName(deckId);
+        this.deleteDeckDeleteButton(deckId);
+        this.deleteDeckNameEditButton(deckId);
+        this.deleteDeckButton(deckId);
+        this.deleteDeckButtonEffect(deckId);
+        this.deleteDeckNameText(deckId);
+        this.deleteNumberOfDeckCards(deckId);
+        this.deleteNumberOfSelectedCards(deckId);
+        this.deleteDeckCardCountMarker(deckId);
+
+        this.deleteCardMapData(deckId);
+        this.deleteDeckButtonMapData(deckId);
+        this.deleteTextMapData(deckId);
     }
 
-    private deleteDeckNameEditButton(): void {
-        const buttonId = this.getCurrentClickDeckDeleteButtonId();
-        if (buttonId === null) {
-            console.warn("삭제할 버튼의 ID가 존재하지 않습니다.");
-            return;
-        }
-        this.deckNameEditButtonRepository.deleteButtonByButtonUniqueId(buttonId);
-        this.deckNameEditButtonPositionRepository.deleteByPositionId(buttonId);
+    private deleteDeckDeleteButton(deckId: number): void {
+        this.deckDeleteButtonRepository.deleteButtonByDeckId(deckId);
+        this.deckDeleteButtonPositionRepository.deleteByDeckId(deckId);
     }
 
-    private deleteDeckButton(): void {
-        const buttonId = this.getCurrentClickDeckDeleteButtonId();
-        if (buttonId === null) {
-            console.warn("삭제할 버튼의 ID가 존재하지 않습니다.");
-            return;
-        }
-        this.myDeckButtonRepository.deleteById(buttonId);
-        this.myDeckButtonPositionRepository.deleteById(buttonId);
+    private deleteDeckNameEditButton(deckId: number): void {
+        this.deckNameEditButtonRepository.deleteButtonByDeckId(deckId);
+        this.deckNameEditButtonPositionRepository.deleteByDeckId(deckId);
     }
 
-    private deleteDeckButtonEffect(): void {
-        const buttonId = this.getCurrentClickDeckDeleteButtonId();
-        if (buttonId === null) {
-            console.warn("삭제할 버튼의 ID가 존재하지 않습니다.");
-            return;
-        }
-        this.myDeckButtonEffectRepository.deleteById(buttonId);
+    private deleteDeckButton(deckId: number): void {
+        this.myDeckButtonRepository.deleteButtonByDeckId(deckId);
+        this.myDeckButtonPositionRepository.deleteByDeckId(deckId);
     }
 
-    private deleteDeckNameText(): void {
-        const buttonId = this.getCurrentClickDeckDeleteButtonId();
-        if (buttonId === null) {
-            console.warn("삭제할 버튼의 ID가 존재하지 않습니다.");
-            return;
-        }
-        this.myDeckNameTextRepository.deleteById(buttonId);
-        this.myDeckNameTextPositionRepository.deleteById(buttonId);
+    private deleteDeckButtonEffect(deckId: number): void {
+        this.myDeckButtonEffectRepository.deleteEffectByDeckId(deckId);
     }
 
-    private deleteCard(): void {
-        const deckId = this.getDeckIdByDeleteButtonId();
-        if (deckId === null) {
-            console.warn("삭제할 덱 ID를 찾을 수 없습니다.");
-            return;
-        }
+    private deleteDeckNameText(deckId: number): void {
+        this.myDeckNameTextRepository.deleteTextByDeckId(deckId);
+        this.myDeckNameTextPositionRepository.deleteByDeckId(deckId);
+    }
+
+    private deleteCard(deckId: number): void {
         this.myDeckCardRepository.deleteDeckByDeckId(deckId);
         this.myDeckCardPositionRepository.deletePositionByDeckId(deckId);
     }
 
-    private deleteBlock(): void {
-        const deckId = this.getDeckIdByDeleteButtonId();
-        if (deckId === null) {
-            console.warn("삭제할 덱 ID를 찾을 수 없습니다.");
-            return;
-        }
+    private deleteBlock(deckId: number): void {
         this.myDeckBlockRepository.deleteDeckByDeckId(deckId);
         this.myDeckBlockPositionRepository.deletePositionByDeckId(deckId);
     }
 
-    private deleteDeckCardName(): void {
-        const deckId = this.getDeckIdByDeleteButtonId();
-        if (deckId === null) {
-            console.warn("삭제할 덱 ID를 찾을 수 없습니다.");
-            return;
-        }
+    private deleteDeckCardName(deckId: number): void {
         this.myDeckCardNameRepository.deleteDeckByDeckId(deckId);
         this.myDeckCardNamePositionRepository.deletePositionByDeckId(deckId);
     }
 
-    private deleteDeckButtonMapData(): void {
-        const deckId = this.getDeckIdByDeleteButtonId();
-        if (deckId === null) {
-            console.warn("삭제할 덱 ID를 찾을 수 없습니다.");
-            return;
-        }
+    private deleteDeckButtonMapData(deckId: number): void {
         this.myDeckButtonMapRepository.removeMyDeckByDeckId(deckId);
     }
 
-    private deleteCardMapData(): void {
-        const deckId = this.getDeckIdByDeleteButtonId();
-        if (deckId === null) {
-            console.warn("삭제할 덱 ID를 찾을 수 없습니다.");
-            return;
-        }
+    private deleteCardMapData(deckId: number): void {
         this.myDeckCardMapRepository.deleteMyDeck(deckId);
     }
 
-    private deleteTextMapData(): void {
-        const deckId = this.getDeckIdByDeleteButtonId();
-        if (deckId === null) {
-            console.warn("삭제할 덱 ID를 찾을 수 없습니다.");
-            return;
-        }
+    private deleteTextMapData(deckId: number): void {
         this.myDeckNameTextMapRepository.deleteMyDeckNameText(deckId);
     }
 
-    // To-do: 별도의 기능 분리
-    private async clearAllDeckCardsFromScene(): Promise<void> {
-        try {
-            const allDeckIdList = this.myDeckCardRepository.findDeckIdList();
+    private deleteNumberOfDeckCards(deckId: number): void {
+        this.myDeckNumberOfCardsRepository.deleteDeckByDeckId(deckId);
+        this.myDeckNumberOfCardsPositionRepository.deletePositionByDeckId(deckId);
+    }
 
-            allDeckIdList.forEach(deckId => {
-                const cardList = this.myDeckCardRepository.findCardListByDeckId(deckId)?? [];
+    private deleteNumberOfSelectedCards(deckId: number): void {
+        this.myDeckNumberOfSelectedCardsRepository.deleteDeckByDeckId(deckId);
+        this.myDeckNumberOfSelectedCardsPositionRepository.deletePositionByDeckId(deckId);
+    }
 
-                for (const card of cardList) {
-                    if (card) {
-                        card.getMesh().visible = false;
-                        this.scene.remove(card.getMesh());
-                    }
-                }
+    private deleteDeckCardCountMarker(deckId: number): void {
+        this.deckCardCountMarkerRepository.deleteDeckByDeckId(deckId);
+        this.deckCardCountMarkerPositionRepository.deletePositionByDeckId(deckId);
+    }
 
-                const cardGroup = this.myDeckCardRepository.findCardGroupByDeckId(deckId);
-                if (cardGroup) {
-                    this.scene.remove(cardGroup);
-                    cardGroup.clear();
-                }
-            });
+    private adjustDeckButton(): void {
+        const deckIdList = this.myDeckButtonRepository.findButtonDeckIdList();
+        for (const deckId of deckIdList) {
+            const button = this.myDeckButtonRepository.findButtonByDeckId(deckId);
+            if (button == null) return;
 
-            this.myDeckCardRepository.resetCardGroup();
+            const buttonMesh = button.getMesh();
+            const buttonPosition = this.myDeckButtonPositionRepository.findPositionByDeckId(deckId);
+            if (buttonPosition == null) return;
 
-            console.log(`[INFO] All deck cards and groups removed from scene.`);
-        } catch (error) {
-            console.error('[ERROR] Failed to remove all deck cards:', error);
+            const widthPercent = 0.18;
+            const heightPercent = (240/1040);
+            const positionX = buttonPosition.getX();
+            const positionY = buttonPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(buttonMesh, widthPercent, heightPercent, positionX, positionY);
         }
+    }
+
+    private adjustDeckButtonEffect(): void {
+        const deckIdList = this.myDeckButtonEffectRepository.findEffectDeckIdList();
+        for (const deckId of deckIdList) {
+            const effect = this.myDeckButtonEffectRepository.findEffectByDeckId(deckId);
+            if (effect == null) return;
+
+            const effectMesh = effect.getMesh();
+            const effectPosition = this.myDeckButtonPositionRepository.findPositionByDeckId(deckId);
+            if (effectPosition == null) return;
+
+            const widthPercent = 0.18;
+            const heightPercent = (240/1040);
+            const positionX = effectPosition.getX();
+            const positionY = effectPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(effectMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    private adjustDeckNameText(): void {
+        const deckIdList = this.myDeckNameTextRepository.findTextDeckIdList();
+        for (const deckId of deckIdList) {
+            const text = this.myDeckNameTextRepository.findNameTextByDeckId(deckId);
+            if (text == null) return;
+
+            const textMesh = text.getMesh();
+            const textPosition = this.myDeckNameTextPositionRepository.findPositionByDeckId(deckId);
+            if (textPosition == null) return;
+
+            const width = text.width;
+            const height = text.height;
+            const positionX = textPosition.getX() * window.innerWidth;
+            const positionY = textPosition.getY() * window.innerHeight;
+
+            textMesh.geometry.dispose();
+            textMesh.geometry = new THREE.PlaneGeometry(width, height);
+            textMesh.position.set(positionX, positionY, 0);
+        }
+    }
+
+    private adjustDeckDeleteButton(): void {
+        const deckIdList = this.deckDeleteButtonRepository.findButtonDeckIdList();
+        for (const deckId of deckIdList) {
+            const button = this.deckDeleteButtonRepository.findButtonByDeckId(deckId);
+            if (button == null) return;
+
+            const buttonMesh = button.getMesh();
+            const buttonPosition = this.deckDeleteButtonPositionRepository.findPositionByDeckId(deckId);
+            if (buttonPosition == null) return;
+
+            const widthPercent = 0.034;
+            const heightPercent = 0.9;
+            const positionX = buttonPosition.getX();
+            const positionY = buttonPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(buttonMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    private adjustDeckNameEditButton(): void {
+        const deckIdList = this.deckNameEditButtonRepository.findButtonDeckIdList();
+        for (const deckId of deckIdList) {
+            const button = this.deckNameEditButtonRepository.findButtonByDeckId(deckId);
+            if (button == null) return;
+
+            const buttonMesh = button.getMesh();
+            const buttonPosition = this.deckNameEditButtonPositionRepository.findPositionByDeckId(deckId);
+            if (buttonPosition == null) return;
+
+            const widthPercent = 0.034;
+            const heightPercent = 0.9;
+            const positionX = buttonPosition.getX();
+            const positionY = buttonPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(buttonMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    // 덱 삭제 후 남은 덱 중 맨 처음 덱의 버튼이 클릭된 상태로 보여야 함.
+    private setCurrentClickDeckButton(): void {
+        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
+
+        this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(firstDeckId);
+    }
+
+    private initializeDeckCardVisibility(): void {
+        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
+
+        deckIdList.forEach((deckId, index) => {
+            const cardList = this.myDeckCardRepository.findCardListByDeckId(deckId);
+            if (cardList == null) return;
+
+            if (deckId === firstDeckId) {
+                cardList.forEach((card) => card.setVisibility(true));
+            } else {
+                cardList.forEach((card) => card.setVisibility(false));
+            }
+        });
+    }
+
+    private initializeDeckButtonVisibility(): void {
+        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
+
+        deckIdList.forEach((deckId, index) => {
+            if (deckId === firstDeckId) {
+                this.myDeckButtonRepository.findButtonByDeckId(deckId)?.setVisibility(false);
+            } else {
+                this.myDeckButtonRepository.findButtonByDeckId(deckId)?.setVisibility(true);
+            }
+        });
+    }
+
+    public initializeDeckButtonEffectVisibility(): void {
+        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
+
+        deckIdList.forEach((deckId, index) => {
+            if (deckId === firstDeckId) {
+                this.myDeckButtonEffectRepository.findEffectByDeckId(deckId)?.setVisibility(true);
+            } else {
+                this.myDeckButtonEffectRepository.findEffectByDeckId(deckId)?.setVisibility(false);
+            }
+        });
+    }
+
+    public initializeBlockVisibility(): void {
+        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
+
+        deckIdList.forEach((deckId, index) => {
+            const blockList = this.myDeckBlockRepository.findBlockListByDeckId(deckId);
+            if (blockList == null) return;
+
+            if (deckId === firstDeckId) {
+                blockList.forEach((block) => block.setVisibility(true));
+            } else {
+                blockList.forEach((block) => block.setVisibility(false));
+            }
+        });
+    }
+
+    public initializeCardNameVisibility(): void {
+        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
+
+        deckIdList.forEach((deckId, index) => {
+            const cardNameList = this.myDeckCardNameRepository.findCardNameListByDeckId(deckId);
+            if (cardNameList === null) return;
+
+            if (deckId === firstDeckId) {
+                cardNameList.forEach((cardName) => cardName.setVisibility(true));
+            } else {
+                cardNameList.forEach((cardName) => cardName.setVisibility(false));
+            }
+        });
+    }
+
+    public initializeDeckDeleteButtonVisibility(): void {
+        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
+        const button = this.deckDeleteButtonRepository.findButtonByDeckId(firstDeckId);
+
+        if (button !== null) {
+            button.setVisibility(true);
+        }
+    }
+
+    public initializeDeckNameEditButtonVisibility(): void {
+        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
+        const button = this.deckNameEditButtonRepository.findButtonByDeckId(firstDeckId);
+
+        if (button !== null) {
+            button.setVisibility(true);
+        }
+    }
+
+    public initializeNumberOfDeckCardsVisibility(): void {
+        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
+
+        deckIdList.forEach((deckId, index) => {
+            const numberList = this.myDeckNumberOfCardsRepository.findNumberListByDeckId(deckId);
+            if (numberList == null) return;
+
+            if (deckId === firstDeckId) {
+                numberList.forEach((number) => number.setVisibility(true));
+            } else {
+                numberList.forEach((number) => number.setVisibility(false));
+            }
+        });
+    }
+
+    public initializeNumberOfSelectedCardsVisibility(): void {
+        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
+
+        deckIdList.forEach((deckId, index) => {
+            const numberList = this.myDeckNumberOfSelectedCardsRepository.findNumberListByDeckId(deckId);
+            if (numberList == null) return null;
+
+            if (deckId === firstDeckId) {
+                numberList.forEach((number) => number.setVisibility(true));
+            } else {
+                numberList.forEach((number) => number.setVisibility(false));
+            }
+        });
+    }
+
+    public initializeDeckCardCountMarkerVisibility(): void {
+        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        const firstDeckId = sortedDeckIdList[0];
+
+        deckIdList.forEach((deckId, index) => {
+            const markerList = this.deckCardCountMarkerRepository.findMarkerListByDeckId(deckId);
+            if (markerList == null) return;
+
+            if (deckId === firstDeckId) {
+                markerList.forEach((marker) => marker.setVisibility(true));
+            } else {
+                markerList.forEach((marker) => marker.setVisibility(false));
+            }
+        });
     }
 
 }

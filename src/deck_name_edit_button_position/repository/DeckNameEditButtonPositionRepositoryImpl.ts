@@ -77,6 +77,13 @@ export class DeckNameEditButtonPositionRepositoryImpl implements DeckNameEditBut
         this.positionMap = newPositionMap;
     }
 
+    public deleteByDeckId(deckId: number): void {
+        const positionId = this.findPositionIdByDeckId(deckId);
+        if (positionId == null) return;
+
+        this.deleteByPositionId(positionId);
+    }
+
     public count(): number {
         return this.positionMap.size;
     }

@@ -191,11 +191,11 @@ export class DeckCardCountMarkerServiceImpl implements DeckCardCountMarkerServic
         const firstDeckId = sortedDeckIdList[0];
 
         deckIdList.forEach((deckId, index) => {
-            const MarkerList = this.getMarkerListByDeckId(deckId);
+            const markerList = this.getMarkerListByDeckId(deckId);
             if (deckId === firstDeckId) {
-                MarkerList.forEach((marker) => marker.setVisibility(true));
+                markerList.forEach((marker) => marker.setVisibility(true));
             } else {
-                MarkerList.forEach((marker) => marker.setVisibility(false));
+                markerList.forEach((marker) => marker.setVisibility(false));
             }
         });
     }

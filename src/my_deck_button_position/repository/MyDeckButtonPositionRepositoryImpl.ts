@@ -54,6 +54,15 @@ export class MyDeckButtonPositionRepositoryImpl implements MyDeckButtonPositionR
         return null;
     }
 
+    public findPositionIdByDeckId(deckId: number): number | null {
+        for (const [positionId, { deckId: storedDeckId }] of this.positionMap.entries()) {
+            if (storedDeckId === deckId) {
+                return positionId;
+            }
+        }
+        return null;
+    }
+
     public deleteById(positionId: number): void {
         this.positionMap.delete(positionId);
 
@@ -68,6 +77,13 @@ export class MyDeckButtonPositionRepositoryImpl implements MyDeckButtonPositionR
         }
 
         this.positionMap = updatedPositionMap; // 업데이트된 맵을 적용
+    }
+
+    public deleteByDeckId(deckId: number): void {
+        const positionId = this.findPositionIdByDeckId(deckId);
+        if (positionId == null) return;
+
+        this.deleteById(positionId);
     }
 
     public deleteAll(): void {
