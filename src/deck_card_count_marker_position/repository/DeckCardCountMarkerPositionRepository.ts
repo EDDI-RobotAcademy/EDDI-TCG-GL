@@ -3,7 +3,7 @@ import {DeckCardCountMarkerPosition} from "../entity/DeckCardCountMarkerPosition
 export interface DeckCardCountMarkerPositionRepository {
     findPositionByPositionId(positionId: number): DeckCardCountMarkerPosition | null;
     findPositionIdListByDeckId(deckId: number): number[];
-    deleteById(positionId: number): boolean;
+    deletePositionAndReorder(deckId: number, positionId: number): void;
     deleteAll(): void;
     count(): number;
 }

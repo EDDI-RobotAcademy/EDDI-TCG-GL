@@ -67,8 +67,32 @@ export class MyDeckNumberOfCardsPositionRepositoryImpl implements MyDeckNumberOf
     }
 
     // To-do: 삭제 부분 후에 수정해야 함
-    public deleteById(positionId: number): boolean {
-        return this.positionMap.delete(positionId);
+    public deletePositionAndReorder(deckId: number, positionId: number): void {
+        this.positionMap.delete(positionId);
+        this.deckPositionIndexMap.set(deckId, 0);
+
+        const positionIdList = this.findPositionIdListByDeckId(deckId);
+        if (!positionIdList) return;
+
+        const updatedPositionIdList = positionIdList.filter(id => id !== positionId);
+        this.deckToPositionMap.set(deckId, updatedPositionIdList);
+
+        for (const id of updatedPositionIdList) {
+            const entry = this.positionMap.get(id);
+            if (!entry) return;
+            const { cardId } = entry;
+
+            const positionIndex = this.deckPositionIndexMap.get(deckId)!;
+            const col = positionIndex % this.maxNumbersPerRow;
+            const row = Math.floor(positionIndex / this.maxNumbersPerRow);
+
+            const newX = this.initialX + col * this.incrementX;
+            const newY = this.initialY + row * this.incrementY;
+            const newPosition = new MyDeckNumberOfCardsPosition(newX, newY);
+
+            this.positionMap.set(id, { cardId, position: newPosition });
+            this.deckPositionIndexMap.set(deckId, positionIndex + 1);
+        }
     }
 
     public deletePositionByDeckId(deckId: number): void {
