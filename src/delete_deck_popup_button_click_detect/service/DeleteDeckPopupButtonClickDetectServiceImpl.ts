@@ -179,15 +179,20 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
                     this.adjustDeckNameEditButton();
 
                     this.setCurrentClickDeckButton();
-                    this.initializeDeckCardVisibility();
-                    this.initializeDeckButtonVisibility();
-                    this.initializeDeckButtonEffectVisibility();
-                    this.initializeBlockVisibility();
-                    this.initializeCardNameVisibility();
-                    this.initializeDeckDeleteButtonVisibility();
-                    this.initializeDeckNameEditButtonVisibility();
-                    this.initializeNumberOfDeckCardsVisibility();
-                    this.initializeNumberOfSelectedCardsVisibility();
+
+                    const deckIdList = this.getDeckIdList();
+                    const firstDeckId = this.getFirstDeckId(deckIdList);
+
+                    this.initializeDeckCardVisibility(deckIdList, firstDeckId);
+                    this.initializeDeckButtonVisibility(deckIdList, firstDeckId);
+                    this.initializeDeckButtonEffectVisibility(deckIdList, firstDeckId);
+                    this.initializeBlockVisibility(deckIdList, firstDeckId);
+                    this.initializeCardNameVisibility(deckIdList, firstDeckId);
+                    this.initializeDeckDeleteButtonVisibility(firstDeckId);
+                    this.initializeDeckNameEditButtonVisibility(firstDeckId);
+                    this.initializeNumberOfDeckCardsVisibility(deckIdList, firstDeckId);
+                    this.initializeNumberOfSelectedCardsVisibility(deckIdList, firstDeckId);
+                    this.initializeDeckCardCountMarkerVisibility(deckIdList, firstDeckId);
 
                     break;
                 default:
@@ -269,20 +274,6 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         popupButtons.forEach((button) => button.setVisibility(isVisible));
     }
 
-    private getCurrentClickDeckDeleteButtonId(): number | null {
-        return this.deckDeleteButtonClickDetectRepository.findCurrentClickedButtonId();
-    }
-
-    private getDeckIdByDeleteButtonId(): number | null {
-        const buttonId = this.getCurrentClickDeckDeleteButtonId();
-        if (buttonId === null) {
-            console.warn('버튼의 ID가 존재하지 않습니다.');
-            return null;
-        }
-
-        return this.myDeckButtonRepository.findDeckIdByButtonId(buttonId);
-    }
-
     // 삭제할 덱의 ID
     private getCurrentDeleteDeckId(): number | null {
 //         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId() ?? null;
@@ -293,6 +284,15 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         } else {
             return deckId;
         }
+    }
+
+    private getDeckIdList(): number[] {
+        return this.myDeckCardMapRepository.findDeckIdList();
+    }
+
+    private getFirstDeckId(deckIdList: number[]): number {
+        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
+        return sortedDeckIdList[0];
     }
 
     public getPopupButtonsVisibleState(): boolean[] {
@@ -490,11 +490,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(firstDeckId);
     }
 
-    private initializeDeckCardVisibility(): void {
-        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
-        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
-        const firstDeckId = sortedDeckIdList[0];
-
+    private initializeDeckCardVisibility(deckIdList: number[], firstDeckId: number): void {
         deckIdList.forEach((deckId, index) => {
             const cardList = this.myDeckCardRepository.findCardListByDeckId(deckId);
             if (cardList == null) return;
@@ -507,11 +503,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         });
     }
 
-    private initializeDeckButtonVisibility(): void {
-        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
-        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
-        const firstDeckId = sortedDeckIdList[0];
-
+    private initializeDeckButtonVisibility(deckIdList: number[], firstDeckId: number): void {
         deckIdList.forEach((deckId, index) => {
             if (deckId === firstDeckId) {
                 this.myDeckButtonRepository.findButtonByDeckId(deckId)?.setVisibility(false);
@@ -521,11 +513,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         });
     }
 
-    public initializeDeckButtonEffectVisibility(): void {
-        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
-        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
-        const firstDeckId = sortedDeckIdList[0];
-
+    private initializeDeckButtonEffectVisibility(deckIdList: number[], firstDeckId: number): void {
         deckIdList.forEach((deckId, index) => {
             if (deckId === firstDeckId) {
                 this.myDeckButtonEffectRepository.findEffectByDeckId(deckId)?.setVisibility(true);
@@ -535,11 +523,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         });
     }
 
-    public initializeBlockVisibility(): void {
-        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
-        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
-        const firstDeckId = sortedDeckIdList[0];
-
+    private initializeBlockVisibility(deckIdList: number[], firstDeckId: number): void {
         deckIdList.forEach((deckId, index) => {
             const blockList = this.myDeckBlockRepository.findBlockListByDeckId(deckId);
             if (blockList == null) return;
@@ -552,11 +536,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         });
     }
 
-    public initializeCardNameVisibility(): void {
-        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
-        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
-        const firstDeckId = sortedDeckIdList[0];
-
+    private initializeCardNameVisibility(deckIdList: number[], firstDeckId: number): void {
         deckIdList.forEach((deckId, index) => {
             const cardNameList = this.myDeckCardNameRepository.findCardNameListByDeckId(deckId);
             if (cardNameList === null) return;
@@ -569,10 +549,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         });
     }
 
-    public initializeDeckDeleteButtonVisibility(): void {
-        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
-        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
-        const firstDeckId = sortedDeckIdList[0];
+    private initializeDeckDeleteButtonVisibility(firstDeckId: number): void {
         const button = this.deckDeleteButtonRepository.findButtonByDeckId(firstDeckId);
 
         if (button !== null) {
@@ -580,10 +557,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         }
     }
 
-    public initializeDeckNameEditButtonVisibility(): void {
-        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
-        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
-        const firstDeckId = sortedDeckIdList[0];
+    private initializeDeckNameEditButtonVisibility(firstDeckId: number): void {
         const button = this.deckNameEditButtonRepository.findButtonByDeckId(firstDeckId);
 
         if (button !== null) {
@@ -591,11 +565,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         }
     }
 
-    public initializeNumberOfDeckCardsVisibility(): void {
-        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
-        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
-        const firstDeckId = sortedDeckIdList[0];
-
+    private initializeNumberOfDeckCardsVisibility(deckIdList: number[], firstDeckId: number): void {
         deckIdList.forEach((deckId, index) => {
             const numberList = this.myDeckNumberOfCardsRepository.findNumberListByDeckId(deckId);
             if (numberList == null) return;
@@ -608,11 +578,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         });
     }
 
-    public initializeNumberOfSelectedCardsVisibility(): void {
-        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
-        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
-        const firstDeckId = sortedDeckIdList[0];
-
+    private initializeNumberOfSelectedCardsVisibility(deckIdList: number[], firstDeckId: number): void {
         deckIdList.forEach((deckId, index) => {
             const numberList = this.myDeckNumberOfSelectedCardsRepository.findNumberListByDeckId(deckId);
             if (numberList == null) return null;
@@ -625,11 +591,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         });
     }
 
-    public initializeDeckCardCountMarkerVisibility(): void {
-        const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
-        const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
-        const firstDeckId = sortedDeckIdList[0];
-
+    private initializeDeckCardCountMarkerVisibility(deckIdList: number[], firstDeckId: number): void {
         deckIdList.forEach((deckId, index) => {
             const markerList = this.deckCardCountMarkerRepository.findMarkerListByDeckId(deckId);
             if (markerList == null) return;
