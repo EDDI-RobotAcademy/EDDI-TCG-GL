@@ -15,6 +15,7 @@ export class DeckMakePopupBackground {
         this.width = width;
         this.height = height;
         this.position = position;
+        this.mesh.visible = false;
     }
 
     public getMesh(): THREE.Mesh {
@@ -27,6 +28,14 @@ export class DeckMakePopupBackground {
 
     public getHeight(): number {
         return this.height;
+    }
+
+    public getVisibility(): boolean {
+        return this.mesh.visible;
+    }
+
+    public setVisibility(state: boolean): void {
+        this.mesh.visible = state;
     }
 
 }

@@ -99,10 +99,9 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
     }
 
     private setDeckMakePopupBackgroundVisible(isVisible: boolean): void {
-        if (isVisible == true) {
-            this.deckMakePopupBackgroundRepository.showDeckMakePopupBackground();
-        } else {
-            this.deckMakePopupBackgroundRepository.hideDeckMakePopupBackground();
+        const background = this.deckMakePopupBackgroundRepository.findDeckMakePopupBackground();
+        if (background) {
+            background.setVisibility(isVisible);
         }
     }
 

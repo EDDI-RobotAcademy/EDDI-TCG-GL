@@ -51,18 +51,4 @@ export class DeckMakePopupBackgroundRepositoryImpl implements DeckMakePopupBackg
         this.background = null;
     }
 
-    public hideDeckMakePopupBackground(): void {
-        const deckMakePopupBackground = this.findDeckMakePopupBackground();
-        if (deckMakePopupBackground) {
-            deckMakePopupBackground.getMesh().visible = false;
-        }
-    }
-
-    public showDeckMakePopupBackground(): void {
-        const deckMakePopupBackground = this.findDeckMakePopupBackground();
-        if (deckMakePopupBackground) {
-            deckMakePopupBackground.getMesh().visible = true;
-        }
-    }
-
 }

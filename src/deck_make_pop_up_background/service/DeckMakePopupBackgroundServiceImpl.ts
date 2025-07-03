@@ -62,8 +62,4 @@ export class DeckMakePopupBackgroundServiceImpl implements DeckMakePopupBackgrou
         this.deckMakePopupBackgroundRepository.deleteDeckMakePopupBackground();
     }
 
-    public initialDeckMakePopupBackgroundVisible(): void {
-        this.deckMakePopupBackgroundRepository.hideDeckMakePopupBackground();
-    }
-
 }

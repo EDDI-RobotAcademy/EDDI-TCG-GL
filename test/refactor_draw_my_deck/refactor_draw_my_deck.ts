@@ -921,12 +921,11 @@ export class TCGJustTestMyDeckView {
         try {
             const deckMakePopupBackground = await this.decKMakePopupBackgroundService.createDeckMakePopupBackground();
             if (deckMakePopupBackground) {
-                this.decKMakePopupBackgroundService.initialDeckMakePopupBackgroundVisible();
                 this.scene.add(deckMakePopupBackground);
             } else {
                 console.warn(`No deckMakePopupBackground found`);
             }
-        }catch (error) {
+        } catch (error) {
             console.error('Failed to add DeckMakePopupBackground:', error);
         }
     }
