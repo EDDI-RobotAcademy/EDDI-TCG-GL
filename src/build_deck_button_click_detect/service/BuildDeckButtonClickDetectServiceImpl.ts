@@ -107,14 +107,8 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
 
     private setDeckMakePopupButtonsVisible(isVisible: boolean): void {
         const buttonIds = this.deckMakePopupButtonsRepository.findAllButtonIds();
-        if (isVisible == true){
-           buttonIds.forEach((buttonId) => {
-               this.deckMakePopupButtonsRepository.showDeckMakePopupButton(buttonId);
-           });
-        } else {
-            buttonIds.forEach((buttonId) => {
-                this.deckMakePopupButtonsRepository.hideDeckMakePopupButton(buttonId);
-            });
+        for (const buttonId of buttonIds) {
+            this.deckMakePopupButtonsRepository.findById(buttonId)?.setVisibility(isVisible);
         }
     }
 

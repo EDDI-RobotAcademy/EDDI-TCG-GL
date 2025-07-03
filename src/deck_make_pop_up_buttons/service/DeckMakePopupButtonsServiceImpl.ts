@@ -10,14 +10,13 @@ export class DeckMakePopupButtonsServiceImpl implements DeckMakePopupButtonsServ
     private static instance: DeckMakePopupButtonsServiceImpl;
     private deckMakePopupButtonsRepository: DeckMakePopupButtonsRepository;
 
-    private constructor(deckMakePopupButtonsRepository: DeckMakePopupButtonsRepository) {
-        this.deckMakePopupButtonsRepository = deckMakePopupButtonsRepository;
+    private constructor() {
+        this.deckMakePopupButtonsRepository = DeckMakePopupButtonsRepositoryImpl.getInstance();
     }
 
     public static getInstance(): DeckMakePopupButtonsServiceImpl {
         if (!DeckMakePopupButtonsServiceImpl.instance) {
-            const deckMakePopupButtonsRepository = DeckMakePopupButtonsRepositoryImpl.getInstance();
-            DeckMakePopupButtonsServiceImpl.instance = new DeckMakePopupButtonsServiceImpl(deckMakePopupButtonsRepository);
+            DeckMakePopupButtonsServiceImpl.instance = new DeckMakePopupButtonsServiceImpl();
         }
         return DeckMakePopupButtonsServiceImpl.instance;
     }
@@ -78,10 +77,4 @@ export class DeckMakePopupButtonsServiceImpl implements DeckMakePopupButtonsServ
         this.deckMakePopupButtonsRepository.deleteAll();
     }
 
-    public initializeDeckMakePopupButtonsVisible(): void {
-        const buttonIds = this.deckMakePopupButtonsRepository.findAllButtonIds();
-        buttonIds.forEach((buttonId) => {
-            this.deckMakePopupButtonsRepository.hideDeckMakePopupButton(buttonId);
-        });
-    }
 }

@@ -838,10 +838,7 @@ export class TCGJustTestMyDeckView {
         try {
             const configList = new DeckEditButtonConfigList();
             await Promise.all(configList.buttonConfigs.map(async (config) =>{
-                const button = await this.deckEditButtonService.createDeckEditButton(
-                    config.id,
-                    config.position
-                );
+                const button = await this.deckEditButtonService.createDeckEditButton(config.id, config.position);
 
                 if (button) {
                     this.scene.add(button);
@@ -857,10 +854,7 @@ export class TCGJustTestMyDeckView {
         try {
             const configList = new DeckEditDoneButtonConfigList();
             await Promise.all(configList.buttonConfigs.map(async (config) => {
-                const button = await this.deckEditDoneButtonService.createDeckEditDoneButton(
-                    config.id,
-                    config.position
-                );
+                const button = await this.deckEditDoneButtonService.createDeckEditDoneButton(config.id, config.position);
 
                 if (button) {
                     this.scene.add(button);
@@ -902,10 +896,7 @@ export class TCGJustTestMyDeckView {
         try {
             const configList = new DeleteDeckPopupButtonConfigList();
             await Promise.all(configList.buttonConfigs.map(async (config) => {
-                const button = await this.deleteDeckPopupButtonService.createDeleteDeckPopupButton(
-                    config.id,
-                    config.position
-                );
+                const button = await this.deleteDeckPopupButtonService.createDeleteDeckPopupButton(config.id, config.position);
 
                 if (button) {
                     this.scene.add(button);
@@ -933,14 +924,10 @@ export class TCGJustTestMyDeckView {
     private async addDeckMakePopupButtons(): Promise<void> {
         try {
             const configList = new DeckMakePopupButtonsConfigList();
-            await Promise.all(configList.buttonConfigs.map(async (config) =>{
-                const button = await this.deckMakePopupButtonsService.createDeckMakePopupButtons(
-                    config.id,
-                    config.position
-                );
+            await Promise.all(configList.buttonConfigs.map(async (config) => {
+                const button = await this.deckMakePopupButtonsService.createDeckMakePopupButtons(config.id,config.position);
 
                 if (button) {
-                    this.deckMakePopupButtonsService.initializeDeckMakePopupButtonsVisible();
                     this.scene.add(button);
                     console.log(`Draw Deck Make Pop-up Button ${config.id}`);
                 }

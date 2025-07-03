@@ -57,7 +57,7 @@ export class DeckMakePopupButtonsRepositoryImpl implements DeckMakePopupButtonsR
     }
 
     public findById(id: number): DeckMakePopupButtons | null {
-        return this.buttonMap.get(id) || null;
+        return this.buttonMap.get(id) ?? null;
     }
 
     public findAll(): DeckMakePopupButtons[] {
@@ -76,17 +76,4 @@ export class DeckMakePopupButtonsRepositoryImpl implements DeckMakePopupButtonsR
         return Array.from(this.buttonMap.keys());
     }
 
-    public hideDeckMakePopupButton(buttonId: number): void {
-        const deckMakePopupButton = this.findById(buttonId);
-        if (deckMakePopupButton) {
-            deckMakePopupButton.getMesh().visible = false;
-        }
-    }
-
-    public showDeckMakePopupButton(buttonId: number): void {
-        const deckMakePopupButton = this.findById(buttonId);
-        if (deckMakePopupButton) {
-            deckMakePopupButton.getMesh().visible = true;
-        }
-    }
 }
