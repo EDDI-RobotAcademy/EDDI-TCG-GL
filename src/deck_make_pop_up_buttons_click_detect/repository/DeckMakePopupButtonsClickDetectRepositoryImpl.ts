@@ -5,8 +5,10 @@ import {DeckMakePopupButtons} from "../../deck_make_pop_up_buttons/entity/DeckMa
 
 export class DeckMakePopupButtonsClickDetectRepositoryImpl implements DeckMakePopupButtonsClickDetectRepository {
     private static instance: DeckMakePopupButtonsClickDetectRepositoryImpl;
-    private currentButtonClickState: DeckMakePopupButtons | null = null;
     private raycaster = new THREE.Raycaster();
+
+    private currentButtonClickState: DeckMakePopupButtons | null = null;
+    private buttonClickEnabled: boolean = false;
 
     public static getInstance(): DeckMakePopupButtonsClickDetectRepositoryImpl {
         if (!DeckMakePopupButtonsClickDetectRepositoryImpl.instance) {
@@ -15,7 +17,7 @@ export class DeckMakePopupButtonsClickDetectRepositoryImpl implements DeckMakePo
         return DeckMakePopupButtonsClickDetectRepositoryImpl.instance;
     }
 
-    isDeckMakePopupButtonsClicked(clickPoint: { x: number; y: number },
+    public isDeckMakePopupButtonsClicked(clickPoint: { x: number; y: number },
                           deckMakePopupButtonsList: DeckMakePopupButtons[],
                           camera: THREE.Camera): any | null {
         const { x, y } = clickPoint;
@@ -45,16 +47,24 @@ export class DeckMakePopupButtonsClickDetectRepositoryImpl implements DeckMakePo
         return null;
     }
 
-    saveCurrentButtonClickState(button: DeckMakePopupButtons): void {
+    public saveCurrentButtonClickState(button: DeckMakePopupButtons): void {
         this.currentButtonClickState = button;
     }
 
-    getCurrentButtonClickState(): DeckMakePopupButtons | null {
+    public getCurrentButtonClickState(): DeckMakePopupButtons | null {
         return this.currentButtonClickState;
     }
 
-    resetCurrentButtonClickState(): void {
+    public resetCurrentButtonClickState(): void {
         this.currentButtonClickState = null;
+    }
+
+    public setButtonClickEnabled(isEnabled: boolean): void {
+        this.buttonClickEnabled = isEnabled;
+    }
+
+    public isButtonClickEnabled(): boolean {
+        return this.buttonClickEnabled;
     }
 
 }

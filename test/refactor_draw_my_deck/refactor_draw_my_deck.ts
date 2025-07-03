@@ -155,12 +155,11 @@ export class TCGJustTestMyDeckView {
     private readonly cameraService = CameraServiceImpl.getInstance(this.cameraRepository);
 
     private myDeckButtonClickDetectService: MyDeckButtonClickDetectService;
-//     private deckMakePopupButtonsClickDetectService: DeckMakePopupButtonsClickDetectService;
+    private deckMakePopupButtonsClickDetectService: DeckMakePopupButtonsClickDetectService;
     private myDeckScrollService: MyDeckScrollService;
     private sideScrollAreaDetectService: SideScrollAreaDetectService;
     private buildDeckButtonHoverDetectService: BuildDeckButtonHoverDetectService;
     private buildDeckButtonClickDetectService: BuildDeckButtonClickDetectService;
-//     private myDeckButtonEffectHoverDetectService: MyDeckButtonEffectHoverDetectService;
     private deckDeleteButtonClickDetectService: DeckDeleteButtonClickDetectService;
     private deleteDeckPopupButtonClickDetectService: DeleteDeckPopupButtonClickDetectService;
     private deckNameEditButtonClickDetectService: DeckNameEditButtonClickDetectService;
@@ -235,6 +234,7 @@ export class TCGJustTestMyDeckView {
         this.deckDeleteButtonClickDetectService = DeckDeleteButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckNameEditButtonClickDetectService = DeckNameEditButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deleteDeckPopupButtonClickDetectService = DeleteDeckPopupButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.deckMakePopupButtonsClickDetectService = DeckMakePopupButtonsClickDetectServiceImpl.getInstance(this.camera, this.scene);
 
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousemove', (e) => this.sideScrollAreaDetectService.onMouseMoveMyDeck(e), false);
@@ -253,22 +253,7 @@ export class TCGJustTestMyDeckView {
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckDeleteButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckNameEditButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deleteDeckPopupButtonClickDetectService.onMouseDown(e), false);
-
-//         this.deckMakePopupButtonsClickDetectService = DeckMakePopupButtonsClickDetectServiceImpl.getInstance(this.camera, this.scene);
-// //         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckMakePopupButtonsClickDetectService.onMouseDown(e), false);
-//         this.renderer.domElement.addEventListener('mousedown', (e) => {
-//             if (this.isDeckMakePopupButtonsEnabled) {
-//                 this.deckMakePopupButtonsClickDetectService.onMouseDown(e);
-//                 const currentButtonClickState = this.deckMakePopupButtonsClickDetectService.getCurrentButtonClickState();
-//                 if (currentButtonClickState) {
-//                     this.isMyDeckButtonEnabled = true;
-//                     this.isDeckPageMovementButtonEnabled = true;
-//                     this.isDeckCardPageMovementButtonEnabled = true;
-//                     this.isDeckMakeButtonEnabled = true;
-//                 }
-//             }
-//         }, false);
-
+        this.renderer.domElement.addEventListener('mousedown', (e) => this.deckMakePopupButtonsClickDetectService.onMouseDown(e), false);
     }
 
     public static getInstance(simulationMyDeckContainer: HTMLElement): TCGJustTestMyDeckView {
