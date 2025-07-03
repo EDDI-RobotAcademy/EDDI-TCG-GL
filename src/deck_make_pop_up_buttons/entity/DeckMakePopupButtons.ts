@@ -18,10 +18,19 @@ export class DeckMakePopupButtons {
         this.height = height;
         this.mesh = mesh;
         this.position = position;
+        this.mesh.visible = false;
     }
 
     public getMesh(): THREE.Mesh {
         return this.mesh;
-        }
+    }
+
+    public getVisibility(): boolean {
+        return this.mesh.visible;
+    }
+
+    public setVisibility(state: boolean): void {
+        this.mesh.visible = state;
+    }
 
 }

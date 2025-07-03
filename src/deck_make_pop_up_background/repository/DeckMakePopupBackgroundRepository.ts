@@ -6,6 +6,4 @@ export interface DeckMakePopupBackgroundRepository {
     createDeckMakePopupBackground(): Promise<DeckMakePopupBackground>;
     findDeckMakePopupBackground(): DeckMakePopupBackground | null;
     deleteDeckMakePopupBackground(): void;
-    hideDeckMakePopupBackground(): void;
-    showDeckMakePopupBackground(): void;
 }

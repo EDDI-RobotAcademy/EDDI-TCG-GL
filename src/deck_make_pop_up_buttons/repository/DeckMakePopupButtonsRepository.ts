@@ -11,6 +11,4 @@ export interface DeckMakePopupButtonsRepository {
     deleteById(id: number): void;
     deleteAll(): void;
     findAllButtonIds(): number[];
-    hideDeckMakePopupButton(buttonId: number): void;
-    showDeckMakePopupButton(buttonId: number): void;
 }

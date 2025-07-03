@@ -92,31 +92,23 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
     }
 
     private setTransparentBackgroundVisible(isVisible: boolean): void {
-        if (isVisible == true) {
-            this.transparentBackgroundRepository.showTransparentBackground();
-        } else {
-            this.transparentBackgroundRepository.hideTransparentBackground();
+        const background = this.transparentBackgroundRepository.findTransparentBackground();
+        if (background) {
+            background.setVisibility(isVisible);
         }
     }
 
     private setDeckMakePopupBackgroundVisible(isVisible: boolean): void {
-        if (isVisible == true) {
-            this.deckMakePopupBackgroundRepository.showDeckMakePopupBackground();
-        } else {
-            this.deckMakePopupBackgroundRepository.hideDeckMakePopupBackground();
+        const background = this.deckMakePopupBackgroundRepository.findDeckMakePopupBackground();
+        if (background) {
+            background.setVisibility(isVisible);
         }
     }
 
     private setDeckMakePopupButtonsVisible(isVisible: boolean): void {
         const buttonIds = this.deckMakePopupButtonsRepository.findAllButtonIds();
-        if (isVisible == true){
-           buttonIds.forEach((buttonId) => {
-               this.deckMakePopupButtonsRepository.showDeckMakePopupButton(buttonId);
-           });
-        } else {
-            buttonIds.forEach((buttonId) => {
-                this.deckMakePopupButtonsRepository.hideDeckMakePopupButton(buttonId);
-            });
+        for (const buttonId of buttonIds) {
+            this.deckMakePopupButtonsRepository.findById(buttonId)?.setVisibility(isVisible);
         }
     }
 

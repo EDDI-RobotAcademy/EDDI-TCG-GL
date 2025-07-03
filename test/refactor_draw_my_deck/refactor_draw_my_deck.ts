@@ -838,10 +838,7 @@ export class TCGJustTestMyDeckView {
         try {
             const configList = new DeckEditButtonConfigList();
             await Promise.all(configList.buttonConfigs.map(async (config) =>{
-                const button = await this.deckEditButtonService.createDeckEditButton(
-                    config.id,
-                    config.position
-                );
+                const button = await this.deckEditButtonService.createDeckEditButton(config.id, config.position);
 
                 if (button) {
                     this.scene.add(button);
@@ -857,10 +854,7 @@ export class TCGJustTestMyDeckView {
         try {
             const configList = new DeckEditDoneButtonConfigList();
             await Promise.all(configList.buttonConfigs.map(async (config) => {
-                const button = await this.deckEditDoneButtonService.createDeckEditDoneButton(
-                    config.id,
-                    config.position
-                );
+                const button = await this.deckEditDoneButtonService.createDeckEditDoneButton(config.id, config.position);
 
                 if (button) {
                     this.scene.add(button);
@@ -876,7 +870,6 @@ export class TCGJustTestMyDeckView {
         try{
             const transparentBackground = await this.transparentBackgroundService.createTransparentBackground();
             if (transparentBackground) {
-                this.transparentBackgroundService.initialTransparentBackgroundVisible();
                 this.scene.add(transparentBackground);
             } else {
                 console.warn(`No transparentBackground found`);
@@ -903,10 +896,7 @@ export class TCGJustTestMyDeckView {
         try {
             const configList = new DeleteDeckPopupButtonConfigList();
             await Promise.all(configList.buttonConfigs.map(async (config) => {
-                const button = await this.deleteDeckPopupButtonService.createDeleteDeckPopupButton(
-                    config.id,
-                    config.position
-                );
+                const button = await this.deleteDeckPopupButtonService.createDeleteDeckPopupButton(config.id, config.position);
 
                 if (button) {
                     this.scene.add(button);
@@ -922,12 +912,11 @@ export class TCGJustTestMyDeckView {
         try {
             const deckMakePopupBackground = await this.decKMakePopupBackgroundService.createDeckMakePopupBackground();
             if (deckMakePopupBackground) {
-                this.decKMakePopupBackgroundService.initialDeckMakePopupBackgroundVisible();
                 this.scene.add(deckMakePopupBackground);
             } else {
                 console.warn(`No deckMakePopupBackground found`);
             }
-        }catch (error) {
+        } catch (error) {
             console.error('Failed to add DeckMakePopupBackground:', error);
         }
     }
@@ -935,14 +924,10 @@ export class TCGJustTestMyDeckView {
     private async addDeckMakePopupButtons(): Promise<void> {
         try {
             const configList = new DeckMakePopupButtonsConfigList();
-            await Promise.all(configList.buttonConfigs.map(async (config) =>{
-                const button = await this.deckMakePopupButtonsService.createDeckMakePopupButtons(
-                    config.id,
-                    config.position
-                );
+            await Promise.all(configList.buttonConfigs.map(async (config) => {
+                const button = await this.deckMakePopupButtonsService.createDeckMakePopupButtons(config.id,config.position);
 
                 if (button) {
-                    this.deckMakePopupButtonsService.initializeDeckMakePopupButtonsVisible();
                     this.scene.add(button);
                     console.log(`Draw Deck Make Pop-up Button ${config.id}`);
                 }
