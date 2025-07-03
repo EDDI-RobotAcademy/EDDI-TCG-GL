@@ -1,7 +1,6 @@
 import * as THREE from "three";
 
 import {BuildDeckButtonClickDetectService} from "./BuildDeckButtonClickDetectService";
-import {BuildDeckButtonStateManager} from "../../build_deck_button_manager/BuildDeckButtonStateManager";
 
 import {BuildDeckButton} from "../../build_deck_button/entity/BuildDeckButton";
 import {TransparentBackground} from "../../transparent_background/entity/TransparentBackground";
@@ -21,7 +20,6 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
     private static instance: BuildDeckButtonClickDetectServiceImpl | null = null;
     private buildDeckButtonClickDetectRepository: BuildDeckButtonClickDetectRepositoryImpl;
     private buildDeckButtonRepository: BuildDeckButtonRepositoryImpl;
-    private buildDeckButtonStateManager: BuildDeckButtonStateManager;
     private cameraRepository: CameraRepository;
 
     private transparentBackgroundRepository: TransparentBackgroundRepositoryImpl;
@@ -31,8 +29,7 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.buildDeckButtonClickDetectRepository = BuildDeckButtonClickDetectRepositoryImpl.getInstance();
-        this.buildDeckButtonRepository = BuildDeckButtonRepositoryImpl.getInstance();
-        this.buildDeckButtonStateManager = BuildDeckButtonStateManager.getInstance();
+        this.buildDeckButtonRepository = BuildDeckButtonRepositoryImpl.getInstance(scene);
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.transparentBackgroundRepository = TransparentBackgroundRepositoryImpl.getInstance();
         this.deckMakePopupBackgroundRepository = DeckMakePopupBackgroundRepositoryImpl.getInstance();
@@ -91,7 +88,7 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
     }
 
     private setButtonVisibility(buttonId: number, isVisible: boolean): void {
-        this.buildDeckButtonStateManager.setVisibility(buttonId, isVisible);
+        this.buildDeckButtonRepository.findButtonById(buttonId)?.setVisibility(isVisible);
     }
 
     private setTransparentBackgroundVisible(isVisible: boolean): void {

@@ -115,7 +115,6 @@ export class TCGJustTestMyDeckView {
     private deckMakePopupButtonsService = DeckMakePopupButtonsServiceImpl.getInstance();
     private deckMakePopupInputContainerService = DeckMakePopupInputContainerServiceImpl.getInstance();
     private sideScrollAreaService = SideScrollAreaServiceImpl.getInstance();
-    private buildDeckButtonService = BuildDeckButtonServiceImpl.getInstance();
     private deleteDeckPopupWindowService = DeleteDeckPopupWindowServiceImpl.getInstance();
     private deleteDeckPopupButtonService = DeleteDeckPopupButtonServiceImpl.getInstance();
     private deckEditButtonService = DeckEditButtonServiceImpl.getInstance();
@@ -140,6 +139,7 @@ export class TCGJustTestMyDeckView {
     private myDeckNameTextService: MyDeckNameTextServiceImpl;
     private myDeckNumberOfCardsService: MyDeckNumberOfCardsServiceImpl;
     private cardSelectionBlockerService: CardSelectionBlockerServiceImpl;
+    private buildDeckButtonService: BuildDeckButtonServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -218,6 +218,7 @@ export class TCGJustTestMyDeckView {
         this.myDeckNameTextService = MyDeckNameTextServiceImpl.getInstance(this.scene);
         this.myDeckNumberOfCardsService = MyDeckNumberOfCardsServiceImpl.getInstance(this.scene);
         this.cardSelectionBlockerService = CardSelectionBlockerServiceImpl.getInstance(this.scene);
+        this.buildDeckButtonService = BuildDeckButtonServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -824,7 +825,6 @@ export class TCGJustTestMyDeckView {
                 );
 
                 if (button) {
-                    this.buildDeckButtonService.initializeRaceButtonVisible();
                     this.scene.add(button);
                     console.log(`Draw Build Deck Button ${config.id}`);
                 }
