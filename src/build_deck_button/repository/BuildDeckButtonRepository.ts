@@ -9,6 +9,4 @@ export interface BuildDeckButtonRepository {
     deleteById(id: number): void;
     deleteAll(): void;
     findAllButtonIds(): number[];
-    hideButton(buttonId: number): void;
-    showButton(buttonId: number): void;
 }

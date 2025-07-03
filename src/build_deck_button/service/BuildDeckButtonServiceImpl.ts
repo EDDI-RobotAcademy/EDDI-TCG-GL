@@ -3,21 +3,18 @@ import {BuildDeckButtonService} from './BuildDeckButtonService';
 import {BuildDeckButton} from "../entity/BuildDeckButton";
 import {BuildDeckButtonRepositoryImpl} from "../repository/BuildDeckButtonRepositoryImpl";
 import {Vector2d} from "../../common/math/Vector2d";
-import {BuildDeckButtonStateManager} from "../../build_deck_button_manager/BuildDeckButtonStateManager";
 
 export class BuildDeckButtonServiceImpl implements BuildDeckButtonService {
     private static instance: BuildDeckButtonServiceImpl;
     private buildDeckButtonRepository: BuildDeckButtonRepositoryImpl;
-    private buildDeckButtonStateManager: BuildDeckButtonStateManager;
 
-    private constructor() {
-        this.buildDeckButtonRepository = BuildDeckButtonRepositoryImpl.getInstance();
-        this.buildDeckButtonStateManager = BuildDeckButtonStateManager.getInstance();
+    private constructor(scene: THREE.Scene) {
+        this.buildDeckButtonRepository = BuildDeckButtonRepositoryImpl.getInstance(scene);
     }
 
-    public static getInstance(): BuildDeckButtonServiceImpl {
+    public static getInstance(scene: THREE.Scene): BuildDeckButtonServiceImpl {
         if (!BuildDeckButtonServiceImpl.instance) {
-            BuildDeckButtonServiceImpl.instance = new BuildDeckButtonServiceImpl();
+            BuildDeckButtonServiceImpl.instance = new BuildDeckButtonServiceImpl(scene);
         }
         return BuildDeckButtonServiceImpl.instance;
     }
@@ -73,10 +70,6 @@ export class BuildDeckButtonServiceImpl implements BuildDeckButtonService {
 
     public deleteAllBuildDeckButtons(): void {
         this.buildDeckButtonRepository.deleteAll();
-    }
-
-    public initializeRaceButtonVisible(): void {
-        this.buildDeckButtonStateManager.initializeButtonVisibility();
     }
 
 }

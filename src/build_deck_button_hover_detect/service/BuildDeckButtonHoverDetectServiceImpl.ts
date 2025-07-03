@@ -4,7 +4,6 @@ import {BuildDeckButtonHoverDetectService} from "./BuildDeckButtonHoverDetectSer
 import {BuildDeckButtonHoverDetectRepositoryImpl} from "../repository/BuildDeckButtonHoverDetectRepositoryImpl";
 import {BuildDeckButton} from "../../build_deck_button/entity/BuildDeckButton";
 import {BuildDeckButtonRepositoryImpl} from "../../build_deck_button/repository/BuildDeckButtonRepositoryImpl";
-import {BuildDeckButtonStateManager} from "../../build_deck_button_manager/BuildDeckButtonStateManager";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -13,13 +12,11 @@ export class BuildDeckButtonHoverDetectServiceImpl implements BuildDeckButtonHov
     private static instance: BuildDeckButtonHoverDetectServiceImpl | null = null;
     private buildDeckButtonHoverDetectRepository: BuildDeckButtonHoverDetectRepositoryImpl;
     private buildDeckButtonRepository: BuildDeckButtonRepositoryImpl;
-    private buildDeckButtonStateManager: BuildDeckButtonStateManager;
     private cameraRepository: CameraRepository;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.buildDeckButtonHoverDetectRepository = BuildDeckButtonHoverDetectRepositoryImpl.getInstance();
-        this.buildDeckButtonRepository = BuildDeckButtonRepositoryImpl.getInstance();
-        this.buildDeckButtonStateManager = BuildDeckButtonStateManager.getInstance();
+        this.buildDeckButtonRepository = BuildDeckButtonRepositoryImpl.getInstance(scene);
         this.cameraRepository = CameraRepositoryImpl.getInstance();
     }
 
@@ -75,7 +72,7 @@ export class BuildDeckButtonHoverDetectServiceImpl implements BuildDeckButtonHov
     }
 
     private setButtonVisibility(buttonId: number, isVisible: boolean): void {
-        this.buildDeckButtonStateManager.setVisibility(buttonId, isVisible);
+        this.buildDeckButtonRepository.findButtonById(buttonId)?.setVisibility(isVisible);
     }
 
 }
