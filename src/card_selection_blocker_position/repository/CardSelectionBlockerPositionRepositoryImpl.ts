@@ -4,7 +4,7 @@ import {CardSelectionBlockerPositionRepository} from "./CardSelectionBlockerPosi
 
 export class CardSelectionBlockerPositionRepositoryImpl implements CardSelectionBlockerPositionRepository {
     private static instance: CardSelectionBlockerPositionRepositoryImpl;
-    private positionMap: Map< number, CardSelectionBlockerPosition> = new Map(); // position Unique ID: position
+    private positionMap: Map<number, { cardId: number, position: CardSelectionBlockerPosition}> = new Map();
 
     private initialX = - 0.192;
     private incrementX = 0.1275;
@@ -21,31 +21,76 @@ export class CardSelectionBlockerPositionRepositoryImpl implements CardSelection
         return CardSelectionBlockerPositionRepositoryImpl.instance;
     }
 
-    public addCardSelectionBlockerPosition(cardId: number, cardIndex: number): CardSelectionBlockerPosition {
-        console.log(`%c Card ID?: ${cardId}, Card Index?: ${cardIndex}`, 'color: #FE2EF7; font-weight: bold;');
-        const col = cardIndex % this.maxCardsPerRow;
-        const row = Math.floor(cardIndex / this.maxCardsPerRow);
+    public addCardSelectionBlockerPosition(cardId: number): CardSelectionBlockerPosition {
+        if (this.containsCardIdInMap(cardId)) {
+            return this.findPositionByCardId(cardId)!;
+        }
+
+        const col = this.positionMap.size % this.maxCardsPerRow;
+        const row = Math.floor(this.positionMap.size / this.maxCardsPerRow);
 
         const positionX = this.initialX + col * this.incrementX;
         const positionY = this.initialY + row * this.incrementY;
 
         const position = new CardSelectionBlockerPosition(positionX, positionY);
-        this.positionMap.set(position.id, position);
+        this.positionMap.set(position.id, {cardId, position: position})
 
         return position;
     }
 
     public findPositionByPositionId(positionId: number): CardSelectionBlockerPosition | null {
-        return this.positionMap.get(positionId) || null;
+        return this.positionMap.get(positionId)?.position ?? null;
+    }
+
+    public findPositionByCardId(cardId: number): CardSelectionBlockerPosition | null {
+        for (const { cardId: storedCardId, position } of this.positionMap.values()) {
+            if (storedCardId === cardId) {
+                return position;
+            }
+        }
+        return null;
+    }
+
+    public findPositionIdByCardId(cardId: number): number | null {
+        for (const [positionId, { cardId: storedCardId }] of this.positionMap.entries()) {
+            if (storedCardId === cardId) {
+                return positionId;
+            }
+        }
+        return null;
     }
 
     public findPositionIdList(): number[] {
         return Array.from(this.positionMap.keys());
     }
 
-    // To-do: 삭제 부분 후에 수정해야 함(재정렬 필요)
-    public deleteById(positionId: number): boolean {
-        return this.positionMap.delete(positionId);
+    public deleteById(positionId: number): void {
+        this.positionMap.delete(positionId);
+
+        let newPositionIndex = 0;
+        const updatedPositionMap = new Map<number, { cardId: number, position: CardSelectionBlockerPosition }>();
+
+        for (const [key, { cardId, position }] of this.positionMap.entries()) {
+            const col = this.positionMap.size % this.maxCardsPerRow;
+            const row = Math.floor(this.positionMap.size / this.maxCardsPerRow);
+
+            const newPositionX = this.initialX + col * this.incrementX;
+            const newPositionY = this.initialY + row * this.incrementY;
+
+            position.setPosition(newPositionX, newPositionY);
+            updatedPositionMap.set(key, { cardId, position });
+
+            newPositionIndex++;
+        }
+
+        this.positionMap = updatedPositionMap;
+    }
+
+    public deleteByCardId(cardId: number): void {
+        const positionId = this.findPositionIdByCardId(cardId);
+        if (positionId == null) return;
+
+        this.deleteById(positionId);
     }
 
     public deleteAll(): void {
@@ -54,5 +99,14 @@ export class CardSelectionBlockerPositionRepositoryImpl implements CardSelection
 
     public count(): number {
         return this.positionMap.size;
+    }
+
+    private containsCardIdInMap(cardId: number): boolean {
+        for (const { cardId: storedCardId } of this.positionMap.values()) {
+            if (storedCardId === cardId) {
+                return true;
+            }
+        }
+        return false;
     }
 }
