@@ -20,9 +20,7 @@ export class DeckMakePopupButtonsClickDetectServiceImpl implements DeckMakePopup
     private deckMakePopupBackgroundRepository: DeckMakePopupBackgroundRepositoryImpl;
     private transparentBackgroundRepository: TransparentBackgroundRepositoryImpl;
     private deckMakePopupInputContainerRepository: DeckMakePopupInputContainerRepositoryImpl;
-
-    private cameraRepository: CameraRepository
-    private leftMouseDown: boolean = false;
+    private cameraRepository: CameraRepository;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.deckMakePopupButtonsClickDetectRepository = DeckMakePopupButtonsClickDetectRepositoryImpl.getInstance();
@@ -40,12 +38,12 @@ export class DeckMakePopupButtonsClickDetectServiceImpl implements DeckMakePopup
         return DeckMakePopupButtonsClickDetectServiceImpl.instance;
     }
 
-    setLeftMouseDown(state: boolean): void {
-        this.leftMouseDown = state;
+    private setButtonClickEnabled(isEnabled: boolean): void {
+        this.deckMakePopupButtonsClickDetectRepository.setButtonClickEnabled(isEnabled);
     }
 
-    isLeftMouseDown(): boolean {
-        return this.leftMouseDown;
+    private isButtonClickEnabled(): boolean {
+        return this.deckMakePopupButtonsClickDetectRepository.isButtonClickEnabled();
     }
 
     async handleLeftClick(clickPoint: { x: number; y: number }): Promise<DeckMakePopupButtons | null> {
@@ -85,9 +83,15 @@ export class DeckMakePopupButtonsClickDetectServiceImpl implements DeckMakePopup
     }
 
     public async onMouseDown(event: MouseEvent): Promise<DeckMakePopupButtons | null> {
+        if (!this.isButtonClickEnabled()) return null;
+
         if (event.button === 0) {
             const clickPoint = { x: event.clientX, y: event.clientY };
-            return await this.handleLeftClick(clickPoint);
+            const result  = await this.handleLeftClick(clickPoint);
+            if (result) {
+                this.setButtonClickEnabled(false);
+            }
+            return result;
         }
         return null;
     }

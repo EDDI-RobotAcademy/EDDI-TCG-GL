@@ -12,29 +12,31 @@ import {TransparentBackgroundRepositoryImpl} from "../../transparent_background/
 import {DeckMakePopupBackgroundRepositoryImpl} from "../../deck_make_pop_up_background/repository/DeckMakePopupBackgroundRepositoryImpl";
 import {DeckMakePopupButtonsRepositoryImpl} from "../../deck_make_pop_up_buttons/repository/DeckMakePopupButtonsRepositoryImpl";
 import {DeckMakePopupInputContainerRepositoryImpl} from "../../deck_make_pop_up_input_container/repository/DeckMakePopupInputContainerRepositoryImpl";
+import {DeckMakePopupButtonsClickDetectRepositoryImpl} from "../../deck_make_pop_up_buttons_click_detect/repository/DeckMakePopupButtonsClickDetectRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
 
 export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonClickDetectService {
     private static instance: BuildDeckButtonClickDetectServiceImpl | null = null;
+    private cameraRepository: CameraRepository;
     private buildDeckButtonClickDetectRepository: BuildDeckButtonClickDetectRepositoryImpl;
     private buildDeckButtonRepository: BuildDeckButtonRepositoryImpl;
-    private cameraRepository: CameraRepository;
-
     private transparentBackgroundRepository: TransparentBackgroundRepositoryImpl;
     private deckMakePopupBackgroundRepository: DeckMakePopupBackgroundRepositoryImpl;
     private deckMakePopupButtonsRepository: DeckMakePopupButtonsRepositoryImpl;
     private deckMakePopupInputContainerRepository: DeckMakePopupInputContainerRepositoryImpl;
+    private deckMakePopupButtonsClickDetectRepository: DeckMakePopupButtonsClickDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
+        this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.buildDeckButtonClickDetectRepository = BuildDeckButtonClickDetectRepositoryImpl.getInstance();
         this.buildDeckButtonRepository = BuildDeckButtonRepositoryImpl.getInstance(scene);
-        this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.transparentBackgroundRepository = TransparentBackgroundRepositoryImpl.getInstance();
         this.deckMakePopupBackgroundRepository = DeckMakePopupBackgroundRepositoryImpl.getInstance();
         this.deckMakePopupButtonsRepository = DeckMakePopupButtonsRepositoryImpl.getInstance();
         this.deckMakePopupInputContainerRepository = DeckMakePopupInputContainerRepositoryImpl.getInstance();
+        this.deckMakePopupButtonsClickDetectRepository = DeckMakePopupButtonsClickDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): BuildDeckButtonClickDetectServiceImpl {
@@ -78,7 +80,11 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
 
         if (event.button === 0) {
             const hoverPoint = { x: event.clientX, y: event.clientY };
-            return await this.handleClick(hoverPoint);
+            const  result = await this.handleClick(hoverPoint);
+            if (result) {
+                this.deckMakePopupButtonsClickDetectRepository.setButtonClickEnabled(true);
+            }
+            return result;
         }
         return null;
     }
