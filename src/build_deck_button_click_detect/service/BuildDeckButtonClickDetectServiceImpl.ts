@@ -1,10 +1,18 @@
 import * as THREE from "three";
 
 import {BuildDeckButtonClickDetectService} from "./BuildDeckButtonClickDetectService";
-import {BuildDeckButtonClickDetectRepositoryImpl} from "../repository/BuildDeckButtonClickDetectRepositoryImpl";
-import {BuildDeckButton} from "../../build_deck_button/entity/BuildDeckButton";
-import {BuildDeckButtonRepositoryImpl} from "../../build_deck_button/repository/BuildDeckButtonRepositoryImpl";
 import {BuildDeckButtonStateManager} from "../../build_deck_button_manager/BuildDeckButtonStateManager";
+
+import {BuildDeckButton} from "../../build_deck_button/entity/BuildDeckButton";
+import {TransparentBackground} from "../../transparent_background/entity/TransparentBackground";
+import {DeckMakePopupBackground} from "../../deck_make_pop_up_background/entity/DeckMakePopupBackground";
+
+import {BuildDeckButtonClickDetectRepositoryImpl} from "../repository/BuildDeckButtonClickDetectRepositoryImpl";
+import {BuildDeckButtonRepositoryImpl} from "../../build_deck_button/repository/BuildDeckButtonRepositoryImpl";
+import {TransparentBackgroundRepositoryImpl} from "../../transparent_background/repository/TransparentBackgroundRepositoryImpl";
+import {DeckMakePopupBackgroundRepositoryImpl} from "../../deck_make_pop_up_background/repository/DeckMakePopupBackgroundRepositoryImpl";
+import {DeckMakePopupButtonsRepositoryImpl} from "../../deck_make_pop_up_buttons/repository/DeckMakePopupButtonsRepositoryImpl";
+import {DeckMakePopupInputContainerRepositoryImpl} from "../../deck_make_pop_up_input_container/repository/DeckMakePopupInputContainerRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -15,13 +23,21 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
     private buildDeckButtonRepository: BuildDeckButtonRepositoryImpl;
     private buildDeckButtonStateManager: BuildDeckButtonStateManager;
     private cameraRepository: CameraRepository;
-    private buttonClickState: boolean = true;
+
+    private transparentBackgroundRepository: TransparentBackgroundRepositoryImpl;
+    private deckMakePopupBackgroundRepository: DeckMakePopupBackgroundRepositoryImpl;
+    private deckMakePopupButtonsRepository: DeckMakePopupButtonsRepositoryImpl;
+    private deckMakePopupInputContainerRepository: DeckMakePopupInputContainerRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.buildDeckButtonClickDetectRepository = BuildDeckButtonClickDetectRepositoryImpl.getInstance();
         this.buildDeckButtonRepository = BuildDeckButtonRepositoryImpl.getInstance();
         this.buildDeckButtonStateManager = BuildDeckButtonStateManager.getInstance();
         this.cameraRepository = CameraRepositoryImpl.getInstance();
+        this.transparentBackgroundRepository = TransparentBackgroundRepositoryImpl.getInstance();
+        this.deckMakePopupBackgroundRepository = DeckMakePopupBackgroundRepositoryImpl.getInstance();
+        this.deckMakePopupButtonsRepository = DeckMakePopupButtonsRepositoryImpl.getInstance();
+        this.deckMakePopupInputContainerRepository = DeckMakePopupInputContainerRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): BuildDeckButtonClickDetectServiceImpl {
@@ -50,6 +66,10 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
 
             if (clickedButton) {
                 console.log(`[DEBUG] Clicked Build Deck Button`);
+                this.setTransparentBackgroundVisible(true);
+                this.setDeckMakePopupBackgroundVisible(true);
+                this.setDeckMakePopupButtonsVisible(true);
+                this.setDeckMakePopupInputContainerVisible(true);
                 return clickedButton;
             }
         }
@@ -72,6 +92,43 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
 
     private setButtonVisibility(buttonId: number, isVisible: boolean): void {
         this.buildDeckButtonStateManager.setVisibility(buttonId, isVisible);
+    }
+
+    private setTransparentBackgroundVisible(isVisible: boolean): void {
+        if (isVisible == true) {
+            this.transparentBackgroundRepository.showTransparentBackground();
+        } else {
+            this.transparentBackgroundRepository.hideTransparentBackground();
+        }
+    }
+
+    private setDeckMakePopupBackgroundVisible(isVisible: boolean): void {
+        if (isVisible == true) {
+            this.deckMakePopupBackgroundRepository.showDeckMakePopupBackground();
+        } else {
+            this.deckMakePopupBackgroundRepository.hideDeckMakePopupBackground();
+        }
+    }
+
+    private setDeckMakePopupButtonsVisible(isVisible: boolean): void {
+        const buttonIds = this.deckMakePopupButtonsRepository.findAllButtonIds();
+        if (isVisible == true){
+           buttonIds.forEach((buttonId) => {
+               this.deckMakePopupButtonsRepository.showDeckMakePopupButton(buttonId);
+           });
+        } else {
+            buttonIds.forEach((buttonId) => {
+                this.deckMakePopupButtonsRepository.hideDeckMakePopupButton(buttonId);
+            });
+        }
+    }
+
+    private setDeckMakePopupInputContainerVisible(isVisible: boolean): void {
+        if (isVisible == true) {
+            this.deckMakePopupInputContainerRepository.showDeckMakePopupInputContainer();
+        } else {
+            this.deckMakePopupInputContainerRepository.hideDeckMakePopupInputContainer();
+        }
     }
 
 }

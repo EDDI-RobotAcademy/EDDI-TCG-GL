@@ -1,9 +1,0 @@
-export interface DeckMakeButtonClickDetectService {
-    setLeftMouseDown(state: boolean): void;
-    isLeftMouseDown(): boolean;
-    handleLeftClick(
-        clickPoint: { x: number; y: number },
-    ): any | null;
-    onMouseDown(event: MouseEvent): Promise<void>;
-    getCurrentButtonClickState(): any | null;
-}
