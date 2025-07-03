@@ -204,10 +204,9 @@ export class MyCardRaceButtonClickDetectServiceImpl implements MyCardRaceButtonC
     }
 
     private setTransparentBackgroundVisibility(isVisible: boolean): void {
-        if (isVisible == true) {
-            this.transparentBackgroundRepository.showTransparentBackground();
-        } else {
-            this.transparentBackgroundRepository.hideTransparentBackground();
+        const background = this.transparentBackgroundRepository.findTransparentBackground();
+        if (background) {
+            background.setVisibility(isVisible);
         }
     }
 

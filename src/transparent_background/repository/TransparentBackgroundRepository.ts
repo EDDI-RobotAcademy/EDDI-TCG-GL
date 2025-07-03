@@ -5,6 +5,4 @@ export interface TransparentBackgroundRepository {
     createTransparentBackground(id: string): Promise<TransparentBackground>;
     findTransparentBackground(): TransparentBackground | null;
     deleteTransparentBackground(): void;
-    hideTransparentBackground(): void;
-    showTransparentBackground(): void;
 }

@@ -45,17 +45,4 @@ export class TransparentBackgroundRepositoryImpl implements TransparentBackgroun
         this.background = null;
     }
 
-    public hideTransparentBackground(): void {
-        const transparentBackground = this.findTransparentBackground();
-        if (transparentBackground) {
-            transparentBackground.getMesh().visible = false;
-        }
-    }
-
-    public showTransparentBackground(): void {
-        const transparentBackground = this.findTransparentBackground();
-        if (transparentBackground) {
-            transparentBackground.getMesh().visible = true;
-        }
-    }
 }

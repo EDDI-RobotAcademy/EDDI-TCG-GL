@@ -876,7 +876,6 @@ export class TCGJustTestMyDeckView {
         try{
             const transparentBackground = await this.transparentBackgroundService.createTransparentBackground();
             if (transparentBackground) {
-                this.transparentBackgroundService.initialTransparentBackgroundVisible();
                 this.scene.add(transparentBackground);
             } else {
                 console.warn(`No transparentBackground found`);

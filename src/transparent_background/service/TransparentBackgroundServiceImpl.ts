@@ -61,8 +61,4 @@ export class TransparentBackgroundServiceImpl implements TransparentBackgroundSe
         this.transparentBackgroundRepository.deleteTransparentBackground();
     }
 
-    public initialTransparentBackgroundVisible(): void {
-        this.transparentBackgroundRepository.hideTransparentBackground();
-    }
-
 }

@@ -97,10 +97,9 @@ export class DeckMakePopupButtonsClickDetectServiceImpl implements DeckMakePopup
     }
 
     private setTransparentBackgroundVisible(isVisible: boolean): void {
-        if (isVisible == true) {
-            this.transparentBackgroundRepository.showTransparentBackground();
-        } else {
-            this.transparentBackgroundRepository.hideTransparentBackground();
+        const background = this.transparentBackgroundRepository.findTransparentBackground();
+        if (background) {
+            background.setVisibility(isVisible);
         }
     }
 
