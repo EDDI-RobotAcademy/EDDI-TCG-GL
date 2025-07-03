@@ -125,7 +125,6 @@ export class TCGJustTestMyDeckView {
     private deckEditButtonService = DeckEditButtonServiceImpl.getInstance();
     private myDeckOwnedCardsService = MyDeckOwnedCardsServiceImpl.getInstance();
     private deckEditDoneButtonService = DeckEditDoneButtonServiceImpl.getInstance();
-    private cardSelectionBlockerService = CardSelectionBlockerServiceImpl.getInstance();
     private myDeckTotalOwnedCardsService = MyDeckTotalOwnedCardsServiceImpl.getInstance();
     private myDeckRemainingOutOfTotalSlashService = MyDeckRemainingOutOfTotalSlashServiceImpl.getInstance();
     private myDeckChosenOutOfTotalSlashService = MyDeckChosenOutOfTotalSlashServiceImpl.getInstance();
@@ -144,6 +143,7 @@ export class TCGJustTestMyDeckView {
     private deckNameEditButtonService: DeckNameEditButtonServiceImpl;
     private myDeckNameTextService: MyDeckNameTextServiceImpl;
     private myDeckNumberOfCardsService: MyDeckNumberOfCardsServiceImpl;
+    private cardSelectionBlockerService: CardSelectionBlockerServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -222,6 +222,7 @@ export class TCGJustTestMyDeckView {
         this.deckNameEditButtonService = DeckNameEditButtonServiceImpl.getInstance(this.scene);
         this.myDeckNameTextService = MyDeckNameTextServiceImpl.getInstance(this.scene);
         this.myDeckNumberOfCardsService = MyDeckNumberOfCardsServiceImpl.getInstance(this.scene);
+        this.cardSelectionBlockerService = CardSelectionBlockerServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -660,7 +661,9 @@ export class TCGJustTestMyDeckView {
     private async addCardSelectionBlocker(): Promise<void> {
         try {
             const cardIdList = this.myDeckOwnedCardsMapRepository.getCardIdList();
-            await this.cardSelectionBlockerService.createCardSelectionBlockerWithPosition(cardIdList);
+            for (const cardId of cardIdList) {
+                await this.cardSelectionBlockerService.createCardSelectionBlockerWithPosition(cardId);
+            }
             this.cardSelectionBlockerService.applyClippingMaskToBlocker();
 
             const blockerGroup = this.cardSelectionBlockerService.getBlockerGroup();

@@ -5,23 +5,27 @@ import {TextureManager} from "../../texture_manager/TextureManager";
 import {MeshGenerator} from "../../mesh/generator";
 import {Vector2d} from "../../common/math/Vector2d";
 import {getCardById} from "../../card/utility";
+import {MeshDestroyer} from "../../mesh/destroyer";
 
 export class CardSelectionBlockerRepositoryImpl implements CardSelectionBlockerRepository {
     private static instance: CardSelectionBlockerRepositoryImpl;
     private blockerMap: Map<number, { cardId: number, blockerMesh: CardSelectionBlocker}> = new Map(); // blocker Unique ID: [card ID: card mesh]
     private blockerGroup: THREE.Group | null = null;
+
     private textureManager: TextureManager;
+    private meshDestroyer: MeshDestroyer;
 
     private readonly BLOCKER_WIDTH: number = 0.096
 
-    private constructor(textureManager: TextureManager) {
+    private constructor(textureManager: TextureManager, scene: THREE.Scene) {
         this.textureManager = textureManager;
+        this.meshDestroyer = new MeshDestroyer(scene);
     }
 
-    public static getInstance(): CardSelectionBlockerRepositoryImpl {
+    public static getInstance(scene: THREE.Scene): CardSelectionBlockerRepositoryImpl {
         if (!CardSelectionBlockerRepositoryImpl.instance) {
             const textureManager = TextureManager.getInstance()
-            CardSelectionBlockerRepositoryImpl.instance = new CardSelectionBlockerRepositoryImpl(textureManager);
+            CardSelectionBlockerRepositoryImpl.instance = new CardSelectionBlockerRepositoryImpl(textureManager, scene);
         }
         return CardSelectionBlockerRepositoryImpl.instance;
     }
@@ -88,14 +92,27 @@ export class CardSelectionBlockerRepositoryImpl implements CardSelectionBlockerR
     }
 
     public deleteAllBlocker(): void {
+        const blockerList = this.findAllBlockers();
+        for (const blocker of blockerList) {
+            this.meshDestroyer.destroyMesh(blocker.getMesh());
+
+            if (this.blockerGroup) {
+                this.blockerGroup.remove(blocker.getMesh());
+            }
+        }
         this.blockerMap.clear();
     }
 
     // 사용자가 소지한 카드 중 특정 카드를 삭제하게 될 경우 (확장성 고려)
     public deleteBlockerByBlockerId(blockerId: number): void {
-        const blocker = this.blockerMap.get(blockerId);
-        if (blocker && this.blockerGroup) {
-            this.blockerGroup.remove(blocker.blockerMesh.getMesh());
+        const blocker = this.findBlockerByBlockerId(blockerId);
+        if (blocker == null) return;
+
+        const mesh = blocker.getMesh();
+        this.meshDestroyer.destroyMesh(mesh);
+
+        if (this.blockerGroup) {
+            this.blockerGroup.remove(mesh);
         }
         this.blockerMap.delete(blockerId);
     }

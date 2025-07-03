@@ -20,33 +20,30 @@ export class CardSelectionBlockerServiceImpl implements CardSelectionBlockerServ
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
     private clippingMaskManager: ClippingMaskManager;
 
-    private constructor() {
-        this.cardSelectionBlockerRepository = CardSelectionBlockerRepositoryImpl.getInstance();
+    private constructor(scene: THREE.Scene) {
+        this.cardSelectionBlockerRepository = CardSelectionBlockerRepositoryImpl.getInstance(scene);
         this.cardSelectionBlockerPositionRepository = CardSelectionBlockerPositionRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
     }
 
-    public static getInstance(): CardSelectionBlockerServiceImpl {
+    public static getInstance(scene: THREE.Scene): CardSelectionBlockerServiceImpl {
         if (!CardSelectionBlockerServiceImpl.instance) {
-            CardSelectionBlockerServiceImpl.instance = new CardSelectionBlockerServiceImpl();
+            CardSelectionBlockerServiceImpl.instance = new CardSelectionBlockerServiceImpl(scene);
         }
         return CardSelectionBlockerServiceImpl.instance;
     }
 
-    public async createCardSelectionBlockerWithPosition(cardIdList: number[]): Promise<THREE.Group | null> {
+    public async createCardSelectionBlockerWithPosition(cardId: number): Promise<THREE.Group | null> {
         const blockerGroup = new THREE.Group();
 
         try {
-            await Promise.all(
-                cardIdList.map(async (cardId, index) => {
-                    const position = this.cardSelectionBlockerPosition(cardId, index);
-                    console.log(`[DEBUG] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
+            const position = this.createCardSelectionBlockerPosition(cardId);
+            console.log(`[DEBUG] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
 
-                    const cardSelectionBlocker = await this.createCardSelectionBlocker(cardId, position.position);
-                    blockerGroup.add(cardSelectionBlocker.getMesh());
-                })
-            );
+            const cardSelectionBlocker = await this.createCardSelectionBlocker(cardId, position.position);
+            blockerGroup.add(cardSelectionBlocker.getMesh());
+
         } catch (error) {
             console.error(`[Error] Failed to create Card Selection Blocker: ${error}`);
             return null;
@@ -106,8 +103,8 @@ export class CardSelectionBlockerServiceImpl implements CardSelectionBlockerServ
         return await this.cardSelectionBlockerRepository.createCardSelectionBlocker(cardId, position);
     }
 
-    private cardSelectionBlockerPosition(cardId: number, cardIndex: number): CardSelectionBlockerPosition {
-        return this.cardSelectionBlockerPositionRepository.addCardSelectionBlockerPosition(cardId, cardIndex);
+    private createCardSelectionBlockerPosition(cardId: number): CardSelectionBlockerPosition {
+        return this.cardSelectionBlockerPositionRepository.addCardSelectionBlockerPosition(cardId);
     }
 
     public getBlockerIdList(): number[] {

@@ -4,7 +4,6 @@ import {IdGenerator} from "../../common/id_generator/IdGenerator";
 
 export class CardSelectionBlocker {
     id: number;
-    isVisible: boolean;
     mesh: THREE.Mesh;
     position: Vector2d;
 
@@ -12,7 +11,6 @@ export class CardSelectionBlocker {
         this.id = IdGenerator.generateId("CardSelectionBlocker");
         this.mesh = mesh;
         this.position = position;
-        this.isVisible = false;
         this.mesh.visible = false;
     }
 
@@ -21,11 +19,10 @@ export class CardSelectionBlocker {
     }
 
     public getVisibility(): boolean {
-        return this.isVisible;
+        return this.mesh.visible;
     }
 
     public setVisibility(state: boolean): void {
-        this.isVisible = state;
         this.mesh.visible = state;
     }
 

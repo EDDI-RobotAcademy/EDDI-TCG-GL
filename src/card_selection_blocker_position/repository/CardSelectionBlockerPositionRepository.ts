@@ -3,7 +3,7 @@ import {CardSelectionBlockerPosition} from "../entity/CardSelectionBlockerPositi
 export interface CardSelectionBlockerPositionRepository {
     findPositionByPositionId(positionId: number): CardSelectionBlockerPosition | null;
     findPositionIdList(): number[];
-    deleteById(positionId: number): boolean;
+    deleteById(positionId: number): void;
     deleteAll(): void;
     count(): number;
 }
