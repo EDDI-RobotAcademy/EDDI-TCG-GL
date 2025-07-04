@@ -7,6 +7,7 @@ import {MyDeckCardNameRepositoryImpl} from "../../my_deck_card_name/repository/M
 import {MyDeckNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_number_of_selected_cards/repository/MyDeckNumberOfSelectedCardsRepositoryImpl";
 import {DeckCardDeleteButtonRepositoryImpl} from "../../deck_card_delete_button/repository/DeckCardDeleteButtonRepositoryImpl";
 import {SideScrollAreaDetectRepositoryImpl} from "../../side_scroll_area_detect/repository/SideScrollAreaDetectRepositoryImpl";
+import {DeckCardAddButtonRepositoryImpl} from "../../deck_card_add_button/repository/DeckCardAddButtonRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -21,6 +22,7 @@ export class MyDeckBlockScrollServiceImpl implements MyDeckBlockScrollService {
     private myDeckNumberOfSelectedCardsRepository: MyDeckNumberOfSelectedCardsRepositoryImpl;
     private deckCardDeleteButtonRepository: DeckCardDeleteButtonRepositoryImpl;
     private sideScrollAreaDetectRepository: SideScrollAreaDetectRepositoryImpl;
+    private deckCardAddButtonRepository: DeckCardAddButtonRepositoryImpl;
 
     private scrollState: boolean = true;
 
@@ -33,6 +35,7 @@ export class MyDeckBlockScrollServiceImpl implements MyDeckBlockScrollService {
         this.myDeckNumberOfSelectedCardsRepository = MyDeckNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
         this.deckCardDeleteButtonRepository = DeckCardDeleteButtonRepositoryImpl.getInstance(scene);
         this.sideScrollAreaDetectRepository = SideScrollAreaDetectRepositoryImpl.getInstance();
+        this.deckCardAddButtonRepository = DeckCardAddButtonRepositoryImpl.getInstance(scene);
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer): MyDeckBlockScrollServiceImpl {
@@ -66,6 +69,7 @@ export class MyDeckBlockScrollServiceImpl implements MyDeckBlockScrollService {
             this.getCardNameGroup(currentClickDeckId),
             this.getNumberOfSelectedCardsGroup(currentClickDeckId),
             this.getDeckCardDeleteButtonGroup(currentClickDeckId),
+            this.getDeckCardAddButtonGroup(currentClickDeckId),
         ];
 
         if (scrollTargets.every(target => !target)) return;
@@ -93,12 +97,20 @@ export class MyDeckBlockScrollServiceImpl implements MyDeckBlockScrollService {
         console.log('After Scroll- Scroll Target Deck Block Position Y', scrollTargets[0]?.position.y);
     }
 
-    private getBlockGroup(deckId: number): THREE.Group {
-        return this.myDeckBlockRepository.findBlockGroupByDeckId(deckId);
+    private getMyDeckScrollEnabledById(areaId: number): boolean {
+        return this.sideScrollAreaDetectRepository.findMyDeckScrollEnabledById(areaId);
     }
 
     public getBlockCountByDeckId(deckId: number): number {
         return this.myDeckBlockRepository.findBlockCountByDeckId(deckId);
+    }
+
+    public getCurrentClickDeckButtonId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    }
+
+    private getBlockGroup(deckId: number): THREE.Group {
+        return this.myDeckBlockRepository.findBlockGroupByDeckId(deckId);
     }
 
     private getCardNameGroup(deckId: number): THREE.Group {
@@ -109,16 +121,12 @@ export class MyDeckBlockScrollServiceImpl implements MyDeckBlockScrollService {
         return this.myDeckNumberOfSelectedCardsRepository.findNumberGroupByDeckId(deckId);
     }
 
-    public getCurrentClickDeckButtonId(): number | null {
-        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
-    }
-
     private getDeckCardDeleteButtonGroup(deckId: number): THREE.Group {
         return this.deckCardDeleteButtonRepository.findButtonGroupByDeckId(deckId);
     }
 
-    private getMyDeckScrollEnabledById(areaId: number): boolean {
-        return this.sideScrollAreaDetectRepository.findMyDeckScrollEnabledById(areaId);
+    private getDeckCardAddButtonGroup(deckId: number): THREE.Group {
+        return this.deckCardAddButtonRepository.findButtonGroupByDeckId(deckId);
     }
 
 }
