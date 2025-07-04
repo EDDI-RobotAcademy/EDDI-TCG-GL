@@ -56,6 +56,7 @@ import {MyDeckChosenOutOfTotalSlashServiceImpl} from "../../src/my_deck_chosen_o
 import {TotalNumberOfSelectedCardsServiceImpl} from "../../src/my_deck_total_number_of_selected_cards/service/TotalNumberOfSelectedCardsServiceImpl";
 import {DeckCardDeleteButtonServiceImpl} from "../../src/deck_card_delete_button/service/DeckCardDeleteButtonServiceImpl";
 import {DeckCardCountMarkerServiceImpl} from "../../src/deck_card_count_marker/service/DeckCardCountMarkerServiceImpl";
+import {DeckCardAddButtonServiceImpl} from "../../src/deck_card_add_button/service/DeckCardAddButtonServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -140,6 +141,7 @@ export class TCGJustTestMyDeckView {
     private myDeckNumberOfCardsService: MyDeckNumberOfCardsServiceImpl;
     private cardSelectionBlockerService: CardSelectionBlockerServiceImpl;
     private buildDeckButtonService: BuildDeckButtonServiceImpl;
+    private deckCardAddButtonService: DeckCardAddButtonServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -218,6 +220,7 @@ export class TCGJustTestMyDeckView {
         this.myDeckNumberOfCardsService = MyDeckNumberOfCardsServiceImpl.getInstance(this.scene);
         this.cardSelectionBlockerService = CardSelectionBlockerServiceImpl.getInstance(this.scene);
         this.buildDeckButtonService = BuildDeckButtonServiceImpl.getInstance(this.scene);
+        this.deckCardAddButtonService = DeckCardAddButtonServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -300,6 +303,7 @@ export class TCGJustTestMyDeckView {
         await this.addMyDeckBlock();
         await this.addMyDeckCardName();
         await this.addDeckCardDeleteButton();
+        await this.addDeckCardAddButton();
         await this.addMyDeckButton();
         await this.addMyDeckButtonEffect();
         await this.addBuildDeckButton();
@@ -800,6 +804,32 @@ export class TCGJustTestMyDeckView {
         }
     }
 
+    private async addDeckCardAddButton(): Promise<void> {
+        try {
+            const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardLists();
+            for (const [deckId, cardIdList] of myDeckCardList) {
+                for (const cardId of cardIdList) {
+                    await this.deckCardAddButtonService.createDeckCardAddButtonWithPosition(deckId, cardId);
+                }
+                this.deckCardAddButtonService.saveButtonGroup(deckId);
+            }
+
+            this.deckCardAddButtonService.applyClippingMaskToButton();
+
+            const deckIdList = this.deckCardAddButtonService.getAllDeckIdList();
+            deckIdList.forEach((deckId) => {
+                const buttonGroup = this.deckCardAddButtonService.getButtonGroupByDeckId(deckId);
+                if (!this.scene.children.includes(buttonGroup)) {
+                    this.scene.add(buttonGroup);
+                }
+                buttonGroup.position.y = 0;
+            });
+
+        } catch (error) {
+            console.error('Failed to add deck card add button:', error);
+        }
+    }
+
     private async addBuildDeckButton(): Promise<void> {
         try {
             const configList = new BuildDeckButtonConfigList();
@@ -982,6 +1012,7 @@ export class TCGJustTestMyDeckView {
             this.deckMakePopupInputContainerService.adjustDeckMakePopupInputContainerPosition();
             this.deleteDeckPopupWindowService.adjustDeckMakePopupBackgroundPosition();
             this.deleteDeckPopupButtonService.adjustDeleteDeckPopupButtonPosition();
+            this.deckCardAddButtonService.adjustDeckCardAddButtonPosition();
         }
     }
 

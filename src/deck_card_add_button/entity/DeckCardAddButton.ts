@@ -2,13 +2,13 @@ import * as THREE from 'three';
 import {Vector2d} from "../../common/math/Vector2d";
 import {IdGenerator} from "../../common/id_generator/IdGenerator";
 
-export class DeckCardDeleteButton {
+export class DeckCardAddButton {
     id: number;
     mesh: THREE.Mesh;
     position: Vector2d;
 
     constructor(mesh: THREE.Mesh, position: Vector2d) {
-        this.id = IdGenerator.generateId("DeckCardDeleteButton");
+        this.id = IdGenerator.generateId("DeckCardAddButton");
         this.mesh = mesh;
         this.position = position;
         this.mesh.visible = false;
