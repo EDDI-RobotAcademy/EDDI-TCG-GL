@@ -16,6 +16,7 @@ import {MyDeckCardNamePositionRepositoryImpl} from "../../my_deck_card_name_posi
 import {MyDeckNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_number_of_selected_cards/repository/MyDeckNumberOfSelectedCardsRepositoryImpl";
 import {MyDeckNumberOfSelectedCardsPositionRepositoryImpl} from "../../my_deck_number_of_selected_cards_position/repository/MyDeckNumberOfSelectedCardsPositionRepositoryImpl";
 import {MyDeckRemainingCardsRepositoryImpl} from "../../my_deck_remaining_cards/repository/MyDeckRemainingCardsRepositoryImpl";
+import {CardSelectionBlockerRepositoryImpl} from "../../card_selection_blocker/repository/CardSelectionBlockerRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -38,6 +39,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
     private myDeckNumberOfSelectedCardsRepository: MyDeckNumberOfSelectedCardsRepositoryImpl;
     private myDeckNumberOfSelectedCardsPositionRepository: MyDeckNumberOfSelectedCardsPositionRepositoryImpl;
     private myDeckRemainingCardsRepository: MyDeckRemainingCardsRepositoryImpl;
+    private cardSelectionBlockerRepository: CardSelectionBlockerRepositoryImpl;
 
     private cardCountManager: CardCountManager;
     private myDeckElementAdjuster: MyDeckElementAdjuster;
@@ -56,6 +58,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         this.myDeckNumberOfSelectedCardsRepository = MyDeckNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
         this.myDeckNumberOfSelectedCardsPositionRepository = MyDeckNumberOfSelectedCardsPositionRepositoryImpl.getInstance();
         this.myDeckRemainingCardsRepository = MyDeckRemainingCardsRepositoryImpl.getInstance(scene);
+        this.cardSelectionBlockerRepository = CardSelectionBlockerRepositoryImpl.getInstance(scene);
 
         this.cardCountManager = CardCountManager.getInstance();
         this.myDeckElementAdjuster = MyDeckElementAdjuster.getInstance();
@@ -101,6 +104,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
             this.saveClickedCardCount(currentClickedDeckButtonId, cardId);
 
             this.deleteRemainingCards(cardId);
+            this.setCardBlockerVisibility(cardId, false);
 
             const selectedCardCount = this.cardCountManager.findCardCountByDeck(currentClickedDeckButtonId, cardId);
             if (selectedCardCount == 0) {
@@ -111,7 +115,6 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
                 this.adjustCardName(currentClickedDeckButtonId);
                 this.adjustNumberOfSelectedCards(currentClickedDeckButtonId);
             }
-
             return clickedButton;
         }
         return null;
@@ -145,6 +148,10 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
 
     private getCardIdByButtonId(buttonId: number): number | null {
         return this.deckCardDeleteButtonRepository.findCardIdByButtonUniqueId(buttonId);
+    }
+
+    private setCardBlockerVisibility(cardId: number, isVisible: boolean): void {
+        this.cardSelectionBlockerRepository.findBlockerByCardId(cardId)?.setVisibility(isVisible);
     }
 
     private saveClickedCardCount(deckId: number, cardId: number): void {
