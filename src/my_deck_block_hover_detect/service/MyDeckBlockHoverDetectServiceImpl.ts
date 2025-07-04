@@ -7,6 +7,7 @@ import {MyDeckBlock} from "../../my_deck_block/entity/MyDeckBlock";
 import {MyDeckBlockRepositoryImpl} from "../../my_deck_block/repository/MyDeckBlockRepositoryImpl";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {DeckCardDeleteButtonRepositoryImpl} from "../../deck_card_delete_button/repository/DeckCardDeleteButtonRepositoryImpl";
+import {DeckCardAddButtonRepositoryImpl} from "../../deck_card_add_button/repository/DeckCardAddButtonRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -18,6 +19,7 @@ export class MyDeckBlockHoverDetectServiceImpl implements MyDeckBlockHoverDetect
     private myDeckBlockRepository: MyDeckBlockRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private deckCardDeleteButtonRepository: DeckCardDeleteButtonRepositoryImpl;
+    private deckCardAddButtonRepository: DeckCardAddButtonRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -25,6 +27,7 @@ export class MyDeckBlockHoverDetectServiceImpl implements MyDeckBlockHoverDetect
         this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance(scene);
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.deckCardDeleteButtonRepository = DeckCardDeleteButtonRepositoryImpl.getInstance(scene);
+        this.deckCardAddButtonRepository = DeckCardAddButtonRepositoryImpl.getInstance(scene);
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckBlockHoverDetectServiceImpl {
@@ -59,11 +62,14 @@ export class MyDeckBlockHoverDetectServiceImpl implements MyDeckBlockHoverDetect
                 console.log(`[DEBUG] Hovered My Deck Block! (Deck ID: ${currentClickedDeckButtonId}, Block Unique ID: ${blockUniqueId})`);
                 this.saveCurrentHoveredButtonId(blockUniqueId);
                 this.setAllDeckCardDeleteButtonVisibility(currentClickedDeckButtonId, false);
+                this.setAllDeckCardAddButtonVisibility(currentClickedDeckButtonId, false);
                 this.setDeckCardDeleteButtonVisibility(blockUniqueId, true);
+                this.setDeckCardAddButtonVisibility(blockUniqueId, true);
             } else {
                 const blockUniqueId = this.getCurrentHoveredButtonId();
                 if (blockUniqueId !== null) {
                     this.setDeckCardDeleteButtonVisibility(blockUniqueId, false);
+                    this.setDeckCardAddButtonVisibility(blockUniqueId, false);
                 }
             }
         }
@@ -97,6 +103,7 @@ export class MyDeckBlockHoverDetectServiceImpl implements MyDeckBlockHoverDetect
     }
 
     private setDeckCardDeleteButtonVisibility(buttonId: number, isVisible: boolean): void {
+//         this.deckCardDeleteButtonRepository.findButtonByButtonUniqueId(buttonId)?.setVisibility(isVisible);
         const button = this.deckCardDeleteButtonRepository.findButtonByButtonUniqueId(buttonId);
         if (button !== null) {
             button.setVisibility(isVisible);
@@ -107,6 +114,23 @@ export class MyDeckBlockHoverDetectServiceImpl implements MyDeckBlockHoverDetect
 
     private setAllDeckCardDeleteButtonVisibility(deckId: number, isVisible: boolean): void {
         const buttonList = this.deckCardDeleteButtonRepository.findButtonListByDeckId(deckId);
+        if (buttonList !== null) {
+            buttonList.forEach(button => button.setVisibility(isVisible));
+        }
+    }
+
+    private setDeckCardAddButtonVisibility(buttonId: number, isVisible: boolean): void {
+//         this.deckCardAddButtonRepository.findButtonByButtonId(buttonId)?.setVisibility(isVisible);
+        const button = this.deckCardAddButtonRepository.findButtonByButtonId(buttonId);
+        if (button !== null) {
+            button.setVisibility(isVisible);
+        } else {
+            console.log(`Not Found Deck Card Add Button (Button ID: ${buttonId})`);
+        }
+    }
+
+    private setAllDeckCardAddButtonVisibility(deckId: number, isVisible: boolean): void {
+        const buttonList = this.deckCardAddButtonRepository.findButtonListByDeckId(deckId);
         if (buttonList !== null) {
             buttonList.forEach(button => button.setVisibility(isVisible));
         }
