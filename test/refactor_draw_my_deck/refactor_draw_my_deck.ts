@@ -92,6 +92,8 @@ import {MyDeckBlockHoverDetectService} from "../../src/my_deck_block_hover_detec
 import {MyDeckBlockHoverDetectServiceImpl} from "../../src/my_deck_block_hover_detect/service/MyDeckBlockHoverDetectServiceImpl";
 import {DeckCardDeleteButtonClickDetectService} from "../../src/deck_card_delete_button_click_detect/service/DeckCardDeleteButtonClickDetectService";
 import {DeckCardDeleteButtonClickDetectServiceImpl} from "../../src/deck_card_delete_button_click_detect/service/DeckCardDeleteButtonClickDetectServiceImpl";
+import {DeckCardAddButtonClickDetectService} from "../../src/deck_card_add_button_click_detect/service/DeckCardAddButtonClickDetectService";
+import {DeckCardAddButtonClickDetectServiceImpl} from "../../src/deck_card_add_button_click_detect/service/DeckCardAddButtonClickDetectServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 
@@ -171,7 +173,8 @@ export class TCGJustTestMyDeckView {
     private myDeckOwnedCardsScrollService: MyDeckOwnedCardsScrollService;
     private myDeckOwnedCardsClickDetectService: MyDeckOwnedCardsClickDetectService;
     private myDeckBlockHoverDetectService: MyDeckBlockHoverDetectService;
-    private deckCardDeleteButtonClickDetectService: DeckCardDeleteButtonClickDetectServiceImpl;
+    private deckCardDeleteButtonClickDetectService: DeckCardDeleteButtonClickDetectService;
+    private deckCardAddButtonClickDetectService: DeckCardAddButtonClickDetectService;
 
     private initialized = false;
     private isAnimating = false;
@@ -238,6 +241,7 @@ export class TCGJustTestMyDeckView {
         this.deckNameEditButtonClickDetectService = DeckNameEditButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deleteDeckPopupButtonClickDetectService = DeleteDeckPopupButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckMakePopupButtonsClickDetectService = DeckMakePopupButtonsClickDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.deckCardAddButtonClickDetectService = DeckCardAddButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
 
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousemove', (e) => this.sideScrollAreaDetectService.onMouseMoveMyDeck(e), false);
@@ -251,12 +255,11 @@ export class TCGJustTestMyDeckView {
         this.renderer.domElement.addEventListener('mousedown', (e) => this.buildDeckButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckEditButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckOwnedCardsClickDetectService.onMouseDown(e), false);
-
-        // To-do: 덱 버튼 클릭되고 덱 삭제 버튼이 나타날 때만 삭제 버튼 클릭 가능해야 함
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckDeleteButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckNameEditButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deleteDeckPopupButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckMakePopupButtonsClickDetectService.onMouseDown(e), false);
+        this.renderer.domElement.addEventListener('mousedown', (e) => this.deckCardAddButtonClickDetectService.onMouseDown(e), false);
     }
 
     public static getInstance(simulationMyDeckContainer: HTMLElement): TCGJustTestMyDeckView {
