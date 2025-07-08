@@ -11,6 +11,8 @@ import {DeckCardAddButtonClickDetectRepositoryImpl} from "../repository/DeckCard
 import {DeckCardAddButton} from "../../deck_card_add_button/entity/DeckCardAddButton";
 import {DeckCardAddButtonRepositoryImpl} from "../../deck_card_add_button/repository/DeckCardAddButtonRepositoryImpl";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
+import {MyDeckTotalOwnedCardsRepositoryImpl} from "../../my_deck_total_owned_cards/repository/MyDeckTotalOwnedCardsRepositoryImpl";
+import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButtonClickDetectService {
     private static instance: DeckCardAddButtonClickDetectServiceImpl | null = null;
@@ -18,12 +20,16 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
     private deckCardAddButtonClickDetectRepository: DeckCardAddButtonClickDetectRepositoryImpl;
     private deckCardAddButtonRepository: DeckCardAddButtonRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
+    private myDeckTotalOwnedCardsRepository: MyDeckTotalOwnedCardsRepositoryImpl;
+    private cardCountManager: CardCountManager;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.deckCardAddButtonClickDetectRepository = DeckCardAddButtonClickDetectRepositoryImpl.getInstance();
         this.deckCardAddButtonRepository = DeckCardAddButtonRepositoryImpl.getInstance(scene);
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
+        this.myDeckTotalOwnedCardsRepository = MyDeckTotalOwnedCardsRepositoryImpl.getInstance();
+        this.cardCountManager = CardCountManager.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckCardAddButtonClickDetectServiceImpl {
@@ -61,6 +67,10 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
 
             this.saveCurrentClickedButtonId(buttonUniqueId);
 
+            const cardId = this.getCardIdByButtonId(buttonUniqueId);
+            if (cardId == null) return null;
+            this.saveClickedCardCount(cardId);
+
             return clickedButton;
         }
         return null;
@@ -76,8 +86,8 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
         return null;
     }
 
-    private saveCurrentClickedButtonId(cardId: number): void {
-        this.deckCardAddButtonClickDetectRepository.saveCurrentClickedButtonId(cardId);
+    private saveCurrentClickedButtonId(buttonId: number): void {
+        this.deckCardAddButtonClickDetectRepository.saveCurrentClickedButtonId(buttonId);
     }
 
     public getCurrentClickedButtonId(): number | null {
@@ -90,6 +100,49 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
 
     private getCurrentClickDeckId(): number | null {
         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    }
+
+    private getCardIdByButtonId(buttonId: number): number | null {
+        return this.deckCardAddButtonRepository.findCardIdByButtonId(buttonId);
+    }
+
+    private saveClickedCardCount(cardId: number): void {
+        const card = getCardById(cardId);
+        if (!card) {
+            console.warn(`[WARN] Card with ID ${cardId} not found`);
+            return;
+        }
+        const grade = Number(card.등급);
+
+        const maxSelectableCardCountByGrade = this.cardCountManager.getMaxClickCountByGrade(grade);
+        const ownedCardCount = this.myDeckTotalOwnedCardsRepository.findCardCountByCardId(cardId);
+        const remainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
+        if (remainingCardCount == null) {
+            console.warn(`[WARN] Remaining Card Count not found for cardId: ${cardId}`);
+            return;
+        }
+
+        const currentClickedDeckId = this.getCurrentClickDeckId();
+        if (currentClickedDeckId == null) return;
+
+        const currentSelectedCardCount = this.cardCountManager.findCardCountByDeck(currentClickedDeckId, cardId);
+        const currentSelectedCardCountByGrade = this.cardCountManager.findCardCountByGrade(currentClickedDeckId, grade);
+
+        // 등급별 제한 검사
+        if (currentSelectedCardCountByGrade >= maxSelectableCardCountByGrade) {
+            console.warn(`[DEBUG] Grade limit exceeded (grade: ${grade}, max count: ${maxSelectableCardCountByGrade})`);
+            return;
+        }
+
+        // 사용자가 소지한 카드 개수 제한 검사
+        if (ownedCardCount !== null && currentSelectedCardCount >= ownedCardCount) {
+            console.warn(`[DEBUG] User Owned Card Not Enough: ${cardId} (Owned Card Count: ${ownedCardCount})`);
+            return;
+        }
+
+        this.cardCountManager.decrementRemainingCardCount(cardId);
+        this.cardCountManager.incrementCardCountByDeck(currentClickedDeckId, cardId);
+        this.cardCountManager.incrementCardCountByGrade(currentClickedDeckId, grade);
     }
 
 }
