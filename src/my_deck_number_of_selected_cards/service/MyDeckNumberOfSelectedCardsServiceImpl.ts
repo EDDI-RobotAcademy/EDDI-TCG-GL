@@ -38,6 +38,7 @@ export class MyDeckNumberOfSelectedCardsServiceImpl implements MyDeckNumberOfSel
     public async createMyDeckNumberOfSelectedCardsWithPosition(deckId: number, cardId: number, cardCount: number): Promise<THREE.Group | null> {
         const numberGroup = new THREE.Group();
         try {
+            // To-do: position 은 존재하고, Mesh 는  존재하지 않을 경우도 고려해야 함
             const numberId = this.getNumberIdByDeckIdAndCardId(deckId, cardId);
             if (numberId == null) {
                 const position = this.myDeckNumberOfSelectedCardsPosition(deckId, cardId);
