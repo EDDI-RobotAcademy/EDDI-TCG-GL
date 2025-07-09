@@ -110,6 +110,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
             this.saveClickedCardCount(currentClickedDeckButtonId, cardId);
 
             this.deleteRemainingCards(cardId);
+            this.deleteNumberOfSelectedCards(currentClickedDeckButtonId, buttonUniqueId);
             this.setCardBlockerVisibility(cardId, false);
 
             const selectedCardCount = this.cardCountManager.findCardCountByDeck(currentClickedDeckButtonId, cardId);
@@ -190,6 +191,12 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         this.myDeckRemainingCardsRepository.deleteRemainingCardsByCardId(cardId);
     }
 
+    private deleteNumberOfSelectedCards(deckId: number, buttonId: number): void {
+        this.myDeckNumberOfSelectedCardsRepository.deleteNumberByDeckIdAndNumberId(deckId, buttonId);
+        // To-do: 해당 카드의 개수가 0일 경우에만 삭제할 것인지(새로운 개수 객체가 어떻게 추가되는 지에 따라 수정)
+        this.myDeckNumberOfSelectedCardsPositionRepository.deleteById(deckId, buttonId);
+    }
+
     // To-do: 메서드명 수정 필요(덱 삭제 버튼, 덱 블록, 카드 이름, 개수 객체 등 한 번에 삭제)
     private deleteDeckElement(deckId: number, cardId: number): void {
         const buttonId = this.deckCardDeleteButtonRepository.findButtonIdByDeckIdAndCardId(deckId, cardId);
@@ -201,8 +208,6 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         this.myDeckBlockPositionRepository.deleteById(deckId, buttonId);
         this.myDeckCardNameRepository.deleteCardNameByDeckIdAndCardNameId(deckId, buttonId);
         this.myDeckCardNamePositionRepository.deleteById(deckId, buttonId);
-        this.myDeckNumberOfSelectedCardsRepository.deleteNumberByDeckIdAndNumberId(deckId, buttonId);
-        this.myDeckNumberOfSelectedCardsPositionRepository.deleteById(deckId, buttonId);
         this.deckCardAddButtonRepository.deleteButtonByDeckIdAndButtonId(deckId, buttonId);
         this.deckCardAddButtonPositionRepository.deleteById(deckId, buttonId);
     }

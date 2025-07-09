@@ -12,6 +12,9 @@ import {DeckCardAddButton} from "../../deck_card_add_button/entity/DeckCardAddBu
 import {DeckCardAddButtonRepositoryImpl} from "../../deck_card_add_button/repository/DeckCardAddButtonRepositoryImpl";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {MyDeckTotalOwnedCardsRepositoryImpl} from "../../my_deck_total_owned_cards/repository/MyDeckTotalOwnedCardsRepositoryImpl";
+import {MyDeckRemainingCardsRepositoryImpl} from "../../my_deck_remaining_cards/repository/MyDeckRemainingCardsRepositoryImpl";
+import {MyDeckRemainingCardsPositionRepositoryImpl} from "../../my_deck_remaining_cards_position/repository/MyDeckRemainingCardsPositionRepositoryImpl";
+import {MyDeckNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_number_of_selected_cards/repository/MyDeckNumberOfSelectedCardsRepositoryImpl";
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButtonClickDetectService {
@@ -21,6 +24,9 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
     private deckCardAddButtonRepository: DeckCardAddButtonRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private myDeckTotalOwnedCardsRepository: MyDeckTotalOwnedCardsRepositoryImpl;
+    private myDeckRemainingCardsRepository: MyDeckRemainingCardsRepositoryImpl;
+    private myDeckRemainingCardsPositionRepository: MyDeckRemainingCardsPositionRepositoryImpl;
+    private myDeckNumberOfSelectedCardsRepository: MyDeckNumberOfSelectedCardsRepositoryImpl;
     private cardCountManager: CardCountManager;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
@@ -29,6 +35,9 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
         this.deckCardAddButtonRepository = DeckCardAddButtonRepositoryImpl.getInstance(scene);
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckTotalOwnedCardsRepository = MyDeckTotalOwnedCardsRepositoryImpl.getInstance();
+        this.myDeckRemainingCardsRepository = MyDeckRemainingCardsRepositoryImpl.getInstance(scene);
+        this.myDeckRemainingCardsPositionRepository = MyDeckRemainingCardsPositionRepositoryImpl.getInstance();
+        this.myDeckNumberOfSelectedCardsRepository = MyDeckNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
         this.cardCountManager = CardCountManager.getInstance();
     }
 
@@ -70,6 +79,9 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
             const cardId = this.getCardIdByButtonId(buttonUniqueId);
             if (cardId == null) return null;
             this.saveClickedCardCount(cardId);
+
+            this.deleteNumberOfRemainingCards(cardId);
+            this.deleteNumberOfSelectedCards(currentClickedDeckId, buttonUniqueId);
 
             return clickedButton;
         }
@@ -143,6 +155,14 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
         this.cardCountManager.decrementRemainingCardCount(cardId);
         this.cardCountManager.incrementCardCountByDeck(currentClickedDeckId, cardId);
         this.cardCountManager.incrementCardCountByGrade(currentClickedDeckId, grade);
+    }
+
+    private deleteNumberOfRemainingCards(cardId: number): void {
+        this.myDeckRemainingCardsRepository.deleteRemainingCardsByCardId(cardId);
+    }
+
+    private deleteNumberOfSelectedCards(deckId: number, buttonId: number): void {
+        this.myDeckNumberOfSelectedCardsRepository.deleteNumberByDeckIdAndNumberId(deckId, buttonId);
     }
 
 }
