@@ -126,7 +126,6 @@ export class TCGJustTestMyDeckView {
     private myDeckTotalOwnedCardsService = MyDeckTotalOwnedCardsServiceImpl.getInstance();
     private myDeckRemainingOutOfTotalSlashService = MyDeckRemainingOutOfTotalSlashServiceImpl.getInstance();
     private myDeckChosenOutOfTotalSlashService = MyDeckChosenOutOfTotalSlashServiceImpl.getInstance();
-    private totalNumberOfSelectedCardsService = TotalNumberOfSelectedCardsServiceImpl.getInstance();
 
     private deckCardDeleteButtonService: DeckCardDeleteButtonServiceImpl;
     private deckCardCountMarkerService: DeckCardCountMarkerServiceImpl;
@@ -144,6 +143,7 @@ export class TCGJustTestMyDeckView {
     private cardSelectionBlockerService: CardSelectionBlockerServiceImpl;
     private buildDeckButtonService: BuildDeckButtonServiceImpl;
     private deckCardAddButtonService: DeckCardAddButtonServiceImpl;
+    private totalNumberOfSelectedCardsService: TotalNumberOfSelectedCardsServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -224,6 +224,7 @@ export class TCGJustTestMyDeckView {
         this.cardSelectionBlockerService = CardSelectionBlockerServiceImpl.getInstance(this.scene);
         this.buildDeckButtonService = BuildDeckButtonServiceImpl.getInstance(this.scene);
         this.deckCardAddButtonService = DeckCardAddButtonServiceImpl.getInstance(this.scene);
+        this.totalNumberOfSelectedCardsService = TotalNumberOfSelectedCardsServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -401,9 +402,14 @@ export class TCGJustTestMyDeckView {
         try {
             const totalCardCountMap = this.myDeckCardMapRepository.getTotalCardCount();
             for (const [deckId, totalCardCount] of totalCardCountMap) {
-                const numberMesh = await this.totalNumberOfSelectedCardsService.createTotalNumberOfSelectedCards(deckId, totalCardCount);
+                await this.totalNumberOfSelectedCardsService.createTotalNumberOfSelectedCards(deckId, totalCardCount);
+            }
+
+            const deckIdList = this.totalNumberOfSelectedCardsService.getAllDeckIdList();
+            for (const deckId of deckIdList) {
+                const numberMesh = this.totalNumberOfSelectedCardsService.getTotalNumberOfSelectedCardsByDeckId(deckId);
                 if (numberMesh) {
-                    this.scene.add(numberMesh);
+                    this.scene.add(numberMesh.getMesh());
                 } else {
                     console.warn(`Total Number Of Selected Cards Mesh Not found`);
                 }

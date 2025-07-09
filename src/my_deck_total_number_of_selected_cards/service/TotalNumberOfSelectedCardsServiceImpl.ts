@@ -8,13 +8,13 @@ export class TotalNumberOfSelectedCardsServiceImpl implements TotalNumberOfSelec
     private static instance: TotalNumberOfSelectedCardsServiceImpl;
     private totalNumberOfSelectedCardsRepository: TotalNumberOfSelectedCardsRepositoryImpl;
 
-    private constructor() {
-        this.totalNumberOfSelectedCardsRepository = TotalNumberOfSelectedCardsRepositoryImpl.getInstance();
+    private constructor(scene: THREE.Scene) {
+        this.totalNumberOfSelectedCardsRepository = TotalNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
     }
 
-    public static getInstance(): TotalNumberOfSelectedCardsServiceImpl {
+    public static getInstance(scene: THREE.Scene): TotalNumberOfSelectedCardsServiceImpl {
         if (!TotalNumberOfSelectedCardsServiceImpl.instance) {
-            TotalNumberOfSelectedCardsServiceImpl.instance = new TotalNumberOfSelectedCardsServiceImpl();
+            TotalNumberOfSelectedCardsServiceImpl.instance = new TotalNumberOfSelectedCardsServiceImpl(scene);
         }
         return TotalNumberOfSelectedCardsServiceImpl.instance;
     }
