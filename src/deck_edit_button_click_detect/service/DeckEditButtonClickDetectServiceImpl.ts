@@ -133,6 +133,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
 
     public async onMouseDown(event: MouseEvent): Promise<DeckEditButton | null> {
         if (!this.isButtonClickEnabled()) return null;
+        if (this.getDeckEditButtonVisibility() == false) return null;
 
         if (event.button === 0) {
             const clickPoint = { x: event.clientX, y: event.clientY };
@@ -202,6 +203,13 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
 
     private getCardIdByCardUniqueId(cardUniqueId: number): number | null {
         return this.myDeckOwnedCardsRepository.findCardIdByCardUniqueId(cardUniqueId);
+    }
+
+    private getDeckEditButtonVisibility(): boolean | undefined {
+        const button = this.getDeckEditButton();
+        if (button !== null) {
+            return button.getVisibility();
+        }
     }
 
     private setDeckEditButtonVisibility(isVisible: boolean): void {
