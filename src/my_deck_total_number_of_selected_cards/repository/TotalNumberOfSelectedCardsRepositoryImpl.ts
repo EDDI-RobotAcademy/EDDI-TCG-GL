@@ -71,7 +71,6 @@ export class TotalNumberOfSelectedCardsRepositoryImpl implements TotalNumberOfSe
     public deleteNumberByDeckId(deckId: number): void {
         const numberInfo = this.numberMap.get(deckId);
         if (numberInfo) {
-            console.log(`여기 실행됨?`);
             this.meshDestroyer.destroyMesh(numberInfo.numberMesh.getMesh());
         }
         this.numberMap.delete(deckId);

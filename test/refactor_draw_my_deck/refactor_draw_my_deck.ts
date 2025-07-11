@@ -57,6 +57,7 @@ import {TotalNumberOfSelectedCardsServiceImpl} from "../../src/my_deck_total_num
 import {DeckCardDeleteButtonServiceImpl} from "../../src/deck_card_delete_button/service/DeckCardDeleteButtonServiceImpl";
 import {DeckCardCountMarkerServiceImpl} from "../../src/deck_card_count_marker/service/DeckCardCountMarkerServiceImpl";
 import {DeckCardAddButtonServiceImpl} from "../../src/deck_card_add_button/service/DeckCardAddButtonServiceImpl";
+import {RequiredNumberOfCardsServiceImpl} from "../../src/required_number_of_cards_in_the_deck/service/RequiredNumberOfCardsServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -144,6 +145,7 @@ export class TCGJustTestMyDeckView {
     private buildDeckButtonService: BuildDeckButtonServiceImpl;
     private deckCardAddButtonService: DeckCardAddButtonServiceImpl;
     private totalNumberOfSelectedCardsService: TotalNumberOfSelectedCardsServiceImpl;
+    private requiredNumberOfCarsService: RequiredNumberOfCardsServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -225,6 +227,7 @@ export class TCGJustTestMyDeckView {
         this.buildDeckButtonService = BuildDeckButtonServiceImpl.getInstance(this.scene);
         this.deckCardAddButtonService = DeckCardAddButtonServiceImpl.getInstance(this.scene);
         this.totalNumberOfSelectedCardsService = TotalNumberOfSelectedCardsServiceImpl.getInstance(this.scene);
+        this.requiredNumberOfCarsService = RequiredNumberOfCardsServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -294,6 +297,7 @@ export class TCGJustTestMyDeckView {
         await this.addBackground();
         await this.addScrollArea();
         await this.addChosenOutOfTotalSlash();
+        await this.addRequiredNumberOfCards();
         await this.addTotalNumberOfSelectedCards();
         await this.addMyDeckCard();
         await this.addMyDeckCardCountMarker();
@@ -395,6 +399,22 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add Chosen Out Of Total Slash:', error);
+        }
+    }
+
+    private async addRequiredNumberOfCards(): Promise<void> {
+        try {
+            await this.requiredNumberOfCarsService.createRequiredNumberOfCards();
+
+            const numberMesh = this.requiredNumberOfCarsService.getNumber();
+            if (numberMesh) {
+                this.scene.add(numberMesh.getMesh());
+            } else {
+                console.warn(`Required Number Of Cards Mesh Not found`);
+            }
+
+        } catch (error) {
+            console.error('Failed to add Required Number Of Cards:', error);
         }
     }
 
@@ -994,6 +1014,7 @@ export class TCGJustTestMyDeckView {
             this.sideScrollAreaService.adjustMyDeckCardScrollAreaPosition();
             this.sideScrollAreaService.adjustMyDeckBlockScrollAreaPosition();
             this.myDeckChosenOutOfTotalSlashService.adjustSlashPosition();
+            this.requiredNumberOfCarsService.adjustNumberPosition();
             this.totalNumberOfSelectedCardsService.adjustTotalNumberOfSelectedCardsPosition();
             this.myDeckButtonService.adjustMyDeckButtonPosition();
             this.myDeckButtonEffectService.adjustMyDeckButtonEffectPosition();
