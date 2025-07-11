@@ -31,6 +31,7 @@ import {MyDeckOwnedCardsClickDetectRepositoryImpl} from "../../deck_owned_cards_
 import {MyDeckBlockHoverDetectRepositoryImpl} from "../../my_deck_block_hover_detect/repository/MyDeckBlockHoverDetectRepositoryImpl";
 import {DeckCardDeleteButtonClickDetectRepositoryImpl} from "../../deck_card_delete_button_click_detect/repository/DeckCardDeleteButtonClickDetectRepositoryImpl";
 import {DeckCardAddButtonClickDetectRepositoryImpl} from "../../deck_card_add_button_click_detect/repository/DeckCardAddButtonClickDetectRepositoryImpl";
+import {RequiredNumberOfCardsRepositoryImpl} from "../../required_number_of_cards_in_the_deck/repository/RequiredNumberOfCardsRepositoryImpl";
 
 export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClickDetectService {
     private static instance: DeckEditButtonClickDetectServiceImpl | null = null;
@@ -54,6 +55,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private myDeckBlockHoverDetectRepository: MyDeckBlockHoverDetectRepositoryImpl;
     private deckCardDeleteButtonClickDetectRepository: DeckCardDeleteButtonClickDetectRepositoryImpl;
     private deckCardAddButtonClickDetectRepository: DeckCardAddButtonClickDetectRepositoryImpl;
+    private requiredNumberOfCardsRepository: RequiredNumberOfCardsRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -76,6 +78,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.myDeckBlockHoverDetectRepository = MyDeckBlockHoverDetectRepositoryImpl.getInstance();
         this.deckCardDeleteButtonClickDetectRepository = DeckCardDeleteButtonClickDetectRepositoryImpl.getInstance();
         this.deckCardAddButtonClickDetectRepository = DeckCardAddButtonClickDetectRepositoryImpl.getInstance();
+        this.requiredNumberOfCardsRepository = RequiredNumberOfCardsRepositoryImpl.getInstance(scene);
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckEditButtonClickDetectServiceImpl {
@@ -125,6 +128,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                 this.setRemainingCardsVisibility(true);
                 this.setRemainingOutOfTotalSlashVisibility(true);
                 this.setChosenOutOfTotalSlashVisibility(true);
+                this.setRequiredNumberOfCardsVisibility(true);
                 return clickedButton;
             }
         }
@@ -133,6 +137,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
 
     public async onMouseDown(event: MouseEvent): Promise<DeckEditButton | null> {
         if (!this.isButtonClickEnabled()) return null;
+        if (this.getDeckEditButtonVisibility() == false) return null;
 
         if (event.button === 0) {
             const clickPoint = { x: event.clientX, y: event.clientY };
@@ -204,6 +209,13 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         return this.myDeckOwnedCardsRepository.findCardIdByCardUniqueId(cardUniqueId);
     }
 
+    private getDeckEditButtonVisibility(): boolean | undefined {
+        const button = this.getDeckEditButton();
+        if (button !== null) {
+            return button.getVisibility();
+        }
+    }
+
     private setDeckEditButtonVisibility(isVisible: boolean): void {
         this.getDeckEditButton()?.setVisibility(isVisible);
     }
@@ -232,6 +244,15 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
             totalNumber.setVisibility(isVisible);
         } else {
             console.log(`Not Found Total Number Of Selected Cards (Deck ID: ${deckId})`);
+        }
+    }
+
+    private setRequiredNumberOfCardsVisibility(isVisible: boolean): void {
+        const requiredNumber = this.requiredNumberOfCardsRepository.findNumber();
+        if (requiredNumber !== null) {
+            requiredNumber.setVisibility(isVisible);
+        } else {
+            console.log(`Not Found Required Number Of Cards`);
         }
     }
 
