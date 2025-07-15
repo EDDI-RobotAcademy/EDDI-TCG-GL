@@ -17,3 +17,6 @@ node_modules
 
 # exclude *.otf
 *.otf
+
+# exclude *.ttf
+*.ttf

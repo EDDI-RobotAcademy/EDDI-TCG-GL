@@ -54,6 +54,7 @@
     "draw-opponent-field": "webpack serve --config ./test/draw_opponent_field/config/webpack.dev.js",
     "draw-make-deck": "webpack serve --config ./test/draw_make_deck/config/webpack.dev.js",
     "refactor-draw-my-card": "webpack serve --config ./test/refactor_draw_my_card/config/webpack.dev.js",
-    "refactor-draw-shop": "webpack serve --config ./test/refactor_draw_shop/config/webpack.dev.js"
+    "refactor-draw-shop": "webpack serve --config ./test/refactor_draw_shop/config/webpack.dev.js",
+    "draw-opponent-neon-border": "webpack serve --config ./test/draw_opponent_neon_border/config/webpack.dev.js"
   }
 }
