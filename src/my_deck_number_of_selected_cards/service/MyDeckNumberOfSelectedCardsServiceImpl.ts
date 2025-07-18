@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {Vector2d} from "../../common/math/Vector2d";
+import {getCardById} from "../../card/utility";
 
 import {MyDeckNumberOfSelectedCardsService} from "./MyDeckNumberOfSelectedCardsService";
 import {MyDeckNumberOfSelectedCards} from "../entity/MyDeckNumberOfSelectedCards";
@@ -11,6 +12,7 @@ import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_det
 import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
 import {SideScrollArea} from "../../side_scroll_area/entity/SideScrollArea";
 import {ClippingMaskManager} from "../../clipping_mask_manager/ClippingMaskManager";
+import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 export class MyDeckNumberOfSelectedCardsServiceImpl implements MyDeckNumberOfSelectedCardsService {
     private static instance: MyDeckNumberOfSelectedCardsServiceImpl;
@@ -19,6 +21,7 @@ export class MyDeckNumberOfSelectedCardsServiceImpl implements MyDeckNumberOfSel
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
     private clippingMaskManager: ClippingMaskManager;
+    private cardCountManager: CardCountManager;
 
     private constructor(scene: THREE.Scene) {
         this.myDeckNumberOfSelectedCardsRepository = MyDeckNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
@@ -26,6 +29,7 @@ export class MyDeckNumberOfSelectedCardsServiceImpl implements MyDeckNumberOfSel
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
+        this.cardCountManager = CardCountManager.getInstance();
     }
 
     public static getInstance(scene: THREE.Scene): MyDeckNumberOfSelectedCardsServiceImpl {
@@ -38,9 +42,8 @@ export class MyDeckNumberOfSelectedCardsServiceImpl implements MyDeckNumberOfSel
     public async createMyDeckNumberOfSelectedCardsWithPosition(deckId: number, cardId: number, cardCount: number): Promise<THREE.Group | null> {
         const numberGroup = new THREE.Group();
         try {
-            // To-do: position 은 존재하고, Mesh 는  존재하지 않을 경우도 고려해야 함
-            const numberId = this.getNumberIdByDeckIdAndCardId(deckId, cardId);
-            if (numberId == null) {
+            const existingPosition = this.getPositionByDeckIdAndCardId(deckId, cardId);
+            if (existingPosition == null) {
                 const position = this.myDeckNumberOfSelectedCardsPosition(deckId, cardId);
                 console.log(`[Block] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
 
@@ -48,10 +51,12 @@ export class MyDeckNumberOfSelectedCardsServiceImpl implements MyDeckNumberOfSel
                 numberGroup.add(myDeckNumberOfCards.getMesh());
 
             } else {
-                const existingPosition = this.getPositionByNumberId(numberId);
                 const existingNumberMesh = this.getNumberMeshByDeckIdAndCardId(deckId, cardId);
+                if (existingNumberMesh == null) {
+                    const myDeckNumberOfCards = await this.createMyDeckNumberOfSelectedCards(deckId, cardId, cardCount, existingPosition.position);
+                    numberGroup.add(myDeckNumberOfCards.getMesh());
 
-                if (existingPosition && existingNumberMesh) {
+                } else {
                     const positionX = existingPosition.getX() * window.innerWidth;
                     const positionY = existingPosition.getY() * window.innerHeight;
 
@@ -90,6 +95,7 @@ export class MyDeckNumberOfSelectedCardsServiceImpl implements MyDeckNumberOfSel
                     continue;
                 }
 
+                // To-do: position 을 number ID 로 가져오면 안 됨. (scene 에서 삭제 후 다시 그릴 때 number 객체 고유 ID 달라지기 때문)
                 const initialPosition = this.getPositionByNumberId(numberId);
                 console.log(`[DEBUG] (adjust) InitialPosition: ${initialPosition}`);
 
@@ -156,12 +162,12 @@ export class MyDeckNumberOfSelectedCardsServiceImpl implements MyDeckNumberOfSel
     }
 
     private getNumberMeshByDeckIdAndCardId(deckId: number, cardId: number): THREE.Mesh | null {
-        const number = this.myDeckNumberOfSelectedCardsRepository.findNumberByDeckIdAndCardId(deckId, cardId);
-        if (!number) {
+        const numberMesh = this.myDeckNumberOfSelectedCardsRepository.findNumberByDeckIdAndCardId(deckId, cardId);
+        if (!numberMesh) {
             console.warn(`[WARN] Number with Deck ID: ${deckId}, Card ID ${cardId} not found`);
             return null;
         }
-        return number.getMesh();
+        return numberMesh.getMesh();
     }
 
     private getNumberIdByDeckIdAndCardId(deckId: number, cardId: number): number | null {
@@ -171,6 +177,14 @@ export class MyDeckNumberOfSelectedCardsServiceImpl implements MyDeckNumberOfSel
             return null;
         }
         return numberId;
+    }
+
+    private getPositionByDeckIdAndCardId(deckId: number, cardId: number): MyDeckNumberOfSelectedCardsPosition | null {
+        const numberPosition = this.myDeckNumberOfSelectedCardsPositionRepository.findPositionByDeckIdAndCardId(deckId, cardId);
+        if (!numberPosition) {
+            console.warn(`[WARN] My Deck Number Of Cards Position not found`);
+        }
+        return numberPosition;
     }
 
     private getCurrentClickDeckButton(): number | null {

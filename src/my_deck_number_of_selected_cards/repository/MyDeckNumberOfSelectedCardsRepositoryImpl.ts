@@ -49,7 +49,7 @@ export class MyDeckNumberOfSelectedCardsRepositoryImpl implements MyDeckNumberOf
         numberMesh.position.set(numberPositionX, numberPositionY, 0);
 
         const newNumber = new MyDeckNumberOfSelectedCards(numberMesh, position);
-        this.numberMap.set(newNumber.id, { cardCount, cardId, numberMesh: newNumber });
+        this.numberMap.set(newNumber.id, { cardId, cardCount, numberMesh: newNumber });
 
         if (!this.deckMap.has(deckId)) {
             this.deckMap.set(deckId, []);
