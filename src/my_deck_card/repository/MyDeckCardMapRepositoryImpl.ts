@@ -143,7 +143,7 @@ export class MyDeckCardMapRepositoryImpl implements MyDeckCardMapRepository {
         if (existingDeck) {
             const existingCard = existingDeck.find(card => card.cardId === cardId);
             if (existingCard) {
-                existingCard.cardCount += cardCount; // 누적
+                existingCard.cardCount = cardCount; // 새로운 count 로 변경
             } else {
                 existingDeck.push({ cardId, cardCount }); // 새 카드 추가
             }

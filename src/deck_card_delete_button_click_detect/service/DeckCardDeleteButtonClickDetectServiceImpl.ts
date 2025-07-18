@@ -110,13 +110,14 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
             this.saveClickedCardCount(currentClickedDeckButtonId, cardId);
 
             this.deleteRemainingCards(cardId);
-            this.deleteNumberOfSelectedCards(currentClickedDeckButtonId, buttonUniqueId);
+            this.deleteNumberOfSelectedCards(currentClickedDeckButtonId, cardId);
             this.setCardBlockerVisibility(cardId, false);
 
             const selectedCardCount = this.cardCountManager.findCardCountByDeck(currentClickedDeckButtonId, cardId);
             if (selectedCardCount == 0) {
                 this.myDeckCardMapRepository.deleteCard(currentClickedDeckButtonId, cardId);
                 this.deleteDeckElement(currentClickedDeckButtonId, cardId);
+                this.deleteNumberOfSelectedCardsPosition(currentClickedDeckButtonId, cardId);
                 this.adjustDeckCardDeleteButton(currentClickedDeckButtonId);
                 this.adjustCardBlock(currentClickedDeckButtonId);
                 this.adjustCardName(currentClickedDeckButtonId);
@@ -176,6 +177,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         }
 
         const selectedCardCount = this.cardCountManager.findCardCountByDeck(deckId, cardId);
+        console.log(`%c 현재 선택한 카드(ID: ${cardId}) 개수는? ${selectedCardCount}`, 'color: #FE2EF7; font-weight: bold;');
         if (selectedCardCount == 0) {
             console.warn(`[DEBUG] Card id: ${cardId}, Count: ${selectedCardCount} No more cards to remove.`);
             return;
@@ -185,16 +187,28 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         this.cardCountManager.incrementRemainingCardCount(cardId);
         this.cardCountManager.decrementCardCountByDeck(deckId, cardId);
         this.cardCountManager.decrementCardCountByGrade(deckId, grade);
+
+        // Map 데이터 업데이트
+        const cardCountInDeck = this.cardCountManager.findCardCountByDeck(deckId, cardId);
+        this.myDeckCardMapRepository.addMyDeckCard(deckId, cardId, cardCountInDeck);
     }
 
     private deleteRemainingCards(cardId: number): void {
         this.myDeckRemainingCardsRepository.deleteRemainingCardsByCardId(cardId);
     }
 
-    private deleteNumberOfSelectedCards(deckId: number, buttonId: number): void {
+    private deleteNumberOfSelectedCards(deckId: number, cardId: number): void {
+        const buttonId = this.myDeckNumberOfSelectedCardsRepository.findNumberIdByDeckIdAndCardId(deckId, cardId);
+        if (buttonId == null) return;
+        console.log(`%c 현재 삭제하려는 버튼 ID? ${buttonId}, card ID: ${cardId}`, 'color: #FE2EF7; font-weight: bold;');
         this.myDeckNumberOfSelectedCardsRepository.deleteNumberByDeckIdAndNumberId(deckId, buttonId);
-        // To-do: 해당 카드의 개수가 0일 경우에만 삭제할 것인지(새로운 개수 객체가 어떻게 추가되는 지에 따라 수정)
-        this.myDeckNumberOfSelectedCardsPositionRepository.deleteById(deckId, buttonId);
+    }
+
+    // 삭제 대상의 카드의 개수가 0일 경우에만 position 삭제
+    private deleteNumberOfSelectedCardsPosition(deckId: number, cardId: number): void {
+        const positionId = this.myDeckNumberOfSelectedCardsPositionRepository.findPositionIdByDeckIdAndCardId(deckId, cardId);
+        if (positionId == null) return;
+        this.myDeckNumberOfSelectedCardsPositionRepository.deleteById(deckId, positionId);
     }
 
     // To-do: 메서드명 수정 필요(덱 삭제 버튼, 덱 블록, 카드 이름, 개수 객체 등 한 번에 삭제)

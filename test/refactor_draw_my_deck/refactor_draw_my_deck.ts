@@ -255,7 +255,14 @@ export class TCGJustTestMyDeckView {
         this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckOwnedCardsScrollService.onWheelScroll(e), false);
         this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckBlockScrollService.onWheelScroll(e), false);
         this.renderer.domElement.addEventListener('mousemove', (e) => this.myDeckBlockHoverDetectService.onMouseMove(e), false);
-        this.renderer.domElement.addEventListener('mousedown', (e) => this.deckCardDeleteButtonClickDetectService.onMouseDown(e), false);
+//         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckCardDeleteButtonClickDetectService.onMouseDown(e), false);
+        this.renderer.domElement.addEventListener('mousedown', async (e) => {
+            const buttonEvent = await this.deckCardDeleteButtonClickDetectService.onMouseDown(e);
+            if (buttonEvent) {
+                // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
+                this.addMyDeckNumberOfSelectedCards();
+            }
+        }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.buildDeckButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckEditButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckOwnedCardsClickDetectService.onMouseDown(e), false);
