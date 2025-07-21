@@ -47,7 +47,7 @@ export class MyDeckRemainingCardsRepositoryImpl implements MyDeckRemainingCardsR
         remainingCardsMesh.position.set(remainingCardsPositionX, remainingCardsPositionY, 0);
 
         const newRemainingCards = new MyDeckRemainingCards(remainingCardsMesh, position);
-        this.remainingCardsMap.set(newRemainingCards.id, { cardCount, cardId, remainingCardsMesh: newRemainingCards });
+        this.remainingCardsMap.set(newRemainingCards.id, { cardId, cardCount, remainingCardsMesh: newRemainingCards });
 
         return newRemainingCards;
     }
@@ -77,7 +77,7 @@ export class MyDeckRemainingCardsRepositoryImpl implements MyDeckRemainingCardsR
     public findRemainingCardByCardId(cardId: number): MyDeckRemainingCards | null {
         for (const [remainingCardsId, { cardId: storedCardId, remainingCardsMesh}] of this.remainingCardsMap.entries()) {
             if (storedCardId === cardId) {
-                console.log(`Match found! Returning Remaining Cards Id: ${remainingCardsId}`);
+                console.log(`Match found! Returning Remaining Cards Id: ${cardId}`);
                 return remainingCardsMesh;
             }
         }
@@ -132,13 +132,22 @@ export class MyDeckRemainingCardsRepositoryImpl implements MyDeckRemainingCardsR
         this.resetRemainingCardsGroup();
     }
 
+    public saveRemainingCardsGroup(): void {
+        const remainingCardsList = this.findAllRemainingCardsList();
+        const numberOfCardsGroup = new THREE.Group();
+
+        remainingCardsList.forEach((remainingCard) => {
+            numberOfCardsGroup.add(remainingCard.getMesh());
+        });
+
+        this.remainingCardsGroup = numberOfCardsGroup;
+    }
+
     public findRemainingCardsGroup(): THREE.Group {
         if (!this.remainingCardsGroup) {
-            this.remainingCardsGroup = new THREE.Group();
-            this.findAllRemainingCardsList()?.forEach((remainingCards) => {
-                this.remainingCardsGroup!.add(remainingCards.getMesh());
-            });
+            throw new Error(`My Deck Number Of Remaining Cards Group not found`);
         }
+
         return this.remainingCardsGroup;
     }
 

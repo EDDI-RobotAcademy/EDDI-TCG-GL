@@ -261,6 +261,7 @@ export class TCGJustTestMyDeckView {
             if (buttonEvent) {
                 // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
                 this.addMyDeckNumberOfSelectedCards();
+                this.addMyDeckRemainingCards();
             }
         }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.buildDeckButtonClickDetectService.onMouseDown(e), false);
@@ -628,11 +629,11 @@ export class TCGJustTestMyDeckView {
             for (const [cardId, ownedCardCount] of totalOwnedCardMap) {
                 const usedCardCount = usedCardMap.get(cardId) ?? 0;
                 const remainingCount = ownedCardCount - usedCardCount;
-                console.log(`Card ID: ${cardId}, Used Card Count: ${usedCardCount}, Remaining Count: ${remainingCount}`);
+                console.log(`%c Card ID: ${cardId}, Used Card Count: ${usedCardCount}, Remaining Count: ${remainingCount}`, 'color: #FE2EF7; font-weight: bold;');
 
                 await this.myDeckRemainingCardsService.createMyDeckRemainingCardsWithPosition(cardId, remainingCount);
             }
-
+            this.myDeckRemainingCardsService.saveRemainingCardGroup();
             this.myDeckRemainingCardsService.applyClippingMaskToRemainingCards();
 
             const remainingCardsGroup = this.myDeckRemainingCardsService.getRemainingCardsGroup();
