@@ -26,7 +26,7 @@ export class CardCountManager {
             console.log(`Already Exist Remaining Card Count Info card ID:${cardId}`);
         } else {
             this.remainingCardCountMap.set(cardId, cardCount);
-            // 제대로 확인 되면 주석 처리
+            // To-do: 제대로 확인 되면 주석 처리
             console.log(`Save Remaining Card Count "Card ID: ${cardId}", "Card Count: ${cardCount}"`);
         }
     }
