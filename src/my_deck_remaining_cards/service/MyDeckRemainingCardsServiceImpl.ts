@@ -121,7 +121,7 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
 
     private async createMyDeckRemainingCards(cardId: number, cardCount: number, position: Vector2d): Promise<MyDeckRemainingCards> {
         const mesh = await this.myDeckRemainingCardsRepository.createMyDeckRemainingCards(cardId, cardCount, position);
-//         this.cardCountManager.saveRemainingCardCount(cardId, cardCount);
+        this.cardCountManager.saveRemainingCardCount(cardId, cardCount);
         return mesh;
     }
 

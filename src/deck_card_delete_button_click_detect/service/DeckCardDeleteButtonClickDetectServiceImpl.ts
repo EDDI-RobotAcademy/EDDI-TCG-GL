@@ -170,11 +170,11 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         }
         const grade = Number(card.등급);
 
-//         const currentRemainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
-//         if (currentRemainingCardCount == null) {
-//             console.warn(`[WARN] "Remaining Card Count" not found for cardId: ${cardId}`);
-//             return;
-//         }
+        const currentRemainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
+        if (currentRemainingCardCount == null) {
+            console.warn(`[WARN] "Remaining Card Count" not found for cardId: ${cardId}`);
+            return;
+        }
 
         const selectedCardCount = this.cardCountManager.findCardCountByDeck(deckId, cardId);
         console.log(`%c 현재 선택한 카드(ID: ${cardId}) 개수는? ${selectedCardCount}`, 'color: #FE2EF7; font-weight: bold;');
@@ -184,7 +184,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         }
 
         // 선택한 카드 개수는 감소, 남은 카드 개수는 증가
-//         this.cardCountManager.incrementRemainingCardCount(cardId);
+        this.cardCountManager.incrementRemainingCardCount(cardId);
         this.cardCountManager.decrementCardCountByDeck(deckId, cardId);
         this.cardCountManager.decrementCardCountByGrade(deckId, grade);
 
