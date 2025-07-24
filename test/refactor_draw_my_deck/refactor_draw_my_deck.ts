@@ -271,7 +271,15 @@ export class TCGJustTestMyDeckView {
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckNameEditButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deleteDeckPopupButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckMakePopupButtonsClickDetectService.onMouseDown(e), false);
-        this.renderer.domElement.addEventListener('mousedown', (e) => this.deckCardAddButtonClickDetectService.onMouseDown(e), false);
+//         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckCardAddButtonClickDetectService.onMouseDown(e), false);
+        this.renderer.domElement.addEventListener('mousedown', async (e) => {
+            const buttonEvent = await this.deckCardAddButtonClickDetectService.onMouseDown(e);
+            if (buttonEvent) {
+                // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
+                this.addMyDeckNumberOfSelectedCards();
+                this.addMyDeckRemainingCards();
+            }
+        }, false);
     }
 
     public static getInstance(simulationMyDeckContainer: HTMLElement): TCGJustTestMyDeckView {
@@ -629,7 +637,7 @@ export class TCGJustTestMyDeckView {
             for (const [cardId, ownedCardCount] of totalOwnedCardMap) {
                 const usedCardCount = usedCardMap.get(cardId) ?? 0;
                 const remainingCount = ownedCardCount - usedCardCount;
-                console.log(`%c Card ID: ${cardId}, Used Card Count: ${usedCardCount}, Remaining Count: ${remainingCount}`, 'color: #FE2EF7; font-weight: bold;');
+//                 console.log(`%c Card ID: ${cardId}, Used Card Count: ${usedCardCount}, Remaining Count: ${remainingCount}`, 'color: #FE2EF7; font-weight: bold;');
 
                 await this.myDeckRemainingCardsService.createMyDeckRemainingCardsWithPosition(cardId, remainingCount);
             }
