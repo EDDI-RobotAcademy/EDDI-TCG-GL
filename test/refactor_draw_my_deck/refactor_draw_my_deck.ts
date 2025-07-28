@@ -58,6 +58,7 @@ import {DeckCardDeleteButtonServiceImpl} from "../../src/deck_card_delete_button
 import {DeckCardCountMarkerServiceImpl} from "../../src/deck_card_count_marker/service/DeckCardCountMarkerServiceImpl";
 import {DeckCardAddButtonServiceImpl} from "../../src/deck_card_add_button/service/DeckCardAddButtonServiceImpl";
 import {RequiredNumberOfCardsServiceImpl} from "../../src/required_number_of_cards_in_the_deck/service/RequiredNumberOfCardsServiceImpl";
+import {MyDeckNumberOfSelectedCardsCloneServiceImpl} from "../../src/my_deck_number_of_selected_cards_clone/service/MyDeckNumberOfSelectedCardsCloneServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -146,6 +147,7 @@ export class TCGJustTestMyDeckView {
     private deckCardAddButtonService: DeckCardAddButtonServiceImpl;
     private totalNumberOfSelectedCardsService: TotalNumberOfSelectedCardsServiceImpl;
     private requiredNumberOfCarsService: RequiredNumberOfCardsServiceImpl;
+    private myDeckNumberOfSelectedCardsCloneService: MyDeckNumberOfSelectedCardsCloneServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
 
@@ -228,6 +230,7 @@ export class TCGJustTestMyDeckView {
         this.deckCardAddButtonService = DeckCardAddButtonServiceImpl.getInstance(this.scene);
         this.totalNumberOfSelectedCardsService = TotalNumberOfSelectedCardsServiceImpl.getInstance(this.scene);
         this.requiredNumberOfCarsService = RequiredNumberOfCardsServiceImpl.getInstance(this.scene);
+        this.myDeckNumberOfSelectedCardsCloneService = MyDeckNumberOfSelectedCardsCloneServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -265,7 +268,14 @@ export class TCGJustTestMyDeckView {
             }
         }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.buildDeckButtonClickDetectService.onMouseDown(e), false);
-        this.renderer.domElement.addEventListener('mousedown', (e) => this.deckEditButtonClickDetectService.onMouseDown(e), false);
+//         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckEditButtonClickDetectService.onMouseDown(e), false);
+        this.renderer.domElement.addEventListener('mousedown', async (e) => {
+            const buttonEvent = await this.deckEditButtonClickDetectService.onMouseDown(e);
+            if (buttonEvent) {
+                // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
+                await this.addMyDeckNumberOfSelectedCardsClone();
+            }
+        }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckOwnedCardsClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckDeleteButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckNameEditButtonClickDetectService.onMouseDown(e), false);
@@ -1003,6 +1013,31 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add DeckMakePopupInputContainer:', error);
+        }
+    }
+
+    private async addMyDeckNumberOfSelectedCardsClone(): Promise<void> {
+        try {
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            if (currentClickedDeckId == null) return;
+
+            const cardIdList = this.myDeckCardMapRepository.findCardIdListByDeckId(currentClickedDeckId);
+            for (const cardId of cardIdList) {
+                const cardCount = this.myDeckCardMapRepository.findCardCountByDeckIdAndCardId(currentClickedDeckId, cardId);
+                await this.myDeckNumberOfSelectedCardsCloneService.createCloneWithPosition(currentClickedDeckId, cardId, cardCount);
+            }
+
+            this.myDeckNumberOfSelectedCardsCloneService.saveCloneGroup();
+            this.myDeckNumberOfSelectedCardsCloneService.applyClippingMaskToClone();
+
+            const cloneGroup = this.myDeckNumberOfSelectedCardsCloneService.getCloneGroup();
+            if (!this.scene.children.includes(cloneGroup)) {
+                this.scene.add(cloneGroup);
+            }
+            cloneGroup.position.y = 0;
+
+        } catch (error) {
+            console.error('Failed to add my deck number of selected cards clone:', error);
         }
     }
 
