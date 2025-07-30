@@ -186,7 +186,7 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
         const buttonId = this.myDeckNumberOfSelectedCardsRepository.findNumberIdByDeckIdAndCardId(deckId, cardId);
         if (buttonId == null) return;
         console.log(`%c 현재 삭제하려는 버튼 ID? ${buttonId}, card ID: ${cardId}`, 'color: #FE2EF7; font-weight: bold;');
-        this.myDeckNumberOfSelectedCardsRepository.deleteNumberByDeckIdAndNumberId(deckId, buttonId);
+        this.myDeckNumberOfSelectedCardsRepository.deleteNumberOfSelectedCards(deckId, buttonId);
     }
 
     private deleteTotalNumberOfSelectedCards(deckId: number): void {
