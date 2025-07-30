@@ -163,16 +163,9 @@ export class MyDeckNumberOfSelectedCardsRepositoryImpl implements MyDeckNumberOf
     }
 
     // 특정 덱의 특정 number of cards 삭제
-    public deleteNumberByDeckIdAndNumberId(deckId: number, numberId: number): void {
+    public deleteNumberOfSelectedCards(deckId: number, numberId: number): void {
         const numberInfo = this.numberMap.get(numberId);
         if (numberInfo) {
-            this.meshDestroyer.destroyMesh(numberInfo.numberMesh.getMesh());
-
-            const group = this.numberGroupMap.get(deckId);
-            if (group) {
-                group.remove(numberInfo.numberMesh.getMesh());
-            }
-
             this.numberMap.delete(numberId);
         }
 
@@ -184,6 +177,18 @@ export class MyDeckNumberOfSelectedCardsRepositoryImpl implements MyDeckNumberOf
 //             if (updatedList.length === 0) {
 //                 this.deckMap.delete(deckId);
 //             }
+        }
+    }
+
+    public deleteNumberOfSelectedCardsMesh(deckId: number, numberId: number): void {
+        const numberInfo = this.numberMap.get(numberId);
+        if (numberInfo) {
+            this.meshDestroyer.destroyMesh(numberInfo.numberMesh.getMesh());
+
+            const group = this.numberGroupMap.get(deckId);
+            if (group) {
+                group.remove(numberInfo.numberMesh.getMesh());
+            }
         }
     }
 
