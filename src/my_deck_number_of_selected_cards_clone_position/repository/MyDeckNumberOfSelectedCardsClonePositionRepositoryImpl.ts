@@ -52,11 +52,13 @@ export class MyDeckNumberOfSelectedCardsClonePositionRepositoryImpl implements M
         if (cardIdList == null) return;
 
         for (const id of cardIdList) {
+            this.positionIndex++;
+
             const newX = this.initialX;
-            const newY = this.initialY + this.positionIndex * this.incrementY;
+            const newY = this.initialY + (this.positionIndex - 1) * this.incrementY;
             const newPosition = new MyDeckNumberOfSelectedCardsClonePosition(newX, newY);
 
-            this.positionMap.set(cardId, newPosition);
+            this.positionMap.set(id, newPosition);
         }
     }
 
