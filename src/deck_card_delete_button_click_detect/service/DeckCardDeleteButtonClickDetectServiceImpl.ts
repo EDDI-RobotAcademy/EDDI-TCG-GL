@@ -21,6 +21,8 @@ import {DeckCardAddButtonRepositoryImpl} from "../../deck_card_add_button/reposi
 import {DeckCardAddButtonPositionRepositoryImpl} from "../../deck_card_add_button_position/repository/DeckCardAddButtonPositionRepositoryImpl";
 import {MyDeckNumberOfSelectedCardsCloneRepositoryImpl} from "../../my_deck_number_of_selected_cards_clone/repository/MyDeckNumberOfSelectedCardsCloneRepositoryImpl";
 import {MyDeckNumberOfSelectedCardsClonePositionRepositoryImpl} from "../../my_deck_number_of_selected_cards_clone_position/repository/MyDeckNumberOfSelectedCardsClonePositionRepositoryImpl";
+import {MyDeckBlockCloneRepositoryImpl} from "../../my_deck_block_clone/repository/MyDeckBlockCloneRepositoryImpl";
+import {MyDeckBlockClonePositionRepositoryImpl} from "../../my_deck_block_clone_position/repository/MyDeckBlockClonePositionRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -48,6 +50,8 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
     private deckCardAddButtonPositionRepository: DeckCardAddButtonPositionRepositoryImpl;
     private myDeckNumberOfSelectedCardsCloneRepository: MyDeckNumberOfSelectedCardsCloneRepositoryImpl;
     private myDeckNumberOfSelectedCardsClonePositionRepository: MyDeckNumberOfSelectedCardsClonePositionRepositoryImpl;
+    private myDeckBlockCloneRepository: MyDeckBlockCloneRepositoryImpl;
+    private myDeckBlockClonePositionRepository: MyDeckBlockClonePositionRepositoryImpl;
 
     private cardCountManager: CardCountManager;
     private myDeckElementAdjuster: MyDeckElementAdjuster;
@@ -71,6 +75,8 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         this.deckCardAddButtonPositionRepository = DeckCardAddButtonPositionRepositoryImpl.getInstance();
         this.myDeckNumberOfSelectedCardsCloneRepository = MyDeckNumberOfSelectedCardsCloneRepositoryImpl.getInstance(scene);
         this.myDeckNumberOfSelectedCardsClonePositionRepository = MyDeckNumberOfSelectedCardsClonePositionRepositoryImpl.getInstance();
+        this.myDeckBlockCloneRepository = MyDeckBlockCloneRepositoryImpl.getInstance(scene);
+        this.myDeckBlockClonePositionRepository = MyDeckBlockClonePositionRepositoryImpl.getInstance();
 
         this.cardCountManager = CardCountManager.getInstance();
         this.myDeckElementAdjuster = MyDeckElementAdjuster.getInstance();
@@ -124,7 +130,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
                 this.deleteDeckElement(currentClickedDeckButtonId, cardId);
                 this.deleteNumberOfSelectedCardsClonePosition(cardId);
                 this.adjustDeckCardDeleteButton(currentClickedDeckButtonId);
-                this.adjustCardBlock(currentClickedDeckButtonId);
+                this.adjustBlockClone();
                 this.adjustCardName(currentClickedDeckButtonId);
                 this.adjustNumberOfSelectedCardsClone();
                 this.adjustDeckCardAddButton(currentClickedDeckButtonId);
@@ -193,9 +199,9 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         this.cardCountManager.decrementCardCountByDeck(deckId, cardId);
         this.cardCountManager.decrementCardCountByGrade(deckId, grade);
 
-        // Map 데이터 업데이트
-        const cardCountInDeck = this.cardCountManager.findCardCountByDeck(deckId, cardId);
-        this.myDeckCardMapRepository.addMyDeckCard(deckId, cardId, cardCountInDeck);
+        // To-do: 편집 완료 버튼 클릭시 map 데이터에 반영
+//         const cardCountInDeck = this.cardCountManager.findCardCountByDeck(deckId, cardId);
+//         this.myDeckCardMapRepository.addMyDeckCard(deckId, cardId, cardCountInDeck);
     }
 
     private deleteRemainingCards(cardId: number): void {
@@ -219,8 +225,9 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
 
         this.deckCardDeleteButtonRepository.deleteButtonByDeckIdAndButtonId(deckId, buttonId);
         this.deckCardDeleteButtonPositionRepository.deleteById(deckId, buttonId);
-        this.myDeckBlockRepository.deleteBlockByDeckIdAndBlockUniqueId(deckId, buttonId);
-        this.myDeckBlockPositionRepository.deleteById(deckId, buttonId);
+        this.myDeckBlockCloneRepository.deleteCloneMesh(cardId);
+        this.myDeckBlockCloneRepository.deleteCloneByCardId(cardId);
+        this.myDeckBlockClonePositionRepository.deleteByCardId(cardId);
         this.myDeckCardNameRepository.deleteCardNameByDeckIdAndCardNameId(deckId, buttonId);
         this.myDeckCardNamePositionRepository.deleteById(deckId, buttonId);
         this.deckCardAddButtonRepository.deleteButtonByDeckIdAndButtonId(deckId, buttonId);
@@ -267,26 +274,6 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         }
     }
 
-    private adjustCardBlock(deckId: number): void {
-        const blockIdList = this.myDeckBlockRepository.findBlockUniqueIdListByDeckId(deckId);
-        for (const blockId of blockIdList) {
-            const block = this.myDeckBlockRepository.findBlockByBlockUniqueId(blockId);
-            if (block == null) return;
-
-            const blockMesh = block.getMesh();
-            const blockPosition = this.myDeckBlockPositionRepository.findPositionByPositionId(blockId);
-
-            if (blockPosition == null) return;
-
-            const widthPercent = 0.166;
-            const heightPercent = (250/1130);
-            const positionX = blockPosition.getX();
-            const positionY = blockPosition.getY();
-
-            this.myDeckElementAdjuster.adjustElementPosition(blockMesh, widthPercent, heightPercent, positionX, positionY);
-        }
-    }
-
     private adjustCardName(deckId: number): void {
         const cardNameIdList = this.myDeckCardNameRepository.findCardNameIdListByDeckId(deckId);
         for (const nameId of cardNameIdList) {
@@ -324,6 +311,28 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
 
             const widthPercent = 0.015;
             const heightPercent = 1;
+            const positionX = clonePosition.getX();
+            const positionY = clonePosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(cloneMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    private adjustBlockClone(): void {
+        const cardIdList = this.myDeckBlockCloneRepository.findCardIdList();
+        if (cardIdList == null) return;
+        console.log(`%c 클론 재정렬 Card ID List: ${cardIdList}`, 'color: #FE2EF7; font-weight: bold;');
+
+        for (const cardId of cardIdList) {
+            const clone = this.myDeckBlockCloneRepository.findCloneByCardId(cardId);
+            if (clone == null) return;
+
+            const cloneMesh = clone.getMesh();
+            const clonePosition = this.myDeckBlockClonePositionRepository.findPositionByCardId(cardId);
+            if (clonePosition == null) return;
+
+            const widthPercent = 0.166;
+            const heightPercent = (250/1130);
             const positionX = clonePosition.getX();
             const positionY = clonePosition.getY();
 
