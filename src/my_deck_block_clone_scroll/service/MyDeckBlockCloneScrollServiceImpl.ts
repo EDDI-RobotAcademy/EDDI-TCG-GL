@@ -6,6 +6,7 @@ import {SideScrollAreaDetectRepositoryImpl} from "../../side_scroll_area_detect/
 import {DeckEditButtonClickDetectRepositoryImpl} from "../../deck_edit_button_click_detect/repository/DeckEditButtonClickDetectRepositoryImpl";
 import {MyDeckBlockCloneRepositoryImpl} from "../../my_deck_block_clone/repository/MyDeckBlockCloneRepositoryImpl";
 import {MyDeckNumberOfSelectedCardsCloneRepositoryImpl} from "../../my_deck_number_of_selected_cards_clone/repository/MyDeckNumberOfSelectedCardsCloneRepositoryImpl";
+import {MyDeckCardNameCloneRepositoryImpl} from "../../my_deck_card_name_clone/repository/MyDeckCardNameCloneRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -19,6 +20,7 @@ export class MyDeckBlockCloneScrollServiceImpl implements MyDeckBlockCloneScroll
     private deckEditButtonClickDetectRepository: DeckEditButtonClickDetectRepositoryImpl;
     private myDeckBlockCloneRepository: MyDeckBlockCloneRepositoryImpl;
     private myDeckNumberOfSelectedCardsCloneRepository: MyDeckNumberOfSelectedCardsCloneRepositoryImpl;
+    private myDeckCardNameCloneRepository: MyDeckCardNameCloneRepositoryImpl;
 
     private scrollEnable: boolean = false;
 
@@ -30,6 +32,7 @@ export class MyDeckBlockCloneScrollServiceImpl implements MyDeckBlockCloneScroll
         this.deckEditButtonClickDetectRepository = DeckEditButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckBlockCloneRepository = MyDeckBlockCloneRepositoryImpl.getInstance(scene);
         this.myDeckNumberOfSelectedCardsCloneRepository = MyDeckNumberOfSelectedCardsCloneRepositoryImpl.getInstance(scene);
+        this.myDeckCardNameCloneRepository = MyDeckCardNameCloneRepositoryImpl.getInstance(scene);
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer): MyDeckBlockCloneScrollServiceImpl {
@@ -60,6 +63,7 @@ export class MyDeckBlockCloneScrollServiceImpl implements MyDeckBlockCloneScroll
         const scrollTargets = [
             this.getBlockCloneGroup(), // scrollTargetBlock
             this.getNumberOfSelectedCardsCloneGroup(),
+            this.getCardNameCloneGroup(),
         ];
 
         if (scrollTargets.every(target => !target)) return;
@@ -105,6 +109,10 @@ export class MyDeckBlockCloneScrollServiceImpl implements MyDeckBlockCloneScroll
 
     private getNumberOfSelectedCardsCloneGroup(): THREE.Group {
         return this.myDeckNumberOfSelectedCardsCloneRepository.findCloneGroup();
+    }
+
+    private getCardNameCloneGroup(): THREE.Group {
+        return this.myDeckCardNameCloneRepository.findCloneGroup();
     }
 
 }
