@@ -60,6 +60,7 @@ import {DeckCardAddButtonServiceImpl} from "../../src/deck_card_add_button/servi
 import {RequiredNumberOfCardsServiceImpl} from "../../src/required_number_of_cards_in_the_deck/service/RequiredNumberOfCardsServiceImpl";
 import {MyDeckNumberOfSelectedCardsCloneServiceImpl} from "../../src/my_deck_number_of_selected_cards_clone/service/MyDeckNumberOfSelectedCardsCloneServiceImpl";
 import {MyDeckBlockCloneServiceImpl} from "../../src/my_deck_block_clone/service/MyDeckBlockCloneServiceImpl";
+import {MyDeckCardNameCloneServiceImpl} from "../../src/my_deck_card_name_clone/service/MyDeckCardNameCloneServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -153,6 +154,7 @@ export class TCGJustTestMyDeckView {
     private requiredNumberOfCarsService: RequiredNumberOfCardsServiceImpl;
     private myDeckNumberOfSelectedCardsCloneService: MyDeckNumberOfSelectedCardsCloneServiceImpl;
     private myDeckBlockCloneService: MyDeckBlockCloneServiceImpl;
+    private myDeckCardNameCloneService: MyDeckCardNameCloneServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
     private cardCountManager = CardCountManager.getInstance();
@@ -239,6 +241,7 @@ export class TCGJustTestMyDeckView {
         this.requiredNumberOfCarsService = RequiredNumberOfCardsServiceImpl.getInstance(this.scene);
         this.myDeckNumberOfSelectedCardsCloneService = MyDeckNumberOfSelectedCardsCloneServiceImpl.getInstance(this.scene);
         this.myDeckBlockCloneService = MyDeckBlockCloneServiceImpl.getInstance(this.scene);
+        this.myDeckCardNameCloneService = MyDeckCardNameCloneServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -284,6 +287,7 @@ export class TCGJustTestMyDeckView {
                 // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
                 await this.addMyDeckNumberOfSelectedCardsClone();
                 await this.addMyDeckBlockClone();
+                await this.addMyDeckCardNameClone();
             }
         }, false);
         this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckBlockCloneScrollService.onWheelScroll(e), false);
@@ -1076,6 +1080,30 @@ export class TCGJustTestMyDeckView {
         }
     }
 
+    private async addMyDeckCardNameClone(): Promise<void> {
+        try {
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            if (currentClickedDeckId == null) return;
+
+            const cardIdList = this.cardCountManager.findCardIdListByDeck(currentClickedDeckId);
+            for (const cardId of cardIdList) {
+                await this.myDeckCardNameCloneService.createCloneWithPosition(currentClickedDeckId, cardId);
+            }
+
+            this.myDeckCardNameCloneService.saveCloneGroup();
+            this.myDeckCardNameCloneService.applyClippingMaskToClone();
+
+            const cloneGroup = this.myDeckCardNameCloneService.getCloneGroup();
+            if (!this.scene.children.includes(cloneGroup)) {
+                this.scene.add(cloneGroup);
+            }
+            cloneGroup.position.y = 0;
+
+        } catch (error) {
+            console.error('Failed to add my deck card name clone:', error);
+        }
+    }
+
     private onWindowResize(): void {
         const newWidth = window.innerWidth;
         const newHeight = window.innerHeight;
@@ -1131,6 +1159,7 @@ export class TCGJustTestMyDeckView {
             this.deckCardAddButtonService.adjustDeckCardAddButtonPosition();
             this.myDeckNumberOfSelectedCardsCloneService.adjustClonePosition();
             this.myDeckBlockCloneService.adjustClonePosition();
+            this.myDeckCardNameCloneService.adjustClonePosition();
         }
     }
 
