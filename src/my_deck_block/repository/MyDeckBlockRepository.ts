@@ -6,6 +6,6 @@ export interface MyDeckBlockRepository {
     createMyDeckBlock(deckId: number, cardId: number, position: Vector2d): Promise<MyDeckBlock>;
     findBlockByBlockUniqueId(blockUniqueId: number): MyDeckBlock | null;
     findBlockListByDeckId(deckId: number): MyDeckBlock[] | null;
-    deleteBlockByDeckIdAndBlockUniqueId(deckId: number, blockUniqueId: number): void;
+    deleteBlock(deckId: number, blockId: number): void;
     deleteAllBlock(): void;
 }
