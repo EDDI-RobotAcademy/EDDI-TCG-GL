@@ -59,6 +59,7 @@ import {DeckCardCountMarkerServiceImpl} from "../../src/deck_card_count_marker/s
 import {DeckCardAddButtonServiceImpl} from "../../src/deck_card_add_button/service/DeckCardAddButtonServiceImpl";
 import {RequiredNumberOfCardsServiceImpl} from "../../src/required_number_of_cards_in_the_deck/service/RequiredNumberOfCardsServiceImpl";
 import {MyDeckNumberOfSelectedCardsCloneServiceImpl} from "../../src/my_deck_number_of_selected_cards_clone/service/MyDeckNumberOfSelectedCardsCloneServiceImpl";
+import {MyDeckBlockCloneServiceImpl} from "../../src/my_deck_block_clone/service/MyDeckBlockCloneServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -98,6 +99,7 @@ import {DeckCardAddButtonClickDetectService} from "../../src/deck_card_add_butto
 import {DeckCardAddButtonClickDetectServiceImpl} from "../../src/deck_card_add_button_click_detect/service/DeckCardAddButtonClickDetectServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
+import {CardCountManager} from "../../src/my_deck_card_manager/CardCountManager";
 
 export class TCGJustTestMyDeckView {
     private static instance: TCGJustTestMyDeckView | null = null;
@@ -148,8 +150,10 @@ export class TCGJustTestMyDeckView {
     private totalNumberOfSelectedCardsService: TotalNumberOfSelectedCardsServiceImpl;
     private requiredNumberOfCarsService: RequiredNumberOfCardsServiceImpl;
     private myDeckNumberOfSelectedCardsCloneService: MyDeckNumberOfSelectedCardsCloneServiceImpl;
+    private myDeckBlockCloneService: MyDeckBlockCloneServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
+    private cardCountManager = CardCountManager.getInstance();
 
     private myDeckButtonMapRepository = MyDeckButtonMapRepositoryImpl.getInstance();
     private myDeckCardMapRepository = MyDeckCardMapRepositoryImpl.getInstance();
@@ -231,6 +235,7 @@ export class TCGJustTestMyDeckView {
         this.totalNumberOfSelectedCardsService = TotalNumberOfSelectedCardsServiceImpl.getInstance(this.scene);
         this.requiredNumberOfCarsService = RequiredNumberOfCardsServiceImpl.getInstance(this.scene);
         this.myDeckNumberOfSelectedCardsCloneService = MyDeckNumberOfSelectedCardsCloneServiceImpl.getInstance(this.scene);
+        this.myDeckBlockCloneService = MyDeckBlockCloneServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -274,6 +279,7 @@ export class TCGJustTestMyDeckView {
             if (buttonEvent) {
                 // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
                 await this.addMyDeckNumberOfSelectedCardsClone();
+                await this.addMyDeckBlockClone();
             }
         }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckOwnedCardsClickDetectService.onMouseDown(e), false);
@@ -1021,9 +1027,9 @@ export class TCGJustTestMyDeckView {
             const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
             if (currentClickedDeckId == null) return;
 
-            const cardIdList = this.myDeckCardMapRepository.findCardIdListByDeckId(currentClickedDeckId);
+            const cardIdList = this.cardCountManager.findCardIdListByDeck(currentClickedDeckId);
             for (const cardId of cardIdList) {
-                const cardCount = this.myDeckCardMapRepository.findCardCountByDeckIdAndCardId(currentClickedDeckId, cardId);
+                const cardCount = this.cardCountManager.findCardCountByDeck(currentClickedDeckId, cardId);
                 await this.myDeckNumberOfSelectedCardsCloneService.createCloneWithPosition(currentClickedDeckId, cardId, cardCount);
             }
 
@@ -1038,6 +1044,30 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add my deck number of selected cards clone:', error);
+        }
+    }
+
+    private async addMyDeckBlockClone(): Promise<void> {
+        try {
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            if (currentClickedDeckId == null) return;
+
+            const cardIdList = this.cardCountManager.findCardIdListByDeck(currentClickedDeckId);
+            for (const cardId of cardIdList) {
+                await this.myDeckBlockCloneService.createCloneWithPosition(currentClickedDeckId, cardId);
+            }
+
+            this.myDeckBlockCloneService.saveCloneGroup();
+            this.myDeckBlockCloneService.applyClippingMaskToClone();
+
+            const cloneGroup = this.myDeckBlockCloneService.getCloneGroup();
+            if (!this.scene.children.includes(cloneGroup)) {
+                this.scene.add(cloneGroup);
+            }
+            cloneGroup.position.y = 0;
+
+        } catch (error) {
+            console.error('Failed to add my deck block clone:', error);
         }
     }
 
@@ -1094,6 +1124,8 @@ export class TCGJustTestMyDeckView {
             this.deleteDeckPopupWindowService.adjustDeckMakePopupBackgroundPosition();
             this.deleteDeckPopupButtonService.adjustDeleteDeckPopupButtonPosition();
             this.deckCardAddButtonService.adjustDeckCardAddButtonPosition();
+            this.myDeckNumberOfSelectedCardsCloneService.adjustClonePosition();
+            this.myDeckBlockCloneService.adjustClonePosition();
         }
     }
 
