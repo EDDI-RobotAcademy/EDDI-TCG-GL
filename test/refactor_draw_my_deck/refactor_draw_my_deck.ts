@@ -97,6 +97,8 @@ import {DeckCardDeleteButtonClickDetectService} from "../../src/deck_card_delete
 import {DeckCardDeleteButtonClickDetectServiceImpl} from "../../src/deck_card_delete_button_click_detect/service/DeckCardDeleteButtonClickDetectServiceImpl";
 import {DeckCardAddButtonClickDetectService} from "../../src/deck_card_add_button_click_detect/service/DeckCardAddButtonClickDetectService";
 import {DeckCardAddButtonClickDetectServiceImpl} from "../../src/deck_card_add_button_click_detect/service/DeckCardAddButtonClickDetectServiceImpl";
+import {MyDeckBlockCloneScrollService} from "../../src/my_deck_block_clone_scroll/service/MyDeckBlockCloneScrollService";
+import {MyDeckBlockCloneScrollServiceImpl} from "../../src/my_deck_block_clone_scroll/service/MyDeckBlockCloneScrollServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 import {CardCountManager} from "../../src/my_deck_card_manager/CardCountManager";
@@ -183,6 +185,7 @@ export class TCGJustTestMyDeckView {
     private myDeckBlockHoverDetectService: MyDeckBlockHoverDetectService;
     private deckCardDeleteButtonClickDetectService: DeckCardDeleteButtonClickDetectService;
     private deckCardAddButtonClickDetectService: DeckCardAddButtonClickDetectService;
+    private myDeckBlockCloneScrollService: MyDeckBlockCloneScrollService;
 
     private initialized = false;
     private isAnimating = false;
@@ -254,6 +257,7 @@ export class TCGJustTestMyDeckView {
         this.deleteDeckPopupButtonClickDetectService = DeleteDeckPopupButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckMakePopupButtonsClickDetectService = DeckMakePopupButtonsClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckCardAddButtonClickDetectService = DeckCardAddButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.myDeckBlockCloneScrollService = MyDeckBlockCloneScrollServiceImpl.getInstance(this.camera, this.scene, this.renderer);
 
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousemove', (e) => this.sideScrollAreaDetectService.onMouseMoveMyDeck(e), false);
@@ -282,6 +286,7 @@ export class TCGJustTestMyDeckView {
                 await this.addMyDeckBlockClone();
             }
         }, false);
+        this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckBlockCloneScrollService.onWheelScroll(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckOwnedCardsClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckDeleteButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckNameEditButtonClickDetectService.onMouseDown(e), false);
