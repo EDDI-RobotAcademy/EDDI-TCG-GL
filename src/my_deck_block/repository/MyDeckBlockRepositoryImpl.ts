@@ -187,8 +187,25 @@ export class MyDeckBlockRepositoryImpl implements MyDeckBlockRepository {
     }
 
     // 특정 덱의 특정 block 삭제
-    public deleteBlockByDeckIdAndBlockUniqueId(deckId: number, blockUniqueId: number): void {
-        const blockInfo = this.blockMap.get(blockUniqueId);
+    public deleteBlock(deckId: number, blockId: number): void {
+        const blockInfo = this.blockMap.get(blockId);
+        if (blockInfo) {
+            this.blockMap.delete(blockId);
+        }
+
+        const blockIdList = this.deckMap.get(deckId);
+        if (blockIdList) {
+            const updatedList = blockIdList.filter(id => id !== blockId);
+            this.deckMap.set(deckId, updatedList);
+
+//             if (updatedList.length === 0) {
+//                 this.deckMap.delete(deckId);
+//             }
+        }
+    }
+
+    public deleteBlockMesh(deckId: number, blockId: number): void {
+        const blockInfo = this.blockMap.get(blockId);
         if (blockInfo) {
             this.meshDestroyer.destroyMesh(blockInfo.blockMesh.getMesh());
 
@@ -196,18 +213,6 @@ export class MyDeckBlockRepositoryImpl implements MyDeckBlockRepository {
             if (group) {
                 group.remove(blockInfo.blockMesh.getMesh());
             }
-
-            this.blockMap.delete(blockUniqueId);
-        }
-
-        const blockIdList = this.deckMap.get(deckId);
-        if (blockIdList) {
-            const updatedList = blockIdList.filter(id => id !== blockUniqueId);
-            this.deckMap.set(deckId, updatedList);
-
-//             if (updatedList.length === 0) {
-//                 this.deckMap.delete(deckId);
-//             }
         }
     }
 
