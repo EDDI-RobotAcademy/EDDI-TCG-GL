@@ -34,6 +34,7 @@ import {DeckCardAddButtonClickDetectRepositoryImpl} from "../../deck_card_add_bu
 import {RequiredNumberOfCardsRepositoryImpl} from "../../required_number_of_cards_in_the_deck/repository/RequiredNumberOfCardsRepositoryImpl";
 import {MyDeckNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_number_of_selected_cards/repository/MyDeckNumberOfSelectedCardsRepositoryImpl";
 import {MyDeckBlockRepositoryImpl} from "../../my_deck_block/repository/MyDeckBlockRepositoryImpl";
+import {MyDeckCardNameRepositoryImpl} from "../../my_deck_card_name/repository/MyDeckCardNameRepositoryImpl";
 
 export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClickDetectService {
     private static instance: DeckEditButtonClickDetectServiceImpl | null = null;
@@ -60,6 +61,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private requiredNumberOfCardsRepository: RequiredNumberOfCardsRepositoryImpl;
     private myDeckNumberOfSelectedCardsRepository: MyDeckNumberOfSelectedCardsRepositoryImpl;
     private myDeckBlockRepository: MyDeckBlockRepositoryImpl;
+    private myDeckCardNameRepository: MyDeckCardNameRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -85,6 +87,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.requiredNumberOfCardsRepository = RequiredNumberOfCardsRepositoryImpl.getInstance(scene);
         this.myDeckNumberOfSelectedCardsRepository = MyDeckNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
         this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance(scene);
+        this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance(scene);
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckEditButtonClickDetectServiceImpl {
@@ -131,6 +134,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                     for (const id of numberOfSelectedCardsIdList) {
                         this.deleteNumberOfSelectedCardsMesh(currentClickedDeckButtonId, id);
                         this.deleteBlockMesh(currentClickedDeckButtonId, id);
+                        this.deleteCardNameMesh(currentClickedDeckButtonId, id);
                     }
                 }
 
@@ -239,6 +243,10 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
 
     private deleteBlockMesh(deckId: number, blockId: number): void {
         this.myDeckBlockRepository.deleteBlockMesh(deckId, blockId);
+    }
+
+    private deleteCardNameMesh(deckId: number, cardNameId: number): void {
+        this.myDeckCardNameRepository.deleteCardNameMesh(deckId, cardNameId);
     }
 
     private setDeckEditButtonVisibility(isVisible: boolean): void {
