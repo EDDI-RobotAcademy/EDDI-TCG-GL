@@ -66,6 +66,13 @@ export class CardCountManager {
         return cardCountEntry ? cardCountEntry.count : 0;
     }
 
+    public findCardIdListByDeck(deckId: number): number[] {
+        const cardList = this.cardCountMap.get(deckId);
+        if (!cardList) return [];
+
+        return cardList.map(entry => entry.cardId);
+    }
+
     public saveCardCountByDeck(deckId: number, cardId: number, count: number): void {
         const existingCardCountList = this.cardCountMap.get(deckId);
         if (existingCardCountList) {
