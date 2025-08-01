@@ -12,6 +12,7 @@ import {CardSelectionBlockerPositionRepositoryImpl} from "../../card_selection_b
 import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
 
 import {ClippingMaskManager} from "../../clipping_mask_manager/ClippingMaskManager";
+import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 export class CardSelectionBlockerServiceImpl implements CardSelectionBlockerService {
     private static instance: CardSelectionBlockerServiceImpl;
@@ -19,12 +20,14 @@ export class CardSelectionBlockerServiceImpl implements CardSelectionBlockerServ
     private cardSelectionBlockerPositionRepository: CardSelectionBlockerPositionRepositoryImpl;
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
     private clippingMaskManager: ClippingMaskManager;
+    private cardCountManager: CardCountManager;
 
     private constructor(scene: THREE.Scene) {
         this.cardSelectionBlockerRepository = CardSelectionBlockerRepositoryImpl.getInstance(scene);
         this.cardSelectionBlockerPositionRepository = CardSelectionBlockerPositionRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
+        this.cardCountManager = CardCountManager.getInstance();
     }
 
     public static getInstance(scene: THREE.Scene): CardSelectionBlockerServiceImpl {
@@ -127,6 +130,25 @@ export class CardSelectionBlockerServiceImpl implements CardSelectionBlockerServ
 
     public getBlockerList(): CardSelectionBlocker[] {
         return this.cardSelectionBlockerRepository.findAllBlockers() ?? [];
+    }
+
+    public initializeBlockerVisibility(): void {
+        const cardIdList = this.cardSelectionBlockerRepository.findAllCardIdList();
+        if (cardIdList == null) return;
+
+        for (const cardId of cardIdList) {
+            const blocker = this.cardSelectionBlockerRepository.findBlockerByCardId(cardId);
+            if (blocker == null) return;
+
+            const remainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
+            if (remainingCardCount !== null && remainingCardCount == 0) {
+                blocker.setVisibility(true);
+            }
+        }
+    }
+
+    public saveBlockerGroup(): void {
+        this.cardSelectionBlockerRepository.saveBlockerGroup();
     }
 
     public getBlockerGroup(): THREE.Group {

@@ -289,6 +289,7 @@ export class TCGJustTestMyDeckView {
                 await this.addMyDeckBlockClone();
                 await this.addMyDeckCardNameClone();
                 await this.addMyDeckRemainingCards();
+                await this.addCardSelectionBlocker();
             }
         }, false);
         this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckBlockCloneScrollService.onWheelScroll(e), false);
@@ -348,7 +349,7 @@ export class TCGJustTestMyDeckView {
         await this.addMyDeckNumberOfCards();
         await this.addMyDeckNumberOfSelectedCards();
         await this.addRemainingOutOfTotalSlash();
-        await this.addCardSelectionBlocker();
+//         await this.addCardSelectionBlocker();
 //         await this.addMyDeckRemainingCards();
         await this.addMyDeckBlock();
         await this.addMyDeckCardName();
@@ -727,6 +728,8 @@ export class TCGJustTestMyDeckView {
             for (const cardId of cardIdList) {
                 await this.cardSelectionBlockerService.createCardSelectionBlockerWithPosition(cardId);
             }
+            this.cardSelectionBlockerService.saveBlockerGroup();
+            this.cardSelectionBlockerService.initializeBlockerVisibility();
             this.cardSelectionBlockerService.applyClippingMaskToBlocker();
 
             const blockerGroup = this.cardSelectionBlockerService.getBlockerGroup();
