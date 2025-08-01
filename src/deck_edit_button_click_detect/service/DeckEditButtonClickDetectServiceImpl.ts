@@ -129,7 +129,6 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                     console.log(`Deck Button Id?: ${currentClickedDeckButtonId}`);
                     this.setMyDeckCardVisibilityByDeckId(currentClickedDeckButtonId, false);
                     this.setMyDeckNumberOfCards(currentClickedDeckButtonId, false);
-                    this.showCardBlockersForFullyUsedCards(currentClickedDeckButtonId);
                     this.setTotalNumberOfSelectedCardsVisibility(currentClickedDeckButtonId, true);
                     this.setDeckCardCountMarkerVisibilityByDeckId(currentClickedDeckButtonId, false);
 
@@ -146,7 +145,6 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                 this.setDeckEditDoneButtonVisibility(true);
                 this.setOwnedCardsVisibility(true);
                 this.setTotalOwnedCardsVisibility(true);
-//                 this.setRemainingCardsVisibility(true);
                 this.setRemainingOutOfTotalSlashVisibility(true);
                 this.setChosenOutOfTotalSlashVisibility(true);
                 this.setRequiredNumberOfCardsVisibility(true);
@@ -310,21 +308,6 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         );
     }
 
-    // To-do: blocker 객체를 덱 편집 버튼 클릭했을 때 생성되는 것으로 변경할 것
-    // 덱에 이미 최대한으로 사용된 카드들에 대해 선택을 막는 blocker 를 표시
-    private showCardBlockersForFullyUsedCards(deckId: number): void {
-        const cardUniqueIdList = this.cardSelectionBlockerRepository.findAllBlockerIdList();
-        cardUniqueIdList.forEach((cardUniqueId) => {
-            const cardId = this.getCardIdByCardUniqueId(cardUniqueId);
-            if (cardId == null) return;
-            const remainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
-
-            if (remainingCardCount !== null && remainingCardCount == 0) {
-                this.setCardBlockerVisibility(cardId, true);
-            }
-        });
-    }
-
     private setCardBlockerVisibility(cardId: number, isVisible: boolean): void {
         const blocker = this.cardSelectionBlockerRepository.findBlockerByCardId(cardId);
         if (blocker !== null) {
@@ -339,10 +322,6 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
 
     private getOwnedCardGroup(): THREE.Group {
         return this.myDeckOwnedCardsRepository.findCardGroup();
-    }
-
-    private getCardSelectionBlockerGroup(): THREE.Group {
-        return this.cardSelectionBlockerRepository.findBlockerGroup();
     }
 
     private getTotalOwnedCardsGroup(): THREE.Group {
@@ -360,7 +339,6 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private resetScrollTargetPositions(): void {
         const scrollTargets = [
             this.getOwnedCardGroup(),
-            this.getCardSelectionBlockerGroup(),
             this.getTotalOwnedCardsGroup(),
             this.getRemainingOutOfTotalSlashGroup(),
         ];

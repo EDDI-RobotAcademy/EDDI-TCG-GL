@@ -81,13 +81,23 @@ export class CardSelectionBlockerRepositoryImpl implements CardSelectionBlockerR
         return this.blockerMap.get(blockerId)?.cardId ?? null;
     }
 
+    public saveBlockerGroup(): void {
+        const newBlockerGroup = new THREE.Group();
+        const blockerList = this.findAllBlockers();
+        if (blockerList == null) return;
+
+        blockerList.forEach((blocker) => {
+            newBlockerGroup.add(blocker.getMesh());
+        });
+
+        this.blockerGroup = newBlockerGroup;
+    }
+
     public findBlockerGroup(): THREE.Group {
         if (!this.blockerGroup) {
-            this.blockerGroup = new THREE.Group();
-            this.findAllBlockers()?.forEach((blocker) => {
-                this.blockerGroup!.add(blocker.getMesh());
-            });
+            throw new Error(`Card Selection Blocker Group not found`);
         }
+
         return this.blockerGroup;
     }
 
@@ -116,4 +126,5 @@ export class CardSelectionBlockerRepositoryImpl implements CardSelectionBlockerR
         }
         this.blockerMap.delete(blockerId);
     }
+
 }
