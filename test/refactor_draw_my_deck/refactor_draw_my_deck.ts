@@ -276,7 +276,7 @@ export class TCGJustTestMyDeckView {
             if (buttonEvent) {
                 // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
                 this.addMyDeckNumberOfSelectedCardsClone();
-                this.addMyDeckRemainingCards();
+                this.reAddMyDeckRemainingCards();
             }
         }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.buildDeckButtonClickDetectService.onMouseDown(e), false);
@@ -288,6 +288,7 @@ export class TCGJustTestMyDeckView {
                 await this.addMyDeckNumberOfSelectedCardsClone();
                 await this.addMyDeckBlockClone();
                 await this.addMyDeckCardNameClone();
+                await this.addMyDeckRemainingCards();
             }
         }, false);
         this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckBlockCloneScrollService.onWheelScroll(e), false);
@@ -302,7 +303,7 @@ export class TCGJustTestMyDeckView {
             if (buttonEvent) {
                 // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
                 this.addMyDeckNumberOfSelectedCards();
-                this.addMyDeckRemainingCards();
+                this.reAddMyDeckRemainingCards();
             }
         }, false);
     }
@@ -348,7 +349,7 @@ export class TCGJustTestMyDeckView {
         await this.addMyDeckNumberOfSelectedCards();
         await this.addRemainingOutOfTotalSlash();
         await this.addCardSelectionBlocker();
-        await this.addMyDeckRemainingCards();
+//         await this.addMyDeckRemainingCards();
         await this.addMyDeckBlock();
         await this.addMyDeckCardName();
         await this.addDeckCardDeleteButton();
@@ -666,6 +667,29 @@ export class TCGJustTestMyDeckView {
 
                 await this.myDeckRemainingCardsService.createMyDeckRemainingCardsWithPosition(cardId, remainingCount);
             }
+            this.myDeckRemainingCardsService.saveRemainingCardGroup();
+            this.myDeckRemainingCardsService.applyClippingMaskToRemainingCards();
+
+            const remainingCardsGroup = this.myDeckRemainingCardsService.getRemainingCardsGroup();
+            if (!this.scene.children.includes(remainingCardsGroup)) {
+                this.scene.add(remainingCardsGroup);
+            }
+            remainingCardsGroup.position.y = 0;
+
+        } catch (error) {
+            console.error('Failed to add my deck remaining cards:', error);
+        }
+    }
+
+    private async reAddMyDeckRemainingCards(): Promise<void> {
+        try {
+            const allCardIdList = this.myDeckOwnedCardsMapRepository.getCardIdList();
+            for (const cardId of allCardIdList) {
+                const remainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
+                if (remainingCardCount == null) return;
+                await this.myDeckRemainingCardsService.createMyDeckRemainingCardsWithPosition(cardId, remainingCardCount);
+            }
+
             this.myDeckRemainingCardsService.saveRemainingCardGroup();
             this.myDeckRemainingCardsService.applyClippingMaskToRemainingCards();
 

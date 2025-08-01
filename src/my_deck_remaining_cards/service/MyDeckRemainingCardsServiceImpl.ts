@@ -52,8 +52,6 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
                 const existingRemainingCardsMesh = this.getRemainingCardsMeshByCardId(cardId);
                 if (existingRemainingCardsMesh == null) {
                     const myDeckRemainingCards = await this.createMyDeckRemainingCards(cardId, cardCount, existingPosition.position);
-                    // To-do: 카드 삭제/추가 버튼 클릭 시 이미 편집 화면이라 visible 설정 true 로 해줘야 함
-                    myDeckRemainingCards.setVisibility(true);
                     remainingCardsGroup.add(myDeckRemainingCards.getMesh());
 
                 } else {
@@ -121,7 +119,10 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
 
     private async createMyDeckRemainingCards(cardId: number, cardCount: number, position: Vector2d): Promise<MyDeckRemainingCards> {
         const mesh = await this.myDeckRemainingCardsRepository.createMyDeckRemainingCards(cardId, cardCount, position);
-        this.cardCountManager.saveRemainingCardCount(cardId, cardCount);
+        const existingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
+        if (existingCardCount == null) {
+            this.cardCountManager.saveRemainingCardCount(cardId, cardCount);
+        }
         return mesh;
     }
 

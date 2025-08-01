@@ -117,10 +117,20 @@ export class MyDeckRemainingCardsRepositoryImpl implements MyDeckRemainingCardsR
         const remainingCardsId = this.findRemainingCardIdByCardId(cardId);
         if (remainingCardsId === null) return;
 
-        const remainingCardEntry = this.remainingCardsMap.get(remainingCardsId);
-        if (!remainingCardEntry) return;
+        const remainingCardsInfo = this.remainingCardsMap.get(remainingCardsId);
+        if (remainingCardsInfo) {
+            this.remainingCardsMap.delete(remainingCardsId);
+        }
+    }
 
-        const mesh = remainingCardEntry.remainingCardsMesh.getMesh();
+    public deleteRemainingCardsMesh(cardId: number): void {
+        const remainingCardsId = this.findRemainingCardIdByCardId(cardId);
+        if (remainingCardsId === null) return;
+
+        const remainingCardInfo = this.remainingCardsMap.get(remainingCardsId);
+        if (remainingCardInfo == null) return;
+
+        const mesh = remainingCardInfo.remainingCardsMesh.getMesh();
 
         this.meshDestroyer.destroyMesh(mesh);
         this.remainingCardsGroup?.remove(mesh);

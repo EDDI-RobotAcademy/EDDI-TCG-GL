@@ -129,6 +129,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
 
             this.deleteNumberOfSelectedCardsClone(cardId);
             this.setCardBlockerVisibility(cardId, false);
+            this.deleteRemainingCards(cardId);
 
             const selectedCardCount = this.cardCountManager.findCardCountByDeck(currentClickedDeckButtonId, cardId);
             if (selectedCardCount == 0) {
@@ -211,6 +212,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
     }
 
     private deleteRemainingCards(cardId: number): void {
+        this.myDeckRemainingCardsRepository.deleteRemainingCardsMesh(cardId);
         this.myDeckRemainingCardsRepository.deleteRemainingCardsByCardId(cardId);
     }
 
