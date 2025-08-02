@@ -17,6 +17,8 @@ import {MyDeckRemainingCardsPositionRepositoryImpl} from "../../my_deck_remainin
 import {MyDeckNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_number_of_selected_cards/repository/MyDeckNumberOfSelectedCardsRepositoryImpl";
 import {CardSelectionBlockerRepositoryImpl} from "../../card_selection_blocker/repository/CardSelectionBlockerRepositoryImpl";
 import {TotalNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_total_number_of_selected_cards/repository/TotalNumberOfSelectedCardsRepositoryImpl";
+import {MyDeckCardMapRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardMapRepositoryImpl";
+
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButtonClickDetectService {
@@ -31,6 +33,7 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
     private myDeckNumberOfSelectedCardsRepository: MyDeckNumberOfSelectedCardsRepositoryImpl;
     private cardSelectionBlockerRepository: CardSelectionBlockerRepositoryImpl;
     private totalNumberOfSelectedCardsRepository: TotalNumberOfSelectedCardsRepositoryImpl;
+    private myDeckCardMapRepository: MyDeckCardMapRepositoryImpl;
     private cardCountManager: CardCountManager;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
@@ -44,6 +47,7 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
         this.myDeckNumberOfSelectedCardsRepository = MyDeckNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
         this.cardSelectionBlockerRepository = CardSelectionBlockerRepositoryImpl.getInstance(scene);
         this.totalNumberOfSelectedCardsRepository = TotalNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
+        this.myDeckCardMapRepository = MyDeckCardMapRepositoryImpl.getInstance();
         this.cardCountManager = CardCountManager.getInstance();
     }
 
@@ -84,11 +88,11 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
 
             const cardId = this.getCardIdByButtonId(buttonUniqueId);
             if (cardId == null) return null;
-            this.saveClickedCardCount(cardId);
+            this.saveClickedCardCount(currentClickedDeckId, cardId);
 
             this.deleteTotalNumberOfSelectedCards(currentClickedDeckId);
             this.deleteNumberOfRemainingCards(cardId);
-            this.deleteNumberOfSelectedCards(currentClickedDeckId, buttonUniqueId);
+            this.deleteNumberOfSelectedCards(currentClickedDeckId, cardId);
 
             const currentRemainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
             if (currentRemainingCardCount == 0) {
@@ -134,7 +138,7 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
         this.cardSelectionBlockerRepository.findBlockerByCardId(cardId)?.setVisibility(isVisible);
     }
 
-    private saveClickedCardCount(cardId: number): void {
+    private saveClickedCardCount(deckId: number, cardId: number): void {
         const card = getCardById(cardId);
         if (!card) {
             console.warn(`[WARN] Card with ID ${cardId} not found`);
@@ -150,11 +154,8 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
             return;
         }
 
-        const currentClickedDeckId = this.getCurrentClickDeckId();
-        if (currentClickedDeckId == null) return;
-
-        const currentSelectedCardCount = this.cardCountManager.findCardCountByDeck(currentClickedDeckId, cardId);
-        const currentSelectedCardCountByGrade = this.cardCountManager.findCardCountByGrade(currentClickedDeckId, grade);
+        const currentSelectedCardCount = this.cardCountManager.findCardCountByDeck(deckId, cardId);
+        const currentSelectedCardCountByGrade = this.cardCountManager.findCardCountByGrade(deckId, grade);
 
         // 등급별 제한 검사
         if (currentSelectedCardCountByGrade >= maxSelectableCardCountByGrade) {
@@ -169,16 +170,23 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
         }
 
         this.cardCountManager.decrementRemainingCardCount(cardId);
-        this.cardCountManager.incrementCardCountByDeck(currentClickedDeckId, cardId);
-        this.cardCountManager.incrementCardCountByGrade(currentClickedDeckId, grade);
+        this.cardCountManager.incrementCardCountByDeck(deckId, cardId);
+        this.cardCountManager.incrementCardCountByGrade(deckId, grade);
+
+        // Map 데이터 업데이트
+        const cardCountInDeck = this.cardCountManager.findCardCountByDeck(deckId, cardId);
+        this.myDeckCardMapRepository.addMyDeckCard(deckId, cardId, cardCountInDeck);
     }
 
     private deleteNumberOfRemainingCards(cardId: number): void {
         this.myDeckRemainingCardsRepository.deleteRemainingCardsByCardId(cardId);
     }
 
-    private deleteNumberOfSelectedCards(deckId: number, buttonId: number): void {
-        this.myDeckNumberOfSelectedCardsRepository.deleteNumberByDeckIdAndNumberId(deckId, buttonId);
+    private deleteNumberOfSelectedCards(deckId: number, cardId: number): void {
+        const buttonId = this.myDeckNumberOfSelectedCardsRepository.findNumberIdByDeckIdAndCardId(deckId, cardId);
+        if (buttonId == null) return;
+        console.log(`%c 현재 삭제하려는 버튼 ID? ${buttonId}, card ID: ${cardId}`, 'color: #FE2EF7; font-weight: bold;');
+        this.myDeckNumberOfSelectedCardsRepository.deleteNumberOfSelectedCards(deckId, buttonId);
     }
 
     private deleteTotalNumberOfSelectedCards(deckId: number): void {

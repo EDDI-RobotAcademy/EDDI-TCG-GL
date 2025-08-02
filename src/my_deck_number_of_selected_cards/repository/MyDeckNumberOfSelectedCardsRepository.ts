@@ -6,6 +6,6 @@ export interface MyDeckNumberOfSelectedCardsRepository {
     createMyDeckNumberOfSelectedCards(deckId: number, cardId: number, cardCount: number, position: Vector2d): Promise<MyDeckNumberOfSelectedCards>;
     findNumberById(numberId: number): MyDeckNumberOfSelectedCards | null;
     findNumberListByDeckId(deckId: number): MyDeckNumberOfSelectedCards[] | null;
-    deleteNumberByDeckIdAndNumberId(deckId: number, numberId: number): void;
+    deleteNumberOfSelectedCards(deckId: number, numberId: number): void;
     deleteAll(): void;
 }

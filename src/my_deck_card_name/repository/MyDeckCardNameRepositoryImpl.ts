@@ -193,13 +193,6 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
     public deleteCardNameByDeckIdAndCardNameId(deckId: number, cardNameId: number): void {
         const nameInfo = this.cardNameMap.get(cardNameId);
         if (nameInfo) {
-            this.meshDestroyer.destroyMesh(nameInfo.cardNameMesh.getMesh());
-
-            const group = this.nameGroupMap.get(deckId);
-            if (group) {
-                group.remove(nameInfo.cardNameMesh.getMesh());
-            }
-
             this.cardNameMap.delete(cardNameId);
         }
 
@@ -211,6 +204,18 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
 //             if (updatedList.length === 0) {
 //                 this.deckMap.delete(deckId);
 //             }
+        }
+    }
+
+    public deleteCardNameMesh(deckId: number, cardNameId: number): void {
+        const nameInfo = this.cardNameMap.get(cardNameId);
+        if (nameInfo) {
+            this.meshDestroyer.destroyMesh(nameInfo.cardNameMesh.getMesh());
+
+            const group = this.nameGroupMap.get(deckId);
+            if (group) {
+                group.remove(nameInfo.cardNameMesh.getMesh());
+            }
         }
     }
 

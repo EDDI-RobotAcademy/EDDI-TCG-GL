@@ -143,7 +143,7 @@ export class MyDeckCardMapRepositoryImpl implements MyDeckCardMapRepository {
         if (existingDeck) {
             const existingCard = existingDeck.find(card => card.cardId === cardId);
             if (existingCard) {
-                existingCard.cardCount += cardCount; // 누적
+                existingCard.cardCount = cardCount; // 새로운 count 로 변경
             } else {
                 existingDeck.push({ cardId, cardCount }); // 새 카드 추가
             }
@@ -152,12 +152,20 @@ export class MyDeckCardMapRepositoryImpl implements MyDeckCardMapRepository {
         }
     }
 
+    // To-do: 메서드명 변경 필요
     // 반환형: [deckId, uniqueCardIdList[]] 형태
     public getDeckIdAndUniqueCardLists(): [number, number[]][] {
         return Array.from(this.currentMyDeckCardMap.entries()).map(([deckId, cardInfos]) => {
             const cardIdList = cardInfos.map(({ cardId }) => cardId);
             return [deckId, cardIdList];
         });
+    }
+
+    public findCardIdListByDeckId(deckId: number): number[] {
+        const cardInfo = this.currentMyDeckCardMap.get(deckId);
+        if (!cardInfo) return [];
+
+        return cardInfo.map(({ cardId }) => cardId);
     }
 
     public getDeckIdAndCardCountList(): [number, number[]][] {

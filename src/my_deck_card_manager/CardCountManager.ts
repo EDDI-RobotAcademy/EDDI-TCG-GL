@@ -4,7 +4,7 @@ export class CardCountManager {
     private static instance: CardCountManager;
     // 남은 카드 개수(선택 가능한 카드 개수)
     private remainingCardCountMap: Map<number, number> = new Map(); // cardId: cardClickCount
-    // 덱별 카드 개수
+    // 덱별 카드 개수(사용자가 덱을 만들기 위해 선택한 카드 개수)
     private cardCountMap: Map<number, { cardId: number, count: number }[]> = new Map(); // deckId: {cardId: card Count}
     // 등급별 카드 개수
     private cardCountByGradeMap: Map<number, { gradeId: number, count: number }[]> = new Map(); // deckId: {gradeId: card Count}
@@ -26,7 +26,7 @@ export class CardCountManager {
             console.log(`Already Exist Remaining Card Count Info card ID:${cardId}`);
         } else {
             this.remainingCardCountMap.set(cardId, cardCount);
-            // 제대로 확인 되면 주석 처리
+            // To-do: 제대로 확인 되면 주석 처리
             console.log(`Save Remaining Card Count "Card ID: ${cardId}", "Card Count: ${cardCount}"`);
         }
     }
@@ -66,12 +66,19 @@ export class CardCountManager {
         return cardCountEntry ? cardCountEntry.count : 0;
     }
 
+    public findCardIdListByDeck(deckId: number): number[] {
+        const cardList = this.cardCountMap.get(deckId);
+        if (!cardList) return [];
+
+        return cardList.map(entry => entry.cardId);
+    }
+
     public saveCardCountByDeck(deckId: number, cardId: number, count: number): void {
         const existingCardCountList = this.cardCountMap.get(deckId);
         if (existingCardCountList) {
             const cardEntry = existingCardCountList.find(entry => entry.cardId === cardId);
             if (cardEntry) {
-                cardEntry.count += count;
+                cardEntry.count = count;
             } else {
                 existingCardCountList.push({cardId: cardId, count: count});
             }
@@ -81,8 +88,17 @@ export class CardCountManager {
     }
 
     public incrementCardCountByDeck(deckId: number, cardId: number): void {
-        const currentCount = this.findCardCountByDeck(deckId, cardId);
-        this.cardCountMap.set(deckId, [{ cardId: cardId, count: currentCount + 1 }]);
+        const cardList = this.cardCountMap.get(deckId);
+        if (cardList) {
+            const cardEntry = cardList.find(entry => entry.cardId === cardId);
+            if (cardEntry) {
+                cardEntry.count += 1;
+            } else {
+                cardList.push({ cardId, count: 1 });
+            }
+        } else {
+            this.cardCountMap.set(deckId, [{ cardId, count: 1 }]);
+        }
 
         // 확인용 (나중에 지워야 함)
         const count = this.findCardCountByDeck(deckId, cardId);
@@ -90,8 +106,13 @@ export class CardCountManager {
     }
 
     public decrementCardCountByDeck(deckId: number, cardId: number): void {
-        const currentCount = this.findCardCountByDeck(deckId, cardId);
-        this.cardCountMap.set(deckId, [{ cardId: cardId, count: currentCount - 1 }]);
+        const cardList = this.cardCountMap.get(deckId);
+        if (cardList) {
+            const cardEntry = cardList.find(entry => entry.cardId === cardId);
+            if (cardEntry && cardEntry.count > 0) {
+                cardEntry.count -= 1;
+            }
+        }
 
         // 확인용 (나중에 지워야 함)
         const count = this.findCardCountByDeck(deckId, cardId);
@@ -122,8 +143,17 @@ export class CardCountManager {
     }
 
     public incrementCardCountByGrade(deckId: number, gradeId: number): void {
-        const currentCount = this.findCardCountByGrade(deckId, gradeId);
-        this.cardCountByGradeMap.set(deckId, [{ gradeId: gradeId, count: currentCount + 1 }]);
+        const gradeInfo = this.cardCountByGradeMap.get(deckId);
+        if (gradeInfo) {
+            const gradeEntry = gradeInfo.find(entry => entry.gradeId === gradeId);
+            if (gradeEntry) {
+                gradeEntry.count += 1;
+            } else {
+                gradeInfo.push({ gradeId, count: 1 });
+            }
+        } else {
+            this.cardCountByGradeMap.set(deckId, [{ gradeId, count: 1 }]);
+        }
 
         // 확인용 (나중에 지워야 함)
         const count = this.findCardCountByGrade(deckId, gradeId);
@@ -131,8 +161,13 @@ export class CardCountManager {
     }
 
     public decrementCardCountByGrade(deckId: number, gradeId: number): void {
-        const currentCount = this.findCardCountByGrade(deckId, gradeId);
-        this.cardCountByGradeMap.set(deckId, [{ gradeId: gradeId, count: currentCount - 1 }]);
+        const gradeInfo = this.cardCountByGradeMap.get(deckId);
+        if (gradeInfo) {
+            const gradeEntry = gradeInfo.find(entry => entry.gradeId === gradeId);
+            if (gradeEntry && gradeEntry.count > 0) {
+                gradeEntry.count -= 1;
+            }
+        }
 
         // 확인용 (나중에 지워야 함)
         const count = this.findCardCountByGrade(deckId, gradeId);

@@ -41,18 +41,26 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
 
         try {
             const existingPosition = this.getPositionByCardId(cardId);
-            const existingRemainingCardsMesh = this.getRemainingCardsMeshByCardId(cardId);
-
-            if (existingPosition !== null && existingRemainingCardsMesh == null) {
-                const myDeckRemainingCards = await this.createMyDeckRemainingCards(cardId, cardCount, existingPosition.position);
-                remainingCardsGroup.add(myDeckRemainingCards.getMesh());
-
-            } else if (existingPosition == null && existingRemainingCardsMesh == null) {
+            if (existingPosition == null) {
                 const newPosition = this.myDeckRemainingCardsPosition(cardId);
                 console.log(`[DEBUG] CardId ${cardId}: Position X=${newPosition.position.getX()}, Y=${newPosition.position.getY()}`);
 
                 const myDeckRemainingCards = await this.createMyDeckRemainingCards(cardId, cardCount, newPosition.position);
                 remainingCardsGroup.add(myDeckRemainingCards.getMesh());
+
+            } else {
+                const existingRemainingCardsMesh = this.getRemainingCardsMeshByCardId(cardId);
+                if (existingRemainingCardsMesh == null) {
+                    const myDeckRemainingCards = await this.createMyDeckRemainingCards(cardId, cardCount, existingPosition.position);
+                    remainingCardsGroup.add(myDeckRemainingCards.getMesh());
+
+                } else {
+                    const positionX = existingPosition.getX() * window.innerWidth;
+                    const positionY = existingPosition.getY() * window.innerHeight;
+
+                    existingRemainingCardsMesh.position.set(positionX, positionY, 0);
+                    remainingCardsGroup.add(existingRemainingCardsMesh);
+                }
             }
 
         } catch (error) {
@@ -66,20 +74,20 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
         const windowWidth = window.innerWidth;
         const windowHeight = window.innerHeight;
 
-        const remainingCardsIdList = this.getRemainingCardsIdList();
-        for (const remainingCardsId of remainingCardsIdList) {
-            console.log(`[DEBUG] (adjust) Remaining Cards ID: ${remainingCardsId}`);
-            const remainingCardsMesh = this.getRemainingCardsById(remainingCardsId);
+        const cardsIdList = this.getCardIdList();
+        for (const cardId of cardsIdList) {
+            console.log(`[DEBUG] (adjust) Remaining Cards- Card ID: ${cardId}`);
+            const remainingCardsMesh = this.getRemainingCardsMeshByCardId(cardId);
             if (!remainingCardsMesh) {
-                console.warn(`[WARN] remainingCardsMesh with Remaining Cards ID ${remainingCardsId} not found`);
+                console.warn(`[WARN] remainingCardsMesh with Remaining Cards- Card ID: ${cardId} not found`);
                 continue;
             }
 
-            const initialPosition = this.getPositionByRemainingCardsId(remainingCardsId);
+            const initialPosition = this.getPositionByCardId(cardId);
             console.log(`[DEBUG] (adjust) InitialPosition: ${initialPosition}`);
 
             if (!initialPosition) {
-                console.error(`[DEBUG] (adjust) No position found for remaining cards id: ${remainingCardsId}`);
+                console.error(`[DEBUG] (adjust) No position found for remaining cards- card id: ${cardId}`);
                 continue;
             }
 
@@ -88,7 +96,7 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
 
             const newPositionX = initialPosition.getX() * windowWidth;
             const newPositionY = initialPosition.getY() * windowHeight;
-            console.log(`[DEBUG] (adjust) Remaining Cards ${remainingCardsId}:`, {
+            console.log(`[DEBUG] (adjust) Remaining Cards- Card ID${cardId}:`, {
                 initialPosition: initialPosition,
                 newPositionX,
                 newPositionY,
@@ -111,7 +119,10 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
 
     private async createMyDeckRemainingCards(cardId: number, cardCount: number, position: Vector2d): Promise<MyDeckRemainingCards> {
         const mesh = await this.myDeckRemainingCardsRepository.createMyDeckRemainingCards(cardId, cardCount, position);
-        this.cardCountManager.saveRemainingCardCount(cardId, cardCount);
+        const existingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
+        if (existingCardCount == null) {
+            this.cardCountManager.saveRemainingCardCount(cardId, cardCount);
+        }
         return mesh;
     }
 
@@ -119,21 +130,8 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
         return this.myDeckRemainingCardsPositionRepository.addMyDeckRemainingCardsPosition(cardId);
     }
 
-    public getRemainingCardsIdList(): number[] {
-        return this.myDeckRemainingCardsRepository.findAllRemainingCardsIdList();
-    }
-
-    private getRemainingCardsById(remainingCardsId: number): THREE.Mesh | null {
-        const remainingCards = this.myDeckRemainingCardsRepository.findRemainingCardsById(remainingCardsId);
-        if (!remainingCards) {
-            console.warn(`[WARN] Remaining Cards with Unique ID ${remainingCardsId} not found`);
-            return null;
-        }
-        return remainingCards.getMesh();
-    }
-
-    private getPositionByRemainingCardsId(remainingCardsId: number): MyDeckRemainingCardsPosition | null {
-        return this.myDeckRemainingCardsPositionRepository.findPositionByPositionId(remainingCardsId);
+    public getCardIdList(): number[] {
+        return this.myDeckRemainingCardsRepository.findAllCardIdList();
     }
 
     private getPositionByCardId(cardId: number): MyDeckRemainingCardsPosition | null {
@@ -145,19 +143,12 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
     }
 
     private getRemainingCardsMeshByCardId(cardId: number): THREE.Mesh | null {
-        const remainingCardIds = this.getRemainingCardsIdByCardId(cardId);
-        if (remainingCardIds == null) {
-            console.warn(`[WARN] Remaining Cards ID with Unique ID ${remainingCardIds} not found`);
-            return null;
-        }
-
-        const remainingCards = this.getRemainingCardsById(remainingCardIds);
+        const remainingCards = this.myDeckRemainingCardsRepository.findRemainingCardByCardId(cardId);
         if (remainingCards == null) {
-            console.warn(`[WARN] Remaining Cards not found`);
+            console.warn(`[WARN] Remaining Cards(Card ID: ${cardId}) not found`);
             return null;
         }
-
-        return remainingCards;
+        return remainingCards.getMesh();
     }
 
     private getAllPositionList(): MyDeckRemainingCardsPosition[] {
@@ -170,6 +161,10 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
             return [];
         }
         return remainingCardsList;
+    }
+
+    public saveRemainingCardGroup(): void {
+        this.myDeckRemainingCardsRepository.saveRemainingCardsGroup();
     }
 
     public getRemainingCardsGroup(): THREE.Group {
