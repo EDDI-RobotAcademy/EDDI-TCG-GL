@@ -13,6 +13,7 @@ export class MyDeckNumberOfSelectedCardsRepositoryImpl implements MyDeckNumberOf
     private numberMap: Map<number, { cardId: number, cardCount: number, numberMesh: MyDeckNumberOfSelectedCards }> = new Map();
     private deckMap: Map<number, number[]> = new Map(); // deckId: number ID List
     private numberGroupMap: Map<number, THREE.Group> = new Map(); // deckId -> Group
+    private originalDeckStateMap: Map<number, MyDeckNumberOfSelectedCards[]> = new Map();
 
     private textureManager: TextureManager;
     private meshDestroyer: MeshDestroyer;

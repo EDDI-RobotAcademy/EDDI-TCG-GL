@@ -190,7 +190,7 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
     }
 
     // 특정 덱의 특정 card name 삭제
-    public deleteCardNameByDeckIdAndCardNameId(deckId: number, cardNameId: number): void {
+    public deleteCardName(deckId: number, cardNameId: number): void {
         const nameInfo = this.cardNameMap.get(cardNameId);
         if (nameInfo) {
             this.cardNameMap.delete(cardNameId);
