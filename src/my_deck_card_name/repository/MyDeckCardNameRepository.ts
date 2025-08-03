@@ -6,6 +6,6 @@ export interface MyDeckCardNameRepository {
     createMyDeckCardName(deckId: number, cardId: number, position: Vector2d): Promise<MyDeckCardName>;
     findCardNameById(cardNameId: number): MyDeckCardName | null;
     findCardNameListByDeckId(deckId: number): MyDeckCardName[] | null;
-    deleteCardNameByDeckIdAndCardNameId(deckId: number, cardNameId: number): void;
+    deleteCardName(deckId: number, cardNameId: number): void;
     deleteAllCardName(): void;
 }

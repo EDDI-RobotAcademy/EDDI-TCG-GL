@@ -131,14 +131,6 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                     this.setMyDeckNumberOfCards(currentClickedDeckButtonId, false);
                     this.setTotalNumberOfSelectedCardsVisibility(currentClickedDeckButtonId, true);
                     this.setDeckCardCountMarkerVisibilityByDeckId(currentClickedDeckButtonId, false);
-
-                    // 덱 편집 버튼 클릭 시 선택한 카드 개수 객체 Mesh 만 제거
-                    const numberOfSelectedCardsIdList = this.getNumberOfSelectedCardsUniqueIdList(currentClickedDeckButtonId);
-                    for (const id of numberOfSelectedCardsIdList) {
-                        this.deleteNumberOfSelectedCardsMesh(currentClickedDeckButtonId, id);
-                        this.deleteBlockMesh(currentClickedDeckButtonId, id);
-                        this.deleteCardNameMesh(currentClickedDeckButtonId, id);
-                    }
                 }
 
                 this.setDeckEditButtonVisibility(false);
@@ -225,22 +217,6 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         if (button !== null) {
             return button.getVisibility();
         }
-    }
-
-    private getNumberOfSelectedCardsUniqueIdList(deckId: number): number[] {
-        return this.myDeckNumberOfSelectedCardsRepository.findNumberIdListByDeckId(deckId);
-    }
-
-    private deleteNumberOfSelectedCardsMesh(deckId: number, numberId: number): void {
-        this.myDeckNumberOfSelectedCardsRepository.deleteNumberOfSelectedCardsMesh(deckId, numberId);
-    }
-
-    private deleteBlockMesh(deckId: number, blockId: number): void {
-        this.myDeckBlockRepository.deleteBlockMesh(deckId, blockId);
-    }
-
-    private deleteCardNameMesh(deckId: number, cardNameId: number): void {
-        this.myDeckCardNameRepository.deleteCardNameMesh(deckId, cardNameId);
     }
 
     private setDeckEditButtonVisibility(isVisible: boolean): void {
