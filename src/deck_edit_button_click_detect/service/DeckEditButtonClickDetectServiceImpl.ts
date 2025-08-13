@@ -131,6 +131,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                     this.setMyDeckNumberOfCards(currentClickedDeckButtonId, false);
                     this.setTotalNumberOfSelectedCardsVisibility(currentClickedDeckButtonId, true);
                     this.setDeckCardCountMarkerVisibilityByDeckId(currentClickedDeckButtonId, false);
+                    this.saveClonedOriginalDeckState(currentClickedDeckButtonId);
                 }
 
                 this.setDeckEditButtonVisibility(false);
@@ -323,6 +324,10 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         scrollTargets.forEach(target => {
             target.position.y = 0;
         });
+    }
+
+    private saveClonedOriginalDeckState(currentClickedDeckId: number): void {
+        this.myDeckNumberOfSelectedCardsRepository.saveClonedOriginalDeckState(currentClickedDeckId);
     }
 
 }
