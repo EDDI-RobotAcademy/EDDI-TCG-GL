@@ -286,7 +286,7 @@ export class TCGJustTestMyDeckView {
             const buttonEvent = await this.deckCardAddButtonClickDetectService.onMouseDown(e);
             if (buttonEvent) {
                 // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
-                this.addMyDeckNumberOfSelectedCards();
+                this.reAddMyDeckNumberOfSelectedCards();
                 this.reAddMyDeckRemainingCards();
             }
         }, false);

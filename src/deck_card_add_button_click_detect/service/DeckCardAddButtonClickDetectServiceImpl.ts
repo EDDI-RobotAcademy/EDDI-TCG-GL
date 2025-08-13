@@ -172,10 +172,6 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
         this.cardCountManager.decrementRemainingCardCount(cardId);
         this.cardCountManager.incrementCardCountByDeck(deckId, cardId);
         this.cardCountManager.incrementCardCountByGrade(deckId, grade);
-
-        // Map 데이터 업데이트
-        const cardCountInDeck = this.cardCountManager.findCardCountByDeck(deckId, cardId);
-        this.myDeckCardMapRepository.addMyDeckCard(deckId, cardId, cardCountInDeck);
     }
 
     private deleteNumberOfRemainingCards(cardId: number): void {
@@ -185,7 +181,8 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
     private deleteNumberOfSelectedCards(deckId: number, cardId: number): void {
         const buttonId = this.myDeckNumberOfSelectedCardsRepository.findNumberIdByDeckIdAndCardId(deckId, cardId);
         if (buttonId == null) return;
-        console.log(`%c 현재 삭제하려는 버튼 ID? ${buttonId}, card ID: ${cardId}`, 'color: #FE2EF7; font-weight: bold;');
+
+        this.myDeckNumberOfSelectedCardsRepository.deleteNumberOfSelectedCardsMesh(deckId, buttonId);
         this.myDeckNumberOfSelectedCardsRepository.deleteNumberOfSelectedCards(deckId, buttonId);
     }
 
