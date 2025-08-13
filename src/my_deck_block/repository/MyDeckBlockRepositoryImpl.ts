@@ -13,6 +13,9 @@ export class MyDeckBlockRepositoryImpl implements MyDeckBlockRepository {
     private deckMap: Map<number, number[]> = new Map(); // deckId: block Unique ID List
     private blockGroupMap: Map<number, THREE.Group> = new Map(); // deckId -> Group
 
+    private originalBlockMap: Map<number, { cardId: number, blockMesh: MyDeckBlock }> = new Map();
+    private originalDeckMap: Map<number, number[]> = new Map();
+
     private textureManager: TextureManager;
     private meshDestroyer: MeshDestroyer;
 
@@ -239,6 +242,47 @@ export class MyDeckBlockRepositoryImpl implements MyDeckBlockRepository {
         this.deckMap.delete(deckId);
         const deckIdList = this.findDeckIdList();
         console.log(`%c삭제 후 남은 덱 id 리스트는? ${deckIdList}`, 'color: #FE2EF7; font-weight: bold;');
+    }
+
+    // 원본 데이터 복제
+    public saveClonedOriginalDeckState(deckId: number): void {
+        this.originalBlockMap.clear();
+        this.originalDeckMap.set(deckId, [...(this.deckMap.get(deckId) || [])]);
+
+        const blockIdList = this.deckMap.get(deckId);
+        if (!blockIdList) {
+            console.warn(`[WARN] No blockIdList for deck ${deckId}`);
+            return;
+        }
+
+        blockIdList.forEach(blockId => {
+            const entry = this.blockMap.get(blockId);
+            if (entry) {
+                const originalMesh = entry.blockMesh.getMesh();
+                const clonedMesh = originalMesh.clone(true);
+                const clonedPosition = entry.blockMesh.position.clone ? entry.blockMesh.position.clone() : entry.blockMesh.position;
+                const clonedWrapper = new MyDeckBlock(clonedMesh, clonedPosition);
+
+                this.originalBlockMap.set(blockId, {
+                    cardId: entry.cardId,
+                    blockMesh: clonedWrapper
+                });
+
+            } else {
+                console.warn(`[WARN] blockId ${blockId} not found in blockMap`);
+            }
+        });
+
+        // To-do: 확인 후 삭제하기
+        console.log(
+            `%c[INFO] Original deck state cloned and stored for deckId ${deckId}`, 'color: #2E9AFE; font-weight: bold;');
+        console.log(
+            'originalBlockMap:',
+            Array.from(this.originalBlockMap.entries()).map(([id, data]) => ({
+                blockId: id,
+                cardId: data.cardId
+            }))
+        );
     }
 
 }

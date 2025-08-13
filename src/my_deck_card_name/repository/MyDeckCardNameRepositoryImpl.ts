@@ -14,6 +14,9 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
     private deckMap: Map<number, number[]> = new Map(); // deckId: card name unique ID List
     private nameGroupMap: Map<number, THREE.Group> = new Map(); // deckId -> Group
 
+    private originalCardNameMap: Map<number, { cardId: number, cardNameMesh: MyDeckCardName }> = new Map();
+    private originalDeckMap: Map<number, number[]> = new Map();
+
     private textureManager: TextureManager;
     private meshDestroyer: MeshDestroyer;
 
@@ -243,5 +246,47 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
         const deckIdList = this.findDeckIdList();
         console.log(`%c삭제 후 남은 덱 id 리스트는? ${deckIdList}`, 'color: #FE2EF7; font-weight: bold;');
     }
+
+    // 원본 데이터 복제
+    public saveClonedOriginalDeckState(deckId: number): void {
+        this.originalCardNameMap.clear();
+        this.originalDeckMap.set(deckId, [...(this.deckMap.get(deckId) || [])]);
+
+        const cardNameIdList = this.deckMap.get(deckId);
+        if (!cardNameIdList) {
+            console.warn(`[WARN] No cardNameIdList for deck ${deckId}`);
+            return;
+        }
+
+        cardNameIdList.forEach(cardNameId => {
+            const entry = this.cardNameMap.get(cardNameId);
+            if (entry) {
+                const originalMesh = entry.cardNameMesh.getMesh();
+                const clonedMesh = originalMesh.clone(true);
+                const clonedPosition = entry.cardNameMesh.position.clone ? entry.cardNameMesh.position.clone() : entry.cardNameMesh.position;
+                const clonedWrapper = new MyDeckCardName(clonedMesh, clonedPosition, entry.cardNameMesh.width, entry.cardNameMesh.height);
+
+                this.originalCardNameMap.set(cardNameId, {
+                    cardId: entry.cardId,
+                    cardNameMesh: clonedWrapper
+                });
+
+            } else {
+                console.warn(`[WARN] cardNameId ${cardNameId} not found in cardNameMap`);
+            }
+        });
+
+        // To-do: 확인 후 삭제하기
+        console.log(
+            `%c[INFO] Original deck state cloned and stored for deckId ${deckId}`, 'color: #2E9AFE; font-weight: bold;');
+        console.log(
+            'originalCardNameMap:',
+            Array.from(this.originalCardNameMap.entries()).map(([id, data]) => ({
+                cardNameId: id,
+                cardId: data.cardId
+            }))
+        );
+    }
+
 
 }
