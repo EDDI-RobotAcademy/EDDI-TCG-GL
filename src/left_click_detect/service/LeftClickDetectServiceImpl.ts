@@ -214,11 +214,6 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     async handleLeftClick(clickPoint: { x: number; y: number }): Promise<any | null> {
         const { x, y } = clickPoint;
 
-        // 선택 상태 초기화
-        // await this.dragMoveRepository.deleteSelectedObject();
-        // await this.dragMoveRepository.deleteSelectedGroup();
-        // await this.dragMoveRepository.deleteSelectedArea()
-
         if (this.activePanelAreaRepository.exists()) {
             const activeResult = this.handleActivePanelClick(x, y);
             if (activeResult) return activeResult;
@@ -230,17 +225,6 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             console.warn("클릭된 영역을 감지할 수 없습니다.");
             return null;
         }
-
-        // const selectedObject = this.determineClickedArea(x, y);
-        // if (!selectedObject) {
-        //     return null;
-        // }
-
-        // const selectedCard = selectedObject.object
-        // this.dragMoveRepository.setSelectedObject(selectedCard);
-
-        // const selectedArea = selectedObject.area
-        // this.dragMoveRepository.setSelectedArea(selectedArea)
 
         try {
             // area에 해당하는 핸들러 실행
@@ -255,28 +239,6 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         }
 
         return null;
-
-        // try {
-        //     // 속성 마크 ID 목록 가져오기
-        //     const attributeMarkIdList = this.getAttributeMarkIdList(clickedHandCard.getId());
-        //
-        //     if (attributeMarkIdList.length > 0) {
-        //         // 속성 마크 객체 목록 가져오기
-        //         const attributeMarkList = await this.getAttributeMarkList(attributeMarkIdList);
-        //
-        //         // 유효한 속성 마크 장면 가져오기
-        //         const validAttributeSceneList = await this.getValidAttributeScenes(attributeMarkList);
-        //
-        //         // 선택된 그룹 설정
-        //         this.dragMoveRepository.setSelectedGroup(validAttributeSceneList);
-        //     }
-        //
-        //     this.createNeonBorder(clickedHandCard)
-        // } catch (error) {
-        //     console.error("Error fetching attribute mark scenes:", error);
-        // }
-        //
-        // return clickedHandCard;
     }
 
     // 속성 마크 ID 목록 가져오기

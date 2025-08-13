@@ -134,7 +134,7 @@ export class ActivePanelAreaRepositoryImpl implements ActivePanelAreaRepository 
             const button = await this.createButton(type, cardId, buttonWidth, buttonHeight, buttonPos, height, heightMargin, skillCount);
             if (button) {
                 this.scene.add(button);
-                this.activeButtons.push(button); // 추가: 버튼 추적
+                this.activeButtons.push(button);
                 console.log(`${type} 버튼 추가 완료`, button.position);
             }
         }
@@ -155,6 +155,11 @@ export class ActivePanelAreaRepositoryImpl implements ActivePanelAreaRepository 
         // 추가: 버튼들 제거
         this.activeButtons.forEach((button) => {
             this.scene.remove(button);
+
+            for (const key in button.userData) {
+                delete button.userData[key];
+            }
+
             button.geometry.dispose();
             if (button.material instanceof THREE.Material) {
                 button.material.dispose();
