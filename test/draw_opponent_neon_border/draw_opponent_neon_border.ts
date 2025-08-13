@@ -141,26 +141,6 @@ export class TCGJustTestBattleFieldView {
                 if (result !== null) {
                     this.rightClickDetectService.setRightMouseDown(true);
                 }
-
-                // TODO: Active Panel 생성
-                // const width = 200;
-                // const height = 200;
-                // const geometry = new THREE.PlaneGeometry(width, height);
-                // const material = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, depthTest: false });
-                //
-                // let rightClickOverlay = new THREE.Mesh(geometry, material);
-                // rightClickOverlay.renderOrder = 1
-                //
-                // // 클릭한 위치에 배치
-                // const vector = new THREE.Vector3(
-                //     (e.x / window.innerWidth) * 2 - 1,
-                //     -(e.y / window.innerHeight) * 2 + 1,
-                //     0
-                // );
-                // vector.unproject(this.camera);
-                // rightClickOverlay.position.copy(vector);
-                //
-                // this.scene.add(rightClickOverlay);
             }
         }, false)
 
@@ -308,11 +288,6 @@ export class TCGJustTestBattleFieldView {
         for (const opponentCardId of opponentFieldUnitList) {
             const opponentFieldUnit = await this.opponentFieldService.createFieldUnit(opponentCardId)
             this.scene.add(opponentFieldUnit);
-
-            // if (opponentFieldUnit) {
-            //     this.opponentFieldSceneRepository.addOpponentFieldScene(opponentFieldUnit);
-            //     this.scene.add(opponentFieldUnit);
-            // }
         }
     }
 
