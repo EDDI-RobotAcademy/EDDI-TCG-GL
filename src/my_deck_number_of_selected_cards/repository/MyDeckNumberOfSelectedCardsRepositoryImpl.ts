@@ -13,7 +13,10 @@ export class MyDeckNumberOfSelectedCardsRepositoryImpl implements MyDeckNumberOf
     private numberMap: Map<number, { cardId: number, cardCount: number, numberMesh: MyDeckNumberOfSelectedCards }> = new Map();
     private deckMap: Map<number, number[]> = new Map(); // deckId: number ID List
     private numberGroupMap: Map<number, THREE.Group> = new Map(); // deckId -> Group
-    private originalDeckStateMap: Map<number, MyDeckNumberOfSelectedCards[]> = new Map();
+
+    // 덱 편집 버튼을 클릭 했을 때 편집 중인 덱의 데이터만 가지고 올 것
+    private originalNumberMap: Map<number, { cardId: number, cardCount: number, numberMesh: MyDeckNumberOfSelectedCards }> = new Map();
+    private originalDeckMap: Map<number, number[]> = new Map();
 
     private textureManager: TextureManager;
     private meshDestroyer: MeshDestroyer;
@@ -216,6 +219,83 @@ export class MyDeckNumberOfSelectedCardsRepositoryImpl implements MyDeckNumberOf
         this.deckMap.delete(deckId);
         const deckIdList = this.findDeckIdList();
 //         console.log(`%c삭제 후 남은 덱 id 리스트는? ${deckIdList}`, 'color: #FE2EF7; font-weight: bold;');
+    }
+
+    // 원본 데이터 복제
+    public saveClonedOriginalDeckState(deckId: number): void {
+        this.originalNumberMap.clear();
+        this.originalDeckMap.set(deckId, [...(this.deckMap.get(deckId) || [])]);
+
+        const numberIdList = this.deckMap.get(deckId);
+        if (!numberIdList) {
+            console.warn(`[WARN] No numberIdList for deck ${deckId}`);
+            return;
+        }
+
+        numberIdList.forEach(numberId => {
+            const entry = this.numberMap.get(numberId);
+            if (entry) {
+                const originalMesh = entry.numberMesh.getMesh();
+                const clonedMesh = originalMesh.clone(true);
+                const clonedPosition = entry.numberMesh.position.clone ? entry.numberMesh.position.clone() : entry.numberMesh.position;
+
+                const clonedWrapper = new MyDeckNumberOfSelectedCards(clonedMesh, clonedPosition);
+
+                this.originalNumberMap.set(numberId, {
+                    cardId: entry.cardId,
+                    cardCount: entry.cardCount,
+                    numberMesh: clonedWrapper
+                });
+            } else {
+                console.warn(`[WARN] numberId ${numberId} not found in numberMap`);
+            }
+        });
+
+        // To-do: 확인 후 삭제하기
+        console.log(
+            `%c[INFO] Original deck state cloned and stored for deckId ${deckId}`, 'color: #2E9AFE; font-weight: bold;');
+        console.log(
+            'originalNumberMap:',
+            Array.from(this.originalNumberMap.entries()).map(([id, data]) => ({
+                numberId: id,
+                cardId: data.cardId,
+                cardCount: data.cardCount
+            }))
+        );
+    }
+
+    public restoreOriginalDeckState(deckId: number): void {
+        const originalNumberIdList = this.originalDeckMap.get(deckId);
+        if (originalNumberIdList) {
+            this.deckMap.set(deckId, [...originalNumberIdList]);
+        }
+
+        const numberIdList = this.deckMap.get(deckId);
+        if (!numberIdList) return;
+
+        numberIdList.forEach(numberId => {
+            const original = this.originalNumberMap.get(numberId);
+            if (original) {
+                // 기존 numberMap의 mesh를 삭제/교체
+                const current = this.numberMap.get(numberId);
+                if (current) {
+                    // 현재 mesh 제거 (scene에서 제거 등)
+                    this.meshDestroyer.destroyMesh(current.numberMesh.getMesh());
+                }
+                // original.numberMesh는 복제본(또는 참조)임. 원래대로 복원
+                this.numberMap.set(numberId, {
+                    cardId: original.cardId,
+                    cardCount: original.cardCount,
+                    numberMesh: original.numberMesh
+                });
+
+                // 필요하면 scene에 다시 add
+                const group = this.numberGroupMap.get(deckId);
+                if (group) {
+                    group.add(original.numberMesh.getMesh());
+                }
+            }
+        });
     }
 
 }
