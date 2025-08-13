@@ -80,6 +80,7 @@ export class ActivePanelAreaRepositoryImpl implements ActivePanelAreaRepository 
         })();
 
         mesh.position.set(pos.getX(), pos.getY() + yOffset, mesh.position.z);
+        mesh.userData.type = type;
         return mesh;
     }
 
@@ -164,6 +165,10 @@ export class ActivePanelAreaRepositoryImpl implements ActivePanelAreaRepository 
 
     exists(): boolean {
         return this.activePanel !== null;
+    }
+
+    getActiveButtons(): THREE.Mesh[] {
+        return this.activeButtons;
     }
 }
 

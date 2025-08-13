@@ -167,6 +167,50 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         return null;
     }
 
+    private getIntersectedButton(
+        x: number,
+        y: number,
+        buttons: THREE.Mesh[]
+    ): THREE.Mesh | null {
+        const mouseVec = new THREE.Vector2(
+            (x / window.innerWidth) * 2 - 1,
+            -(y / window.innerHeight) * 2 + 1
+        );
+
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouseVec, this.camera);
+
+        const intersects = raycaster.intersectObjects(buttons);
+        if (intersects.length > 0) {
+            return intersects[0].object as THREE.Mesh;
+        }
+
+        return null;
+    }
+
+    private handleActivePanelClick(x: number, y: number): any | null {
+        const buttons = this.activePanelAreaRepository.getActiveButtons() ?? [];
+        if (buttons.length === 0) return null;
+
+        const clickedButton = this.getIntersectedButton(x, y, buttons);
+        if (!clickedButton) return null;
+
+        const type = clickedButton.userData.type;
+        console.log(`Active Panel 버튼 클릭됨: ${type}`);
+
+        // 버튼별 동작
+        switch (type) {
+            case "general":
+                // ...
+                break;
+            case "details":
+                // ...
+                break;
+        }
+
+        return { type: "activePanelButton", buttonType: type };
+    }
+
     async handleLeftClick(clickPoint: { x: number; y: number }): Promise<any | null> {
         const { x, y } = clickPoint;
 
@@ -175,11 +219,16 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         // await this.dragMoveRepository.deleteSelectedGroup();
         // await this.dragMoveRepository.deleteSelectedArea()
 
+        if (this.activePanelAreaRepository.exists()) {
+            const activeResult = this.handleActivePanelClick(x, y);
+            if (activeResult) return activeResult;
+        }
+
         const detectedArea = this.mouseCursorDetectRepository.detectArea(x, y);
 
         if (detectedArea === null) {
             console.warn("클릭된 영역을 감지할 수 없습니다.");
-            return null; // null인 경우 바로 반환
+            return null;
         }
 
         // const selectedObject = this.determineClickedArea(x, y);
