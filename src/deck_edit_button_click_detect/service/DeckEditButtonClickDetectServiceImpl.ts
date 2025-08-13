@@ -328,6 +328,8 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
 
     private saveClonedOriginalDeckState(currentClickedDeckId: number): void {
         this.myDeckNumberOfSelectedCardsRepository.saveClonedOriginalDeckState(currentClickedDeckId);
+        this.myDeckBlockRepository.saveClonedOriginalDeckState(currentClickedDeckId);
+        this.myDeckCardNameRepository.saveClonedOriginalDeckState(currentClickedDeckId);
     }
 
 }
