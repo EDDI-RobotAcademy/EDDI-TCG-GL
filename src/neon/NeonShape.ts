@@ -154,12 +154,12 @@ export class NeonShape {
         await this.addNeonLine(startX, startY + rectLength, startX, startY - 5.0); // 좌측
     }
 
-    public createNeonShaderMaterial(): Shader {
+    public createNeonShaderMaterial(baseColor: THREE.Color, glowColor: THREE.Color): Shader {
         const shaderMaterial: Shader = new THREE.ShaderMaterial({
             uniforms: {
                 time: { value: 0.0 },
-                baseColor: { value: new THREE.Color(0x2c75ff) }, // 기본 파란색
-                glowColor: { value: new THREE.Color(0x2EFEF7) }, // 더 밝은 파란색
+                baseColor: { value: baseColor },
+                glowColor: { value: glowColor },
             },
             vertexShader: `
                 varying vec2 vUv;
@@ -190,21 +190,23 @@ export class NeonShape {
         return shaderMaterial;
     }
 
-    public async addNeonShaderRectangle(startX: number, startY: number, width: number, height: number): Promise<{ lines: THREE.Mesh[]; neonMaterials: THREE.ShaderMaterial[] }> {
+    public async addNeonShaderRectangle(startX: number, startY: number, width: number, height: number,
+                                        baseColor: THREE.Color, glowColor: THREE.Color): Promise<{ lines: THREE.Mesh[]; neonMaterials: THREE.ShaderMaterial[] }> {
         const results = [];
 
         // 사각형의 각 변에 대해 4개의 선을 추가하고 결과 저장
-        results.push(await this.addNeonShaderLine(startX + 5.0, startY, startX + width - 5.0, startY)); // 하단
-        results.push(await this.addNeonShaderLine(startX + width, startY - 5.0, startX + width, startY + height)); // 좌측
+        results.push(await this.addNeonShaderLine(startX + 5.0, startY, startX + width - 5.0, startY, baseColor, glowColor)); // 하단
+        results.push(await this.addNeonShaderLine(startX + width, startY - 5.0, startX + width, startY + height, baseColor, glowColor)); // 좌측
         results.push(
             await this.addNeonShaderLine(
                 startX + width + 5.0,
                 startY + height,
                 startX - 5.0,
-                startY + height
+                startY + height,
+                baseColor, glowColor
             )
         ); // 상단
-        results.push(await this.addNeonShaderLine(startX, startY + height, startX, startY - 5.0)); // 우측
+        results.push(await this.addNeonShaderLine(startX, startY + height, startX, startY - 5.0, baseColor, glowColor)); // 우측
 
         // 결과를 라인과 머티리얼로 분리
         const lines = results.map((result) => result.line);
@@ -213,10 +215,11 @@ export class NeonShape {
         return { lines, neonMaterials };
     }
 
-    private async addNeonShaderLine(startX: number, startY: number, endX: number, endY: number
+    private async addNeonShaderLine(startX: number, startY: number, endX: number, endY: number,
+                                    baseColor: THREE.Color, glowColor: THREE.Color
             ): Promise<{ line: THREE.Mesh; neonMaterial: THREE.ShaderMaterial }>{
         // 네온 셰이더 머티리얼 생성
-        const neonMaterial = this.createNeonShaderMaterial();
+        const neonMaterial = this.createNeonShaderMaterial(baseColor, glowColor);
 
         // 선의 방향과 길이 계산
         const direction = new THREE.Vector3(endX - startX, endY - startY, 0);

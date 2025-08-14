@@ -243,7 +243,8 @@ export class TCGJustTestBattleFieldView {
         // }
 
         // this.neonShape.addNeonShaderRectangle(startX, startY, width, height)
-        this.neonShape.addNeonShaderRectangle(0, 0, 200, 200)
+        this.neonShape.addNeonShaderRectangle(0, 0, 200, 200,
+            new THREE.Color(0x2C75FF), new THREE.Color(0x2EFEF7))
     }
 
     private async addBackground(): Promise<void> {
