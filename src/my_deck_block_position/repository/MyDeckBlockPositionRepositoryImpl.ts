@@ -8,6 +8,10 @@ export class MyDeckBlockPositionRepositoryImpl implements MyDeckBlockPositionRep
     private deckToPositionMap: Map< number, number[]> = new Map(); // deck ID: position Unique ID List
     private deckPositionIndexMap: Map<number, number> = new Map();
 
+    private originalPositionMap: Map<number, { cardId: number, position: MyDeckBlockPosition }> = new Map();
+    private originalDeckToPositionMap: Map<number, number[]> = new Map();
+    private originalDeckPositionIndexMap: Map<number, number> = new Map();
+
     private initialX = 0.37;
     private initialY =  0.23;
     private incrementY = - 0.073;
@@ -105,4 +109,48 @@ export class MyDeckBlockPositionRepositoryImpl implements MyDeckBlockPositionRep
     public count(): number {
         return this.positionMap.size;
     }
+
+    // 원본 데이터 복제
+    public saveClonedOriginalPositionState(deckId: number): void {
+        this.originalPositionMap.clear();
+        this.originalDeckToPositionMap.clear();
+
+        const positionIdList = this.deckToPositionMap.get(deckId) || [];
+        this.originalDeckToPositionMap.set(deckId, [...positionIdList]);
+
+        // deckPositionIndexMap 복제
+        const positionIndex = this.deckPositionIndexMap.get(deckId) ?? 0;
+        this.originalDeckPositionIndexMap.set(deckId, positionIndex);
+
+        positionIdList.forEach(positionId => {
+            const entry = this.positionMap.get(positionId);
+            if (entry) {
+                const clonedPosition = new MyDeckBlockPosition(
+                    entry.position.getX(),
+                    entry.position.getY()
+                );
+
+                this.originalPositionMap.set(positionId, {
+                    cardId: entry.cardId,
+                    position: clonedPosition
+                });
+            } else {
+                console.warn(`[WARN] positionId ${positionId} not found in positionMap`);
+            }
+        });
+
+        // To-do: 확인 후에 지우기
+        console.log(
+            `%c[INFO] Original position state cloned for deckId ${deckId}`,'color: #2E9AFE; font-weight: bold;'
+        );
+
+        console.log(
+            'originalMyDeckBlockPositionMap:',
+            Array.from(this.originalPositionMap.entries()).map(([id, data]) => ({
+                positionId: id,
+                cardId: data.cardId,
+            }))
+        );
+    }
+
 }
