@@ -35,6 +35,9 @@ import {RequiredNumberOfCardsRepositoryImpl} from "../../required_number_of_card
 import {MyDeckNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_number_of_selected_cards/repository/MyDeckNumberOfSelectedCardsRepositoryImpl";
 import {MyDeckBlockRepositoryImpl} from "../../my_deck_block/repository/MyDeckBlockRepositoryImpl";
 import {MyDeckCardNameRepositoryImpl} from "../../my_deck_card_name/repository/MyDeckCardNameRepositoryImpl";
+import {MyDeckNumberOfSelectedCardsPositionRepositoryImpl} from "../../my_deck_number_of_selected_cards_position/repository/MyDeckNumberOfSelectedCardsPositionRepositoryImpl";
+import {MyDeckBlockPositionRepositoryImpl} from "../../my_deck_block_position/repository/MyDeckBlockPositionRepositoryImpl";
+import {MyDeckCardNamePositionRepositoryImpl} from "../../my_deck_card_name_position/repository/MyDeckCardNamePositionRepositoryImpl";
 
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
@@ -64,6 +67,9 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private myDeckNumberOfSelectedCardsRepository: MyDeckNumberOfSelectedCardsRepositoryImpl;
     private myDeckBlockRepository: MyDeckBlockRepositoryImpl;
     private myDeckCardNameRepository: MyDeckCardNameRepositoryImpl;
+    private myDeckNumberOfSelectedCardsPositionRepository: MyDeckNumberOfSelectedCardsPositionRepositoryImpl;
+    private myDeckBlockPositionRepository: MyDeckBlockPositionRepositoryImpl;
+    private myDeckCardNamePositionRepository: MyDeckCardNamePositionRepositoryImpl;
     private cardCountManager: CardCountManager;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
@@ -91,6 +97,9 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.myDeckNumberOfSelectedCardsRepository = MyDeckNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
         this.myDeckBlockRepository = MyDeckBlockRepositoryImpl.getInstance(scene);
         this.myDeckCardNameRepository = MyDeckCardNameRepositoryImpl.getInstance(scene);
+        this.myDeckNumberOfSelectedCardsPositionRepository = MyDeckNumberOfSelectedCardsPositionRepositoryImpl.getInstance();
+        this.myDeckBlockPositionRepository = MyDeckBlockPositionRepositoryImpl.getInstance();
+        this.myDeckCardNamePositionRepository = MyDeckCardNamePositionRepositoryImpl.getInstance();
         this.cardCountManager = CardCountManager.getInstance();
     }
 
@@ -328,8 +337,11 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
 
     private saveClonedOriginalDeckState(currentClickedDeckId: number): void {
         this.myDeckNumberOfSelectedCardsRepository.saveClonedOriginalDeckState(currentClickedDeckId);
+        this.myDeckNumberOfSelectedCardsPositionRepository.saveClonedOriginalPositionState(currentClickedDeckId);
         this.myDeckBlockRepository.saveClonedOriginalDeckState(currentClickedDeckId);
+        this.myDeckBlockPositionRepository.saveClonedOriginalPositionState(currentClickedDeckId);
         this.myDeckCardNameRepository.saveClonedOriginalDeckState(currentClickedDeckId);
+        this.myDeckCardNamePositionRepository.saveClonedOriginalPositionState(currentClickedDeckId);
     }
 
 }
