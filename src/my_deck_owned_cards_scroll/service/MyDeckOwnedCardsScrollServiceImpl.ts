@@ -6,6 +6,8 @@ import {MyDeckTotalOwnedCardsRepositoryImpl} from "../../my_deck_total_owned_car
 import {MyDeckRemainingCardsRepositoryImpl} from "../../my_deck_remaining_cards/repository/MyDeckRemainingCardsRepositoryImpl";
 import {MyDeckRemainingOutOfTotalSlashRepositoryImpl} from "../../my_deck_remaining_out_of_total_slash/repository/MyDeckRemainingOutOfTotalSlashRepositoryImpl";
 import {SideScrollAreaDetectRepositoryImpl} from "../../side_scroll_area_detect/repository/SideScrollAreaDetectRepositoryImpl";
+import {DeckEditButtonClickDetectRepositoryImpl} from "../../deck_edit_button_click_detect/repository/DeckEditButtonClickDetectRepositoryImpl";
+import {CardSelectionBlockerRepositoryImpl} from "../../card_selection_blocker/repository/CardSelectionBlockerRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -18,9 +20,11 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
     private myDeckTotalOwnedCardsRepository: MyDeckTotalOwnedCardsRepositoryImpl;
     private myDeckRemainingCardsRepository: MyDeckRemainingCardsRepositoryImpl;
     private myDeckRemainingOutOfTotalSlashRepository: MyDeckRemainingOutOfTotalSlashRepositoryImpl;
+    private cardSelectionBlockerRepository: CardSelectionBlockerRepositoryImpl;
     private sideScrollAreaDetectRepository: SideScrollAreaDetectRepositoryImpl;
+    private deckEditButtonClickDetectRepository: DeckEditButtonClickDetectRepositoryImpl;
 
-    private isScrollEnabled: boolean = true;
+    private isScrollEnabled: boolean = false;
 
     private constructor(camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer) {
         this.renderer = renderer;
@@ -29,7 +33,9 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
         this.myDeckTotalOwnedCardsRepository = MyDeckTotalOwnedCardsRepositoryImpl.getInstance();
         this.myDeckRemainingCardsRepository = MyDeckRemainingCardsRepositoryImpl.getInstance(scene);
         this.myDeckRemainingOutOfTotalSlashRepository = MyDeckRemainingOutOfTotalSlashRepositoryImpl.getInstance();
+        this.cardSelectionBlockerRepository = CardSelectionBlockerRepositoryImpl.getInstance(scene);
         this.sideScrollAreaDetectRepository = SideScrollAreaDetectRepositoryImpl.getInstance();
+        this.deckEditButtonClickDetectRepository = DeckEditButtonClickDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene, renderer: THREE.WebGLRenderer): MyDeckOwnedCardsScrollServiceImpl {
@@ -50,6 +56,9 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
     public async onWheelScroll(event: WheelEvent): Promise<void> {
         if (!this.getMyDeckScrollEnabledById(1)) return;
 
+        const currentDeckEditButtonClickDetect = this.getCurrentDeckEditButtonClickState();
+        if (currentDeckEditButtonClickDetect == false) return;
+
         const cardRowCount = this.getCardRowCount();
         console.log(`card row count?${cardRowCount}`);
         if (cardRowCount < 3) return;
@@ -57,8 +66,9 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
         const scrollTargets = [
             this.getOwnedCardGroup(), // scrollTargetDeckOwnedCard
             this.getTotalOwnedCardsGroup(),
-//             this.getRemainingCardsGroup(),
+            this.getRemainingCardsGroup(),
             this.getSlashGroup(),
+            this.getCardSelectionBlocker(),
         ];
 
         if (scrollTargets.every(target => !target)) return;
@@ -102,6 +112,10 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
         return this.myDeckRemainingOutOfTotalSlashRepository.findSlashGroup();
     }
 
+    private getCardSelectionBlocker(): THREE.Group {
+        return this.cardSelectionBlockerRepository.findBlockerGroup();
+    }
+
     private getCardCount(): number {
         return this.myDeckOwnedCardsRepository.findAllCardCount();
     }
@@ -115,6 +129,10 @@ export class MyDeckOwnedCardsScrollServiceImpl implements MyDeckOwnedCardsScroll
 
     private getMyDeckScrollEnabledById(areaId: number): boolean {
         return this.sideScrollAreaDetectRepository.findMyDeckScrollEnabledById(areaId);
+    }
+
+    public getCurrentDeckEditButtonClickState(): boolean | null {
+        return this.deckEditButtonClickDetectRepository.getCurrentButtonClickState();
     }
 
 }

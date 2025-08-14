@@ -4,16 +4,14 @@ import {IdGenerator} from "../../common/id_generator/IdGenerator";
 
 export class MyDeckRemainingOutOfTotalSlash {
     id: number;
-    isVisible: boolean;
     mesh: THREE.Mesh;
     position: Vector2d;
 
     constructor(mesh: THREE.Mesh, position: Vector2d) {
         this.id = IdGenerator.generateId("MyDeckRemainingOutOfTotalSlash");
-        this.isVisible = false;
         this.mesh = mesh;
         this.position = position;
-        this.mesh.visible = false;
+        this.mesh.visible = true;
     }
 
     public getMesh(): THREE.Mesh {
@@ -21,11 +19,10 @@ export class MyDeckRemainingOutOfTotalSlash {
     }
 
     public getVisibility(): boolean {
-        return this.isVisible;
+        return this.mesh.visible;
     }
 
     public setVisibility(state: boolean): void {
-        this.isVisible = state;
         this.mesh.visible = state;
     }
 
