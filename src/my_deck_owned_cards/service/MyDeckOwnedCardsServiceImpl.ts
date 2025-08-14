@@ -34,27 +34,15 @@ export class MyDeckOwnedCardsServiceImpl implements MyDeckOwnedCardsService {
         return MyDeckOwnedCardsServiceImpl.instance;
     }
 
-    public async createMyDeckOwnedCardsWithPosition(cardIdToCountMap: Map<number, number>): Promise<THREE.Group | null> {
+    public async createMyDeckOwnedCardsWithPosition(cardId: number): Promise<THREE.Group | null> {
         const cardGroup = new THREE.Group();
-        const cardIdList = Array.from(cardIdToCountMap.keys());
-
         try {
-            await Promise.all(
-                cardIdList.map(async (cardId, index) => {
-                    const position = this.myDeckOwnedCardsPosition(cardId, index);
-                    console.log(`[DEBUG] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
+            const position = this.createMyDeckOwnedCardsPosition(cardId);
+            console.log(`[DEBUG] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
 
-                    const cardCount = cardIdToCountMap.get(cardId);
-                    if (cardCount === undefined) {
-                        console.warn(`[WARN] Card count not found for cardId: ${cardId}, defaulting to 0`);
-                        return;
-                    }
-                    console.log(`[DEBUG] Card id: ${cardId}, Card count: ${cardCount}`);
+            const myDeckOwnedCard = await this.createMyDeckOwnedCards(cardId, position.position);
+            cardGroup.add(myDeckOwnedCard.getMesh());
 
-                    const myDeckOwnedCard = await this.createMyDeckOwnedCards(cardId, cardCount, position.position);
-                    cardGroup.add(myDeckOwnedCard.getMesh());
-                })
-            );
         } catch (error) {
             console.error(`[Error] Failed to create My Deck Owned Cards: ${error}`);
             return null;
@@ -110,12 +98,12 @@ export class MyDeckOwnedCardsServiceImpl implements MyDeckOwnedCardsService {
             }
     }
 
-    private async createMyDeckOwnedCards(cardId: number, cardCount: number, position: Vector2d): Promise<MyDeckOwnedCards> {
-        return await this.myDeckOwnedCardsRepository.createMyDeckOwnedCards(cardId, cardCount, position);
+    private async createMyDeckOwnedCards(cardId: number, position: Vector2d): Promise<MyDeckOwnedCards> {
+        return await this.myDeckOwnedCardsRepository.createMyDeckOwnedCards(cardId, position);
     }
 
-    private myDeckOwnedCardsPosition(cardId: number, cardIndex: number): MyDeckOwnedCardsPosition {
-        return this.myDeckOwnedCardsPositionRepository.addMyDeckOwnedCardsPosition(cardId, cardIndex);
+    private createMyDeckOwnedCardsPosition(cardId: number): MyDeckOwnedCardsPosition {
+        return this.myDeckOwnedCardsPositionRepository.addMyDeckOwnedCardsPosition(cardId);
     }
 
     public getCardUniqueIdList(): number[] {
@@ -145,13 +133,9 @@ export class MyDeckOwnedCardsServiceImpl implements MyDeckOwnedCardsService {
 
     }
 
-//     public getCardList(): THREE.Mesh[] {
-//         const cardList = this.myDeckOwnedCardsRepository.findAllCards();
-//         if (!cardList) {
-//             return [];
-//         }
-//         return cardList.map((card) => card.getMesh());
-//     }
+    public saveCardGroup(): void {
+        this.myDeckOwnedCardsRepository.saveCardGroup();
+    }
 
     public getCardGroup(): THREE.Group {
         return this.myDeckOwnedCardsRepository.findCardGroup();

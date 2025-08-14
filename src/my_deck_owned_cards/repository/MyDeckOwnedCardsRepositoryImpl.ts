@@ -10,7 +10,6 @@ export class MyDeckOwnedCardsRepositoryImpl implements MyDeckOwnedCardsRepositor
     private static instance: MyDeckOwnedCardsRepositoryImpl;
     private cardMap: Map<number, { cardId: number, cardMesh: MyDeckOwnedCards }> = new Map(); // card Unique ID: [card ID: card mesh]
     private cardGroup: THREE.Group | null = null;
-    private cardCountMap: Map<number, number> = new Map(); // card Unique Id: card Count
     private textureManager: TextureManager;
 
     private readonly CARD_WIDTH: number = 0.096
@@ -27,7 +26,7 @@ export class MyDeckOwnedCardsRepositoryImpl implements MyDeckOwnedCardsRepositor
         return MyDeckOwnedCardsRepositoryImpl.instance;
     }
 
-    public async createMyDeckOwnedCards(cardId: number, cardCount: number, position: Vector2d): Promise<MyDeckOwnedCards> {
+    public async createMyDeckOwnedCards(cardId: number, position: Vector2d): Promise<MyDeckOwnedCards> {
         const card = getCardById(cardId);
         if (!card) {
             throw new Error(`Card with ID ${cardId} not found`);
@@ -49,7 +48,6 @@ export class MyDeckOwnedCardsRepositoryImpl implements MyDeckOwnedCardsRepositor
 
         const newCard = new MyDeckOwnedCards(cardMesh, position);
         this.cardMap.set(newCard.id, { cardId: cardId, cardMesh: newCard });
-        this.cardCountMap.set(newCard.id, cardCount);
 
         return newCard
     }
@@ -93,20 +91,29 @@ export class MyDeckOwnedCardsRepositoryImpl implements MyDeckOwnedCardsRepositor
         }
     }
 
+    public saveCardGroup(): void {
+        const newCardGroup = new THREE.Group();
+        const cardList = this.findAllCards();
+        if (cardList == null) return;
+
+        cardList.forEach((card) => {
+            newCardGroup.add(card.getMesh());
+        });
+
+        this.cardGroup = newCardGroup;
+    }
+
     public findCardGroup(): THREE.Group {
         if (!this.cardGroup) {
-            this.cardGroup = new THREE.Group();
-            this.findAllCards()?.forEach((card) => {
-                this.cardGroup!.add(card.getMesh());
-            });
+            throw new Error(`My Deck Owned Cards Group not found`);
         }
+
         return this.cardGroup;
     }
 
     // 모든 정보 삭제
     public deleteAllCard(): void {
         this.cardMap.clear();
-        this.cardCountMap.clear();
     }
 
     // 특정 카드 삭제
@@ -116,15 +123,10 @@ export class MyDeckOwnedCardsRepositoryImpl implements MyDeckOwnedCardsRepositor
             this.cardGroup.remove(card.cardMesh.getMesh());
         }
         this.cardMap.delete(cardUniqueId);
-        this.cardCountMap.delete(cardUniqueId);
     }
 
     public findAllCardCount(): number {
         return this.cardMap.size;
-    }
-
-    public getCardCountByCardUniqueId(cardUniqueId: number): number | null {
-        return this.cardCountMap.get(cardUniqueId) ?? null;
     }
 
 }

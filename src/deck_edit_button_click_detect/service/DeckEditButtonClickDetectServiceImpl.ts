@@ -130,7 +130,6 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
             if (clickedButton) {
                 this.saveCurrentButtonClickState(true);
                 console.log(`[DEBUG] Clicked Deck Edit Button`);
-                this.resetScrollTargetPositions();
 
 //                 this.hideAllCardBlocker();
                 const currentClickedDeckButtonId = this.getCurrentClickedDeckButtonId();
@@ -145,9 +144,6 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
 
                 this.setDeckEditButtonVisibility(false);
                 this.setDeckEditDoneButtonVisibility(true);
-                this.setOwnedCardsVisibility(true);
-                this.setTotalOwnedCardsVisibility(true);
-                this.setRemainingOutOfTotalSlashVisibility(true);
                 this.setChosenOutOfTotalSlashVisibility(true);
                 this.setRequiredNumberOfCardsVisibility(true);
                 return clickedButton;
@@ -194,28 +190,12 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         return this.deckEditButtonClickDetectRepository.getCurrentButtonClickState();
     }
 
-    private getAllOwnedCards(): MyDeckOwnedCards[] {
-        return this.myDeckOwnedCardsRepository.findAllCards();
-    }
-
-    private getAllTotalOwnedCards(): MyDeckTotalOwnedCards[] {
-        return this.myDeckTotalOwnedCardsRepository.findAllTotalOwnedCardsList();
-    }
-
-    private getAllRemainingOutOfTotalSlash(): MyDeckRemainingOutOfTotalSlash[] {
-        return this.myDeckRemainingOutOfTotalSlashRepository.findAllSlashList();
-    }
-
     private getTotalNumberOfSelectedCardsByDeckId(deckId: number): TotalNumberOfSelectedCards | null {
         return this.totalNumberOfSelectedCardsRepository.findNumberByDeckId(deckId);
     }
 
     private getCurrentClickedDeckButtonId(): number | null {
         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
-    }
-
-    private getOwnedCardCountByCardUniqueId(cardUniqueId: number): number | null {
-        return this.myDeckOwnedCardsRepository.getCardCountByCardUniqueId(cardUniqueId);
     }
 
     private getCardIdByCardUniqueId(cardUniqueId: number): number | null {
@@ -269,19 +249,6 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         }
     }
 
-    private setOwnedCardsVisibility(isVisible: boolean): void {
-        const allCards = this.getAllOwnedCards();
-        allCards.forEach((card) => card.setVisibility(isVisible));
-    }
-
-    private setTotalOwnedCardsVisibility(isVisible: boolean): void {
-        this.getAllTotalOwnedCards().forEach((totalOwnedCards) => totalOwnedCards.setVisibility(isVisible));
-    }
-
-    private setRemainingOutOfTotalSlashVisibility(isVisible: boolean): void {
-        this.getAllRemainingOutOfTotalSlash().forEach((slash) => slash.setVisibility(isVisible));
-    }
-
     private setMyDeckCardVisibilityByDeckId(deckId: number, isVisible: boolean): void {
         this.myDeckCardRepository.findCardListByDeckId(deckId)?.forEach(card =>
             card.setVisibility(isVisible)
@@ -304,35 +271,6 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private hideAllCardBlocker(): void {
         const allBlockers = this.cardSelectionBlockerRepository.findAllBlockers();
         allBlockers.forEach((blocker) => blocker.setVisibility(false));
-    }
-
-    private getOwnedCardGroup(): THREE.Group {
-        return this.myDeckOwnedCardsRepository.findCardGroup();
-    }
-
-    private getTotalOwnedCardsGroup(): THREE.Group {
-        return this.myDeckTotalOwnedCardsRepository.findTotalOwnedCardsGroup();
-    }
-
-    private getRemainingCardsGroup(): THREE.Group {
-        return this.myDeckRemainingCardsRepository.findRemainingCardsGroup();
-    }
-
-    private getRemainingOutOfTotalSlashGroup(): THREE.Group {
-        return this.myDeckRemainingOutOfTotalSlashRepository.findSlashGroup();
-    }
-
-    private resetScrollTargetPositions(): void {
-        const scrollTargets = [
-            this.getOwnedCardGroup(),
-            this.getTotalOwnedCardsGroup(),
-            this.getRemainingOutOfTotalSlashGroup(),
-        ];
-
-        if (scrollTargets.every(target => !target)) return;
-        scrollTargets.forEach(target => {
-            target.position.y = 0;
-        });
     }
 
     private saveClonedOriginalDeckState(currentClickedDeckId: number): void {

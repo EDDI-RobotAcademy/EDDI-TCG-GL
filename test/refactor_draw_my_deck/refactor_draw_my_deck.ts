@@ -254,7 +254,6 @@ export class TCGJustTestMyDeckView {
         this.renderer.domElement.addEventListener('mousemove', (e) => this.buildDeckButtonHoverDetectService.onMouseMove(e), false);
         this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckScrollService.onWheelScroll(e), false);
         this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckCardScrollService.onWheelScroll(e), false);
-        this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckOwnedCardsScrollService.onWheelScroll(e), false);
         this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckBlockScrollService.onWheelScroll(e), false);
         this.renderer.domElement.addEventListener('mousemove', (e) => this.myDeckBlockHoverDetectService.onMouseMove(e), false);
 //         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckCardDeleteButtonClickDetectService.onMouseDown(e), false);
@@ -272,10 +271,14 @@ export class TCGJustTestMyDeckView {
             const buttonEvent = await this.deckEditButtonClickDetectService.onMouseDown(e);
             if (buttonEvent) {
                 // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
+                await this.addMyDeckOwnedCards();
+                await this.addMyDeckTotalOwnedCards();
+                await this.addRemainingOutOfTotalSlash();
                 await this.addMyDeckRemainingCards();
                 await this.addCardSelectionBlocker();
             }
         }, false);
+        this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckOwnedCardsScrollService.onWheelScroll(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckOwnedCardsClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckDeleteButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckNameEditButtonClickDetectService.onMouseDown(e), false);
@@ -327,11 +330,11 @@ export class TCGJustTestMyDeckView {
         await this.addTotalNumberOfSelectedCards();
         await this.addMyDeckCard();
         await this.addMyDeckCardCountMarker();
-        await this.addMyDeckOwnedCards();
-        await this.addMyDeckTotalOwnedCards();
+//         await this.addMyDeckOwnedCards();
+//         await this.addMyDeckTotalOwnedCards();
         await this.addMyDeckNumberOfCards();
         await this.addMyDeckNumberOfSelectedCards();
-        await this.addRemainingOutOfTotalSlash();
+//         await this.addRemainingOutOfTotalSlash();
 //         await this.addCardSelectionBlocker();
 //         await this.addMyDeckRemainingCards();
         await this.addMyDeckBlock();
@@ -608,8 +611,11 @@ export class TCGJustTestMyDeckView {
 
     private async addMyDeckOwnedCards(): Promise<void> {
         try {
-            const cardMap = this.myDeckOwnedCardsMapRepository.findCurrentMyDeckOwnedCardsMap();
-            await this.myDeckOwnedCardsService.createMyDeckOwnedCardsWithPosition(cardMap);
+            const cardIdList = this.myDeckOwnedCardsMapRepository.getCardIdList();
+            for (const cardId of cardIdList) {
+                await this.myDeckOwnedCardsService.createMyDeckOwnedCardsWithPosition(cardId);
+            }
+            this.myDeckOwnedCardsService.saveCardGroup();
             this.myDeckOwnedCardsService.applyClippingMaskToDeckOwnedCards();
 
             const cardGroup = this.myDeckOwnedCardsService.getCardGroup();

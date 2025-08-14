@@ -4,7 +4,7 @@ import {MyDeckOwnedCardsPositionRepository} from "./MyDeckOwnedCardsPositionRepo
 
 export class MyDeckOwnedCardsPositionRepositoryImpl implements MyDeckOwnedCardsPositionRepository {
     private static instance: MyDeckOwnedCardsPositionRepositoryImpl;
-    private positionMap: Map< number, MyDeckOwnedCardsPosition> = new Map(); // position Unique ID: position
+    private positionMap: Map<number, { cardId: number, position: MyDeckOwnedCardsPosition}> = new Map();
 
     private initialX = - 0.192;
     private incrementX = 0.1275;
@@ -21,22 +21,43 @@ export class MyDeckOwnedCardsPositionRepositoryImpl implements MyDeckOwnedCardsP
         return MyDeckOwnedCardsPositionRepositoryImpl.instance;
     }
 
-    public addMyDeckOwnedCardsPosition(cardId: number, cardIndex: number): MyDeckOwnedCardsPosition {
-        console.log(`%c Card ID?: ${cardId}, Card Index?: ${cardIndex}`, 'color: #FE2EF7; font-weight: bold;');
-        const col = cardIndex % this.maxCardsPerRow;
-        const row = Math.floor(cardIndex / this.maxCardsPerRow);
+    public addMyDeckOwnedCardsPosition(cardId: number): MyDeckOwnedCardsPosition {
+        if (this.containsCardIdInMap(cardId)) {
+            return this.findPositionByCardId(cardId)!;
+        }
+
+        const col = this.positionMap.size % this.maxCardsPerRow;
+        const row = Math.floor(this.positionMap.size / this.maxCardsPerRow);
 
         const positionX = this.initialX + col * this.incrementX;
         const positionY = this.initialY + row * this.incrementY;
 
         const position = new MyDeckOwnedCardsPosition(positionX, positionY);
-        this.positionMap.set(position.id, position);
+        this.positionMap.set(position.id, {cardId, position: position})
 
         return position;
     }
 
     public findPositionByPositionId(positionId: number): MyDeckOwnedCardsPosition | null {
-        return this.positionMap.get(positionId) || null;
+        return this.positionMap.get(positionId)?.position ?? null;
+    }
+
+    public findPositionByCardId(cardId: number): MyDeckOwnedCardsPosition | null {
+        for (const { cardId: storedCardId, position } of this.positionMap.values()) {
+            if (storedCardId === cardId) {
+                return position;
+            }
+        }
+        return null;
+    }
+
+    public findPositionIdByCardId(cardId: number): number | null {
+        for (const [positionId, { cardId: storedCardId }] of this.positionMap.entries()) {
+            if (storedCardId === cardId) {
+                return positionId;
+            }
+        }
+        return null;
     }
 
     public findPositionIdList(): number[] {
@@ -55,4 +76,14 @@ export class MyDeckOwnedCardsPositionRepositoryImpl implements MyDeckOwnedCardsP
     public count(): number {
         return this.positionMap.size;
     }
+
+    private containsCardIdInMap(cardId: number): boolean {
+        for (const { cardId: storedCardId } of this.positionMap.values()) {
+            if (storedCardId === cardId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
