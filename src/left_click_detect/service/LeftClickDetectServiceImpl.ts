@@ -526,6 +526,33 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         });
     }
 
+    private deactivateEveryExistOpponentNeonBorder(): void {
+        // 모든 NeonBorder 중에서 FIELD + ENEMY 타입만 찾음
+        const allNeonBorders = this.neonBorderRepository.findAll();
+        const opponentBorders = allNeonBorders.filter(
+            border =>
+                border.getNeonBorderSceneType() === NeonBorderSceneType.FIELD &&
+                border.getType() === NeonBorderType.ENEMY
+        );
+
+        if (opponentBorders.length === 0) {
+            console.warn("No existing opponent NeonBorders to deactivate.");
+            return;
+        }
+
+        console.log(`Deactivating ${opponentBorders.length} opponent NeonBorders.`);
+
+        opponentBorders.forEach(border => {
+            border.getNeonBorderLineSceneIdList().forEach(lineSceneId => {
+                const lineScene = this.neonBorderLineSceneRepository.findById(lineSceneId);
+                const lineMesh = lineScene?.getLine();
+                if (lineMesh) {
+                    lineMesh.visible = false;
+                }
+            });
+        });
+    }
+
     private deactivateExistNeonBorder(clickedCard: ClickableCard): void {
         const prevYourFieldSceneId = clickedCard.getId();
         console.log(`activateExistNeonBorder() yourFieldSceneId: ${prevYourFieldSceneId}`)
@@ -562,6 +589,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         console.log(`prevYourFieldCard: ${prevYourFieldCard}`)
 
         if (prevYourFieldCard !== null) {
+            this.deactivateEveryExistOpponentNeonBorder()
             this.deactivateExistNeonBorder(prevYourFieldCard)
             this.activePanelAreaRepository.delete();
         }
@@ -596,6 +624,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         }
 
         if (prevYourFieldCard !== null) {
+            this.deactivateEveryExistOpponentNeonBorder()
             this.deactivateExistNeonBorder(prevYourFieldCard)
             this.activePanelAreaRepository.delete();
         }
