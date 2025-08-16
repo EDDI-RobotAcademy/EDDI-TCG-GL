@@ -32,4 +32,8 @@ export class OpponentField {
     getAttributeMarkIdList(): number[] {
         return this.attributeMarkIdList;
     }
+
+    getCardId(): number {
+        return this.cardId;
+    }
 }

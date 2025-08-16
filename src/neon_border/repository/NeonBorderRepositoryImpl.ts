@@ -3,6 +3,7 @@ import { NeonBorderRepository } from "./NeonBorderRepository";
 import {NeonBorder} from "../entity/NeonBorder";
 import {NeonBorderSceneType} from "../entity/NeonBorderSceneType";
 import chalk from "chalk";
+import {NeonBorderType} from "../entity/NeonBorderType";
 
 export class NeonBorderRepositoryImpl implements NeonBorderRepository {
     private static instance: NeonBorderRepositoryImpl | null = null;
@@ -48,14 +49,27 @@ export class NeonBorderRepositoryImpl implements NeonBorderRepository {
         return null;
     }
 
-    findByCardSceneIdWithPlacement(cardSceneId: number, sceneType: NeonBorderSceneType): NeonBorder | null {
+    findByCardSceneIdWithSceneType(cardSceneId: number, sceneType: NeonBorderSceneType): NeonBorder | null {
+        for (const neonBorder of this.storage.values()) {
+            if (
+                neonBorder.getNeonBorderSceneId() === cardSceneId &&
+                neonBorder.getNeonBorderSceneType() === NeonBorderSceneType[sceneType]
+            ) {
+                return neonBorder;
+            }
+        }
+        return null;
+    }
+
+    findByCardSceneIdWithPlacement(cardSceneId: number, sceneType: NeonBorderSceneType, borderType: NeonBorderType): NeonBorder | null {
         for (const neonBorder of this.storage.values()) {
             console.log(chalk.red.bold(`NeonBorderRepositoryImpl findByCardSceneIdWithPlacement() neonBorder: ${JSON.stringify(neonBorder, null, 2)}`));
             console.log(chalk.red.bold(`cardSceneId: ${cardSceneId}, sceneType: ${sceneType}`));
             console.log(chalk.red.bold(`NeonBorderSceneType[sceneType]: ${NeonBorderSceneType[sceneType]}, neonBorder.getNeonBorderSceneType(): ${neonBorder.getNeonBorderSceneType()}`));
             if (
                 neonBorder.getNeonBorderSceneId() === cardSceneId &&
-                neonBorder.getNeonBorderSceneType() === NeonBorderSceneType[sceneType]
+                neonBorder.getNeonBorderSceneType() === NeonBorderSceneType[sceneType] &&
+                neonBorder.getType() === borderType
             ) {
                 return neonBorder;
             }

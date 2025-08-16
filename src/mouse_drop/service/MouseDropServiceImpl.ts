@@ -38,6 +38,7 @@ import {NeonBorderLinePositionRepository} from "../../neon_border_line_position/
 import {NeonBorderLinePositionRepositoryImpl} from "../../neon_border_line_position/repository/NeonBorderLinePositionRepositoryImpl";
 import {NeonBorderSceneType} from "../../neon_border/entity/NeonBorderSceneType";
 import chalk from "chalk";
+import {NeonBorderType} from "../../neon_border/entity/NeonBorderType";
 
 export class MouseDropServiceImpl implements MouseDropService {
     private static instance: MouseDropServiceImpl | null = null;
@@ -249,7 +250,7 @@ export class MouseDropServiceImpl implements MouseDropService {
         const cardScene = selectedObject as unknown as BattleFieldCardScene;
         const cardSceneId = cardScene.getId();
 
-        const neonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(cardSceneId, NeonBorderSceneType.HAND);
+        const neonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(cardSceneId, NeonBorderSceneType.HAND, NeonBorderType.ALLY);
 
         if (!neonBorder) {
             console.log(chalk.red.bold(`repositionNeonBorder() Neon Border not found for sceneId: ${cardSceneId}`));
@@ -425,7 +426,7 @@ export class MouseDropServiceImpl implements MouseDropService {
 
         // NeonBorderRepository에서 cardSceneId를 사용해 NeonBorder 찾기
         // const neonBorder = this.neonBorderRepository.findById(cardSceneId);
-        const neonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(cardSceneId, NeonBorderSceneType.HAND);
+        const neonBorder = this.neonBorderRepository.findByCardSceneIdWithSceneType(cardSceneId, NeonBorderSceneType.HAND);
 
         if (!neonBorder) {
             console.log(`NeonBorder not found for cardSceneId: ${cardSceneId}`);
@@ -601,7 +602,7 @@ export class MouseDropServiceImpl implements MouseDropService {
 
         const cardSceneId = selectedObject.getId();
         // const neonBorder = this.neonBorderRepository.findByCardSceneId(cardSceneId);
-        const neonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(cardSceneId, NeonBorderSceneType.HAND);
+        const neonBorder = this.neonBorderRepository.findByCardSceneIdWithSceneType(cardSceneId, NeonBorderSceneType.HAND);
 
         if (neonBorder) {
             const positionIds = neonBorder.getNeonBorderLinePositionIdList(); // 저장된 위치 ID 리스트
