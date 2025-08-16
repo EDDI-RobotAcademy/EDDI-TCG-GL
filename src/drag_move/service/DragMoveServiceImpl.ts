@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { DragMoveService } from './DragMoveService';
+import {DragMoveService} from './DragMoveService';
 import {DragMoveRepositoryImpl} from "../repository/DragMoveRepositoryImpl";
 import {DragMoveRepository} from "../repository/DragMoveRepository";
 import {BattleFieldCardScene} from "../../battle_field_card_scene/entity/BattleFieldCardScene";
@@ -13,6 +13,7 @@ import {NeonBorderLineSceneRepositoryImpl} from "../../neon_border_line_scene/re
 import {NeonBorderLinePositionRepositoryImpl} from "../../neon_border_line_position/repository/NeonBorderLinePositionRepositoryImpl";
 import {NeonBorderSceneType} from "../../neon_border/entity/NeonBorderSceneType";
 import {LeftClickedArea} from "../../left_click_detect/entity/LeftClickedArea";
+import {NeonBorderType} from "../../neon_border/entity/NeonBorderType";
 
 export class DragMoveServiceImpl implements DragMoveService {
     private static instance: DragMoveServiceImpl | null = null;
@@ -114,7 +115,7 @@ export class DragMoveServiceImpl implements DragMoveService {
 
     private updateNeonBorderPosition(cardSceneId: number, movement: THREE.Vector3): void {
         // 해당 카드에 연결된 NeonBorder를 가져옴
-        const neonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(cardSceneId, NeonBorderSceneType.HAND);
+        const neonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(cardSceneId, NeonBorderSceneType.HAND, NeonBorderType.ALLY);
         if (!neonBorder) {
             console.warn(`No NeonBorder found for card scene ID: ${cardSceneId}`);
             return;

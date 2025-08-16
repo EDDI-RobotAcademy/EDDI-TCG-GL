@@ -1,7 +1,5 @@
 import {LeftClickDetectService} from "./LeftClickDetectService";
-import {
-    BattleFieldCardSceneRepositoryImpl
-} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepositoryImpl";
+import {BattleFieldCardSceneRepositoryImpl} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepositoryImpl";
 import {BattleFieldCardSceneRepository} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepository";
 import {LeftClickHandDetectRepositoryImpl} from "../repository/LeftClickHandDetectRepositoryImpl";
 import {LeftClickHandDetectRepository} from "../repository/LeftClickHandDetectRepository";
@@ -12,45 +10,27 @@ import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository"
 import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
 import {BattleFieldHandRepository} from "../../battle_field_hand/repository/BattleFieldHandRepository";
 import {BattleFieldHandRepositoryImpl} from "../../battle_field_hand/repository/BattleFieldHandRepositoryImpl";
-import {
-    BattleFieldCardAttributeMarkSceneRepository
-} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
-import {
-    BattleFieldCardAttributeMarkSceneRepositoryImpl
-} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
-import {
-    BattleFieldCardAttributeMarkScene
-} from "../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
-import {
-    BattleFieldCardAttributeMarkRepositoryImpl
-} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
-import {
-    BattleFieldCardAttributeMarkRepository
-} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
+import {BattleFieldCardAttributeMarkSceneRepository} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
+import {BattleFieldCardAttributeMarkSceneRepositoryImpl} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
+import {BattleFieldCardAttributeMarkScene} from "../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
+import {BattleFieldCardAttributeMarkRepositoryImpl} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
+import {BattleFieldCardAttributeMarkRepository} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
 import {BattleFieldCardAttributeMark} from "../../battle_field_card_attribute_mark/entity/BattleFieldCardAttributeMark";
 import {NeonBorderRepository} from "../../neon_border/repository/NeonBorderRepository";
 import {NeonBorderRepositoryImpl} from "../../neon_border/repository/NeonBorderRepositoryImpl";
 import {NeonBorder} from "../../neon_border/entity/NeonBorder";
 import {NeonShape} from "../../neon/NeonShape";
 import {NeonBorderLineSceneRepository} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepository";
-import {
-    NeonBorderLineSceneRepositoryImpl
-} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
+import {NeonBorderLineSceneRepositoryImpl} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
 import {NeonBorderLineScene} from "../../neon_border_line_scene/entity/NeonBorderLineScene";
 import {NeonBorderLinePosition} from "../../neon_border_line_position/entity/NeonBorderLinePosition";
 import {Vector2d} from "../../common/math/Vector2d";
-import {
-    NeonBorderLinePositionRepository
-} from "../../neon_border_line_position/repository/NeonBorderLinePositionRepository";
-import {
-    NeonBorderLinePositionRepositoryImpl
-} from "../../neon_border_line_position/repository/NeonBorderLinePositionRepositoryImpl";
+import {NeonBorderLinePositionRepository} from "../../neon_border_line_position/repository/NeonBorderLinePositionRepository";
+import {NeonBorderLinePositionRepositoryImpl} from "../../neon_border_line_position/repository/NeonBorderLinePositionRepositoryImpl";
 import {NeonBorderSceneType} from "../../neon_border/entity/NeonBorderSceneType";
 import chalk from "chalk";
 import {YourFieldCardSceneRepository} from "../../your_field_card_scene/repository/YourFieldCardSceneRepository";
-import {
-    YourFieldCardSceneRepositoryImpl
-} from "../../your_field_card_scene/repository/YourFieldCardSceneRepositoryImpl";
+import {YourFieldCardSceneRepositoryImpl} from "../../your_field_card_scene/repository/YourFieldCardSceneRepositoryImpl";
 import {LeftClickYourFieldDetectRepository} from "../repository/LeftClickYourFieldDetectRepository";
 import {LeftClickYourFieldDetectRepositoryImpl} from "../repository/LeftClickYourFieldDetectRepositoryImpl";
 import {LeftClickedArea} from "../entity/LeftClickedArea";
@@ -67,28 +47,17 @@ import {ActivePanelAreaRepository} from "../../active_panel_area/repository/Acti
 import {ActivePanelAreaRepositoryImpl} from "../../active_panel_area/repository/ActivePanelAreaRepositoryImpl";
 import {getCardById} from "../../card/utility";
 import {getSkillType, SkillType} from "../../card/SkillType";
-import {
-    OpponentFieldCardSceneRepository
-} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepository";
-import {
-    OpponentFieldCardSceneRepositoryImpl
-} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepositoryImpl";
+import {OpponentFieldCardSceneRepository} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepository";
+import {OpponentFieldCardSceneRepositoryImpl} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepositoryImpl";
 import {OpponentFieldRepositoryImpl} from "../../opponent_field/repository/OpponentFieldRepositoryImpl";
 import {OpponentFieldRepository} from "../../opponent_field/repository/OpponentFieldRepository";
-import {
-    OpponentFieldCardAttributeMarkRepository
-} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
+import {OpponentFieldCardAttributeMarkRepository} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
 
-import {
-    OpponentFieldCardAttributeMarkSceneRepositoryImpl
-} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
-import {
-    OpponentFieldCardAttributeMarkSceneRepository
-} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
-import {
-    OpponentFieldCardAttributeMarkRepositoryImpl
-} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
+import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
+import {OpponentFieldCardAttributeMarkSceneRepository} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
+import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
 import {NeonBorderType} from "../../neon_border/entity/NeonBorderType";
+import {MarkSceneType} from "../../battle_field_card_attribute_mark_scene/entity/MarkSceneType";
 
 export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private static instance: LeftClickDetectServiceImpl | null = null;
@@ -251,7 +220,8 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             // 기존 테두리 있는지 확인
             const existingNeonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(
                 opponentCardSceneId,
-                NeonBorderSceneType.FIELD
+                NeonBorderSceneType.FIELD,
+                NeonBorderType.ENEMY
             );
 
             if (existingNeonBorder && existingNeonBorder.getType() === NeonBorderType.ENEMY) {
@@ -456,7 +426,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
         const cardSceneId = clickedCard.getId();
 
-        const existingNeonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(cardSceneId, NeonBorderSceneType.HAND);
+        const existingNeonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(cardSceneId, NeonBorderSceneType.HAND, NeonBorderType.ALLY);
         console.log(chalk.red.bold(`existingNeonBorder: ${existingNeonBorder}`));
         if (existingNeonBorder) {
             console.log(`NeonBorder already exists for cardSceneId: ${cardSceneId}, enabling visibility.`);
@@ -506,7 +476,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         console.log(`activateExistNeonBorder() yourFieldSceneId: ${yourFieldSceneId}`)
         const yourField = this.yourFieldRepository.findByCardSceneId(yourFieldSceneId)
         console.log("activateExistNeonBorder() yourField (JSON):", JSON.stringify(yourField, null, 2));
-        const existingNeonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(yourFieldSceneId, NeonBorderSceneType.FIELD);
+        const existingNeonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(yourFieldSceneId, NeonBorderSceneType.FIELD, NeonBorderType.ALLY);
 
         if (!existingNeonBorder) {
             console.warn(`No existing NeonBorder found for cardSceneId: ${yourFieldSceneId}`);
@@ -558,7 +528,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         console.log(`activateExistNeonBorder() yourFieldSceneId: ${prevYourFieldSceneId}`)
         const yourField = this.yourFieldRepository.findByCardSceneId(prevYourFieldSceneId)
         console.log("activateExistNeonBorder() yourField (JSON):", JSON.stringify(yourField, null, 2));
-        const existingNeonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(prevYourFieldSceneId, NeonBorderSceneType.FIELD);
+        const existingNeonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(prevYourFieldSceneId, NeonBorderSceneType.FIELD, NeonBorderType.ALLY);
 
         if (!existingNeonBorder) {
             console.warn(`No existing NeonBorder found for cardSceneId: ${prevYourFieldSceneId}`);
@@ -644,7 +614,70 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     }
 
     async handleOpponentFieldClick(x: number, y: number): Promise<void> {
-        // OPPONENT_FIELD 영역에 대한 처리
+        console.log(`handleOpponentFieldClick()`);
+
+        // OPPONENT_FIELD 영역 클릭 감지
+        const opponentFieldSceneList = this.opponentFieldCardSceneRepository.findAll();
+        const clickedOpponentFieldCardScene = this.leftClickHandDetectRepository.isYourHandAreaClicked(
+            { x, y },
+            opponentFieldSceneList,
+            this.camera
+        );
+
+        if (clickedOpponentFieldCardScene === null) {
+            console.log('클릭한 요소 찾지 못함');
+            return;
+        }
+
+        const clickedOpponentFieldCardSceneId = clickedOpponentFieldCardScene.getId();
+
+        if (this.activePanelAreaRepository.exists()) {
+            console.log(`공격 대상 Scene: ${JSON.stringify(clickedOpponentFieldCardScene, null, 2)}`);
+
+            // OpponentField 엔티티 조회
+            const opponentFieldEntity = this.opponentFieldRepository.findByCardSceneId(clickedOpponentFieldCardSceneId);
+            if (!opponentFieldEntity) return;
+
+            const targetCardId = opponentFieldEntity.cardId;
+            console.log(`공격 대상 카드 id: ${targetCardId}`);
+
+            const selectedYourFieldCard = this.dragMoveRepository.getSelectedObject() as unknown as YourFieldCardScene;
+            const yourFieldCardId = selectedYourFieldCard.getId()
+            console.log(`yourFieldCardId: ${yourFieldCardId}`)
+
+            const yourFieldCard = this.yourFieldRepository.findById(yourFieldCardId);
+            if (yourFieldCard == null) return;
+
+            const cardId = yourFieldCard.getCardId()
+            if (cardId == null) return;
+            console.log(`공격 진행자 cardId: ${cardId}`)
+
+            const attributeMarkIdList = yourFieldCard.getAttributeMarkIdList();
+
+            const attributeMarkList = await Promise.all(
+                attributeMarkIdList.map(id => this.battleFieldCardAttributeMarkRepository.findById(id))
+            );
+
+            const validMarkList = attributeMarkList.filter((mark): mark is BattleFieldCardAttributeMark => mark !== null);
+            console.log(`validMarkList: ${validMarkList}`)
+
+            let swordScene: BattleFieldCardAttributeMarkScene | null = null;
+
+            for (const id of attributeMarkIdList) {
+                const mark = await this.battleFieldCardAttributeMarkRepository.findById(id);
+                if (!mark) continue;
+
+                const markScene = await this.battleFieldCardAttributeMarkSceneRepository.findById(mark.attributeMarkSceneId);
+                if (!markScene) continue;
+
+                if (markScene.getMarkSceneType() === MarkSceneType.SWORD) {
+                    swordScene = markScene;
+                    break;
+                }
+            }
+
+            console.log(`swordScene: ${swordScene}`)
+        }
     }
 
     async handleOpponentHandClick(x: number, y: number): Promise<void> {
