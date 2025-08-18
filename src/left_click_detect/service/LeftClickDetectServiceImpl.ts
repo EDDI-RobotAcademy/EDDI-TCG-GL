@@ -534,6 +534,28 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         });
     }
 
+    private deactivateEveryNeonBorder(): void {
+        // 모든 NeonBorder 중에서 FIELD + ENEMY 타입만 찾음
+        const allNeonBorders = this.neonBorderRepository.findAll();
+
+        if (allNeonBorders.length === 0) {
+            console.warn("No existing opponent NeonBorders to deactivate.");
+            return;
+        }
+
+        console.log(`Deactivating ${allNeonBorders.length} NeonBorders.`);
+
+        allNeonBorders.forEach(border => {
+            border.getNeonBorderLineSceneIdList().forEach(lineSceneId => {
+                const lineScene = this.neonBorderLineSceneRepository.findById(lineSceneId);
+                const lineMesh = lineScene?.getLine();
+                if (lineMesh) {
+                    lineMesh.visible = false;
+                }
+            });
+        });
+    }
+
     private deactivateExistNeonBorder(clickedCard: ClickableCard): void {
         const prevYourFieldSceneId = clickedCard.getId();
         console.log(`activateExistNeonBorder() yourFieldSceneId: ${prevYourFieldSceneId}`)
@@ -691,7 +713,11 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             console.log(`swordScene: ${swordScene}`)
             if (!swordScene) return;
 
+            this.activePanelAreaRepository.delete()
+
             await this.attackWithWeapon(swordScene, clickedOpponentFieldCardScene);
+
+            this.deactivateEveryNeonBorder()
         }
     }
 
