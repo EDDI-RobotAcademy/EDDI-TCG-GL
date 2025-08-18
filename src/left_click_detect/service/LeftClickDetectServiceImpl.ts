@@ -5,7 +5,10 @@ import {LeftClickHandDetectRepositoryImpl} from "../repository/LeftClickHandDete
 import {LeftClickHandDetectRepository} from "../repository/LeftClickHandDetectRepository";
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
+
 import * as THREE from "three";
+// import TWEEN from '../../../src/animation/TweenInstance';
+
 import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository";
 import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
 import {BattleFieldHandRepository} from "../../battle_field_hand/repository/BattleFieldHandRepository";
@@ -58,6 +61,14 @@ import {OpponentFieldCardAttributeMarkSceneRepository} from "../../opponent_fiel
 import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
 import {NeonBorderType} from "../../neon_border/entity/NeonBorderType";
 import {MarkSceneType} from "../../battle_field_card_attribute_mark_scene/entity/MarkSceneType";
+import {OpponentFieldCardScene} from "../../opponent_field_card_scene/entity/OpponentFieldCardScene";
+import {TCGJustTestBattleFieldView} from "../../../test/draw_opponent_neon_border/draw_opponent_neon_border";
+
+declare const TWEEN: {
+    Tween: any;
+    Easing: any;
+    update: (time?: number) => void;
+};
 
 export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private static instance: LeftClickDetectServiceImpl | null = null;
@@ -677,7 +688,87 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             }
 
             console.log(`swordScene: ${swordScene}`)
+            if (!swordScene) return;
+
+            await this.attackWithWeapon(swordScene, clickedOpponentFieldCardScene);
         }
+    }
+
+    private yoursWeaponToOpponent(swordMesh: THREE.Mesh, originPos: THREE.Vector3, targetPos: THREE.Vector3, duration: number): Promise<void> {
+        return new Promise(resolve => {
+            console.log('>>> [Debug] yoursWeaponToOpponent called');
+            console.log('>>> swordMesh position before tween:', swordMesh.position);
+            console.log('>>> targetPos:', targetPos);
+
+            const tween = new TWEEN.Tween(swordMesh.position)
+                .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z }, duration)
+                .easing(TWEEN.Easing.Quadratic.Out)
+                .onStart(() => {
+                    console.log('>>> [Debug] Tween started');
+                })
+                .onUpdate(() => {
+                    console.log('>>> [Debug] Tween updating:', swordMesh.position);
+                })
+                .onComplete(() => {
+                    console.log('>>> [Debug] Tween completed');
+                    resolve();
+                });
+
+            console.log('>>> [Debug] Registering tween in TCGJustTestBattleFieldView');
+            // TCGJustTestBattleFieldView.getInstance().registerTween(tween);
+
+            console.log('>>> [Debug] Starting tween');
+            tween.start();
+        });
+    }
+
+    private attackOpponentLeftToRightWithWeapon(mesh: THREE.Mesh, fromZ: number, toZ: number, duration: number): Promise<void> {
+        return new Promise(resolve => {
+            const rot = { z: fromZ };
+            new TWEEN.Tween(rot)
+                .to({ z: toZ }, duration)
+                .yoyo(true)
+                .repeat(1)
+                .easing(TWEEN.Easing.Quadratic.InOut)
+                .onUpdate(() => {
+                    mesh.rotation.z = rot.z;
+                })
+                .onComplete(() => resolve())
+                .start();
+        });
+    }
+
+    private returnWeaponFromOpponent(mesh: THREE.Mesh, from: THREE.Vector3, to: THREE.Vector3, duration: number): Promise<void> {
+        return new Promise(resolve => {
+            const pos = { x: from.x, y: from.y, z: from.z };
+            new TWEEN.Tween(pos)
+                .to({ x: to.x, y: to.y, z: to.z }, duration)
+                .easing(TWEEN.Easing.Quadratic.In)
+                .onUpdate(() => {
+                    mesh.position.set(pos.x, pos.y, pos.z);
+                })
+                .onComplete(() => resolve())
+                .start();
+        });
+    }
+
+    private async attackWithWeapon(
+        swordScene: BattleFieldCardAttributeMarkScene,
+        opponentScene: OpponentFieldCardScene
+    ): Promise<void> {
+        console.log(`attackWithWeapon`)
+        const swordMesh = swordScene.getMesh();
+        const targetPos = opponentScene.getMesh().position.clone();
+        const originPos = swordMesh.position.clone();
+
+        // 1) 무기를 상대 근처로 이동
+        await this.yoursWeaponToOpponent(swordMesh, originPos, targetPos.clone().add(new THREE.Vector3(0, 0, 0.5)), 1000);
+
+// 2) 좌→우 휘두르기
+        await this.attackOpponentLeftToRightWithWeapon(swordMesh, swordMesh.rotation.z, swordMesh.rotation.z + Math.PI / 2, 200);
+
+// 3) 무기 복귀
+        await this.returnWeaponFromOpponent(swordMesh, swordMesh.position.clone(), originPos, 1000);
     }
 
     async handleOpponentHandClick(x: number, y: number): Promise<void> {

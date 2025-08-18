@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+// import TWEEN from '../../src/animation/TweenInstance';
+
 import battleFieldMusic from '@resource/music/battle_field/battle-field.mp3';
 import {TextureManager} from "../../src/texture_manager/TextureManager";
 import {NonBackgroundImage} from "../../src/shape/image/NonBackgroundImage";
@@ -40,6 +42,11 @@ import {RightClickDetectServiceImpl} from "../../src/right_click_detect/service/
 import {RightClickDetectService} from "../../src/right_click_detect/service/RightClickDetectService";
 import {LeftClickedArea} from "../../src/left_click_detect/entity/LeftClickedArea";
 
+declare const TWEEN: {
+    Tween: any;
+    Easing: any;
+    update: (time?: number) => void;
+};
 
 export class TCGJustTestBattleFieldView {
     private static instance: TCGJustTestBattleFieldView | null = null;
@@ -90,6 +97,47 @@ export class TCGJustTestBattleFieldView {
     private isDragging = false;
 
     private userWindowSize: UserWindowSize;
+
+    // private activeTweens: TWEEN.Tween[] = [];
+
+    private testBox: THREE.Mesh | null = null;
+
+    private addTestBox(): void {
+        const geometry = new THREE.PlaneGeometry(50, 50); // 2D 평면
+        const material = new THREE.MeshBasicMaterial({
+            color: 0xff0000,
+            depthTest: false,   // 항상 앞으로
+            transparent: true,
+            opacity: 1
+        });
+        this.testBox = new THREE.Mesh(geometry, material);
+        this.testBox.renderOrder = 999;
+        this.testBox = new THREE.Mesh(geometry, material);
+
+        // 초기 위치 (좌상단 기준)
+        this.testBox.position.set(236, 100, 0); // 화면 좌표처럼 사용
+        this.testBox.renderOrder = 999
+        this.scene.add(this.testBox);
+
+        console.log('Camera bounds:', this.camera.left, this.camera.right, this.camera.top, this.camera.bottom);
+
+        if (!this.testBox) {
+            console.warn("[TestBox] testBox is not initialized");
+            return;
+        }
+
+        this.renderer.render(this.scene, this.camera);
+
+        // 2) Tween 생성
+        const endPos = new THREE.Vector3(223, 237, 0);
+        const tween = new TWEEN.Tween(this.testBox!.position)
+            .to({ x: endPos.x, y: endPos.y, z: endPos.z }, 10000)
+            .easing(TWEEN.Easing.Quadratic.InOut)
+            .onStart(() => console.log('[TestBox2D] Tween started'))
+            .onUpdate(() => console.log('[TestBox2D] Position:', this.testBox!.position))
+            .onComplete(() => console.log('[TestBox2D] Tween complete'))
+            .start();
+    }
 
     constructor(simulationBattleFieldContainer: HTMLElement) {
         this.simulationBattleFieldContainer = simulationBattleFieldContainer;
@@ -177,8 +225,9 @@ export class TCGJustTestBattleFieldView {
         }, false);
     }
 
-    public static getInstance(lobbyContainer: HTMLElement): TCGJustTestBattleFieldView {
+    public static getInstance(lobbyContainer?: HTMLElement): TCGJustTestBattleFieldView {
         if (!TCGJustTestBattleFieldView.instance) {
+            if (!lobbyContainer) throw new Error('Root container required for first initialization');
             TCGJustTestBattleFieldView.instance = new TCGJustTestBattleFieldView(lobbyContainer);
         }
         return TCGJustTestBattleFieldView.instance;
@@ -209,6 +258,7 @@ export class TCGJustTestBattleFieldView {
         this.addOpponentField();
         this.addYourHandUnitList()
         this.addOpponentFieldUnitList()
+        // this.addTestBox();
 
         this.initialized = true;
         this.isAnimating = true;
@@ -452,13 +502,22 @@ export class TCGJustTestBattleFieldView {
         }
     }
 
-    animate(): void {
+    // public registerTween(tween: TWEEN.Tween) {
+    //     tween.onComplete(() => {
+    //         const index = this.activeTweens.indexOf(tween);
+    //         if (index >= 0) this.activeTweens.splice(index, 1);
+    //     });
+    //
+    //     this.activeTweens.push(tween);
+    // }
+
+    animate(time?: number): void {
         if (this.isAnimating) {
+            requestAnimationFrame((t) => this.animate(t));
+            TWEEN.update(time);
+
             this.neonShape.updateNeonEffect();
-
             this.renderer.render(this.scene, this.camera);
-
-            requestAnimationFrame(() => this.animate());
         } else {
             console.log('Animation stopped.');
         }
