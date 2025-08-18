@@ -66,16 +66,30 @@ export class ActivePanelAreaRepositoryImpl implements ActivePanelAreaRepository 
         const mesh = MeshGenerator.createMesh(texture, width, height, pos);
         mesh.renderOrder = 4;
 
+        const generalY = panelHeight * 0.5 - height * 0.5 - margin * 0.5;
+        const detailsY = panelHeight * 0.5 - height * (1.5 + skillCount) - margin * (skillCount + 1.75);
+
+        const step = skillCount > 0
+            ? (generalY - detailsY) / (skillCount + 1)
+            : 0;
+
         const yOffset = (() => {
             switch (type) {
                 case 'general':
-                    return panelHeight * 0.5 - height * 0.5 - margin * 0.5;
+                    console.log(`generalY: ${generalY}`)
+                    return generalY;
+
                 case 'details':
-                    return panelHeight * 0.5 - height * (1.5 + skillCount) - margin * (skillCount + 1.75);
+                    console.log(`detailsY: ${detailsY}`)
+                    return detailsY;
+
                 case 'firstSkill':
-                    return panelHeight * 0.5 - height * (0.5 + this.FIRST_SKILL) - margin * 1.5;
+                    if (skillCount >= 1) return generalY - step * 1;
+                    return 0;
+
                 case 'secondSkill':
-                    return panelHeight * 0.5 - height * (0.5 + this.SECOND_SKILL) - margin * 2.5;
+                    if (skillCount >= 2) return generalY - step * 2;
+                    return 0;
             }
         })();
 
