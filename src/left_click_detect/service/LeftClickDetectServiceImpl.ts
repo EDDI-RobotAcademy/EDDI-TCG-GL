@@ -352,6 +352,9 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
                 break;
             case "firstSkill":
                 console.log("firstSkill type")
+                if (skill1Type === SkillType.Single) {
+                    this.createOpponentNeonBorderList()
+                }
                 break;
             case "secondSkill":
                 console.log("secondSkill type")

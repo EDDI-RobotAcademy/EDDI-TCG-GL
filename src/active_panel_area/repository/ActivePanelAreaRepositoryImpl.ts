@@ -76,19 +76,17 @@ export class ActivePanelAreaRepositoryImpl implements ActivePanelAreaRepository 
         const yOffset = (() => {
             switch (type) {
                 case 'general':
-                    console.log(`generalY: ${generalY}`)
                     return generalY;
 
                 case 'details':
-                    console.log(`detailsY: ${detailsY}`)
                     return detailsY;
 
                 case 'firstSkill':
-                    if (skillCount >= 1) return generalY - step * 1;
+                    if (skillCount >= 1) return generalY - step * this.FIRST_SKILL;
                     return 0;
 
                 case 'secondSkill':
-                    if (skillCount >= 2) return generalY - step * 2;
+                    if (skillCount >= 2) return generalY - step * this.SECOND_SKILL;
                     return 0;
             }
         })();
