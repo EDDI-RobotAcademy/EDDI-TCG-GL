@@ -681,7 +681,8 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
                 const markScene = await this.battleFieldCardAttributeMarkSceneRepository.findById(mark.attributeMarkSceneId);
                 if (!markScene) continue;
 
-                if (markScene.getMarkSceneType() === MarkSceneType.SWORD) {
+                if (markScene.getMarkSceneType() === MarkSceneType.SWORD ||
+                    markScene.getMarkSceneType() === MarkSceneType.STAFF) {
                     swordScene = markScene;
                     break;
                 }
