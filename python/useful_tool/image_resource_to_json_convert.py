@@ -1,3 +1,5 @@
+import re
+
 import os
 import json
 from enum import Enum
@@ -328,14 +330,22 @@ def get_active_panel_skill_images(base_path):
     for unit_folder in os.listdir(base_path):
         unit_path = os.path.join(base_path, unit_folder)
         if os.path.isdir(unit_path):
+            # unit_folder별 이미지 리스트 초기화
             skill_images[unit_folder] = []
-            for sub_folder in os.listdir(unit_path):
+
+            # 스킬 폴더 정렬 (1, 2, ...)
+            sub_folders = [f for f in os.listdir(unit_path) if os.path.isdir(os.path.join(unit_path, f))]
+            sub_folders.sort(key=lambda x: int(re.search(r'\d+', x).group()))
+
+            for sub_folder in sub_folders:
                 sub_folder_path = os.path.join(unit_path, sub_folder)
-                if os.path.isdir(sub_folder_path):
-                    for file_name in os.listdir(sub_folder_path):
-                        if file_name.endswith(".png"):
-                            file_path = os.path.join(sub_folder_path, file_name)
-                            skill_images[unit_folder].append(clean_path(file_path))
+                # 각 폴더 내 파일도 정렬 (파일 이름에 번호 있으면)
+                files = [f for f in os.listdir(sub_folder_path) if f.endswith(".png")]
+                files.sort(key=lambda f: int(re.search(r'\d+', f).group()) if re.search(r'\d+', f) else 0)
+
+                for file_name in files:
+                    file_path = os.path.join(sub_folder_path, file_name)
+                    skill_images[unit_folder].append(clean_path(file_path))
     return skill_images
 
 # Initialize paths

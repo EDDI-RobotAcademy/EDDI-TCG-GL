@@ -350,6 +350,12 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             case "general":
                 this.createOpponentNeonBorderList()
                 break;
+            case "firstSkill":
+                console.log("firstSkill type")
+                break;
+            case "secondSkill":
+                console.log("secondSkill type")
+                break;
             case "details":
                 // ...
                 break;
