@@ -714,10 +714,10 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             if (!swordScene) return;
 
             this.activePanelAreaRepository.delete()
+            this.deactivateExistNeonBorder(selectedYourFieldCard)
+            this.deactivateEveryExistOpponentNeonBorder()
 
             await this.attackWithWeapon(swordScene, clickedOpponentFieldCardScene);
-
-            this.deactivateEveryNeonBorder()
         }
     }
 
