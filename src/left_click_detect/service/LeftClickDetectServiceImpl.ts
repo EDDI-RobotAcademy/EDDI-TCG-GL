@@ -1,5 +1,7 @@
 import {LeftClickDetectService} from "./LeftClickDetectService";
-import {BattleFieldCardSceneRepositoryImpl} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepositoryImpl";
+import {
+    BattleFieldCardSceneRepositoryImpl
+} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepositoryImpl";
 import {BattleFieldCardSceneRepository} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepository";
 import {LeftClickHandDetectRepositoryImpl} from "../repository/LeftClickHandDetectRepositoryImpl";
 import {LeftClickHandDetectRepository} from "../repository/LeftClickHandDetectRepository";
@@ -8,32 +10,49 @@ import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl
 
 import * as THREE from "three";
 // import TWEEN from '../../../src/animation/TweenInstance';
-
 import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository";
 import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
 import {BattleFieldHandRepository} from "../../battle_field_hand/repository/BattleFieldHandRepository";
 import {BattleFieldHandRepositoryImpl} from "../../battle_field_hand/repository/BattleFieldHandRepositoryImpl";
-import {BattleFieldCardAttributeMarkSceneRepository} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
-import {BattleFieldCardAttributeMarkSceneRepositoryImpl} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
-import {BattleFieldCardAttributeMarkScene} from "../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
-import {BattleFieldCardAttributeMarkRepositoryImpl} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
-import {BattleFieldCardAttributeMarkRepository} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
+import {
+    BattleFieldCardAttributeMarkSceneRepository
+} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
+import {
+    BattleFieldCardAttributeMarkSceneRepositoryImpl
+} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
+import {
+    BattleFieldCardAttributeMarkScene
+} from "../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
+import {
+    BattleFieldCardAttributeMarkRepositoryImpl
+} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
+import {
+    BattleFieldCardAttributeMarkRepository
+} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
 import {BattleFieldCardAttributeMark} from "../../battle_field_card_attribute_mark/entity/BattleFieldCardAttributeMark";
 import {NeonBorderRepository} from "../../neon_border/repository/NeonBorderRepository";
 import {NeonBorderRepositoryImpl} from "../../neon_border/repository/NeonBorderRepositoryImpl";
 import {NeonBorder} from "../../neon_border/entity/NeonBorder";
 import {NeonShape} from "../../neon/NeonShape";
 import {NeonBorderLineSceneRepository} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepository";
-import {NeonBorderLineSceneRepositoryImpl} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
+import {
+    NeonBorderLineSceneRepositoryImpl
+} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
 import {NeonBorderLineScene} from "../../neon_border_line_scene/entity/NeonBorderLineScene";
 import {NeonBorderLinePosition} from "../../neon_border_line_position/entity/NeonBorderLinePosition";
 import {Vector2d} from "../../common/math/Vector2d";
-import {NeonBorderLinePositionRepository} from "../../neon_border_line_position/repository/NeonBorderLinePositionRepository";
-import {NeonBorderLinePositionRepositoryImpl} from "../../neon_border_line_position/repository/NeonBorderLinePositionRepositoryImpl";
+import {
+    NeonBorderLinePositionRepository
+} from "../../neon_border_line_position/repository/NeonBorderLinePositionRepository";
+import {
+    NeonBorderLinePositionRepositoryImpl
+} from "../../neon_border_line_position/repository/NeonBorderLinePositionRepositoryImpl";
 import {NeonBorderSceneType} from "../../neon_border/entity/NeonBorderSceneType";
 import chalk from "chalk";
 import {YourFieldCardSceneRepository} from "../../your_field_card_scene/repository/YourFieldCardSceneRepository";
-import {YourFieldCardSceneRepositoryImpl} from "../../your_field_card_scene/repository/YourFieldCardSceneRepositoryImpl";
+import {
+    YourFieldCardSceneRepositoryImpl
+} from "../../your_field_card_scene/repository/YourFieldCardSceneRepositoryImpl";
 import {LeftClickYourFieldDetectRepository} from "../repository/LeftClickYourFieldDetectRepository";
 import {LeftClickYourFieldDetectRepositoryImpl} from "../repository/LeftClickYourFieldDetectRepositoryImpl";
 import {LeftClickedArea} from "../entity/LeftClickedArea";
@@ -50,21 +69,36 @@ import {ActivePanelAreaRepository} from "../../active_panel_area/repository/Acti
 import {ActivePanelAreaRepositoryImpl} from "../../active_panel_area/repository/ActivePanelAreaRepositoryImpl";
 import {getCardById} from "../../card/utility";
 import {getSkillType, SkillType} from "../../card/SkillType";
-import {OpponentFieldCardSceneRepository} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepository";
-import {OpponentFieldCardSceneRepositoryImpl} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepositoryImpl";
+import {
+    OpponentFieldCardSceneRepository
+} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepository";
+import {
+    OpponentFieldCardSceneRepositoryImpl
+} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepositoryImpl";
 import {OpponentFieldRepositoryImpl} from "../../opponent_field/repository/OpponentFieldRepositoryImpl";
 import {OpponentFieldRepository} from "../../opponent_field/repository/OpponentFieldRepository";
-import {OpponentFieldCardAttributeMarkRepository} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
+import {
+    OpponentFieldCardAttributeMarkRepository
+} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
 
-import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
-import {OpponentFieldCardAttributeMarkSceneRepository} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
-import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
+import {
+    OpponentFieldCardAttributeMarkSceneRepositoryImpl
+} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
+import {
+    OpponentFieldCardAttributeMarkSceneRepository
+} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
+import {
+    OpponentFieldCardAttributeMarkRepositoryImpl
+} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
 import {NeonBorderType} from "../../neon_border/entity/NeonBorderType";
 import {MarkSceneType} from "../../battle_field_card_attribute_mark_scene/entity/MarkSceneType";
 import {OpponentFieldCardScene} from "../../opponent_field_card_scene/entity/OpponentFieldCardScene";
-import {TCGJustTestBattleFieldView} from "../../../test/draw_opponent_neon_border/draw_opponent_neon_border";
 import {LeftClickOpponentMasterDetectRepository} from "../repository/LeftClickOpponentMasterDetectRepository";
 import {LeftClickOpponentMasterDetectRepositoryImpl} from "../repository/LeftClickOpponentMasterDetectRepositoryImpl";
+import {ActionTypeRepository} from "../../action_type/repository/ActionTypeRepository";
+import {ActionTypeRepositoryImpl} from "../../action_type/repository/ActionTypeRepositoryImpl";
+import {ActionType} from "../../action_type/entity/ActionType";
+import {ActionTypeHandler} from "../../action_type/handler/ActionTypeHandler";
 
 declare const TWEEN: {
     Tween: any;
@@ -125,6 +159,9 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private yourFieldAttributeMarkManager: YourFieldAttributeMarkManager
 
     private activePanelAreaRepository: ActivePanelAreaRepository
+    private actionTypeRepository: ActionTypeRepository
+
+    private actionTypeHandler: ActionTypeHandler
 
     private leftMouseDown: boolean = false;
 
@@ -179,6 +216,9 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         this.yourFieldAttributeMarkManager = YourFieldAttributeMarkManager.getInstance()
 
         this.activePanelAreaRepository = ActivePanelAreaRepositoryImpl.getInstance(camera, scene)
+        this.actionTypeRepository = ActionTypeRepositoryImpl.getInstance()
+
+        this.actionTypeHandler = ActionTypeHandler.getInstance()
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): LeftClickDetectServiceImpl {
@@ -361,11 +401,13 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             case "general":
                 this.createOpponentNeonBorderList()
                 this.createOpponentMasterNeonBorder()
+                // this.actionTypeRepository.setActionType(ActionType)
                 break;
             case "firstSkill":
                 console.log("firstSkill type")
                 if (skill1Type === SkillType.Single) {
                     this.createOpponentNeonBorderList()
+                    this.createOpponentMasterNeonBorder()
                 }
                 break;
             case "secondSkill":
@@ -734,6 +776,22 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
     async handleOpponentFieldClick(x: number, y: number): Promise<void> {
         console.log(`handleOpponentFieldClick()`);
+
+        // const currentActionType = this.actionTypeRepository.getActionType();
+        //
+        // if (currentActionType === null) {
+        //     console.warn("현재 ActionType이 선택되지 않았습니다.");
+        //     return;
+        // }
+        //
+        // const handler = this.actionTypeHandler(currentActionType);
+        // if (!handler) {
+        //     console.warn(`해당 ActionType 핸들러가 없습니다: ${currentActionType}`);
+        //     return;
+        // }
+        //
+        // // ActionType에 맞는 로직 구동
+        // await handler();
 
         // OPPONENT_FIELD 영역 클릭 감지
         const opponentFieldSceneList = this.opponentFieldCardSceneRepository.findAll();
