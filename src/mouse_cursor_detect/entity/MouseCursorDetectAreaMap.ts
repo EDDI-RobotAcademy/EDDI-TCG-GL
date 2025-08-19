@@ -26,6 +26,8 @@ export class MouseCursorDetectAreaMap {
             [MouseCursorDetectArea.ENVIRONMENT]: { x1: 10, y1: 10, x2: 10, y2: 10 },
             [MouseCursorDetectArea.SETTINGS]: { x1: 10, y1: 10, x2: 10, y2: 10 },
             [MouseCursorDetectArea.TURN_END]: { x1: 10, y1: 10, x2: 10, y2: 10 },
+
+            [MouseCursorDetectArea.OPPONENT_MASETER]: { x1: 0.4605885, y1: 0.0476804, x2: 0.5410156, y2: 0.1920103 },
         };
     }
 

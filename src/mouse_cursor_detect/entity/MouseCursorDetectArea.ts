@@ -12,5 +12,6 @@ export enum MouseCursorDetectArea {
     FIELD_ENERGY = 11,
     ENVIRONMENT = 12,
     SETTINGS = 13,
-    TURN_END = 14
+    TURN_END = 14,
+    OPPONENT_MASETER = 15,
 }
