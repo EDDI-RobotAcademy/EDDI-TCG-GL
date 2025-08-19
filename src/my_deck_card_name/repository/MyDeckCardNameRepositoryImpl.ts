@@ -288,5 +288,52 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
         );
     }
 
+    public restoreOriginalDeckState(deckId: number): void {
+        const originalCardNameIdList = this.originalDeckMap.get(deckId);
+        if (originalCardNameIdList) {
+            this.deckMap.set(deckId, [...originalCardNameIdList]);
+        }
+
+        const cardNameIdList = this.deckMap.get(deckId);
+        if (!cardNameIdList) return;
+
+        cardNameIdList.forEach(cardNameId => {
+            const originalCardNameInfo = this.originalCardNameMap.get(cardNameId);
+            if (originalCardNameInfo) {
+                const currentCardNameInfo = this.cardNameMap.get(cardNameId);
+                if (currentCardNameInfo) {
+                    this.meshDestroyer.destroyMesh(currentCardNameInfo.cardNameMesh.getMesh());
+                }
+
+                this.cardNameMap.set(cardNameId, {
+                    cardId: originalCardNameInfo.cardId,
+                    cardNameMesh: originalCardNameInfo.cardNameMesh
+                });
+
+                const group = this.nameGroupMap.get(deckId);
+                if (group) {
+                    originalCardNameInfo.cardNameMesh.setVisibility(false);
+                    group.add(originalCardNameInfo.cardNameMesh.getMesh());
+                }
+            }
+        });
+
+        // To-do: 확인 후 없애야 함
+        const restoredData = cardNameIdList.map(cardNameId => {
+            const data = this.cardNameMap.get(cardNameId);
+            return data ? {
+                cardNameId,
+                cardId: data.cardId,
+                cardNameMesh: data.cardNameMesh
+            } : { cardNameId, cardId: null, cardNameMesh: null };
+        });
+
+        console.log(
+            `%c[덱 편집 중단 후 다른 덱 버튼을 눌렀을 때] Deck ${deckId} restored.`,
+            'color: #2E9AFE; font-weight: bold;'
+        );
+        console.log('복원된 mesh 데이터:', restoredData);
+
+    }
 
 }
