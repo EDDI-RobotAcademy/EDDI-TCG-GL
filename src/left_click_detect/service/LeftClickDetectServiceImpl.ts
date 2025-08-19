@@ -898,7 +898,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         });
     }
 
-    private attackOpponentLeftToRightWithWeapon(mesh: THREE.Mesh, opponentCardGroup: THREE.Group, halfWidth: number, halfHeight: number, duration: number): Promise<void> {
+    private attackOpponentUnitLeftToRightWithWeapon(mesh: THREE.Mesh, opponentCardGroup: THREE.Group, halfWidth: number, halfHeight: number, duration: number): Promise<void> {
         return new Promise(resolve => {
             const startRot = mesh.rotation.z;        // 현재 회전값
             const endRot = startRot - Math.PI;       // 시계 방향 180도 회전
@@ -928,22 +928,6 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
                     mesh.position.set(obj.x, obj.y, obj.z);
                     mesh.rotation.z = obj.rot;
                 })
-
-            // const opponentStartX = opponentCardGroup.position.x;
-            // const shakeAmount = 0.02 * window.innerWidth; // 진동 폭
-            // const opponentTween = new TWEEN.Tween({ x: opponentStartX })
-            //     .to({ x: opponentStartX + shakeAmount }, duration / 4)
-            //     .yoyo(true)
-            //     .repeat(3)
-            //     .onUpdate((obj: { x: number }) => {
-            //         opponentCardGroup.position.x = obj.x;
-            //     });
-            //
-            // // 동시에 시작
-            // weaponTween.start();
-            // opponentTween.start();
-            //
-            // setTimeout(() => resolve(), duration);
 
             const steps = 12;
             const singleDuration = duration / steps;
@@ -1040,7 +1024,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         await this.yoursWeaponToOpponent(weaponMesh, cardGroup, originPos, targetPos.clone().add(new THREE.Vector3(0, 0, 0.5)), 1000);
 
         // 2) 좌우 휘두르기
-        await this.attackOpponentLeftToRightWithWeapon(weaponMesh, opponentCardGroup, halfWidth, halfHeight, 300);
+        await this.attackOpponentUnitLeftToRightWithWeapon(weaponMesh, opponentCardGroup, halfWidth, halfHeight, 300);
 
         // 3) 무기 복귀
         await this.returnWeaponFromOpponent(weaponMesh, cardGroup, weaponMesh.position.clone(), originPos, weaponMesh.rotation.z, originRot, 1000);
@@ -1157,6 +1141,73 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         }
     }
 
+    private attackOpponentMasterLeftToRightWithWeapon(mesh: THREE.Mesh, halfWidth: number, halfHeight: number, duration: number): Promise<void> {
+        return new Promise(resolve => {
+            const startRot = mesh.rotation.z;        // 현재 회전값
+            const endRot = startRot - Math.PI;       // 시계 방향 180도 회전
+
+            const originPos = mesh.position.clone();
+            const targetPos = originPos.clone();
+
+            const octantWidth = halfWidth / 4;
+            const octantHeight = halfHeight / 4;
+
+            targetPos.x += (halfWidth * 1.25);
+
+            const weaponTween = new TWEEN.Tween({
+                x: originPos.x,
+                y: originPos.y,
+                z: originPos.z,
+                rot: startRot
+            })
+                .to({
+                    x: targetPos.x,
+                    y: targetPos.y,
+                    z: targetPos.z,
+                    rot: endRot
+                }, duration)
+                .easing(TWEEN.Easing.Quadratic.InOut)
+                .onUpdate((obj: { x: number; y: number; z: number; rot: number; }) => {
+                    mesh.position.set(obj.x, obj.y, obj.z);
+                    mesh.rotation.z = obj.rot;
+                })
+
+            const steps = 12;
+            const singleDuration = duration / steps;
+            const originalPosition = this.scene.position.clone();
+            let prevPos = originalPosition.clone();
+            const tweens = [];
+
+            for (let i = 0; i < steps; i++) {
+                const nextPos = new THREE.Vector3(
+                    originalPosition.x + (Math.random() * 2 - 1) * octantWidth,
+                    originalPosition.y + (Math.random() * 2 - 1) * octantHeight,
+                    originalPosition.z
+                );
+
+                const t = new TWEEN.Tween(this.scene.position)
+                    .to({ x: nextPos.x, y: nextPos.y }, singleDuration)
+                    .easing(TWEEN.Easing.Quadratic.InOut);
+
+                if (i > 0) tweens[i - 1].chain(t);
+                tweens.push(t);
+                prevPos = nextPos.clone();
+            }
+
+            // 마지막 Tween은 화면 원위치로 복귀
+            tweens[steps - 1].chain(
+                new TWEEN.Tween(this.scene.position)
+                    .to({ x: originalPosition.x, y: originalPosition.y }, singleDuration)
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .onComplete(() => resolve())
+            );
+
+            // 동시에 시작
+            weaponTween.start();
+            tweens[0].start();
+        });
+    }
+
     private async attackOpponentMasterWithWeapon(
         weaponScene: BattleFieldCardAttributeMarkScene,
         cardGroup: THREE.Group,
@@ -1175,6 +1226,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         const width = endX - startX;
         const height = endY - startY;
         const halfWidth = width / 2;
+        const halfHeight = height / 2;
 
         const targetPos = new THREE.Vector3(startX, startY + height / 2, 0.5);
 
@@ -1182,7 +1234,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         await this.yoursWeaponToOpponent(weaponMesh, cardGroup, originPos, targetPos.clone().add(new THREE.Vector3(0, 0, 0.5)), 1000);
 
         // 2) 좌우 휘두르기
-        // await this.attackOpponentLeftToRightWithWeapon(weaponMesh, halfWidth * 1.25, 300);
+        await this.attackOpponentMasterLeftToRightWithWeapon(weaponMesh, halfWidth, halfHeight, 300);
 
         // 3) 무기 복귀
         await this.returnWeaponFromOpponent(weaponMesh, cardGroup, weaponMesh.position.clone(), originPos, weaponMesh.rotation.z, originRot, 1000);
