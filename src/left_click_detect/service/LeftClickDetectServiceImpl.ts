@@ -807,7 +807,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
                     z: targetPos.z,
                     rot: endRot
                 }, duration)
-                .easing(TWEEN.Easing.Quadratic.Out)
+                .easing(TWEEN.Easing.Quadratic.In)
                 .onUpdate((obj: { x: number; y: number; z: number; rot: number; }) => {
                     swordMesh.position.set(obj.x, obj.y, obj.z);
                     swordMesh.rotation.z = obj.rot;
