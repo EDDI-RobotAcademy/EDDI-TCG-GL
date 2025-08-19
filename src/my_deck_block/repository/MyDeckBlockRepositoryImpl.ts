@@ -285,4 +285,52 @@ export class MyDeckBlockRepositoryImpl implements MyDeckBlockRepository {
         );
     }
 
+    public restoreOriginalDeckState(deckId: number): void {
+        const originalBlockIdList = this.originalDeckMap.get(deckId);
+        if (originalBlockIdList) {
+            this.deckMap.set(deckId, [...originalBlockIdList]);
+        }
+
+        const blockIdList = this.deckMap.get(deckId);
+        if (!blockIdList) return;
+
+        blockIdList.forEach(blockId => {
+            const originalBlockInfo = this.originalBlockMap.get(blockId);
+            if (originalBlockInfo) {
+                const currentBlockInfo = this.blockMap.get(blockId);
+                if (currentBlockInfo) {
+                    this.meshDestroyer.destroyMesh(currentBlockInfo.blockMesh.getMesh());
+                }
+
+                this.blockMap.set(blockId, {
+                    cardId: originalBlockInfo.cardId,
+                    blockMesh: originalBlockInfo.blockMesh
+                });
+
+                const group = this.blockGroupMap.get(deckId);
+                if (group) {
+                    originalBlockInfo.blockMesh.setVisibility(false);
+                    group.add(originalBlockInfo.blockMesh.getMesh());
+                }
+            }
+        });
+
+        // To-do: 확인 후 없애야 함
+        const restoredData = blockIdList.map(blockId => {
+            const data = this.blockMap.get(blockId);
+            return data ? {
+                blockId,
+                cardId: data.cardId,
+                blockMesh: data.blockMesh
+            } : { blockId, cardId: null, blockMesh: null };
+        });
+
+        console.log(
+            `%c[덱 편집 중단 후 다른 덱 버튼을 눌렀을 때] Deck ${deckId} restored.`,
+            'color: #2E9AFE; font-weight: bold;'
+        );
+        console.log('복원된 mesh 데이터:', restoredData);
+
+    }
+
 }
