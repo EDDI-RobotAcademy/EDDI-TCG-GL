@@ -1,0 +1,4 @@
+export enum GeneralAttackType {
+    OPPONENT_FIELD_UNIT = "OPPONENT_FIELD_UNIT",
+    OPPONENT_MASTER = "OPPONENT_MASTER",
+}

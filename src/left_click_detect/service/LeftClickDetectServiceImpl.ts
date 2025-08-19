@@ -1,7 +1,5 @@
 import {LeftClickDetectService} from "./LeftClickDetectService";
-import {
-    BattleFieldCardSceneRepositoryImpl
-} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepositoryImpl";
+import {BattleFieldCardSceneRepositoryImpl} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepositoryImpl";
 import {BattleFieldCardSceneRepository} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepository";
 import {LeftClickHandDetectRepositoryImpl} from "../repository/LeftClickHandDetectRepositoryImpl";
 import {LeftClickHandDetectRepository} from "../repository/LeftClickHandDetectRepository";
@@ -14,45 +12,27 @@ import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository"
 import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
 import {BattleFieldHandRepository} from "../../battle_field_hand/repository/BattleFieldHandRepository";
 import {BattleFieldHandRepositoryImpl} from "../../battle_field_hand/repository/BattleFieldHandRepositoryImpl";
-import {
-    BattleFieldCardAttributeMarkSceneRepository
-} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
-import {
-    BattleFieldCardAttributeMarkSceneRepositoryImpl
-} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
-import {
-    BattleFieldCardAttributeMarkScene
-} from "../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
-import {
-    BattleFieldCardAttributeMarkRepositoryImpl
-} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
-import {
-    BattleFieldCardAttributeMarkRepository
-} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
+import {BattleFieldCardAttributeMarkSceneRepository} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
+import {BattleFieldCardAttributeMarkSceneRepositoryImpl} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
+import {BattleFieldCardAttributeMarkScene} from "../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
+import {BattleFieldCardAttributeMarkRepositoryImpl} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
+import {BattleFieldCardAttributeMarkRepository} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
 import {BattleFieldCardAttributeMark} from "../../battle_field_card_attribute_mark/entity/BattleFieldCardAttributeMark";
 import {NeonBorderRepository} from "../../neon_border/repository/NeonBorderRepository";
 import {NeonBorderRepositoryImpl} from "../../neon_border/repository/NeonBorderRepositoryImpl";
 import {NeonBorder} from "../../neon_border/entity/NeonBorder";
 import {NeonShape} from "../../neon/NeonShape";
 import {NeonBorderLineSceneRepository} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepository";
-import {
-    NeonBorderLineSceneRepositoryImpl
-} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
+import {NeonBorderLineSceneRepositoryImpl} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
 import {NeonBorderLineScene} from "../../neon_border_line_scene/entity/NeonBorderLineScene";
 import {NeonBorderLinePosition} from "../../neon_border_line_position/entity/NeonBorderLinePosition";
 import {Vector2d} from "../../common/math/Vector2d";
-import {
-    NeonBorderLinePositionRepository
-} from "../../neon_border_line_position/repository/NeonBorderLinePositionRepository";
-import {
-    NeonBorderLinePositionRepositoryImpl
-} from "../../neon_border_line_position/repository/NeonBorderLinePositionRepositoryImpl";
+import {NeonBorderLinePositionRepository} from "../../neon_border_line_position/repository/NeonBorderLinePositionRepository";
+import {NeonBorderLinePositionRepositoryImpl} from "../../neon_border_line_position/repository/NeonBorderLinePositionRepositoryImpl";
 import {NeonBorderSceneType} from "../../neon_border/entity/NeonBorderSceneType";
 import chalk from "chalk";
 import {YourFieldCardSceneRepository} from "../../your_field_card_scene/repository/YourFieldCardSceneRepository";
-import {
-    YourFieldCardSceneRepositoryImpl
-} from "../../your_field_card_scene/repository/YourFieldCardSceneRepositoryImpl";
+import {YourFieldCardSceneRepositoryImpl} from "../../your_field_card_scene/repository/YourFieldCardSceneRepositoryImpl";
 import {LeftClickYourFieldDetectRepository} from "../repository/LeftClickYourFieldDetectRepository";
 import {LeftClickYourFieldDetectRepositoryImpl} from "../repository/LeftClickYourFieldDetectRepositoryImpl";
 import {LeftClickedArea} from "../entity/LeftClickedArea";
@@ -69,27 +49,15 @@ import {ActivePanelAreaRepository} from "../../active_panel_area/repository/Acti
 import {ActivePanelAreaRepositoryImpl} from "../../active_panel_area/repository/ActivePanelAreaRepositoryImpl";
 import {getCardById} from "../../card/utility";
 import {getSkillType, SkillType} from "../../card/SkillType";
-import {
-    OpponentFieldCardSceneRepository
-} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepository";
-import {
-    OpponentFieldCardSceneRepositoryImpl
-} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepositoryImpl";
+import {OpponentFieldCardSceneRepository} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepository";
+import {OpponentFieldCardSceneRepositoryImpl} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepositoryImpl";
 import {OpponentFieldRepositoryImpl} from "../../opponent_field/repository/OpponentFieldRepositoryImpl";
 import {OpponentFieldRepository} from "../../opponent_field/repository/OpponentFieldRepository";
-import {
-    OpponentFieldCardAttributeMarkRepository
-} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
+import {OpponentFieldCardAttributeMarkRepository} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
 
-import {
-    OpponentFieldCardAttributeMarkSceneRepositoryImpl
-} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
-import {
-    OpponentFieldCardAttributeMarkSceneRepository
-} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
-import {
-    OpponentFieldCardAttributeMarkRepositoryImpl
-} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
+import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
+import {OpponentFieldCardAttributeMarkSceneRepository} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
+import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
 import {NeonBorderType} from "../../neon_border/entity/NeonBorderType";
 import {MarkSceneType} from "../../battle_field_card_attribute_mark_scene/entity/MarkSceneType";
 import {OpponentFieldCardScene} from "../../opponent_field_card_scene/entity/OpponentFieldCardScene";
@@ -97,8 +65,11 @@ import {LeftClickOpponentMasterDetectRepository} from "../repository/LeftClickOp
 import {LeftClickOpponentMasterDetectRepositoryImpl} from "../repository/LeftClickOpponentMasterDetectRepositoryImpl";
 import {ActionTypeRepository} from "../../action_type/repository/ActionTypeRepository";
 import {ActionTypeRepositoryImpl} from "../../action_type/repository/ActionTypeRepositoryImpl";
-import {ActionType} from "../../action_type/entity/ActionType";
 import {ActionTypeHandler} from "../../action_type/handler/ActionTypeHandler";
+import {ActivePanelButtonType} from "../../active_panel_area/entity/ActivePanelButtonType";
+import {ActionType} from "../../action_type/entity/ActionType";
+import {GeneralAttackType} from "../../general_attack/entity/GeneralAttackType";
+import {ActivePanelButtonHandler} from "../../active_panel_area/handler/ActivePanelButtonHandler";
 
 declare const TWEEN: {
     Tween: any;
@@ -159,9 +130,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private yourFieldAttributeMarkManager: YourFieldAttributeMarkManager
 
     private activePanelAreaRepository: ActivePanelAreaRepository
-    private actionTypeRepository: ActionTypeRepository
-
-    private actionTypeHandler: ActionTypeHandler
+    private activePanelButtonHandler: ActivePanelButtonHandler
 
     private leftMouseDown: boolean = false;
 
@@ -216,9 +185,10 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         this.yourFieldAttributeMarkManager = YourFieldAttributeMarkManager.getInstance()
 
         this.activePanelAreaRepository = ActivePanelAreaRepositoryImpl.getInstance(camera, scene)
-        this.actionTypeRepository = ActionTypeRepositoryImpl.getInstance()
+        // this.actionTypeRepository = ActionTypeRepositoryImpl.getInstance()
 
-        this.actionTypeHandler = ActionTypeHandler.getInstance()
+        // this.actionTypeHandler = ActionTypeHandler.getInstance()
+        this.activePanelButtonHandler = ActivePanelButtonHandler.getInstance(camera, scene)
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): LeftClickDetectServiceImpl {
@@ -401,7 +371,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             case "general":
                 this.createOpponentNeonBorderList()
                 this.createOpponentMasterNeonBorder()
-                // this.actionTypeRepository.setActionType(ActionType)
+                this.activePanelAreaRepository.setActivePanelButtonType(ActivePanelButtonType.GENERAL)
                 break;
             case "firstSkill":
                 console.log("firstSkill type")
@@ -776,316 +746,14 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
     async handleOpponentFieldClick(x: number, y: number): Promise<void> {
         console.log(`handleOpponentFieldClick()`);
+        const currentActivePanelButtonType = this.activePanelAreaRepository.getActivePanelButtonType();
 
-        // const currentActionType = this.actionTypeRepository.getActionType();
-        //
-        // if (currentActionType === null) {
-        //     console.warn("현재 ActionType이 선택되지 않았습니다.");
-        //     return;
-        // }
-        //
-        // const handler = this.actionTypeHandler(currentActionType);
-        // if (!handler) {
-        //     console.warn(`해당 ActionType 핸들러가 없습니다: ${currentActionType}`);
-        //     return;
-        // }
-        //
-        // // ActionType에 맞는 로직 구동
-        // await handler();
-
-        // OPPONENT_FIELD 영역 클릭 감지
-        const opponentFieldSceneList = this.opponentFieldCardSceneRepository.findAll();
-        const clickedOpponentFieldCardScene = this.leftClickHandDetectRepository.isYourHandAreaClicked(
-            { x, y },
-            opponentFieldSceneList,
-            this.camera
-        );
-
-        if (clickedOpponentFieldCardScene === null) {
-            console.log('클릭한 요소 찾지 못함');
+        if (currentActivePanelButtonType === ActivePanelButtonType.NONE) {
+            console.warn("현재 ActivePanelButtonType이 선택되지 않았습니다.");
             return;
         }
 
-        const clickedOpponentFieldCardSceneId = clickedOpponentFieldCardScene.getId();
-
-        if (this.activePanelAreaRepository.exists()) {
-            console.log(`공격 대상 Scene: ${JSON.stringify(clickedOpponentFieldCardScene, null, 2)}`);
-
-            // OpponentField 엔티티 조회
-            const opponentFieldEntity = this.opponentFieldRepository.findByCardSceneId(clickedOpponentFieldCardSceneId);
-            if (!opponentFieldEntity) return;
-
-            const targetCardId = opponentFieldEntity.cardId;
-            console.log(`공격 대상 카드 id: ${targetCardId}`);
-
-            const targetAttributeMarkIdList = opponentFieldEntity.getAttributeMarkIdList();
-
-            const targetAttributeMarkList = await Promise.all(
-                targetAttributeMarkIdList.map(id => this.battleFieldCardAttributeMarkRepository.findById(id))
-            );
-
-            const validTargetMarkList = targetAttributeMarkList.filter((mark): mark is BattleFieldCardAttributeMark => mark !== null);
-            console.log(`validTargetMarkList: ${validTargetMarkList}`)
-
-            const opponentFieldCardScene = this.opponentFieldCardSceneRepository.findById(clickedOpponentFieldCardSceneId)
-            if (opponentFieldCardScene == null) return;
-
-            const opponentCardGroup = new THREE.Group();
-            this.scene.remove(opponentFieldCardScene.getMesh());
-            opponentCardGroup.add(opponentFieldCardScene.getMesh());
-
-            for (const id of targetAttributeMarkIdList) {
-                const mark = await this.opponentFieldCardAttributeMarkRepository.findById(id);
-                if (!mark) continue;
-
-                const markScene = await this.opponentFieldCardAttributeMarkSceneRepository.findById(mark.attributeMarkSceneId);
-                if (!markScene) continue;
-
-                this.scene.remove(markScene.getMesh());
-                opponentCardGroup.add(markScene.getMesh());
-            }
-
-            this.scene.add(opponentCardGroup);
-
-            const selectedYourFieldCard = this.dragMoveRepository.getSelectedObject() as unknown as YourFieldCardScene;
-            const yourFieldCardId = selectedYourFieldCard.getId()
-            console.log(`yourFieldCardId: ${yourFieldCardId}`)
-
-            const yourFieldCard = this.yourFieldRepository.findById(yourFieldCardId);
-            if (yourFieldCard == null) return;
-
-            const cardId = yourFieldCard.getCardId()
-            if (cardId == null) return;
-            console.log(`공격 진행자 cardId: ${cardId}`)
-
-            const attributeMarkIdList = yourFieldCard.getAttributeMarkIdList();
-
-            const attributeMarkList = await Promise.all(
-                attributeMarkIdList.map(id => this.battleFieldCardAttributeMarkRepository.findById(id))
-            );
-
-            const validMarkList = attributeMarkList.filter((mark): mark is BattleFieldCardAttributeMark => mark !== null);
-            console.log(`validMarkList: ${validMarkList}`)
-
-            let weaponScene: BattleFieldCardAttributeMarkScene | null = null;
-
-            const cardSceneId = yourFieldCard.getCardSceneId()
-            if (cardSceneId == null) return;
-
-            const yourFieldCardScene = this.yourFieldCardSceneRepository.findById(cardSceneId)
-            if (yourFieldCardScene == null) return;
-
-            const cardGroup = new THREE.Group();
-            this.scene.remove(yourFieldCardScene.getMesh());
-            cardGroup.add(yourFieldCardScene.getMesh());
-
-            for (const id of attributeMarkIdList) {
-                const mark = await this.battleFieldCardAttributeMarkRepository.findById(id);
-                if (!mark) continue;
-
-                const markScene = await this.battleFieldCardAttributeMarkSceneRepository.findById(mark.attributeMarkSceneId);
-                if (!markScene) continue;
-
-                if (markScene.getMarkSceneType() === MarkSceneType.SWORD ||
-                    markScene.getMarkSceneType() === MarkSceneType.STAFF) {
-                    weaponScene = markScene;
-                    continue
-                }
-
-                this.scene.remove(markScene.getMesh());
-                cardGroup.add(markScene.getMesh());
-            }
-
-            this.scene.add(cardGroup);
-
-            console.log(`weaponScene: ${weaponScene}`)
-            if (!weaponScene) return;
-
-            this.activePanelAreaRepository.delete()
-            this.deactivateExistNeonBorder(selectedYourFieldCard)
-            this.deactivateEveryExistOpponentNeonBorder()
-            this.deactivateOpponentMasterNeonBorder()
-
-            await this.attackWithWeapon(weaponScene, cardGroup, opponentCardGroup, clickedOpponentFieldCardScene);
-        }
-    }
-
-    private yoursWeaponToOpponent(weaponMesh: THREE.Mesh, cardGroup: THREE.Group, originPos: THREE.Vector3, targetPos: THREE.Vector3, duration: number): Promise<void> {
-        return new Promise(resolve => {
-            console.log('>>> [Debug] yoursWeaponToOpponent called');
-            console.log('>>> weaponMesh position before tween:', weaponMesh.position);
-            console.log('>>> targetPos:', targetPos);
-
-            const startRot = weaponMesh.rotation.z;        // 시작 회전
-            const endRot = startRot + Math.PI * 130 / 180;        // 목표 회전 (좌측으로 기울이기)
-            const startY = cardGroup.position.y;
-
-            const quarterWidth = this.CARD_WIDTH * window.innerWidth / 4;
-
-            // 무기 Tween
-            const weaponTween = new TWEEN.Tween({
-                x: originPos.x,
-                y: originPos.y,
-                z: originPos.z,
-                rot: startRot
-            })
-                .to({
-                    x: targetPos.x,
-                    y: targetPos.y,
-                    z: targetPos.z,
-                    rot: endRot
-                }, duration)
-                .easing(TWEEN.Easing.Quadratic.In)
-                .onUpdate((obj: { x: number; y: number; z: number; rot: number }) => {
-                    weaponMesh.position.set(obj.x, obj.y, obj.z);
-                    weaponMesh.rotation.z = obj.rot;
-                });
-
-            // 카드 Mesh Tween (y 살짝 올렸다가 다시 내리기)
-            const cardUp = new TWEEN.Tween({ y: startY })
-                .to({ y: startY + quarterWidth }, duration / 2)
-                .easing(TWEEN.Easing.Quadratic.Out)
-                .onUpdate((obj: { y: number; }) => cardGroup.position.y = obj.y);
-
-            // 동시에 시작
-            weaponTween.start();
-            cardUp.start();
-
-            // 완료 시 resolve
-            setTimeout(() => resolve(), duration);
-        });
-    }
-
-    private attackOpponentUnitLeftToRightWithWeapon(mesh: THREE.Mesh, opponentCardGroup: THREE.Group, halfWidth: number, halfHeight: number, duration: number): Promise<void> {
-        return new Promise(resolve => {
-            const startRot = mesh.rotation.z;        // 현재 회전값
-            const endRot = startRot - Math.PI;       // 시계 방향 180도 회전
-
-            const originPos = mesh.position.clone();
-            const targetPos = originPos.clone();
-
-            const octantWidth = halfWidth / 4;
-            const octantHeight = halfHeight / 4;
-
-            targetPos.x += (halfWidth * 1.25);
-
-            const weaponTween = new TWEEN.Tween({
-                x: originPos.x,
-                y: originPos.y,
-                z: originPos.z,
-                rot: startRot
-            })
-                .to({
-                    x: targetPos.x,
-                    y: targetPos.y,
-                    z: targetPos.z,
-                    rot: endRot
-                }, duration)
-                .easing(TWEEN.Easing.Quadratic.InOut)
-                .onUpdate((obj: { x: number; y: number; z: number; rot: number; }) => {
-                    mesh.position.set(obj.x, obj.y, obj.z);
-                    mesh.rotation.z = obj.rot;
-                })
-
-            const steps = 12;
-            const singleDuration = duration / steps;
-            const originalPosition = opponentCardGroup.position.clone();
-            let prevPos = originalPosition.clone();
-            const tweens = [];
-
-            for (let i = 0; i < steps; i++) {
-                const nextPos = new THREE.Vector3(
-                    originalPosition.x + (Math.random() * 2 - 1) * octantWidth,
-                    originalPosition.y + (Math.random() * 2 - 1) * octantHeight,
-                    originalPosition.z
-                );
-
-                const t = new TWEEN.Tween(opponentCardGroup.position)
-                    .to({ x: nextPos.x, y: nextPos.y }, singleDuration)
-                    .easing(TWEEN.Easing.Quadratic.InOut);
-
-                if (i > 0) tweens[i - 1].chain(t);
-                tweens.push(t);
-            }
-
-            // 마지막 Tween은 원래 위치로 복귀
-            tweens[steps - 1].chain(
-                new TWEEN.Tween(opponentCardGroup.position)
-                    .to({ x: originalPosition.x, y: originalPosition.y }, singleDuration)
-                    .easing(TWEEN.Easing.Quadratic.InOut)
-                    .onComplete(() => resolve())
-            );
-
-            // 동시에 시작
-            weaponTween.start();
-            tweens[0].start();
-        });
-    }
-
-    private returnWeaponFromOpponent(
-        weaponMesh: THREE.Mesh,
-        cardGroup: THREE.Group,
-        fromPos: THREE.Vector3,
-        toPos: THREE.Vector3,
-        fromRot: number,
-        toRot: number,
-        duration: number
-    ): Promise<void> {
-        return new Promise(resolve => {
-            // 무기 Tween
-            const weaponObj = { x: fromPos.x, y: fromPos.y, z: fromPos.z, rot: fromRot };
-            const quarterWidth = this.CARD_WIDTH * window.innerWidth / 4;
-
-            const weaponTween = new TWEEN.Tween(weaponObj)
-                .to({ x: toPos.x, y: toPos.y, z: toPos.z, rot: toRot }, duration)
-                .easing(TWEEN.Easing.Quadratic.In)
-                .onUpdate(() => {
-                    weaponMesh.position.set(weaponObj.x, weaponObj.y, weaponObj.z);
-                    weaponMesh.rotation.z = weaponObj.rot;
-                });
-
-            // 카드 Tween (y 내려오기)
-            const startY = cardGroup.position.y;
-            const cardDown = new TWEEN.Tween({ y: startY })
-                .to({ y: startY - quarterWidth }, duration)
-                .easing(TWEEN.Easing.Quadratic.InOut)
-                .onUpdate((obj: { y: number; }) => {
-                    cardGroup.position.y = obj.y;
-                });
-
-            // 둘 다 동시에 실행
-            weaponTween.start();
-            cardDown.start();
-
-            setTimeout(() => resolve(), duration);
-        });
-    }
-
-    private async attackWithWeapon(
-        weaponScene: BattleFieldCardAttributeMarkScene,
-        cardGroup: THREE.Group,
-        opponentCardGroup: THREE.Group,
-        opponentScene: OpponentFieldCardScene
-    ): Promise<void> {
-        console.log(`attackWithWeapon`)
-        const weaponMesh = weaponScene.getMesh();
-        const targetMesh = opponentScene.getMesh();
-
-        const originPos = weaponMesh.position.clone();
-        const originRot = weaponMesh.rotation.z;
-
-        const halfWidth = this.CARD_WIDTH * window.innerWidth / 2;
-        const halfHeight = this.CARD_HEIGHT * window.innerWidth / 2;
-        const targetPos = targetMesh.position.clone().add(new THREE.Vector3(-halfWidth, 0, 0.5));
-
-        // 1) 무기를 상대 근처로 이동
-        await this.yoursWeaponToOpponent(weaponMesh, cardGroup, originPos, targetPos.clone().add(new THREE.Vector3(0, 0, 0.5)), 1000);
-
-        // 2) 좌우 휘두르기
-        await this.attackOpponentUnitLeftToRightWithWeapon(weaponMesh, opponentCardGroup, halfWidth, halfHeight, 300);
-
-        // 3) 무기 복귀
-        await this.returnWeaponFromOpponent(weaponMesh, cardGroup, weaponMesh.position.clone(), originPos, weaponMesh.rotation.z, originRot, 1000);
+        this.activePanelButtonHandler.execute(currentActivePanelButtonType, GeneralAttackType.OPPONENT_FIELD_UNIT, x, y)
     }
 
     async handleOpponentHandClick(x: number, y: number): Promise<void> {
@@ -1133,168 +801,13 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     }
 
     private async handleOpponentMasterClick(x: number, y: number): Promise<void> {
-        if (this.activePanelAreaRepository.exists()) {
-            console.log(`공격 대상: 상대방 본체`);
+        const currentActivePanelButtonType = this.activePanelAreaRepository.getActivePanelButtonType();
 
-            const selectedYourFieldCard = this.dragMoveRepository.getSelectedObject() as unknown as YourFieldCardScene;
-            const yourFieldCardId = selectedYourFieldCard.getId()
-            console.log(`yourFieldCardId: ${yourFieldCardId}`)
-
-            const yourFieldCard = this.yourFieldRepository.findById(yourFieldCardId);
-            if (yourFieldCard == null) return;
-
-            const cardId = yourFieldCard.getCardId()
-            if (cardId == null) return;
-            console.log(`공격 진행자 cardId: ${cardId}`)
-
-            const attributeMarkIdList = yourFieldCard.getAttributeMarkIdList();
-
-            const attributeMarkList = await Promise.all(
-                attributeMarkIdList.map(id => this.battleFieldCardAttributeMarkRepository.findById(id))
-            );
-
-            const validMarkList = attributeMarkList.filter((mark): mark is BattleFieldCardAttributeMark => mark !== null);
-            console.log(`validMarkList: ${validMarkList}`)
-
-            let weaponScene: BattleFieldCardAttributeMarkScene | null = null;
-
-            const cardSceneId = yourFieldCard.getCardSceneId()
-            if (cardSceneId == null) return;
-
-            const yourFieldCardScene = this.yourFieldCardSceneRepository.findById(cardSceneId)
-            if (yourFieldCardScene == null) return;
-
-            const cardGroup = new THREE.Group();
-            this.scene.remove(yourFieldCardScene.getMesh());
-            cardGroup.add(yourFieldCardScene.getMesh());
-
-            for (const id of attributeMarkIdList) {
-                const mark = await this.battleFieldCardAttributeMarkRepository.findById(id);
-                if (!mark) continue;
-
-                const markScene = await this.battleFieldCardAttributeMarkSceneRepository.findById(mark.attributeMarkSceneId);
-                if (!markScene) continue;
-
-                if (markScene.getMarkSceneType() === MarkSceneType.SWORD ||
-                    markScene.getMarkSceneType() === MarkSceneType.STAFF) {
-                    weaponScene = markScene;
-                    continue
-                }
-
-                this.scene.remove(markScene.getMesh());
-                cardGroup.add(markScene.getMesh());
-            }
-
-            this.scene.add(cardGroup);
-
-            console.log(`weaponScene: ${weaponScene}`)
-            if (!weaponScene) return;
-
-            this.activePanelAreaRepository.delete()
-            this.deactivateExistNeonBorder(selectedYourFieldCard)
-            this.deactivateEveryExistOpponentNeonBorder()
-            this.deactivateOpponentMasterNeonBorder()
-
-            await this.attackOpponentMasterWithWeapon(weaponScene, cardGroup);
+        if (currentActivePanelButtonType === ActivePanelButtonType.NONE) {
+            console.warn("현재 ActivePanelButtonType이 선택되지 않았습니다.");
+            return;
         }
-    }
 
-    private attackOpponentMasterLeftToRightWithWeapon(mesh: THREE.Mesh, halfWidth: number, halfHeight: number, duration: number): Promise<void> {
-        return new Promise(resolve => {
-            const startRot = mesh.rotation.z;        // 현재 회전값
-            const endRot = startRot - Math.PI;       // 시계 방향 180도 회전
-
-            const originPos = mesh.position.clone();
-            const targetPos = originPos.clone();
-
-            const octantWidth = halfWidth / 4;
-            const octantHeight = halfHeight / 4;
-
-            targetPos.x += (halfWidth * 1.25);
-
-            const weaponTween = new TWEEN.Tween({
-                x: originPos.x,
-                y: originPos.y,
-                z: originPos.z,
-                rot: startRot
-            })
-                .to({
-                    x: targetPos.x,
-                    y: targetPos.y,
-                    z: targetPos.z,
-                    rot: endRot
-                }, duration)
-                .easing(TWEEN.Easing.Quadratic.InOut)
-                .onUpdate((obj: { x: number; y: number; z: number; rot: number; }) => {
-                    mesh.position.set(obj.x, obj.y, obj.z);
-                    mesh.rotation.z = obj.rot;
-                })
-
-            const steps = 12;
-            const singleDuration = duration / steps;
-            const originalPosition = this.scene.position.clone();
-            let prevPos = originalPosition.clone();
-            const tweens = [];
-
-            for (let i = 0; i < steps; i++) {
-                const nextPos = new THREE.Vector3(
-                    originalPosition.x + (Math.random() * 2 - 1) * octantWidth,
-                    originalPosition.y + (Math.random() * 2 - 1) * octantHeight,
-                    originalPosition.z
-                );
-
-                const t = new TWEEN.Tween(this.scene.position)
-                    .to({ x: nextPos.x, y: nextPos.y }, singleDuration)
-                    .easing(TWEEN.Easing.Quadratic.InOut);
-
-                if (i > 0) tweens[i - 1].chain(t);
-                tweens.push(t);
-                prevPos = nextPos.clone();
-            }
-
-            // 마지막 Tween은 화면 원위치로 복귀
-            tweens[steps - 1].chain(
-                new TWEEN.Tween(this.scene.position)
-                    .to({ x: originalPosition.x, y: originalPosition.y }, singleDuration)
-                    .easing(TWEEN.Easing.Quadratic.InOut)
-                    .onComplete(() => resolve())
-            );
-
-            // 동시에 시작
-            weaponTween.start();
-            tweens[0].start();
-        });
-    }
-
-    private async attackOpponentMasterWithWeapon(
-        weaponScene: BattleFieldCardAttributeMarkScene,
-        cardGroup: THREE.Group,
-    ): Promise<void> {
-        console.log(`attackWithWeapon`)
-        const weaponMesh = weaponScene.getMesh();
-
-        const originPos = weaponMesh.position.clone();
-        const originRot = weaponMesh.rotation.z;
-
-        const startX = (this.OPPONENT_START_X - 0.5) * window.innerWidth;
-        const startY = (0.5 - this.OPPONENT_START_Y) * window.innerHeight;
-        const endX = (this.OPPONENT_END_X - 0.5) * window.innerWidth;
-        const endY = (0.5 - this.OPPONENT_END_Y) * window.innerHeight;
-
-        const width = endX - startX;
-        const height = endY - startY;
-        const halfWidth = width / 2;
-        const halfHeight = height / 2;
-
-        const targetPos = new THREE.Vector3(startX, startY + height / 2, 0.5);
-
-        // 1) 무기를 상대 근처로 이동
-        await this.yoursWeaponToOpponent(weaponMesh, cardGroup, originPos, targetPos.clone().add(new THREE.Vector3(0, 0, 0.5)), 1000);
-
-        // 2) 좌우 휘두르기
-        await this.attackOpponentMasterLeftToRightWithWeapon(weaponMesh, halfWidth, halfHeight, 300);
-
-        // 3) 무기 복귀
-        await this.returnWeaponFromOpponent(weaponMesh, cardGroup, weaponMesh.position.clone(), originPos, weaponMesh.rotation.z, originRot, 1000);
+        this.activePanelButtonHandler.execute(currentActivePanelButtonType, GeneralAttackType.OPPONENT_MASTER, x, y)
     }
 }
