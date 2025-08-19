@@ -7,7 +7,7 @@ import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
 
 import * as THREE from "three";
-// import TWEEN from '../../../src/animation/TweenInstance';
+
 import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository";
 import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
 import {BattleFieldHandRepository} from "../../battle_field_hand/repository/BattleFieldHandRepository";
@@ -59,17 +59,14 @@ import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../opponent_
 import {OpponentFieldCardAttributeMarkSceneRepository} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
 import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
 import {NeonBorderType} from "../../neon_border/entity/NeonBorderType";
-import {MarkSceneType} from "../../battle_field_card_attribute_mark_scene/entity/MarkSceneType";
-import {OpponentFieldCardScene} from "../../opponent_field_card_scene/entity/OpponentFieldCardScene";
+
 import {LeftClickOpponentMasterDetectRepository} from "../repository/LeftClickOpponentMasterDetectRepository";
 import {LeftClickOpponentMasterDetectRepositoryImpl} from "../repository/LeftClickOpponentMasterDetectRepositoryImpl";
-import {ActionTypeRepository} from "../../action_type/repository/ActionTypeRepository";
-import {ActionTypeRepositoryImpl} from "../../action_type/repository/ActionTypeRepositoryImpl";
-import {ActionTypeHandler} from "../../action_type/handler/ActionTypeHandler";
+
 import {ActivePanelButtonType} from "../../active_panel_area/entity/ActivePanelButtonType";
-import {ActionType} from "../../action_type/entity/ActionType";
 import {GeneralAttackType} from "../../general_attack/entity/GeneralAttackType";
 import {ActivePanelButtonHandler} from "../../active_panel_area/handler/ActivePanelButtonHandler";
+import {BattleFieldCommonAreaType} from "../../common/type/BattleFieldCommonAreaType";
 
 declare const TWEEN: {
     Tween: any;
@@ -185,9 +182,6 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         this.yourFieldAttributeMarkManager = YourFieldAttributeMarkManager.getInstance()
 
         this.activePanelAreaRepository = ActivePanelAreaRepositoryImpl.getInstance(camera, scene)
-        // this.actionTypeRepository = ActionTypeRepositoryImpl.getInstance()
-
-        // this.actionTypeHandler = ActionTypeHandler.getInstance()
         this.activePanelButtonHandler = ActivePanelButtonHandler.getInstance(camera, scene)
     }
 
@@ -378,6 +372,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
                 if (skill1Type === SkillType.Single) {
                     this.createOpponentNeonBorderList()
                     this.createOpponentMasterNeonBorder()
+                    this.activePanelAreaRepository.setActivePanelButtonType(ActivePanelButtonType.FIRST_SKILL)
                 }
                 break;
             case "secondSkill":
@@ -753,7 +748,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             return;
         }
 
-        this.activePanelButtonHandler.execute(currentActivePanelButtonType, GeneralAttackType.OPPONENT_FIELD_UNIT, x, y)
+        this.activePanelButtonHandler.execute(currentActivePanelButtonType, BattleFieldCommonAreaType.OPPONENT_FIELD_UNIT, x, y)
     }
 
     async handleOpponentHandClick(x: number, y: number): Promise<void> {
@@ -808,6 +803,6 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             return;
         }
 
-        this.activePanelButtonHandler.execute(currentActivePanelButtonType, GeneralAttackType.OPPONENT_MASTER, x, y)
+        this.activePanelButtonHandler.execute(currentActivePanelButtonType, BattleFieldCommonAreaType.OPPONENT_MASTER, x, y)
     }
 }
