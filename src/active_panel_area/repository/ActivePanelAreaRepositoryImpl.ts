@@ -4,6 +4,7 @@ import {TextureManager} from "../../texture_manager/TextureManager";
 import {MeshGenerator} from "../../mesh/generator";
 import {Vector2d} from "../../common/math/Vector2d";
 import {getCardById} from "../../card/utility";
+import {ActivePanelButtonType} from "../entity/ActivePanelButtonType";
 
 export class ActivePanelAreaRepositoryImpl implements ActivePanelAreaRepository {
     private static instance: ActivePanelAreaRepositoryImpl | null = null;
@@ -23,6 +24,8 @@ export class ActivePanelAreaRepositoryImpl implements ActivePanelAreaRepository 
 
     private readonly FIRST_SKILL = 1;
     private readonly SECOND_SKILL = 2;
+
+    private buttonType: ActivePanelButtonType = ActivePanelButtonType.NONE;
 
     private constructor(camera: THREE.Camera, scene: THREE.Scene) {
         this.camera = camera;
@@ -186,6 +189,14 @@ export class ActivePanelAreaRepositoryImpl implements ActivePanelAreaRepository 
 
     getActiveButtons(): THREE.Mesh[] {
         return this.activeButtons;
+    }
+
+    getActivePanelButtonType(): ActivePanelButtonType {
+        return this.buttonType
+    }
+
+    setActivePanelButtonType(type: ActivePanelButtonType): void {
+        this.buttonType = type;
     }
 }
 
