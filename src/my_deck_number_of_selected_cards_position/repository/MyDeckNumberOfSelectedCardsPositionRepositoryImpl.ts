@@ -180,8 +180,48 @@ export class MyDeckNumberOfSelectedCardsPositionRepositoryImpl implements MyDeck
             Array.from(this.originalPositionMap.entries()).map(([id, data]) => ({
                 positionId: id,
                 cardId: data.cardId,
+                positionX: data.position.getX(),
+                positionY: data.position.getY(),
             }))
         );
+    }
+
+    public restoreOriginalPositionState(deckId: number): void {
+        const originalPositionIdList = this.originalDeckToPositionMap.get(deckId);
+        if (originalPositionIdList) {
+            this.deckToPositionMap.set(deckId, [...originalPositionIdList]);
+        }
+
+        const positionIdList = this.deckToPositionMap.get(deckId);
+        if (!positionIdList) return;
+
+        positionIdList.forEach(positionId => {
+            const originalPositionInfo = this.originalPositionMap.get(positionId);
+            if (originalPositionInfo) {
+                this.positionMap.set(positionId, {
+                    cardId: originalPositionInfo.cardId,
+                    position: originalPositionInfo.position
+                });
+            }
+        });
+
+        // To-do: 확인 후 없애야 함
+        const restoredData = positionIdList.map(positionId => {
+            const data = this.positionMap.get(positionId);
+            return data ? {
+                positionId,
+                cardId: data.cardId,
+                positionX: data.position.getX(),
+                positionY: data.position.getY()
+            } : { positionId, cardId: null, position: null };
+        });
+
+        console.log(
+            `%c[덱 편집 중단 후 다른 덱 버튼을 눌렀을 때] Deck ${deckId} restored.`,
+            'color: #2E9AFE; font-weight: bold;'
+        );
+        console.log('복원된 position 데이터:', restoredData);
+
     }
 
 }

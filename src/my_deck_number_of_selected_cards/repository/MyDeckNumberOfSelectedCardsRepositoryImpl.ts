@@ -274,28 +274,46 @@ export class MyDeckNumberOfSelectedCardsRepositoryImpl implements MyDeckNumberOf
         if (!numberIdList) return;
 
         numberIdList.forEach(numberId => {
-            const original = this.originalNumberMap.get(numberId);
-            if (original) {
+            const originalNumberInfo = this.originalNumberMap.get(numberId);
+            if (originalNumberInfo) {
                 // 기존 numberMap의 mesh를 삭제/교체
-                const current = this.numberMap.get(numberId);
-                if (current) {
-                    // 현재 mesh 제거 (scene에서 제거 등)
-                    this.meshDestroyer.destroyMesh(current.numberMesh.getMesh());
+                const currentNumberInfo = this.numberMap.get(numberId);
+                if (currentNumberInfo) {
+                    // 현재 mesh를 scene에서 제거
+                    this.meshDestroyer.destroyMesh(currentNumberInfo.numberMesh.getMesh());
                 }
-                // original.numberMesh는 복제본(또는 참조)임. 원래대로 복원
+                // 원래대로 복원
                 this.numberMap.set(numberId, {
-                    cardId: original.cardId,
-                    cardCount: original.cardCount,
-                    numberMesh: original.numberMesh
+                    cardId: originalNumberInfo.cardId,
+                    cardCount: originalNumberInfo.cardCount,
+                    numberMesh: originalNumberInfo.numberMesh
                 });
 
                 // 필요하면 scene에 다시 add
                 const group = this.numberGroupMap.get(deckId);
                 if (group) {
-                    group.add(original.numberMesh.getMesh());
+                    originalNumberInfo.numberMesh.setVisibility(false);
+                    group.add(originalNumberInfo.numberMesh.getMesh());
                 }
             }
         });
+
+        // To-do: 확인 후 없애야 함
+        const restoredData = numberIdList.map(numberId => {
+            const data = this.numberMap.get(numberId);
+            return data ? {
+                numberId,
+                cardId: data.cardId,
+                cardCount: data.cardCount
+            } : { numberId, cardId: null, cardCount: null };
+        });
+
+        console.log(
+            `%c[덱 편집 중단 후 다른 덱 버튼을 눌렀을 때] Deck ${deckId} restored.`,
+            'color: #2E9AFE; font-weight: bold;'
+        );
+        console.log('복원된 mesh 데이터:', restoredData);
+
     }
 
 }
