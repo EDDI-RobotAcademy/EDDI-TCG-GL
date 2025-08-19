@@ -1035,6 +1035,16 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
             let weaponScene: BattleFieldCardAttributeMarkScene | null = null;
 
+            const cardSceneId = yourFieldCard.getCardSceneId()
+            if (cardSceneId == null) return;
+
+            const yourFieldCardScene = this.yourFieldCardSceneRepository.findById(cardSceneId)
+            if (yourFieldCardScene == null) return;
+
+            const cardGroup = new THREE.Group();
+            this.scene.remove(yourFieldCardScene.getMesh());
+            cardGroup.add(yourFieldCardScene.getMesh());
+
             for (const id of attributeMarkIdList) {
                 const mark = await this.battleFieldCardAttributeMarkRepository.findById(id);
                 if (!mark) continue;
@@ -1045,9 +1055,14 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
                 if (markScene.getMarkSceneType() === MarkSceneType.SWORD ||
                     markScene.getMarkSceneType() === MarkSceneType.STAFF) {
                     weaponScene = markScene;
-                    break;
+                    continue
                 }
+
+                this.scene.remove(markScene.getMesh());
+                cardGroup.add(markScene.getMesh());
             }
+
+            this.scene.add(cardGroup);
 
             console.log(`weaponScene: ${weaponScene}`)
             if (!weaponScene) return;
@@ -1057,12 +1072,13 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             this.deactivateEveryExistOpponentNeonBorder()
             this.deactivateOpponentMasterNeonBorder()
 
-            await this.attackOpponentMasterWithWeapon(weaponScene);
+            await this.attackOpponentMasterWithWeapon(weaponScene, cardGroup);
         }
     }
 
     private async attackOpponentMasterWithWeapon(
         weaponScene: BattleFieldCardAttributeMarkScene,
+        cardGroup: THREE.Group,
     ): Promise<void> {
         console.log(`attackWithWeapon`)
         const weaponMesh = weaponScene.getMesh();
@@ -1081,14 +1097,13 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
         const targetPos = new THREE.Vector3(startX, startY + height / 2, 0.5);
 
-        // // 1) 무기를 상대 근처로 이동
-        // await this.yoursWeaponToOpponent(weaponMesh, originPos, targetPos.clone().add(new THREE.Vector3(0, 0, 0.5)), 1000);
-        //
-        // // 2) 좌우 휘두르기
-        // await this.attackOpponentLeftToRightWithWeapon(weaponMesh, halfWidth * 1.25, 300);
-        //
-        // // 3) 무기 복귀
-        // // await this.returnWeaponFromOpponent(swordMesh, swordMesh.position.clone(), originPos, 1000);
-        // await this.returnWeaponFromOpponent(weaponMesh, weaponMesh.position.clone(), originPos, weaponMesh.rotation.z, originRot, 1000);
+        // 1) 무기를 상대 근처로 이동
+        await this.yoursWeaponToOpponent(weaponMesh, cardGroup, originPos, targetPos.clone().add(new THREE.Vector3(0, 0, 0.5)), 1000);
+
+        // 2) 좌우 휘두르기
+        await this.attackOpponentLeftToRightWithWeapon(weaponMesh, halfWidth * 1.25, 300);
+
+        // 3) 무기 복귀
+        await this.returnWeaponFromOpponent(weaponMesh, cardGroup, weaponMesh.position.clone(), originPos, weaponMesh.rotation.z, originRot, 1000);
     }
 }
