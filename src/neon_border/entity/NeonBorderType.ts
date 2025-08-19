@@ -1,4 +1,5 @@
 export enum NeonBorderType {
     ALLY,
-    ENEMY
+    ENEMY,
+    OPPONENT_MASTER
 }

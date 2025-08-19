@@ -1,4 +1,5 @@
 export enum NeonBorderSceneType {
     HAND = "HAND",
-    FIELD = "FIELD"
+    FIELD = "FIELD",
+    OPPONENT_MASTER = "OPPONENT_MASTER"
 }
