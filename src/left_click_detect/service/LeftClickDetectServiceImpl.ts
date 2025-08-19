@@ -782,6 +782,16 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
             let weaponScene: BattleFieldCardAttributeMarkScene | null = null;
 
+            const cardSceneId = yourFieldCard.getCardSceneId()
+            if (cardSceneId == null) return;
+
+            const yourFieldCardScene = this.yourFieldCardSceneRepository.findById(cardSceneId)
+            if (yourFieldCardScene == null) return;
+
+            const cardGroup = new THREE.Group();
+            this.scene.remove(yourFieldCardScene.getMesh());
+            cardGroup.add(yourFieldCardScene.getMesh());
+
             for (const id of attributeMarkIdList) {
                 const mark = await this.battleFieldCardAttributeMarkRepository.findById(id);
                 if (!mark) continue;
@@ -792,9 +802,14 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
                 if (markScene.getMarkSceneType() === MarkSceneType.SWORD ||
                     markScene.getMarkSceneType() === MarkSceneType.STAFF) {
                     weaponScene = markScene;
-                    break;
+                    continue
                 }
+
+                this.scene.remove(markScene.getMesh());
+                cardGroup.add(markScene.getMesh());
             }
+
+            this.scene.add(cardGroup);
 
             console.log(`weaponScene: ${weaponScene}`)
             if (!weaponScene) return;
@@ -804,11 +819,11 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             this.deactivateEveryExistOpponentNeonBorder()
             this.deactivateOpponentMasterNeonBorder()
 
-            await this.attackWithWeapon(weaponScene, clickedOpponentFieldCardScene);
+            await this.attackWithWeapon(weaponScene, cardGroup, clickedOpponentFieldCardScene);
         }
     }
 
-    private yoursWeaponToOpponent(weaponMesh: THREE.Mesh, originPos: THREE.Vector3, targetPos: THREE.Vector3, duration: number): Promise<void> {
+    private yoursWeaponToOpponent(weaponMesh: THREE.Mesh, cardGroup: THREE.Group, originPos: THREE.Vector3, targetPos: THREE.Vector3, duration: number): Promise<void> {
         return new Promise(resolve => {
             console.log('>>> [Debug] yoursWeaponToOpponent called');
             console.log('>>> weaponMesh position before tween:', weaponMesh.position);
@@ -816,8 +831,12 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
             const startRot = weaponMesh.rotation.z;        // 시작 회전
             const endRot = startRot + Math.PI * 130 / 180;        // 목표 회전 (좌측으로 기울이기)
+            const startY = cardGroup.position.y;
 
-            const tween = new TWEEN.Tween({
+            const quarterWidth = this.CARD_WIDTH * window.innerWidth / 4;
+
+            // 무기 Tween
+            const weaponTween = new TWEEN.Tween({
                 x: originPos.x,
                 y: originPos.y,
                 z: originPos.z,
@@ -830,12 +849,23 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
                     rot: endRot
                 }, duration)
                 .easing(TWEEN.Easing.Quadratic.In)
-                .onUpdate((obj: { x: number; y: number; z: number; rot: number; }) => {
+                .onUpdate((obj: { x: number; y: number; z: number; rot: number }) => {
                     weaponMesh.position.set(obj.x, obj.y, obj.z);
                     weaponMesh.rotation.z = obj.rot;
-                })
-                .onComplete(() => resolve())
-                .start();
+                });
+
+            // 카드 Mesh Tween (y 살짝 올렸다가 다시 내리기)
+            const cardUp = new TWEEN.Tween({ y: startY })
+                .to({ y: startY + quarterWidth }, duration / 2)
+                .easing(TWEEN.Easing.Quadratic.Out)
+                .onUpdate((obj: { y: number; }) => cardGroup.position.y = obj.y);
+
+            // 동시에 시작
+            weaponTween.start();
+            cardUp.start();
+
+            // 완료 시 resolve
+            setTimeout(() => resolve(), duration);
         });
     }
 
@@ -872,7 +902,8 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     }
 
     private returnWeaponFromOpponent(
-        mesh: THREE.Mesh,
+        weaponMesh: THREE.Mesh,
+        cardGroup: THREE.Group,
         fromPos: THREE.Vector3,
         toPos: THREE.Vector3,
         fromRot: number,
@@ -880,21 +911,38 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         duration: number
     ): Promise<void> {
         return new Promise(resolve => {
-            const obj = { x: fromPos.x, y: fromPos.y, z: fromPos.z, rot: fromRot };
-            new TWEEN.Tween(obj)
+            // 무기 Tween
+            const weaponObj = { x: fromPos.x, y: fromPos.y, z: fromPos.z, rot: fromRot };
+            const quarterWidth = this.CARD_WIDTH * window.innerWidth / 4;
+
+            const weaponTween = new TWEEN.Tween(weaponObj)
                 .to({ x: toPos.x, y: toPos.y, z: toPos.z, rot: toRot }, duration)
                 .easing(TWEEN.Easing.Quadratic.In)
                 .onUpdate(() => {
-                    mesh.position.set(obj.x, obj.y, obj.z);
-                    mesh.rotation.z = obj.rot;
-                })
-                .onComplete(() => resolve())
-                .start();
+                    weaponMesh.position.set(weaponObj.x, weaponObj.y, weaponObj.z);
+                    weaponMesh.rotation.z = weaponObj.rot;
+                });
+
+            // 카드 Tween (y 내려오기)
+            const startY = cardGroup.position.y;
+            const cardDown = new TWEEN.Tween({ y: startY })
+                .to({ y: startY - quarterWidth }, duration)
+                .easing(TWEEN.Easing.Quadratic.InOut)
+                .onUpdate((obj: { y: number; }) => {
+                    cardGroup.position.y = obj.y;
+                });
+
+            // 둘 다 동시에 실행
+            weaponTween.start();
+            cardDown.start();
+
+            setTimeout(() => resolve(), duration);
         });
     }
 
     private async attackWithWeapon(
         weaponScene: BattleFieldCardAttributeMarkScene,
+        cardGroup: THREE.Group,
         opponentScene: OpponentFieldCardScene
     ): Promise<void> {
         console.log(`attackWithWeapon`)
@@ -908,14 +956,13 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         const targetPos = targetMesh.position.clone().add(new THREE.Vector3(-halfWidth, 0, 0.5));
 
         // 1) 무기를 상대 근처로 이동
-        await this.yoursWeaponToOpponent(weaponMesh, originPos, targetPos.clone().add(new THREE.Vector3(0, 0, 0.5)), 1000);
+        await this.yoursWeaponToOpponent(weaponMesh, cardGroup, originPos, targetPos.clone().add(new THREE.Vector3(0, 0, 0.5)), 1000);
 
         // 2) 좌우 휘두르기
         await this.attackOpponentLeftToRightWithWeapon(weaponMesh, halfWidth * 1.25, 300);
 
         // 3) 무기 복귀
-        // await this.returnWeaponFromOpponent(swordMesh, swordMesh.position.clone(), originPos, 1000);
-        await this.returnWeaponFromOpponent(weaponMesh, weaponMesh.position.clone(), originPos, weaponMesh.rotation.z, originRot, 1000);
+        await this.returnWeaponFromOpponent(weaponMesh, cardGroup, weaponMesh.position.clone(), originPos, weaponMesh.rotation.z, originRot, 1000);
     }
 
     async handleOpponentHandClick(x: number, y: number): Promise<void> {
@@ -1034,14 +1081,14 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
         const targetPos = new THREE.Vector3(startX, startY + height / 2, 0.5);
 
-        // 1) 무기를 상대 근처로 이동
-        await this.yoursWeaponToOpponent(weaponMesh, originPos, targetPos.clone().add(new THREE.Vector3(0, 0, 0.5)), 1000);
-
-        // 2) 좌우 휘두르기
-        await this.attackOpponentLeftToRightWithWeapon(weaponMesh, halfWidth * 1.25, 300);
-
-        // 3) 무기 복귀
-        // await this.returnWeaponFromOpponent(swordMesh, swordMesh.position.clone(), originPos, 1000);
-        await this.returnWeaponFromOpponent(weaponMesh, weaponMesh.position.clone(), originPos, weaponMesh.rotation.z, originRot, 1000);
+        // // 1) 무기를 상대 근처로 이동
+        // await this.yoursWeaponToOpponent(weaponMesh, originPos, targetPos.clone().add(new THREE.Vector3(0, 0, 0.5)), 1000);
+        //
+        // // 2) 좌우 휘두르기
+        // await this.attackOpponentLeftToRightWithWeapon(weaponMesh, halfWidth * 1.25, 300);
+        //
+        // // 3) 무기 복귀
+        // // await this.returnWeaponFromOpponent(swordMesh, swordMesh.position.clone(), originPos, 1000);
+        // await this.returnWeaponFromOpponent(weaponMesh, weaponMesh.position.clone(), originPos, weaponMesh.rotation.z, originRot, 1000);
     }
 }
