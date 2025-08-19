@@ -195,18 +195,20 @@ export class NeonShape {
         const results = [];
 
         // 사각형의 각 변에 대해 4개의 선을 추가하고 결과 저장
-        results.push(await this.addNeonShaderLine(startX + 5.0, startY, startX + width - 5.0, startY, baseColor, glowColor)); // 하단
-        results.push(await this.addNeonShaderLine(startX + width, startY - 5.0, startX + width, startY + height, baseColor, glowColor)); // 좌측
+        // results.push(await this.addNeonShaderLine(startX + 5.0, startY, startX + width - 5.0, startY, baseColor, glowColor)); // 하단
+        results.push(await this.addNeonShaderLine(startX, startY, startX + width, startY, baseColor, glowColor)); // 하단
+        // results.push(await this.addNeonShaderLine(startX + width, startY - 5.0, startX + width, startY + height, baseColor, glowColor)); // 우측
+        results.push(await this.addNeonShaderLine(startX + width, startY - 2.5, startX + width, startY + height, baseColor, glowColor)); // 우측
         results.push(
             await this.addNeonShaderLine(
-                startX + width + 5.0,
+                startX + width + 2.5,
                 startY + height,
-                startX - 5.0,
+                startX - 2.5,
                 startY + height,
                 baseColor, glowColor
             )
         ); // 상단
-        results.push(await this.addNeonShaderLine(startX, startY + height, startX, startY - 5.0, baseColor, glowColor)); // 우측
+        results.push(await this.addNeonShaderLine(startX, startY + height, startX, startY - 2.5, baseColor, glowColor)); // 좌측
 
         // 결과를 라인과 머티리얼로 분리
         const lines = results.map((result) => result.line);
@@ -227,7 +229,7 @@ export class NeonShape {
         direction.normalize();
 
         // 선의 기하학적 정의
-        const geometry = new THREE.PlaneGeometry(length, 10); // 선 두께는 10으로 설정
+        const geometry = new THREE.PlaneGeometry(length, 5); // 선 두께는 10으로 설정
         const line = new THREE.Mesh(geometry, neonMaterial);
 
         // 선 회전 (방향 맞추기)

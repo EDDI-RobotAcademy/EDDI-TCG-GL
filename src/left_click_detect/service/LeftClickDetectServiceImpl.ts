@@ -85,6 +85,12 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private readonly CARD_WIDTH: number = 0.06493506493
     private readonly CARD_HEIGHT: number = this.CARD_WIDTH * 1.615
 
+    private readonly OPPONENT_START_X: number = 0.4605885
+    private readonly OPPONENT_START_Y: number = 0.1920103
+
+    private readonly OPPONENT_END_X: number = 0.5410156
+    private readonly OPPONENT_END_Y: number = 0.0476804
+
     private mouseCursorDetectRepository: MouseCursorDetectRepository
 
     private neonBorderRepository: NeonBorderRepository;
@@ -349,12 +355,19 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         switch (type) {
             case "general":
                 this.createOpponentNeonBorderList()
+                this.createOpponentMasterNeonBorder()
                 break;
             case "firstSkill":
                 console.log("firstSkill type")
+                if (skill1Type === SkillType.Single) {
+                    this.createOpponentNeonBorderList()
+                }
                 break;
             case "secondSkill":
                 console.log("secondSkill type")
+                if (skill2Type === SkillType.EveryUnitField) {
+                    console.log("유닛 필드 전체 공격")
+                }
                 break;
             case "details":
                 // ...
@@ -428,6 +441,73 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         );
     }
 
+    private async createNeonBorderNormalization(
+        startX: number,
+        startY: number,
+        width: number,
+        height: number,
+        sceneType: NeonBorderSceneType,
+        targetSceneId: number | null,
+        borderType: NeonBorderType,
+        color1: THREE.ColorRepresentation = 0x2C75FF,
+        color2: THREE.ColorRepresentation = 0x2EFEF7
+    ): Promise<NeonBorder> {
+        const { lines, neonMaterials } = await this.neonShape.addNeonShaderRectangle(
+            startX,
+            startY,
+            width,
+            height,
+            new THREE.Color(color1),
+            new THREE.Color(color2)
+        );
+
+        const lineSceneIds = lines.map((line) => {
+            const scene = new NeonBorderLineScene(line, line.material as THREE.ShaderMaterial);
+            this.neonBorderLineSceneRepository.save(scene);
+            return scene.getId();
+        });
+
+        const positionIds = lines.map((line) => {
+            const position = new NeonBorderLinePosition(new Vector2d(line.position.x, line.position.y));
+            this.neonBorderLinePositionRepository.save(position);
+            return position.getId();
+        });
+
+        const neonBorder = new NeonBorder(
+            lineSceneIds,
+            positionIds,
+            sceneType,
+            targetSceneId ?? -1,
+            borderType
+        );
+
+        console.log(chalk.red.bold(`Created new NeonBorder: ${JSON.stringify(neonBorder)}`));
+        this.neonBorderRepository.save(neonBorder);
+
+        return neonBorder;
+    }
+
+    private async createOpponentMasterNeonBorder() {
+        // const existingOpponentMasterNeonBorder = this.neonBorderRepository.findOpponentMaster(NeonBorderType.MASTER);
+
+        const opponentMasterStartX = (this.OPPONENT_START_X - 0.5) * window.innerWidth;
+        // const opponentMasterStartX = 0;
+        console.log(`opponentMasterStartX: ${opponentMasterStartX}`)
+        const opponentMasterStartY = (0.5 - this.OPPONENT_START_Y) * window.innerHeight;
+        // const opponentMasterStartY = 0;
+
+        const opponentMasterEndX = (this.OPPONENT_END_X - 0.5) * window.innerWidth;
+        const opponentMasterEndY = (0.5 - this.OPPONENT_END_Y) * window.innerHeight;
+
+        const opponentMasterWidth = (opponentMasterEndX - opponentMasterStartX);
+        const opponentMasterHeight = (opponentMasterEndY - opponentMasterStartY);
+
+        await this.createNeonBorderNormalization(
+            opponentMasterStartX, opponentMasterStartY, opponentMasterWidth, opponentMasterHeight,
+            NeonBorderSceneType.OPPONENT_MASTER, null, NeonBorderType.OPPONENT_MASTER,
+            new THREE.Color(0xFF1A1A), new THREE.Color(0xFFEF7F));
+    }
+
     private async createNeonBorder(clickedCard: ClickableCard): Promise<void> {
         const cardMesh = clickedCard.getMesh();
         cardMesh.renderOrder = 1;
@@ -464,6 +544,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         const startY = cardPosition.y - halfHeight;
         const width = this.CARD_WIDTH * window.innerWidth;
         const height = this.CARD_HEIGHT * window.innerWidth;
+        console.log(`startX: ${startX}, startY: ${startY}, width: ${width}, height: ${height}`);
 
         const { lines, neonMaterials } = await this.neonShape.addNeonShaderRectangle(startX, startY, width, height,
             new THREE.Color(0x2C75FF), new THREE.Color(0x2EFEF7));
@@ -790,20 +871,6 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
                 .start();
         });
     }
-
-    // private returnWeaponFromOpponent(mesh: THREE.Mesh, from: THREE.Vector3, to: THREE.Vector3, duration: number): Promise<void> {
-    //     return new Promise(resolve => {
-    //         const pos = { x: from.x, y: from.y, z: from.z };
-    //         new TWEEN.Tween(pos)
-    //             .to({ x: to.x, y: to.y, z: to.z }, duration)
-    //             .easing(TWEEN.Easing.Quadratic.In)
-    //             .onUpdate(() => {
-    //                 mesh.position.set(pos.x, pos.y, pos.z);
-    //             })
-    //             .onComplete(() => resolve())
-    //             .start();
-    //     });
-    // }
 
     private returnWeaponFromOpponent(
         mesh: THREE.Mesh,
