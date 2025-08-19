@@ -501,13 +501,14 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     }
 
     private async createOpponentMasterNeonBorder() {
-        // const existingOpponentMasterNeonBorder = this.neonBorderRepository.findOpponentMaster(NeonBorderType.MASTER);
+        const existingOpponentMasterNeonBorder = this.neonBorderRepository.findOpponentMaster(NeonBorderType.OPPONENT_MASTER);
+        if (existingOpponentMasterNeonBorder) {
+            this.enableExistingNeonBorder(existingOpponentMasterNeonBorder);
+            return;
+        }
 
         const opponentMasterStartX = (this.OPPONENT_START_X - 0.5) * window.innerWidth;
-        // const opponentMasterStartX = 0;
-        console.log(`opponentMasterStartX: ${opponentMasterStartX}`)
         const opponentMasterStartY = (0.5 - this.OPPONENT_START_Y) * window.innerHeight;
-        // const opponentMasterStartY = 0;
 
         const opponentMasterEndX = (this.OPPONENT_END_X - 0.5) * window.innerWidth;
         const opponentMasterEndY = (0.5 - this.OPPONENT_END_Y) * window.innerHeight;
@@ -570,6 +571,21 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
         console.log(`Activating existing NeonBorder for cardSceneId: ${yourFieldSceneId}`);
         this.enableExistingNeonBorder(existingNeonBorder)
+    }
+
+    private deactivateOpponentMasterNeonBorder(): void {
+        const opponentMasterNeonBorder = this.neonBorderRepository.findOpponentMaster(NeonBorderType.OPPONENT_MASTER);
+        if (!opponentMasterNeonBorder) return;
+
+        opponentMasterNeonBorder.getNeonBorderLineSceneIdList().forEach((lineSceneId) => {
+            const lineScene = this.neonBorderLineSceneRepository.findById(lineSceneId);
+            if (lineScene) {
+                const lineMesh = lineScene.getLine();
+                if (lineMesh) {
+                    lineMesh.visible = false; // visibility off
+                }
+            }
+        });
     }
 
     private deactivateEveryExistOpponentNeonBorder(): void {
@@ -781,6 +797,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             this.activePanelAreaRepository.delete()
             this.deactivateExistNeonBorder(selectedYourFieldCard)
             this.deactivateEveryExistOpponentNeonBorder()
+            this.deactivateOpponentMasterNeonBorder()
 
             await this.attackWithWeapon(swordScene, clickedOpponentFieldCardScene);
         }

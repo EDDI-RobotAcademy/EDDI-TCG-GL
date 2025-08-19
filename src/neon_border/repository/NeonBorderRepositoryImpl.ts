@@ -76,4 +76,17 @@ export class NeonBorderRepositoryImpl implements NeonBorderRepository {
         }
         return null;
     }
+
+    findOpponentMaster(borderType: NeonBorderType): NeonBorder | null {
+        for (const neonBorder of this.storage.values()) {
+            if (
+                neonBorder.getType() === borderType
+            ) {
+                console.log(chalk.red.bold(`Found Opponent Master NeonBorder (id: ${neonBorder.getId()})`));
+                return neonBorder;
+            }
+        }
+        return null;
+    }
+
 }

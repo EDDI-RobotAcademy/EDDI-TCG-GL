@@ -12,4 +12,5 @@ export interface NeonBorderRepository {
     findByCardSceneId(cardSceneId: number): NeonBorder | null;
     findByCardSceneIdWithSceneType(sceneId: number, type: NeonBorderSceneType): NeonBorder | null;
     findByCardSceneIdWithPlacement(sceneId: number, type: NeonBorderSceneType, borderType: NeonBorderType): NeonBorder | null;
+    findOpponentMaster(borderType: NeonBorderType): NeonBorder | null;
 }
