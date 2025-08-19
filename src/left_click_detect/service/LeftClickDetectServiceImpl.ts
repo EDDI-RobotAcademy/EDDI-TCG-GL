@@ -487,6 +487,19 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         return neonBorder;
     }
 
+    private enableExistingNeonBorder(neonBorder: NeonBorder): void {
+        neonBorder.getNeonBorderLineSceneIdList().forEach((lineSceneId) => {
+            const lineScene = this.neonBorderLineSceneRepository.findById(lineSceneId);
+            if (lineScene) {
+                const lineMesh = lineScene.getLine();
+                if (lineMesh) {
+                    lineMesh.visible = true;
+                    console.log(`Neon Border Line (ID: ${lineSceneId}) visibility set to true.`);
+                }
+            }
+        });
+    }
+
     private async createOpponentMasterNeonBorder() {
         // const existingOpponentMasterNeonBorder = this.neonBorderRepository.findOpponentMaster(NeonBorderType.MASTER);
 
@@ -527,16 +540,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         console.log(chalk.red.bold(`existingNeonBorder: ${existingNeonBorder}`));
         if (existingNeonBorder) {
             console.log(`NeonBorder already exists for cardSceneId: ${cardSceneId}, enabling visibility.`);
-            existingNeonBorder.getNeonBorderLineSceneIdList().forEach((lineSceneId) => {
-                const lineScene = this.neonBorderLineSceneRepository.findById(lineSceneId);
-                if (lineScene) {
-                    const lineMesh = lineScene.getLine();
-                    if (lineMesh) {
-                        lineMesh.visible = true; // Enable visibility
-                        console.log(`Neon Border Line (ID: ${lineSceneId}) visibility set to true.`);
-                    }
-                }
-            });
+            this.enableExistingNeonBorder(existingNeonBorder);
             return;
         }
 
@@ -546,27 +550,10 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         const height = this.CARD_HEIGHT * window.innerWidth;
         console.log(`startX: ${startX}, startY: ${startY}, width: ${width}, height: ${height}`);
 
-        const { lines, neonMaterials } = await this.neonShape.addNeonShaderRectangle(startX, startY, width, height,
+        await this.createNeonBorderNormalization(
+            startX, startY, width, height,
+            NeonBorderSceneType.HAND, cardSceneId, NeonBorderType.ALLY,
             new THREE.Color(0x2C75FF), new THREE.Color(0x2EFEF7));
-
-        const lineSceneIds = lines.map((line) => {
-            const scene = new NeonBorderLineScene(line, line.material as THREE.ShaderMaterial);
-            this.neonBorderLineSceneRepository.save(scene);
-            return scene.getId();
-        });
-
-        const positionIds = lines.map((line) => {
-            const position = new NeonBorderLinePosition(new Vector2d(line.position.x, line.position.y));
-            this.neonBorderLinePositionRepository.save(position);
-            return position.getId();
-        });
-
-        const neonBorder = new NeonBorder(lineSceneIds, positionIds, NeonBorderSceneType.HAND, cardSceneId, NeonBorderType.ALLY);
-        console.log(chalk.red.bold(`neonBorderSceneType: ${neonBorder.getNeonBorderSceneType()}`));
-        console.log(chalk.red.bold(`Expected sceneType: ${NeonBorderSceneType.HAND}`));
-        console.log(chalk.red.bold(`Created new NeonBorder for cardSceneId: ${cardSceneId}`));
-        console.log(chalk.red.bold(`chalk.red.bold(Saving NeonBorder: ${JSON.stringify(neonBorder)}`));
-        this.neonBorderRepository.save(neonBorder);
     }
 
     private activateExistNeonBorder(clickedCard: ClickableCard): void {
@@ -582,16 +569,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         }
 
         console.log(`Activating existing NeonBorder for cardSceneId: ${yourFieldSceneId}`);
-
-        existingNeonBorder.getNeonBorderLineSceneIdList().forEach((lineSceneId) => {
-            const lineScene = this.neonBorderLineSceneRepository.findById(lineSceneId);
-            if (lineScene) {
-                const lineMesh = lineScene.getLine();
-                if (lineMesh) {
-                    lineMesh.visible = true;
-                }
-            }
-        });
+        this.enableExistingNeonBorder(existingNeonBorder)
     }
 
     private deactivateEveryExistOpponentNeonBorder(): void {
