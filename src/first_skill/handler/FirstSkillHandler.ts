@@ -114,6 +114,13 @@ export class FirstSkillHandler {
 
     private async handleOpponentMaster(x: number, y: number): Promise<void> {
         console.log(`첫 번째 스킬 (타겟팅) 공격: 상대 본체 공격 처리 (x:${x}, y:${y})`);
+
+        const { cardGroup, selectedYourFieldCard } = await this.prepareYourAttacker();
+
+        this.neonBorderHandler.cleanupAfterAction(selectedYourFieldCard)
+
+        this.firstSkillAnimation.setScene(this.scene);
+        this.firstSkillAnimation.targetingSkillToOpponentMaster(cardGroup)
     }
 
     private async prepareYourAttacker() {
