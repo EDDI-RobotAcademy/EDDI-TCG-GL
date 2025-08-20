@@ -30,6 +30,7 @@ import {ActivePanelAreaRepository} from "../../active_panel_area/repository/Acti
 import {NeonBorderRepository} from "../../neon_border/repository/NeonBorderRepository";
 import {NeonBorderLineSceneRepository} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepository";
 import {MarkSceneType} from "../../battle_field_card_attribute_mark_scene/entity/MarkSceneType";
+import {NeonBorderHandler} from "../../neon_border/handler/NeonBorderHandler";
 
 export class FirstSkillHandler {
     private static instance: FirstSkillHandler;
@@ -51,6 +52,7 @@ export class FirstSkillHandler {
     private neonBorderLineSceneRepository: NeonBorderLineSceneRepository;
 
     private firstSkillAnimation: FirstSkillAnimation;
+    private neonBorderHandler: NeonBorderHandler;
 
     private handlers: Record<FirstSkillType,
         (x: number, y: number) => Promise<void>> = {
@@ -76,6 +78,7 @@ export class FirstSkillHandler {
         this.neonBorderLineSceneRepository = NeonBorderLineSceneRepositoryImpl.getInstance();
 
         this.firstSkillAnimation = FirstSkillAnimation.getInstance();
+        this.neonBorderHandler = NeonBorderHandler.getInstance(camera, scene);
     }
 
     public static getInstance(camera: THREE.Camera, scene: THREE.Scene): FirstSkillHandler {
@@ -101,7 +104,9 @@ export class FirstSkillHandler {
     private async handleOpponentFieldUnit(x: number, y: number): Promise<void> {
         console.log(`첫 번째 스킬 (타겟팅) 공격: 상대 필드 유닛 공격 처리 (x:${x}, y:${y})`);
 
-        const { cardGroup } = await this.prepareYourAttacker();
+        const { cardGroup, selectedYourFieldCard } = await this.prepareYourAttacker();
+
+        this.neonBorderHandler.cleanupAfterAction(selectedYourFieldCard)
 
         this.firstSkillAnimation.setScene(this.scene);
         this.firstSkillAnimation.targetingSkillToOpponent(cardGroup)
@@ -133,17 +138,22 @@ export class FirstSkillHandler {
         const yourFieldCardScene = this.yourFieldCardSceneRepository.findById(cardSceneId);
         if (yourFieldCardScene == null) throw new Error("공격자 Scene 없음");
 
-        // 카드 + 마크 그룹핑
-        const cardGroup = new THREE.Group();
-        const originMeshPos = yourFieldCardScene.getMesh().position.clone();
-        cardGroup.position.copy(originMeshPos);
+        // 카드 씬의 원래 위치 저장
+        if (!yourFieldCardScene.getMesh().userData.originPos) {
+            yourFieldCardScene.getMesh().userData.originPos = yourFieldCardScene.getMesh().position.clone();
+        }
 
-        // 카드 mesh를 그룹 안으로 옮기고, 그룹 기준으로 0으로 설정
-        this.scene.remove(yourFieldCardScene.getMesh());
+        const originPos = yourFieldCardScene.getMesh().userData.originPos.clone();
+
+        // 그룹 위치를 카드 원래 위치로
+        const cardGroup = new THREE.Group();
+        cardGroup.position.copy(originPos);
+
+        // 카드 mesh 위치를 그룹 기준 0,0,0으로
         yourFieldCardScene.getMesh().position.set(0, 0, 0);
         cardGroup.add(yourFieldCardScene.getMesh());
 
-        // attribute mark들 역시 그룹 안으로 옮기고 그룹 기준 상대좌표로 설정
+        // 마크 처리
         for (const id of attributeMarkIdList) {
             const mark = await this.battleFieldCardAttributeMarkRepository.findById(id);
             if (!mark) continue;
@@ -152,8 +162,14 @@ export class FirstSkillHandler {
             if (!markScene) continue;
 
             this.scene.remove(markScene.getMesh());
-            const relativePos = markScene.getMesh().position.clone().sub(originMeshPos);
+
+            // 카드 기준 상대좌표로 변환
+            if (!markScene.getMesh().userData.originPos) {
+                markScene.getMesh().userData.originPos = markScene.getMesh().position.clone();
+            }
+            const relativePos = markScene.getMesh().userData.originPos.clone().sub(originPos);
             markScene.getMesh().position.copy(relativePos);
+
             cardGroup.add(markScene.getMesh());
         }
 
@@ -165,6 +181,6 @@ export class FirstSkillHandler {
             console.log(`child[${idx}] mesh position:`, child.position);
         });
 
-        return { cardGroup };
+        return { cardGroup, selectedYourFieldCard };
     }
 }

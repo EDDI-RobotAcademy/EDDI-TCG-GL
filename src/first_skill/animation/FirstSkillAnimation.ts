@@ -35,6 +35,26 @@ export class FirstSkillAnimation {
 
         // 3. 카드 원위치 복귀
         await this.returnYourCardFromSkillPanel(yourCardGroup, 1000);
+
+        yourCardGroup.userData.originPos = yourCardGroup.position.clone();
+
+        // ✅ 모든 child의 월드 좌표 저장 (무기 포함)
+        yourCardGroup.children.forEach(child => {
+            child.userData.originPos = child.getWorldPosition(new THREE.Vector3());
+        });
+
+        // ✅ 씬에 남아 있는 무기도 반드시 갱신
+        this.scene.traverse(obj => {
+            if (obj.userData && obj.userData.isWeapon) {
+                obj.userData.originPos = obj.getWorldPosition(new THREE.Vector3());
+            }
+        });
+
+        this.scene.traverse(obj => {
+            if (obj.userData?.isWeapon) {
+                obj.userData.originPos = obj.getWorldPosition(new THREE.Vector3());
+            }
+        });
     }
 
     private async yourCardToSkillPanel(cardGroup: THREE.Group, duration: number): Promise<void> {

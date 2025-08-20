@@ -44,21 +44,36 @@ export class GeneralAttackAnimation {
         const weaponMesh = weaponScene.getMesh();
         const targetMesh = opponentScene.getMesh();
 
-        const originPos = weaponMesh.position.clone();
+        // ✅ 월드 좌표 보장
+        weaponMesh.updateMatrixWorld(true);
+        targetMesh.updateMatrixWorld(true);
+
+        const originPos = weaponMesh.getWorldPosition(new THREE.Vector3()); // ✅
         const originRot = weaponMesh.rotation.z;
 
         const halfWidth = this.CARD_WIDTH * window.innerWidth / 2;
         const halfHeight = this.CARD_HEIGHT * window.innerWidth / 2;
-        const targetPos = targetMesh.position.clone().add(new THREE.Vector3(-halfWidth, 0, 0.5));
+
+        const targetPos = targetMesh
+            .getWorldPosition(new THREE.Vector3())   // ✅ 월드
+            .add(new THREE.Vector3(-halfWidth, 0, 0.5));
 
         // 1) 무기를 상대 근처로 이동
-        await this.yoursWeaponToOpponent(weaponMesh, cardGroup, originPos, targetPos.clone().add(new THREE.Vector3(0, 0, 0.5)), 1000);
+        await this.yoursWeaponToOpponent(
+            weaponMesh, cardGroup, originPos,
+            targetPos.clone().add(new THREE.Vector3(0, 0, 0.5)), 1000
+        );
 
         // 2) 좌우 휘두르기
-        await this.attackOpponentUnitLeftToRightWithWeapon(weaponMesh, opponentCardGroup, halfWidth, halfHeight, 300);
+        await this.attackOpponentUnitLeftToRightWithWeapon(
+            weaponMesh, opponentCardGroup, halfWidth, halfHeight, 300
+        );
 
         // 3) 무기 복귀
-        await this.returnWeaponFromOpponent(weaponMesh, cardGroup, weaponMesh.position.clone(), originPos, weaponMesh.rotation.z, originRot, 1000);
+        const curWorld = weaponMesh.getWorldPosition(new THREE.Vector3()); // ✅
+        await this.returnWeaponFromOpponent(
+            weaponMesh, cardGroup, curWorld, originPos, weaponMesh.rotation.z, originRot, 1000
+        );
     }
 
     /** 본체 공격 */
