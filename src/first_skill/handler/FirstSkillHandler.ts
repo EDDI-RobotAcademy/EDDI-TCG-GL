@@ -135,9 +135,15 @@ export class FirstSkillHandler {
 
         // 카드 + 마크 그룹핑
         const cardGroup = new THREE.Group();
+        const originMeshPos = yourFieldCardScene.getMesh().position.clone();
+        cardGroup.position.copy(originMeshPos);
+
+        // 카드 mesh를 그룹 안으로 옮기고, 그룹 기준으로 0으로 설정
         this.scene.remove(yourFieldCardScene.getMesh());
+        yourFieldCardScene.getMesh().position.set(0, 0, 0);
         cardGroup.add(yourFieldCardScene.getMesh());
 
+        // attribute mark들 역시 그룹 안으로 옮기고 그룹 기준 상대좌표로 설정
         for (const id of attributeMarkIdList) {
             const mark = await this.battleFieldCardAttributeMarkRepository.findById(id);
             if (!mark) continue;
@@ -146,10 +152,19 @@ export class FirstSkillHandler {
             if (!markScene) continue;
 
             this.scene.remove(markScene.getMesh());
+            const relativePos = markScene.getMesh().position.clone().sub(originMeshPos);
+            markScene.getMesh().position.copy(relativePos);
             cardGroup.add(markScene.getMesh());
         }
 
         this.scene.add(cardGroup);
+
+        console.log("원래 카드 씬 위치:", yourFieldCardScene.getMesh().position);
+        console.log("그룹핑 후 카드 위치:", cardGroup.position);
+        cardGroup.children.forEach((child, idx) => {
+            console.log(`child[${idx}] mesh position:`, child.position);
+        });
+
         return { cardGroup };
     }
 }

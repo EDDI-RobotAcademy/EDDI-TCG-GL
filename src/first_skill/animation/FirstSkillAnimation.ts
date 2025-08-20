@@ -8,16 +8,10 @@ declare const TWEEN: {
 
 export class FirstSkillAnimation {
     private static instance: FirstSkillAnimation;
-
     private scene!: THREE.Scene;
-    private readonly CARD_WIDTH: number = 0.06493506493
-    private readonly CARD_HEIGHT: number = this.CARD_WIDTH * 1.615
 
-    private readonly OPPONENT_START_X: number = 0.4605885
-    private readonly OPPONENT_START_Y: number = 0.1920103
-
-    private readonly OPPONENT_END_X: number = 0.5410156
-    private readonly OPPONENT_END_Y: number = 0.0476804
+    private readonly SKILL_PANEL_X = 0;
+    private readonly SKILL_PANEL_Y = (0.5 - 0.78221649) * window.innerHeight; // 원래 y 그대로
 
     private constructor() {}
 
@@ -32,14 +26,67 @@ export class FirstSkillAnimation {
         this.scene = scene;
     }
 
-    public async targetingSkillToOpponent(
-        yourCardGroup: THREE.Group,
-    ): Promise<void> {
+    public async targetingSkillToOpponent(yourCardGroup: THREE.Group): Promise<void> {
+        // 1. 카드 스킬 패널로 이동
         await this.yourCardToSkillPanel(yourCardGroup, 1000);
 
-        // await this.useSkillEffectToTarget(weaponMesh, opponentCardGroup, halfWidth, halfHeight, 300);
+        // 2. (추후) 스킬 이펙트 처리
+        // await this.useSkillEffectToTarget(...);
 
+        // 3. 카드 원위치 복귀
         await this.returnYourCardFromSkillPanel(yourCardGroup, 1000);
+    }
+
+    private async yourCardToSkillPanel(cardGroup: THREE.Group, duration: number): Promise<void> {
+        return new Promise(resolve => {
+            // 원래 위치 저장
+            if (!cardGroup.userData.originPos) {
+                cardGroup.userData.originPos = cardGroup.position.clone();
+            }
+
+            const originPos = cardGroup.position.clone();
+            console.log(`cardGroup.position: ${JSON.stringify(cardGroup.position)}`)
+
+            // 절대 좌표 기준 스킬 패널 위치
+            const destPos = new THREE.Vector3(
+                this.SKILL_PANEL_X,
+                this.SKILL_PANEL_Y,
+                originPos.z + 1
+            );
+
+            console.log(`[yourCardToSkillPanel] origin: (${originPos.x.toFixed(2)}, ${originPos.y.toFixed(2)}, ${originPos.z.toFixed(2)})`);
+            console.log(`[yourCardToSkillPanel] dest:   (${destPos.x.toFixed(2)}, ${destPos.y.toFixed(2)}, ${destPos.z.toFixed(2)})`);
+
+            const tweenObj = { x: originPos.x, y: originPos.y, z: originPos.z };
+
+            new TWEEN.Tween(tweenObj)
+                .to({ x: destPos.x, y: destPos.y, z: destPos.z }, duration)
+                .easing(TWEEN.Easing.Quadratic.Out)
+                .onUpdate(() => {
+                    cardGroup.position.set(tweenObj.x, tweenObj.y, tweenObj.z);
+                })
+                .onComplete(() => resolve())
+                .start();
+        });
+    }
+
+    private async returnYourCardFromSkillPanel(cardGroup: THREE.Group, duration: number): Promise<void> {
+        return new Promise(resolve => {
+            const originPos = cardGroup.userData.originPos as THREE.Vector3;
+
+            if (!originPos) return resolve();
+
+            const tweenObj = { x: cardGroup.position.x, y: cardGroup.position.y, z: cardGroup.position.z };
+
+            new TWEEN.Tween(tweenObj)
+                .to({ x: originPos.x, y: originPos.y, z: originPos.z }, duration)
+                .easing(TWEEN.Easing.Quadratic.InOut)
+                .onUpdate(() => {
+                    cardGroup.position.set(tweenObj.x, tweenObj.y, tweenObj.z);
+                })
+                .onComplete(() => resolve())
+                .start();
+        });
     }
 
     public async targetingSkillToOpponentMaster(
@@ -47,61 +94,4 @@ export class FirstSkillAnimation {
     ): Promise<void> {
 
     }
-
-    private async yourCardToSkillPanel(
-        cardGroup: THREE.Group,
-        duration: number
-    ): Promise<void> {
-        return new Promise(resolve => {
-            const originPos = cardGroup.position.clone();
-
-            // 화면 기준으로 스킬 패널 위치 (예시: 화면 하단 중앙)
-            const destX = 0;
-            const destY = -window.innerHeight * 0.25;
-            const destPos = new THREE.Vector3(destX, destY, originPos.z + 1);
-
-            new TWEEN.Tween({
-                x: originPos.x,
-                y: originPos.y,
-                z: originPos.z
-            })
-                .to(
-                    { x: destPos.x, y: destPos.y, z: destPos.z },
-                    duration
-                )
-                .easing(TWEEN.Easing.Quadratic.Out)
-                .onUpdate((obj: { x: number; y: number; z: number }) => {
-                    cardGroup.position.set(obj.x, obj.y, obj.z);
-                })
-                .onComplete(() => resolve())
-                .start();
-        });
-    }
-
-    // 카드 원위치 복귀
-    private async returnYourCardFromSkillPanel(
-        cardGroup: THREE.Group,
-        duration: number
-    ): Promise<void> {
-        return new Promise(resolve => {
-            const destPos = cardGroup.userData.originPos as THREE.Vector3 ?? new THREE.Vector3(0, 0, 0);
-
-            new TWEEN.Tween({
-                x: cardGroup.position.x,
-                y: cardGroup.position.y,
-                z: cardGroup.position.z
-            })
-                .to(
-                    { x: destPos.x, y: destPos.y, z: destPos.z },
-                    duration
-                )
-                .easing(TWEEN.Easing.Quadratic.InOut)
-                .onUpdate((obj: { x: number; y: number; z: number }) => {
-                    cardGroup.position.set(obj.x, obj.y, obj.z);
-                })
-                .onComplete(() => resolve())
-                .start();
-        });
-    }
-
 }
