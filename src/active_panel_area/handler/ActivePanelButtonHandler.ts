@@ -48,7 +48,10 @@ export class ActivePanelButtonHandler {
         ) => {
             if (x !== undefined && y !== undefined) {
                 await this.secondSkillHandler.execute(secondSkillType, x, y);
+                return
             }
+
+            await this.secondSkillHandler.execute(secondSkillType, 0, 0);
         },
         [ActivePanelButtonType.THIRD_SKILL]: async () => {},
         [ActivePanelButtonType.DETAILS]: async () => {},
