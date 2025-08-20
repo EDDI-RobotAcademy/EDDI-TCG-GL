@@ -67,12 +67,7 @@ import {ActivePanelButtonType} from "../../active_panel_area/entity/ActivePanelB
 import {GeneralAttackType} from "../../general_attack/entity/GeneralAttackType";
 import {ActivePanelButtonHandler} from "../../active_panel_area/handler/ActivePanelButtonHandler";
 import {BattleFieldCommonAreaType} from "../../common/type/BattleFieldCommonAreaType";
-
-declare const TWEEN: {
-    Tween: any;
-    Easing: any;
-    update: (time?: number) => void;
-};
+import {NeonBorderHandler} from "../../neon_border/handler/NeonBorderHandler";
 
 export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private static instance: LeftClickDetectServiceImpl | null = null;
@@ -102,6 +97,8 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
     private neonBorderLineSceneRepository: NeonBorderLineSceneRepository;
     private neonBorderLinePositionRepository: NeonBorderLinePositionRepository;
+
+    private neonBorderHandler: NeonBorderHandler;
 
     private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository
     private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository
@@ -158,6 +155,8 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         this.neonBorderLineSceneRepository = NeonBorderLineSceneRepositoryImpl.getInstance()
         this.neonBorderLinePositionRepository = NeonBorderLinePositionRepositoryImpl.getInstance()
 
+        this.neonBorderHandler = NeonBorderHandler.getInstance(camera, scene);
+
         this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance()
         this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance()
         this.battleFieldCardSceneRepository = BattleFieldCardSceneRepositoryImpl.getInstance();
@@ -200,22 +199,6 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         return this.leftMouseDown;
     }
 
-    private determineClickedArea(x: number, y: number): { object: any; area: LeftClickedArea } | null {
-        const handSceneList = this.battleFieldCardSceneRepository.findAll();
-        const clickedHandCard = this.leftClickHandDetectRepository.isYourHandAreaClicked({ x, y }, handSceneList, this.camera);
-        if (clickedHandCard) {
-            return { object: clickedHandCard, area: LeftClickedArea.YOUR_HAND };
-        }
-
-        const yourFieldSceneList = this.yourFieldCardSceneRepository.findAll();
-        const clickedYourFieldCard = this.leftClickYourFieldDetectRepository.isYourFieldAreaClicked({ x, y }, yourFieldSceneList, this.camera);
-        if (clickedYourFieldCard) {
-            return { object: clickedYourFieldCard, area: LeftClickedArea.YOUR_FIELD };
-        }
-
-        return null;
-    }
-
     private getIntersectedButton(
         x: number,
         y: number,
@@ -235,89 +218,6 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         }
 
         return null;
-    }
-
-    private async createOpponentNeonBorderList() {
-        const opponentFieldList = this.opponentFieldRepository.findAll();
-
-        for (const opponentField of opponentFieldList) {
-            const opponentCardSceneId = opponentField.getCardSceneId();
-
-            // 기존 테두리 있는지 확인
-            const existingNeonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(
-                opponentCardSceneId,
-                NeonBorderSceneType.FIELD,
-                NeonBorderType.ENEMY
-            );
-
-            if (existingNeonBorder && existingNeonBorder.getType() === NeonBorderType.ENEMY) {
-                // 기존 테두리 활성화
-                existingNeonBorder.getNeonBorderLineSceneIdList().forEach((lineSceneId) => {
-                    const lineScene = this.neonBorderLineSceneRepository.findById(lineSceneId);
-                    if (lineScene) {
-                        const lineMesh = lineScene.getLine();
-                        if (lineMesh) {
-                            lineMesh.visible = true;
-                        }
-                    }
-                });
-                continue; // 다음 카드로
-            }
-
-            const opponentCardSceneMesh = await this.opponentFieldCardSceneRepository.findById(opponentCardSceneId);
-            if (!opponentCardSceneMesh) continue;
-
-            const opponentCardMesh = opponentCardSceneMesh.getMesh();
-            opponentCardMesh.renderOrder = 1;
-
-            const attributeMarkIds = this.opponentFieldRepository.findAttributeMarkIdListByCardSceneId(opponentCardSceneId) || [];
-
-            for (const attributeMarkId of attributeMarkIds) {
-                const cardAttributeMark = await this.opponentFieldCardAttributeMarkRepository.findById(attributeMarkId);
-                if (!cardAttributeMark) continue;
-
-                const markScene = await this.opponentFieldCardAttributeMarkSceneRepository.findById(cardAttributeMark.attributeMarkSceneId);
-                if (!markScene) continue;
-
-                // 4. Attribute Mesh renderOrder 설정
-                markScene.getMesh().renderOrder = 2;
-            }
-
-            const halfWidth = this.CARD_WIDTH * window.innerWidth / 2;
-            const halfHeight = this.CARD_HEIGHT * window.innerWidth / 2;
-
-            // 새 테두리 생성
-            const startX = opponentCardMesh.position.x - halfWidth;
-            const startY = opponentCardMesh.position.y - halfHeight;
-            const width = this.CARD_WIDTH * window.innerWidth;
-            const height = this.CARD_HEIGHT * window.innerWidth;
-
-            // 빨간색 네온 테두리
-            const { lines, neonMaterials } = await this.neonShape.addNeonShaderRectangle(
-                startX,
-                startY,
-                width,
-                height,
-                new THREE.Color(0xFF1A1A), // baseColor 빨강
-                new THREE.Color(0xFFEF7F)  // glowColor 밝은 빨강
-            );
-
-            // 라인 씬과 포지션 저장
-            const lineSceneIds = lines.map((line) => {
-                const scene = new NeonBorderLineScene(line, line.material as THREE.ShaderMaterial);
-                this.neonBorderLineSceneRepository.save(scene);
-                return scene.getId();
-            });
-
-            const positionIds = lines.map((line) => {
-                const position = new NeonBorderLinePosition(new Vector2d(line.position.x, line.position.y));
-                this.neonBorderLinePositionRepository.save(position);
-                return position.getId();
-            });
-
-            const neonBorder = new NeonBorder(lineSceneIds, positionIds, NeonBorderSceneType.FIELD, opponentCardSceneId, NeonBorderType.ENEMY);
-            this.neonBorderRepository.save(neonBorder);
-        }
     }
 
     private handleActivePanelClick(x: number, y: number): any | null {
@@ -363,15 +263,15 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         // 버튼별 동작
         switch (type) {
             case "general":
-                this.createOpponentNeonBorderList()
-                this.createOpponentMasterNeonBorder()
+                this.neonBorderHandler.createOpponentNeonBorderList()
+                this.neonBorderHandler.createOpponentMasterNeonBorder()
                 this.activePanelAreaRepository.setActivePanelButtonType(ActivePanelButtonType.GENERAL)
                 break;
             case "firstSkill":
                 console.log("firstSkill type")
                 if (skill1Type === SkillType.Single) {
-                    this.createOpponentNeonBorderList()
-                    this.createOpponentMasterNeonBorder()
+                    this.neonBorderHandler.createOpponentNeonBorderList()
+                    this.neonBorderHandler.createOpponentMasterNeonBorder()
                     this.activePanelAreaRepository.setActivePanelButtonType(ActivePanelButtonType.FIRST_SKILL)
                 }
                 break;
@@ -419,261 +319,6 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         return null;
     }
 
-    // 속성 마크 ID 목록 가져오기
-    private getAttributeMarkIdList(cardSceneId: number): number[] {
-        const result = this.battleFieldHandRepository.findAttributeMarkIdListByCardSceneId(cardSceneId);
-        return result || []; // null인 경우 빈 배열 반환
-    }
-
-    // 속성 마크 객체 목록 가져오기
-    private async getAttributeMarkList(attributeMarkIdList: number[]): Promise<BattleFieldCardAttributeMark[]> {
-        const attributeMarkPromises = attributeMarkIdList.map(id =>
-            this.battleFieldCardAttributeMarkRepository.findById(id)
-        );
-
-        const attributeMarkResults = await Promise.all(attributeMarkPromises);
-
-        // null 값을 제외한 속성 마크 반환
-        return attributeMarkResults.filter(
-            (attributeMark): attributeMark is BattleFieldCardAttributeMark => attributeMark !== null
-        );
-    }
-
-    // 유효한 속성 마크 장면 가져오기
-    private async getValidAttributeScenes(attributeMarkList: BattleFieldCardAttributeMark[]): Promise<BattleFieldCardAttributeMarkScene[]> {
-        const scenePromises = attributeMarkList.map(attributeMark =>
-            this.battleFieldCardAttributeMarkSceneRepository.findById(attributeMark.attributeMarkSceneId)
-        );
-
-        const sceneResults = await Promise.all(scenePromises);
-
-        // null 값을 제외한 장면 반환
-        return sceneResults.filter(
-            (scene): scene is BattleFieldCardAttributeMarkScene => scene !== null
-        );
-    }
-
-    private async createNeonBorderNormalization(
-        startX: number,
-        startY: number,
-        width: number,
-        height: number,
-        sceneType: NeonBorderSceneType,
-        targetSceneId: number | null,
-        borderType: NeonBorderType,
-        color1: THREE.ColorRepresentation = 0x2C75FF,
-        color2: THREE.ColorRepresentation = 0x2EFEF7
-    ): Promise<NeonBorder> {
-        const { lines, neonMaterials } = await this.neonShape.addNeonShaderRectangle(
-            startX,
-            startY,
-            width,
-            height,
-            new THREE.Color(color1),
-            new THREE.Color(color2)
-        );
-
-        const lineSceneIds = lines.map((line) => {
-            const scene = new NeonBorderLineScene(line, line.material as THREE.ShaderMaterial);
-            this.neonBorderLineSceneRepository.save(scene);
-            return scene.getId();
-        });
-
-        const positionIds = lines.map((line) => {
-            const position = new NeonBorderLinePosition(new Vector2d(line.position.x, line.position.y));
-            this.neonBorderLinePositionRepository.save(position);
-            return position.getId();
-        });
-
-        const neonBorder = new NeonBorder(
-            lineSceneIds,
-            positionIds,
-            sceneType,
-            targetSceneId ?? -1,
-            borderType
-        );
-
-        console.log(chalk.red.bold(`Created new NeonBorder: ${JSON.stringify(neonBorder)}`));
-        this.neonBorderRepository.save(neonBorder);
-
-        return neonBorder;
-    }
-
-    private enableExistingNeonBorder(neonBorder: NeonBorder): void {
-        neonBorder.getNeonBorderLineSceneIdList().forEach((lineSceneId) => {
-            const lineScene = this.neonBorderLineSceneRepository.findById(lineSceneId);
-            if (lineScene) {
-                const lineMesh = lineScene.getLine();
-                if (lineMesh) {
-                    lineMesh.visible = true;
-                    console.log(`Neon Border Line (ID: ${lineSceneId}) visibility set to true.`);
-                }
-            }
-        });
-    }
-
-    private async createOpponentMasterNeonBorder() {
-        const existingOpponentMasterNeonBorder = this.neonBorderRepository.findOpponentMaster(NeonBorderType.OPPONENT_MASTER);
-        if (existingOpponentMasterNeonBorder) {
-            this.enableExistingNeonBorder(existingOpponentMasterNeonBorder);
-            return;
-        }
-
-        const opponentMasterStartX = (this.OPPONENT_START_X - 0.5) * window.innerWidth;
-        const opponentMasterStartY = (0.5 - this.OPPONENT_START_Y) * window.innerHeight;
-
-        const opponentMasterEndX = (this.OPPONENT_END_X - 0.5) * window.innerWidth;
-        const opponentMasterEndY = (0.5 - this.OPPONENT_END_Y) * window.innerHeight;
-
-        const opponentMasterWidth = (opponentMasterEndX - opponentMasterStartX);
-        const opponentMasterHeight = (opponentMasterEndY - opponentMasterStartY);
-
-        await this.createNeonBorderNormalization(
-            opponentMasterStartX, opponentMasterStartY, opponentMasterWidth, opponentMasterHeight,
-            NeonBorderSceneType.OPPONENT_MASTER, null, NeonBorderType.OPPONENT_MASTER,
-            new THREE.Color(0xFF1A1A), new THREE.Color(0xFFEF7F));
-    }
-
-    private async createNeonBorder(clickedCard: ClickableCard): Promise<void> {
-        const cardMesh = clickedCard.getMesh();
-        cardMesh.renderOrder = 1;
-
-        const cardPosition = cardMesh.position;
-        this.dragMoveRepository.getSelectedGroup().forEach((obj) => {
-            const attributeMesh = obj.getMesh();
-            attributeMesh.renderOrder = 2;
-        });
-
-        const halfWidth = this.CARD_WIDTH * window.innerWidth / 2;
-        const halfHeight = this.CARD_HEIGHT * window.innerWidth / 2;
-
-        const cardSceneId = clickedCard.getId();
-
-        const existingNeonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(cardSceneId, NeonBorderSceneType.HAND, NeonBorderType.ALLY);
-        console.log(chalk.red.bold(`existingNeonBorder: ${existingNeonBorder}`));
-        if (existingNeonBorder) {
-            console.log(`NeonBorder already exists for cardSceneId: ${cardSceneId}, enabling visibility.`);
-            this.enableExistingNeonBorder(existingNeonBorder);
-            return;
-        }
-
-        const startX = cardPosition.x - halfWidth;
-        const startY = cardPosition.y - halfHeight;
-        const width = this.CARD_WIDTH * window.innerWidth;
-        const height = this.CARD_HEIGHT * window.innerWidth;
-        console.log(`startX: ${startX}, startY: ${startY}, width: ${width}, height: ${height}`);
-
-        await this.createNeonBorderNormalization(
-            startX, startY, width, height,
-            NeonBorderSceneType.HAND, cardSceneId, NeonBorderType.ALLY,
-            new THREE.Color(0x2C75FF), new THREE.Color(0x2EFEF7));
-    }
-
-    private activateExistNeonBorder(clickedCard: ClickableCard): void {
-        const yourFieldSceneId = clickedCard.getId();
-        console.log(`activateExistNeonBorder() yourFieldSceneId: ${yourFieldSceneId}`)
-        const yourField = this.yourFieldRepository.findByCardSceneId(yourFieldSceneId)
-        console.log("activateExistNeonBorder() yourField (JSON):", JSON.stringify(yourField, null, 2));
-        const existingNeonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(yourFieldSceneId, NeonBorderSceneType.FIELD, NeonBorderType.ALLY);
-
-        if (!existingNeonBorder) {
-            console.warn(`No existing NeonBorder found for cardSceneId: ${yourFieldSceneId}`);
-            return;
-        }
-
-        console.log(`Activating existing NeonBorder for cardSceneId: ${yourFieldSceneId}`);
-        this.enableExistingNeonBorder(existingNeonBorder)
-    }
-
-    private deactivateOpponentMasterNeonBorder(): void {
-        const opponentMasterNeonBorder = this.neonBorderRepository.findOpponentMaster(NeonBorderType.OPPONENT_MASTER);
-        if (!opponentMasterNeonBorder) return;
-
-        opponentMasterNeonBorder.getNeonBorderLineSceneIdList().forEach((lineSceneId) => {
-            const lineScene = this.neonBorderLineSceneRepository.findById(lineSceneId);
-            if (lineScene) {
-                const lineMesh = lineScene.getLine();
-                if (lineMesh) {
-                    lineMesh.visible = false; // visibility off
-                }
-            }
-        });
-    }
-
-    private deactivateEveryExistOpponentNeonBorder(): void {
-        // 모든 NeonBorder 중에서 FIELD + ENEMY 타입만 찾음
-        const allNeonBorders = this.neonBorderRepository.findAll();
-        const opponentBorders = allNeonBorders.filter(
-            border =>
-                border.getNeonBorderSceneType() === NeonBorderSceneType.FIELD &&
-                border.getType() === NeonBorderType.ENEMY
-        );
-
-        if (opponentBorders.length === 0) {
-            console.warn("No existing opponent NeonBorders to deactivate.");
-            return;
-        }
-
-        console.log(`Deactivating ${opponentBorders.length} opponent NeonBorders.`);
-
-        opponentBorders.forEach(border => {
-            border.getNeonBorderLineSceneIdList().forEach(lineSceneId => {
-                const lineScene = this.neonBorderLineSceneRepository.findById(lineSceneId);
-                const lineMesh = lineScene?.getLine();
-                if (lineMesh) {
-                    lineMesh.visible = false;
-                }
-            });
-        });
-    }
-
-    private deactivateEveryNeonBorder(): void {
-        // 모든 NeonBorder 중에서 FIELD + ENEMY 타입만 찾음
-        const allNeonBorders = this.neonBorderRepository.findAll();
-
-        if (allNeonBorders.length === 0) {
-            console.warn("No existing opponent NeonBorders to deactivate.");
-            return;
-        }
-
-        console.log(`Deactivating ${allNeonBorders.length} NeonBorders.`);
-
-        allNeonBorders.forEach(border => {
-            border.getNeonBorderLineSceneIdList().forEach(lineSceneId => {
-                const lineScene = this.neonBorderLineSceneRepository.findById(lineSceneId);
-                const lineMesh = lineScene?.getLine();
-                if (lineMesh) {
-                    lineMesh.visible = false;
-                }
-            });
-        });
-    }
-
-    private deactivateExistNeonBorder(clickedCard: ClickableCard): void {
-        const prevYourFieldSceneId = clickedCard.getId();
-        console.log(`activateExistNeonBorder() yourFieldSceneId: ${prevYourFieldSceneId}`)
-        const yourField = this.yourFieldRepository.findByCardSceneId(prevYourFieldSceneId)
-        console.log("activateExistNeonBorder() yourField (JSON):", JSON.stringify(yourField, null, 2));
-        const existingNeonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(prevYourFieldSceneId, NeonBorderSceneType.FIELD, NeonBorderType.ALLY);
-
-        if (!existingNeonBorder) {
-            console.warn(`No existing NeonBorder found for cardSceneId: ${prevYourFieldSceneId}`);
-            return;
-        }
-
-        console.log(`Deactivating existing NeonBorder for cardSceneId: ${prevYourFieldSceneId}`);
-
-        existingNeonBorder.getNeonBorderLineSceneIdList().forEach((lineSceneId) => {
-            const lineScene = this.neonBorderLineSceneRepository.findById(lineSceneId);
-            if (lineScene) {
-                const lineMesh = lineScene.getLine();
-                if (lineMesh) {
-                    lineMesh.visible = false;
-                }
-            }
-        });
-    }
-
     private async handleYourHandClick(x: number, y: number): Promise<void> {
         const handSceneList = this.battleFieldCardSceneRepository.findAll();
         const clickedHandCard = this.leftClickHandDetectRepository.isYourHandAreaClicked({ x, y }, handSceneList, this.camera);
@@ -685,8 +330,9 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         console.log(`prevYourFieldCard: ${prevYourFieldCard}`)
 
         if (prevYourFieldCard !== null) {
-            this.deactivateEveryExistOpponentNeonBorder()
-            this.deactivateExistNeonBorder(prevYourFieldCard)
+            this.neonBorderHandler.deactivateEveryExistOpponentNeonBorder()
+            this.neonBorderHandler.deactivateExistNeonBorder(prevYourFieldCard)
+            this.neonBorderHandler.deactivateOpponentMasterNeonBorder()
             this.activePanelAreaRepository.delete();
         }
 
@@ -700,7 +346,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             this.dragMoveRepository.setSelectedGroup(validAttributeSceneList);
         }
 
-        this.createNeonBorder(clickedHandCard);
+        this.neonBorderHandler.createYourNeonBorder(clickedHandCard);
     }
 
     private async handleYourFieldClick(x: number, y: number): Promise<void> {
@@ -714,7 +360,8 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         const prevYourFieldCard = this.dragMoveRepository.getSelectedObject() as unknown as YourFieldCardScene;
         console.log(`prevYourFieldCard: ${prevYourFieldCard}`)
 
-        this.activateExistNeonBorder(clickedYourFieldCard);
+        // this.activateExistNeonBorder(clickedYourFieldCard);
+        this.neonBorderHandler.activateExistNeonBorder(clickedYourFieldCard);
 
         if (prevYourFieldCard && prevYourFieldCard.getId() === clickedYourFieldCard.getId()) {
             console.log('같은 카드를 선택하였습니다!')
@@ -722,8 +369,9 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         }
 
         if (prevYourFieldCard !== null) {
-            this.deactivateEveryExistOpponentNeonBorder()
-            this.deactivateExistNeonBorder(prevYourFieldCard)
+            this.neonBorderHandler.deactivateEveryExistOpponentNeonBorder()
+            this.neonBorderHandler.deactivateExistNeonBorder(prevYourFieldCard)
+            this.neonBorderHandler.deactivateOpponentMasterNeonBorder()
             this.activePanelAreaRepository.delete();
         }
 
