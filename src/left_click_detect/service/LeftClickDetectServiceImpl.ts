@@ -714,6 +714,8 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         const prevYourFieldCard = this.dragMoveRepository.getSelectedObject() as unknown as YourFieldCardScene;
         console.log(`prevYourFieldCard: ${prevYourFieldCard}`)
 
+        this.activateExistNeonBorder(clickedYourFieldCard);
+
         if (prevYourFieldCard && prevYourFieldCard.getId() === clickedYourFieldCard.getId()) {
             console.log('같은 카드를 선택하였습니다!')
             return;
@@ -736,7 +738,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         }
 
         // this.createNeonBorder(clickedYourFieldCard);
-        this.activateExistNeonBorder(clickedYourFieldCard);
+
     }
 
     async handleOpponentFieldClick(x: number, y: number): Promise<void> {

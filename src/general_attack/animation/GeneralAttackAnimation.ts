@@ -44,18 +44,18 @@ export class GeneralAttackAnimation {
         const weaponMesh = weaponScene.getMesh();
         const targetMesh = opponentScene.getMesh();
 
-        // ✅ 월드 좌표 보장
+        // 월드 좌표 보장
         weaponMesh.updateMatrixWorld(true);
         targetMesh.updateMatrixWorld(true);
 
-        const originPos = weaponMesh.getWorldPosition(new THREE.Vector3()); // ✅
+        const originPos = weaponMesh.getWorldPosition(new THREE.Vector3());
         const originRot = weaponMesh.rotation.z;
 
         const halfWidth = this.CARD_WIDTH * window.innerWidth / 2;
         const halfHeight = this.CARD_HEIGHT * window.innerWidth / 2;
 
         const targetPos = targetMesh
-            .getWorldPosition(new THREE.Vector3())   // ✅ 월드
+            .getWorldPosition(new THREE.Vector3())   // 월드
             .add(new THREE.Vector3(-halfWidth, 0, 0.5));
 
         // 1) 무기를 상대 근처로 이동
@@ -70,7 +70,7 @@ export class GeneralAttackAnimation {
         );
 
         // 3) 무기 복귀
-        const curWorld = weaponMesh.getWorldPosition(new THREE.Vector3()); // ✅
+        const curWorld = weaponMesh.getWorldPosition(new THREE.Vector3());
         await this.returnWeaponFromOpponent(
             weaponMesh, cardGroup, curWorld, originPos, weaponMesh.rotation.z, originRot, 1000
         );
