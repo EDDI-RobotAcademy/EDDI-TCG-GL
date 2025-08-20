@@ -1,0 +1,123 @@
+import * as THREE from "three";
+
+import {YourFieldCardScene} from "../../your_field_card_scene/entity/YourFieldCardScene";
+import {BattleFieldCardAttributeMark} from "../../battle_field_card_attribute_mark/entity/BattleFieldCardAttributeMark";
+import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
+import {YourFieldRepositoryImpl} from "../../your_field/repository/YourFieldRepositoryImpl";
+import {YourFieldCardSceneRepositoryImpl} from "../../your_field_card_scene/repository/YourFieldCardSceneRepositoryImpl";
+import {BattleFieldCardAttributeMarkRepositoryImpl} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
+import {BattleFieldCardAttributeMarkSceneRepositoryImpl} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
+import {OpponentFieldCardSceneRepositoryImpl} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepositoryImpl";
+import {OpponentFieldRepositoryImpl} from "../../opponent_field/repository/OpponentFieldRepositoryImpl";
+import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
+import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
+import {LeftClickHandDetectRepositoryImpl} from "../../left_click_detect/repository/LeftClickHandDetectRepositoryImpl";
+import {ActivePanelAreaRepositoryImpl} from "../../active_panel_area/repository/ActivePanelAreaRepositoryImpl";
+import {NeonBorderRepositoryImpl} from "../../neon_border/repository/NeonBorderRepositoryImpl";
+import {NeonBorderLineSceneRepositoryImpl} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
+import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository";
+import {YourFieldRepository} from "../../your_field/repository/YourFieldRepository";
+import {YourFieldCardSceneRepository} from "../../your_field_card_scene/repository/YourFieldCardSceneRepository";
+import {BattleFieldCardAttributeMarkRepository} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
+import {BattleFieldCardAttributeMarkSceneRepository} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
+import {OpponentFieldCardSceneRepository} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepository";
+import {OpponentFieldRepository} from "../../opponent_field/repository/OpponentFieldRepository";
+import {OpponentFieldCardAttributeMarkRepository} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
+import {OpponentFieldCardAttributeMarkSceneRepository} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
+import {LeftClickHandDetectRepository} from "../../left_click_detect/repository/LeftClickHandDetectRepository";
+import {ActivePanelAreaRepository} from "../../active_panel_area/repository/ActivePanelAreaRepository";
+import {NeonBorderRepository} from "../../neon_border/repository/NeonBorderRepository";
+import {NeonBorderLineSceneRepository} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepository";
+import {MarkSceneType} from "../../battle_field_card_attribute_mark_scene/entity/MarkSceneType";
+import {NeonBorderHandler} from "../../neon_border/handler/NeonBorderHandler";
+import {SecondSkillType} from "../entity/SecondSkillType";
+
+export class SecondSkillHandler {
+    private static instance: SecondSkillHandler;
+
+    private dragMoveRepository: DragMoveRepository;
+    private yourFieldRepository: YourFieldRepository;
+    private yourFieldCardSceneRepository: YourFieldCardSceneRepository;
+    private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository;
+    private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository;
+    private opponentFieldCardSceneRepository: OpponentFieldCardSceneRepository;
+    private opponentFieldRepository: OpponentFieldRepository;
+    private opponentFieldCardAttributeMarkRepository: OpponentFieldCardAttributeMarkRepository;
+    private opponentFieldCardAttributeMarkSceneRepository: OpponentFieldCardAttributeMarkSceneRepository;
+
+    private leftClickHandDetectRepository: LeftClickHandDetectRepository;
+    private activePanelAreaRepository: ActivePanelAreaRepository;
+
+    private neonBorderRepository: NeonBorderRepository;
+    private neonBorderLineSceneRepository: NeonBorderLineSceneRepository;
+
+    // private secondSkillAnimation: SecondSkillAnimation;
+    private neonBorderHandler: NeonBorderHandler;
+
+    private handlers: Record<SecondSkillType,
+        (x: number, y: number) => Promise<void>> = {
+        [SecondSkillType.OPPONENT_FIELD_UNIT]: this.handleOpponentFieldUnit.bind(this),
+        [SecondSkillType.OPPONENT_MASTER]: this.handleOpponentMaster.bind(this),
+        [SecondSkillType.EVERY_OPPONENT_FIELD_UNIT]: this.handleEveryOpponentFieldUnit.bind(this),
+    };
+
+    private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
+        this.dragMoveRepository = DragMoveRepositoryImpl.getInstance();
+        this.yourFieldRepository = YourFieldRepositoryImpl.getInstance();
+        this.yourFieldCardSceneRepository = YourFieldCardSceneRepositoryImpl.getInstance();
+        this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance();
+        this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
+        this.opponentFieldCardSceneRepository = OpponentFieldCardSceneRepositoryImpl.getInstance();
+        this.opponentFieldRepository = OpponentFieldRepositoryImpl.getInstance();
+        this.opponentFieldCardAttributeMarkRepository = OpponentFieldCardAttributeMarkRepositoryImpl.getInstance();
+        this.opponentFieldCardAttributeMarkSceneRepository = OpponentFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
+
+        this.leftClickHandDetectRepository = LeftClickHandDetectRepositoryImpl.getInstance();
+        this.activePanelAreaRepository= ActivePanelAreaRepositoryImpl.getInstance(camera, scene);
+
+        this.neonBorderRepository = NeonBorderRepositoryImpl.getInstance();
+        this.neonBorderLineSceneRepository = NeonBorderLineSceneRepositoryImpl.getInstance();
+
+        // this.secondSkillAnimation = SecondSkillAnimation.getInstance();
+        this.neonBorderHandler = NeonBorderHandler.getInstance(camera, scene);
+    }
+
+    public static getInstance(camera: THREE.Camera, scene: THREE.Scene): SecondSkillHandler {
+        if (!SecondSkillHandler.instance) {
+            SecondSkillHandler.instance = new SecondSkillHandler(camera, scene);
+        }
+        return SecondSkillHandler.instance;
+    }
+
+    public async execute(
+        type: SecondSkillType,
+        x: number,
+        y: number
+    ): Promise<void> {
+        const handler = this.handlers[type];
+        if (!handler) {
+            console.warn(`Handler not found for SecondSkillType: ${type}`);
+            return;
+        }
+        await handler(x, y);
+    }
+
+    private async handleOpponentFieldUnit(x: number, y: number): Promise<void> {
+        console.log(`두 번째 스킬 (타겟팅) 공격: 상대 필드 유닛 공격 처리 (x:${x}, y:${y})`);
+
+        // const { cardGroup, selectedYourFieldCard } = await this.prepareYourAttacker();
+
+        // this.neonBorderHandler.cleanupAfterAction(selectedYourFieldCard)
+
+        // this.secondSkillAnimation.setScene(this.scene);
+        // this.secondSkillAnimation.targetingSkillToOpponent(cardGroup)
+    }
+
+    private async handleOpponentMaster(x: number, y: number): Promise<void> {
+        console.log(`두 번째 스킬 (타겟팅) 공격: 상대 본체 공격 처리 (x:${x}, y:${y})`);
+    }
+
+    private async handleEveryOpponentFieldUnit(x: number, y: number): Promise<void> {
+        console.log(`두 번째 스킬 필드 유닛 전체 공격`);
+    }
+}

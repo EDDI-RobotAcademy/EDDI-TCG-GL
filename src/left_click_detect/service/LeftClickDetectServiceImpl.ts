@@ -279,6 +279,8 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
                 console.log("secondSkill type")
                 if (skill2Type === SkillType.EveryUnitField) {
                     console.log("유닛 필드 전체 공격")
+                    this.activePanelAreaRepository.setActivePanelButtonType(ActivePanelButtonType.SECOND_SKILL)
+                    this.activePanelButtonHandler.execute(ActivePanelButtonType.SECOND_SKILL, BattleFieldCommonAreaType.EVERY_OPPONENT_FIELD_UNIT)
                 }
                 break;
             case "details":

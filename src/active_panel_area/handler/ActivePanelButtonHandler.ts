@@ -1,13 +1,18 @@
 import {ActivePanelButtonType} from "../entity/ActivePanelButtonType";
 import {GeneralAttackHandler} from "../../general_attack/handler/GeneralAttackHandler";
+
 import * as THREE from "three";
+
 import {FirstSkillHandler} from "../../first_skill/handler/FirstSkillHandler";
+import {SecondSkillType} from "../../second_skill/entity/SecondSkillType";
+import {SecondSkillHandler} from "../../second_skill/handler/SecondSkillHandler";
 
 export class ActivePanelButtonHandler {
     private static instance: ActivePanelButtonHandler;
 
     private generalAttackHandler: GeneralAttackHandler;
     private firstSkillHandler: FirstSkillHandler;
+    private secondSkillHandler: SecondSkillHandler;
 
     private handlers: Record<
         ActivePanelButtonType,
@@ -36,7 +41,18 @@ export class ActivePanelButtonHandler {
                 y
             );
         },
-        [ActivePanelButtonType.SECOND_SKILL]: async () => {},
+        [ActivePanelButtonType.SECOND_SKILL]: async (
+            secondSkillType: SecondSkillType,
+            x?: number,
+            y?: number
+        ) => {
+            if (x !== undefined && y !== undefined) {
+                await this.secondSkillHandler.execute(secondSkillType, x, y);
+                return
+            }
+
+            await this.secondSkillHandler.execute(secondSkillType, 0, 0);
+        },
         [ActivePanelButtonType.THIRD_SKILL]: async () => {},
         [ActivePanelButtonType.DETAILS]: async () => {},
     };
@@ -44,6 +60,7 @@ export class ActivePanelButtonHandler {
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.generalAttackHandler = GeneralAttackHandler.getInstance(camera, scene);
         this.firstSkillHandler = FirstSkillHandler.getInstance(camera, scene);
+        this.secondSkillHandler = SecondSkillHandler.getInstance(camera, scene);
     }
 
     public static getInstance(camera: THREE.Camera, scene: THREE.Scene): ActivePanelButtonHandler {
