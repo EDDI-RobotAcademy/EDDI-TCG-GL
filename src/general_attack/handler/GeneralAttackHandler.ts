@@ -37,6 +37,7 @@ import { NeonBorderLineSceneRepositoryImpl } from "../../neon_border_line_scene/
 import { BattleFieldCardAttributeMark } from "../../battle_field_card_attribute_mark/entity/BattleFieldCardAttributeMark";
 import {GeneralAttackAnimation} from "../animation/GeneralAttackAnimation";
 import {OpponentFieldCardScene} from "../../opponent_field_card_scene/entity/OpponentFieldCardScene";
+import {NeonBorderHandler} from "../../neon_border/handler/NeonBorderHandler";
 
 export class GeneralAttackHandler {
     private static instance: GeneralAttackHandler;
@@ -52,10 +53,8 @@ export class GeneralAttackHandler {
     private opponentFieldCardAttributeMarkSceneRepository: OpponentFieldCardAttributeMarkSceneRepository;
 
     private leftClickHandDetectRepository: LeftClickHandDetectRepository;
-    private activePanelAreaRepository: ActivePanelAreaRepository;
 
-    private neonBorderRepository: NeonBorderRepository;
-    private neonBorderLineSceneRepository: NeonBorderLineSceneRepository;
+    private neonBorderHandler: NeonBorderHandler;
 
     private generalAttackAnimation: GeneralAttackAnimation;
 
@@ -79,10 +78,8 @@ export class GeneralAttackHandler {
         this.opponentFieldCardAttributeMarkSceneRepository = OpponentFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
 
         this.leftClickHandDetectRepository = LeftClickHandDetectRepositoryImpl.getInstance();
-        this.activePanelAreaRepository= ActivePanelAreaRepositoryImpl.getInstance(camera, scene);
 
-        this.neonBorderRepository = NeonBorderRepositoryImpl.getInstance();
-        this.neonBorderLineSceneRepository = NeonBorderLineSceneRepositoryImpl.getInstance();
+        this.neonBorderHandler = NeonBorderHandler.getInstance(camera, scene)
 
         this.generalAttackAnimation = GeneralAttackAnimation.getInstance();
     }
@@ -119,7 +116,7 @@ export class GeneralAttackHandler {
         const { weaponScene, cardGroup, selectedYourFieldCard } = await this.prepareYourAttacker();
         if (!weaponScene) return;
 
-        this.cleanupAfterAttack(selectedYourFieldCard);
+        this.neonBorderHandler.cleanupAfterAction(selectedYourFieldCard)
         await this.attackWithWeapon(weaponScene, cardGroup, opponentCardGroup, clickedOpponentFieldCardScene);
     }
 
@@ -129,7 +126,7 @@ export class GeneralAttackHandler {
         const { weaponScene, cardGroup, selectedYourFieldCard } = await this.prepareYourAttacker();
         if (!weaponScene) return;
 
-        this.cleanupAfterAttack(selectedYourFieldCard);
+        this.neonBorderHandler.cleanupAfterAction(selectedYourFieldCard)
         await this.attackOpponentMasterWithWeapon(weaponScene, cardGroup);
     }
 
@@ -183,7 +180,7 @@ export class GeneralAttackHandler {
                 markScene.getMarkSceneType() === MarkSceneType.STAFF) {
                 weaponScene = markScene; // 그룹에 추가하지 않는다
 
-                // 🔽🔽🔽 추가: 무기를 월드 기준으로 풀어준다 (reparent to scene, keep world transform)
+                // 추가: 무기를 월드 기준으로 풀어준다 (reparent to scene, keep world transform)
                 const weaponMesh = markScene.getMesh();
                 weaponMesh.updateMatrixWorld(true);
 
@@ -253,14 +250,6 @@ export class GeneralAttackHandler {
         return { group: opponentCardGroup, scene: clickedOpponentFieldCardScene };
     }
 
-    /** 공격 후 공통 정리 */
-    private cleanupAfterAttack(selectedYourFieldCard: YourFieldCardScene) {
-        this.activePanelAreaRepository.delete();
-        this.deactivateExistNeonBorder(selectedYourFieldCard);
-        this.deactivateEveryExistOpponentNeonBorder();
-        this.deactivateOpponentMasterNeonBorder();
-    }
-
     /** ================== 애니메이션 호출부 ================== */
 
     async attackWithWeapon(
@@ -281,52 +270,5 @@ export class GeneralAttackHandler {
         console.log(">> 본체 공격 애니메이션 실행");
         this.generalAttackAnimation.setScene(this.scene);
         await this.generalAttackAnimation.attackOpponentMasterWithWeapon(weaponScene, attackerGroup);
-    }
-
-    /** ================== 네온보더 처리 ================== */
-
-    private deactivateExistNeonBorder(clickedCard: ClickableCard): void {
-        const prevYourFieldSceneId = clickedCard.getId();
-        const existingNeonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(
-            prevYourFieldSceneId,
-            NeonBorderSceneType.FIELD,
-            NeonBorderType.ALLY
-        );
-
-        if (!existingNeonBorder) return;
-
-        existingNeonBorder.getNeonBorderLineSceneIdList().forEach((lineSceneId) => {
-            const lineScene = this.neonBorderLineSceneRepository.findById(lineSceneId);
-            const lineMesh = lineScene?.getLine();
-            if (lineMesh) lineMesh.visible = false;
-        });
-    }
-
-    private deactivateEveryExistOpponentNeonBorder(): void {
-        const allNeonBorders = this.neonBorderRepository.findAll();
-        const opponentBorders = allNeonBorders.filter(
-            border =>
-                border.getNeonBorderSceneType() === NeonBorderSceneType.FIELD &&
-                border.getType() === NeonBorderType.ENEMY
-        );
-
-        opponentBorders.forEach(border => {
-            border.getNeonBorderLineSceneIdList().forEach(lineSceneId => {
-                const lineScene = this.neonBorderLineSceneRepository.findById(lineSceneId);
-                const lineMesh = lineScene?.getLine();
-                if (lineMesh) lineMesh.visible = false;
-            });
-        });
-    }
-
-    private deactivateOpponentMasterNeonBorder(): void {
-        const opponentMasterNeonBorder = this.neonBorderRepository.findOpponentMaster(NeonBorderType.OPPONENT_MASTER);
-        if (!opponentMasterNeonBorder) return;
-
-        opponentMasterNeonBorder.getNeonBorderLineSceneIdList().forEach((lineSceneId) => {
-            const lineScene = this.neonBorderLineSceneRepository.findById(lineSceneId);
-            const lineMesh = lineScene?.getLine();
-            if (lineMesh) lineMesh.visible = false;
-        });
     }
 }

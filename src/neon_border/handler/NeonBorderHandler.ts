@@ -12,6 +12,8 @@ import {YourFieldCardScene} from "../../your_field_card_scene/entity/YourFieldCa
 import {ClickableCard} from "../../left_click_detect/service/ClickableCard";
 import { ActivePanelAreaRepository } from "src/active_panel_area/repository/ActivePanelAreaRepository";
 import {ActivePanelAreaRepositoryImpl} from "../../active_panel_area/repository/ActivePanelAreaRepositoryImpl";
+import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository";
+import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
 
 export class NeonBorderHandler {
     private static instance: NeonBorderHandler;
@@ -21,11 +23,15 @@ export class NeonBorderHandler {
 
     private activePanelAreaRepository: ActivePanelAreaRepository;
 
+    private dragMoveRepository: DragMoveRepository;
+
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.neonBorderRepository = NeonBorderRepositoryImpl.getInstance();
         this.neonBorderLineSceneRepository = NeonBorderLineSceneRepositoryImpl.getInstance();
 
         this.activePanelAreaRepository = ActivePanelAreaRepositoryImpl.getInstance(camera, scene);
+
+        this.dragMoveRepository = DragMoveRepositoryImpl.getInstance();
     }
 
     public static getInstance(camera: THREE.Camera, scene: THREE.Scene): NeonBorderHandler {
@@ -40,6 +46,7 @@ export class NeonBorderHandler {
         this.deactivateExistNeonBorder(selectedYourFieldCard);
         this.deactivateEveryExistOpponentNeonBorder();
         this.deactivateOpponentMasterNeonBorder();
+        this.dragMoveRepository.deleteSelectedObject()
     }
 
     /** ================== 네온보더 처리 ================== */
