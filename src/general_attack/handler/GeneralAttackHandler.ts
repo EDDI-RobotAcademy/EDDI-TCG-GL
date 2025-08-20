@@ -143,14 +143,7 @@ export class GeneralAttackHandler {
         const yourFieldCard = this.yourFieldRepository.findById(yourFieldCardId);
         if (!yourFieldCard) throw new Error("공격자 카드 찾기 실패");
 
-        const cardId = yourFieldCard.getCardId();
-        if (!cardId) throw new Error("공격자 카드 ID 없음");
-
         const attributeMarkIdList = yourFieldCard.getAttributeMarkIdList();
-        const attributeMarkList = await Promise.all(
-            attributeMarkIdList.map(id => this.battleFieldCardAttributeMarkRepository.findById(id))
-        );
-        const validMarkList = attributeMarkList.filter((mark): mark is BattleFieldCardAttributeMark => mark !== null);
 
         const cardSceneId = yourFieldCard.getCardSceneId();
         if (cardSceneId == null) throw new Error("공격자 SceneId 없음");
@@ -158,9 +151,18 @@ export class GeneralAttackHandler {
         const yourFieldCardScene = this.yourFieldCardSceneRepository.findById(cardSceneId);
         if (yourFieldCardScene == null) throw new Error("공격자 Scene 없음");
 
-        // 카드 + 마크 그룹핑
+        // 카드 씬 원래 위치 저장
+        if (!yourFieldCardScene.getMesh().userData.originPos) {
+            yourFieldCardScene.getMesh().userData.originPos = yourFieldCardScene.getMesh().position.clone();
+        }
+
+        const cardOriginPos = yourFieldCardScene.getMesh().getWorldPosition(new THREE.Vector3());
         const cardGroup = new THREE.Group();
+        cardGroup.position.copy(cardOriginPos);
+
+        // 카드 mesh 위치 그룹 기준 0,0,0
         this.scene.remove(yourFieldCardScene.getMesh());
+        yourFieldCardScene.getMesh().position.set(0, 0, 0);
         cardGroup.add(yourFieldCardScene.getMesh());
 
         let weaponScene: BattleFieldCardAttributeMarkScene | null = null;
@@ -172,17 +174,44 @@ export class GeneralAttackHandler {
             const markScene = await this.battleFieldCardAttributeMarkSceneRepository.findById(mark.attributeMarkSceneId);
             if (!markScene) continue;
 
+            // originPos 절대좌표로만 저장
+            if (!markScene.getMesh().userData.originPos) {
+                markScene.getMesh().userData.originPos = markScene.getMesh().position.clone();
+            }
+
             if (markScene.getMarkSceneType() === MarkSceneType.SWORD ||
                 markScene.getMarkSceneType() === MarkSceneType.STAFF) {
-                weaponScene = markScene;
+                weaponScene = markScene; // 그룹에 추가하지 않는다
+
+                // 🔽🔽🔽 추가: 무기를 월드 기준으로 풀어준다 (reparent to scene, keep world transform)
+                const weaponMesh = markScene.getMesh();
+                weaponMesh.updateMatrixWorld(true);
+
+                const wpos = weaponMesh.getWorldPosition(new THREE.Vector3());
+                const wquat = weaponMesh.getWorldQuaternion(new THREE.Quaternion());
+                const wscale = weaponMesh.getWorldScale(new THREE.Vector3());
+
+                if (weaponMesh.parent) weaponMesh.parent.remove(weaponMesh);
+                this.scene.add(weaponMesh);              // 씬 루트로
+                weaponMesh.position.copy(wpos);          // 로컬=월드
+                weaponMesh.quaternion.copy(wquat);
+                weaponMesh.scale.copy(wscale);
+
+                // (선택) 원위치/회전 저장
+                weaponMesh.userData.originPos = wpos.clone();
+                weaponMesh.userData.originRot = weaponMesh.rotation.z;
+
                 continue;
             }
 
-            this.scene.remove(markScene.getMesh());
+            // 일반 마크만 그룹에 넣음 (상대좌표)
+            const relativePos = markScene.getMesh().userData.originPos.clone().sub(cardOriginPos);
+            markScene.getMesh().position.copy(relativePos);
             cardGroup.add(markScene.getMesh());
         }
 
         this.scene.add(cardGroup);
+
         return { weaponScene, cardGroup, selectedYourFieldCard };
     }
 
