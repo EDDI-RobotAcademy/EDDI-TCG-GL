@@ -5,12 +5,11 @@ import {MeshGenerator} from "../../mesh/generator";
 import {TextureManager} from "../../texture_manager/TextureManager";
 import {getCardById} from "../../card/utility";
 import {Vector2d} from "../../common/math/Vector2d";
+import {CardConstants} from "../../card/CardConstants";
 
 export class BattleFieldCardSceneRepositoryImpl implements BattleFieldCardSceneRepository {
     private static instance: BattleFieldCardSceneRepositoryImpl;
     private cardSceneMap: Map<number, BattleFieldCardScene> = new Map();
-
-    private readonly CARD_WIDTH: number = 0.06493506493
 
     private constructor() {}
 
@@ -37,7 +36,7 @@ export class BattleFieldCardSceneRepositoryImpl implements BattleFieldCardSceneR
             throw new Error(`Texture for card ${cardId} not found`);
         }
 
-        const cardWidth = this.CARD_WIDTH * window.innerWidth;
+        const cardWidth = CardConstants.CARD_WIDTH_RATIO * window.innerWidth;
         const cardHeight = cardWidth * 1.615;
 
         const mainCardMesh = MeshGenerator.createMesh(cardTexture, cardWidth, cardHeight, position);

@@ -5,6 +5,7 @@ import {MeshGenerator} from "../../mesh/generator";
 import {Vector2d} from "../../common/math/Vector2d";
 import {getCardById} from "../../card/utility";
 import {ActivePanelButtonType} from "../entity/ActivePanelButtonType";
+import {CardConstants} from "../../card/CardConstants";
 
 export class ActivePanelAreaRepositoryImpl implements ActivePanelAreaRepository {
     private static instance: ActivePanelAreaRepositoryImpl | null = null;
@@ -16,11 +17,11 @@ export class ActivePanelAreaRepositoryImpl implements ActivePanelAreaRepository 
 
     private activeButtons: THREE.Mesh[] = []; // 추가: 버튼들 추적용 배열
 
-    private readonly ACTIVE_PANEL_WIDTH_RATIO = 0.06493506493;
-    private readonly ACTIVE_PANEL_HEIGHT_RATIO = this.ACTIVE_PANEL_WIDTH_RATIO / 1.617;
+    private readonly ACTIVE_PANEL_WIDTH_RATIO = CardConstants.ACTIVE_PANEL_WIDTH_RATIO;
+    private readonly ACTIVE_PANEL_HEIGHT_RATIO = CardConstants.ACTIVE_PANEL_HEIGHT_RATIO;
 
-    private readonly ACTIVE_PANEL_BUTTON_WIDTH_RATIO = 0.05411255411;
-    private readonly ACTIVE_PANEL_BUTTON_HEIGHT_RATIO = this.ACTIVE_PANEL_BUTTON_WIDTH_RATIO / 1.617;
+    private readonly ACTIVE_PANEL_BUTTON_WIDTH_RATIO = CardConstants.ACTIVE_PANEL_BUTTON_WIDTH_RATIO;
+    private readonly ACTIVE_PANEL_BUTTON_HEIGHT_RATIO = CardConstants.ACTIVE_PANEL_BUTTON_HEIGHT_RATIO;
 
     private readonly FIRST_SKILL = 1;
     private readonly SECOND_SKILL = 2;

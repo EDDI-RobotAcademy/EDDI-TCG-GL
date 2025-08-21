@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import {BattleFieldCardAttributeMarkScene} from "../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
 import {OpponentFieldCardScene} from "../../opponent_field_card_scene/entity/OpponentFieldCardScene";
+import {CardConstants} from "../../card/CardConstants";
 
 declare const TWEEN: {
     Tween: any;
@@ -12,8 +13,8 @@ export class GeneralAttackAnimation {
     private static instance: GeneralAttackAnimation;
 
     private scene!: THREE.Scene;
-    private readonly CARD_WIDTH: number = 0.06493506493
-    private readonly CARD_HEIGHT: number = this.CARD_WIDTH * 1.615
+    private readonly CARD_WIDTH_RATIO: number = CardConstants.CARD_WIDTH_RATIO
+    private readonly CARD_HEIGHT_RATIO: number = CardConstants.CARD_HEIGHT_RATIO
 
     private readonly OPPONENT_START_X: number = 0.4605885
     private readonly OPPONENT_START_Y: number = 0.1920103
@@ -51,8 +52,8 @@ export class GeneralAttackAnimation {
         const originPos = weaponMesh.getWorldPosition(new THREE.Vector3());
         const originRot = weaponMesh.rotation.z;
 
-        const halfWidth = this.CARD_WIDTH * window.innerWidth / 2;
-        const halfHeight = this.CARD_HEIGHT * window.innerWidth / 2;
+        const halfWidth = this.CARD_WIDTH_RATIO * window.innerWidth / 2;
+        const halfHeight = this.CARD_HEIGHT_RATIO * window.innerWidth / 2;
 
         const targetPos = targetMesh
             .getWorldPosition(new THREE.Vector3())   // 월드
@@ -116,7 +117,7 @@ export class GeneralAttackAnimation {
             const startRot = weaponMesh.rotation.z;
             const endRot = startRot + Math.PI * 130 / 180;
             const startY = cardGroup.position.y;
-            const quarterWidth = this.CARD_WIDTH * window.innerWidth / 4;
+            const quarterWidth = this.CARD_WIDTH_RATIO * window.innerWidth / 4;
 
             const weaponTween = new TWEEN.Tween({ x: originPos.x, y: originPos.y, z: originPos.z, rot: startRot })
                 .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z, rot: endRot }, duration)
@@ -235,7 +236,7 @@ export class GeneralAttackAnimation {
     private returnWeaponFromOpponent(weaponMesh: THREE.Mesh, cardGroup: THREE.Group, fromPos: THREE.Vector3, toPos: THREE.Vector3, fromRot: number, toRot: number, duration: number): Promise<void> {
         return new Promise(resolve => {
             const weaponObj = { x: fromPos.x, y: fromPos.y, z: fromPos.z, rot: fromRot };
-            const quarterWidth = this.CARD_WIDTH * window.innerWidth / 4;
+            const quarterWidth = this.CARD_WIDTH_RATIO * window.innerWidth / 4;
 
             const weaponTween = new TWEEN.Tween(weaponObj)
                 .to({ x: toPos.x, y: toPos.y, z: toPos.z, rot: toRot }, duration)
