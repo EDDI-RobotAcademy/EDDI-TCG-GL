@@ -130,6 +130,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
             if (clickedButton) {
                 this.saveCurrentButtonClickState(true);
                 console.log(`[DEBUG] Clicked Deck Edit Button`);
+                console.log(`%c Clicked Deck Edit Button`, 'color: #ffbb00; font-weight: bold;');
 
 //                 this.hideAllCardBlocker();
                 const currentClickedDeckButtonId = this.getCurrentClickedDeckButtonId();
