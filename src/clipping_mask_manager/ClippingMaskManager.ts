@@ -56,4 +56,27 @@ export class ClippingMaskManager {
         }
     }
 
+    public isMeshVisible(mesh: THREE.Mesh, clippingPlanes: THREE.Plane[]): boolean {
+        if (!mesh.geometry) return false;
+
+        const positionAttribute = mesh.geometry.getAttribute("position");
+        const vector = new THREE.Vector3();
+
+        for (let i = 0; i < positionAttribute.count; i++) {
+            vector.fromBufferAttribute(positionAttribute, i);
+            mesh.localToWorld(vector);
+
+            // 이 정점이 모든 plane 안쪽에 있는지 확인
+            for (const plane of clippingPlanes) {
+                if (plane.distanceToPoint(vector) < 0) {
+                    // 하나라도 plane 바깥이면 -> 이 mesh는 보이지 않음
+                    return false;
+                }
+            }
+        }
+        // 모든 정점이 내부에 있으면 보임
+        return true;
+    }
+
+
 }

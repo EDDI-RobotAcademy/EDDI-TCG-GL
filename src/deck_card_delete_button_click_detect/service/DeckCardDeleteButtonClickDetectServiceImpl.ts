@@ -115,7 +115,6 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
 
             const selectedCardCount = this.cardCountManager.findCardCountByDeck(currentClickedDeckButtonId, cardId);
             if (selectedCardCount == 0) {
-                this.myDeckCardMapRepository.deleteCard(currentClickedDeckButtonId, cardId);
                 this.deleteDeckElement(currentClickedDeckButtonId, cardId);
                 this.deleteNumberOfSelectedCardsPosition(currentClickedDeckButtonId, cardId);
                 this.adjustDeckCardDeleteButton(currentClickedDeckButtonId);
@@ -177,7 +176,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         }
 
         const selectedCardCount = this.cardCountManager.findCardCountByDeck(deckId, cardId);
-        console.log(`%c 현재 선택한 카드(ID: ${cardId}) 개수는? ${selectedCardCount}`, 'color: #FE2EF7; font-weight: bold;');
+        console.log(`%c [덱 카드 삭제 버튼]덱 ID: ${deckId}, 현재 선택한 카드(ID: ${cardId}) 개수는? ${selectedCardCount}`, 'color: #FE2EF7; font-weight: bold;');
         if (selectedCardCount == 0) {
             console.warn(`[DEBUG] Card id: ${cardId}, Count: ${selectedCardCount} No more cards to remove.`);
             return;

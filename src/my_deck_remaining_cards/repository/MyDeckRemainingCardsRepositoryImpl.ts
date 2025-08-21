@@ -67,7 +67,7 @@ export class MyDeckRemainingCardsRepositoryImpl implements MyDeckRemainingCardsR
     public findRemainingCardIdByCardId(cardId: number): number | null {
         for (const [remainingCardsId, { cardId: storedCardId }] of this.remainingCardsMap.entries()) {
             if (storedCardId === cardId) {
-                console.log(`Match found! Returning Remaining Cards Id: ${remainingCardsId}`);
+//                 console.log(`Match found! Returning Remaining Cards Id: ${remainingCardsId}`);
                 return remainingCardsId;
             }
         }
@@ -77,7 +77,7 @@ export class MyDeckRemainingCardsRepositoryImpl implements MyDeckRemainingCardsR
     public findRemainingCardByCardId(cardId: number): MyDeckRemainingCards | null {
         for (const [remainingCardsId, { cardId: storedCardId, remainingCardsMesh}] of this.remainingCardsMap.entries()) {
             if (storedCardId === cardId) {
-                console.log(`Match found! Returning Remaining Cards Id: ${cardId}`);
+//                 console.log(`Match found! Returning Remaining Cards Id: ${cardId}`);
                 return remainingCardsMesh;
             }
         }
