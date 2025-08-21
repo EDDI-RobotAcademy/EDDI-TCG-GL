@@ -40,6 +40,7 @@ export class DeckCardDeleteButtonClickDetectRepositoryImpl implements DeckCardDe
 
         const scrollArea = this.getScrollArea();
         if (scrollArea == null) return null;
+
         scrollArea.width = 0.202 * window.innerWidth;
         scrollArea.height = 0.61 * window.innerHeight;
         scrollArea.position.set(0.38 * window.innerWidth, -0.024 * window.innerHeight);
@@ -48,6 +49,7 @@ export class DeckCardDeleteButtonClickDetectRepositoryImpl implements DeckCardDe
         const candidateMeshes = meshes.filter(buttonMesh =>
             this.clippingMaskManager.isMeshVisible(buttonMesh, clippingPlanes)
         );
+
         if (candidateMeshes.length === 0) return null;
 
         const intersects = this.raycaster.intersectObjects(candidateMeshes, false);
