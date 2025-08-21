@@ -791,7 +791,7 @@ export class TCGJustTestMyDeckView {
         try {
             const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
             if (currentClickedDeckId == null) return;
-            console.log(`%c [덱 카드 삭제 버튼 클릭 후 새로 그려지는 number Mesh] 현재 클릭한 덱 ID: ${currentClickedDeckId}`, 'color: #FE2EF7; font-weight: bold;');
+            console.log(`%c [delete card or add card button click] 현재 클릭한 덱 ID: ${currentClickedDeckId}`, 'color: #FE2EF7; font-weight: bold;');
 
             const cardIdList = this.cardCountManager.findCardIdListByDeck(currentClickedDeckId);
             for (const cardId of cardIdList) {
