@@ -1,4 +1,5 @@
 export enum LeftClickedArea {
+    NONE = 0,
     YOUR_HAND = 1,
     YOUR_FIELD = 2,
     OPPONENT_FIELD = 3,
