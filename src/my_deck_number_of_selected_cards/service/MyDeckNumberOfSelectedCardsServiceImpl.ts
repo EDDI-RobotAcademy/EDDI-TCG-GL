@@ -45,7 +45,7 @@ export class MyDeckNumberOfSelectedCardsServiceImpl implements MyDeckNumberOfSel
             const existingPosition = this.getPositionByDeckIdAndCardId(deckId, cardId);
             if (existingPosition == null) {
                 const position = this.myDeckNumberOfSelectedCardsPosition(deckId, cardId);
-                console.log(`[Block] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
+                console.log(`%c [New Number] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`, 'color: #FE2EF7; font-weight: bold;');
 
                 const myDeckNumberOfCards = await this.createMyDeckNumberOfSelectedCards(deckId, cardId, cardCount, position.position);
                 numberGroup.add(myDeckNumberOfCards.getMesh());
@@ -55,8 +55,10 @@ export class MyDeckNumberOfSelectedCardsServiceImpl implements MyDeckNumberOfSel
                 if (existingNumberMesh == null) {
                     const myDeckNumberOfCards = await this.createMyDeckNumberOfSelectedCards(deckId, cardId, cardCount, existingPosition.position);
                     numberGroup.add(myDeckNumberOfCards.getMesh());
+                    console.log(`%c [New Number-position 존재] DeckId: ${deckId}, CardId: ${cardId}`, 'color: #FE2EF7; font-weight: bold;');
 
                 } else {
+                    console.log(`%c [Number 존재] DeckId: ${deckId}, CardId: ${cardId}`, 'color: #FE2EF7; font-weight: bold;');
                     const positionX = existingPosition.getX() * window.innerWidth;
                     const positionY = existingPosition.getY() * window.innerHeight;
 
