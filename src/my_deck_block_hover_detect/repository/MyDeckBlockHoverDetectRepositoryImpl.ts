@@ -37,9 +37,10 @@ export class MyDeckBlockHoverDetectRepositoryImpl implements MyDeckBlockHoverDet
         this.raycaster.setFromCamera(normalizedMouse, camera);
 
         const meshes = blockList.map(block => block.getMesh());
-
         const scrollArea = this.getScrollArea();
+
         if (scrollArea == null) return null;
+
         scrollArea.width = 0.202 * window.innerWidth;
         scrollArea.height = 0.61 * window.innerHeight;
         scrollArea.position.set(0.38 * window.innerWidth, -0.024 * window.innerHeight);
@@ -48,6 +49,7 @@ export class MyDeckBlockHoverDetectRepositoryImpl implements MyDeckBlockHoverDet
         const candidateMeshes = meshes.filter(blockMesh =>
             this.clippingMaskManager.isMeshVisible(blockMesh, clippingPlanes)
         );
+
         if (candidateMeshes.length === 0) return null;
 
         const intersects = this.raycaster.intersectObjects(candidateMeshes, false);
