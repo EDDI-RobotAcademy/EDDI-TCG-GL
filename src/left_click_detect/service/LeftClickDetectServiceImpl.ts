@@ -68,6 +68,7 @@ import {GeneralAttackType} from "../../general_attack/entity/GeneralAttackType";
 import {ActivePanelButtonHandler} from "../../active_panel_area/handler/ActivePanelButtonHandler";
 import {BattleFieldCommonAreaType} from "../../common/type/BattleFieldCommonAreaType";
 import {NeonBorderHandler} from "../../neon_border/handler/NeonBorderHandler";
+import {OpponentFieldCardScene} from "../../opponent_field_card_scene/entity/OpponentFieldCardScene";
 
 export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private static instance: LeftClickDetectServiceImpl | null = null;
@@ -128,7 +129,11 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
     private leftMouseDown: boolean = false;
 
+    private prevMouseCursorDetectArea: MouseCursorDetectArea = MouseCursorDetectArea.NONE;
+    private currentMouseCursorDetectArea: MouseCursorDetectArea = MouseCursorDetectArea.NONE;
+
     private areaHandlers: Record<MouseCursorDetectArea, (x: number, y: number) => Promise<void>> = {
+        [MouseCursorDetectArea.NONE]: async () => { /* do nothing */ },
         [MouseCursorDetectArea.YOUR_HAND]: this.handleYourHandClick.bind(this),
         [MouseCursorDetectArea.YOUR_FIELD]: this.handleYourFieldClick.bind(this),
         [MouseCursorDetectArea.OPPONENT_FIELD]: this.handleOpponentFieldClick.bind(this),
@@ -230,6 +235,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         const type = clickedButton.userData.type;
         console.log(`Active Panel 버튼 클릭됨: ${type}`);
 
+        // currentMouseCursorDetectArea
         const selectedYourFieldCard = this.dragMoveRepository.getSelectedObject() as unknown as YourFieldCardScene;
         const yourFieldCardId = selectedYourFieldCard.getId()
         console.log(`yourFieldCardId: ${yourFieldCardId}`)
@@ -284,7 +290,11 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
                 }
                 break;
             case "details":
-                // ...
+                console.log("details type")
+                this.activePanelAreaRepository.setActivePanelButtonType(ActivePanelButtonType.DETAILS)
+                if (this.currentMouseCursorDetectArea === MouseCursorDetectArea.YOUR_FIELD) {
+                    this.activePanelButtonHandler.execute(ActivePanelButtonType.DETAILS, BattleFieldCommonAreaType.YOUR_FIELD_UNIT)
+                }
                 break;
         }
 
@@ -305,6 +315,8 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             console.warn("클릭된 영역을 감지할 수 없습니다.");
             return null;
         }
+
+        this.currentMouseCursorDetectArea = detectedArea;
 
         try {
             // area에 해당하는 핸들러 실행
@@ -358,11 +370,20 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             return;
         }
 
-        // TODO: 이전 선택 카드가 현재 선택 카드와 같은지 판별해야함
-        const prevYourFieldCard = this.dragMoveRepository.getSelectedObject() as unknown as YourFieldCardScene;
+        let prevYourFieldCard: YourFieldCardScene | null = null;
+
+        if (this.currentMouseCursorDetectArea !== this.prevMouseCursorDetectArea) {
+            this.prevMouseCursorDetectArea = this.currentMouseCursorDetectArea;
+
+            this.dragMoveRepository.deleteSelectedObject()
+        }
+
+        prevYourFieldCard = this.dragMoveRepository.getSelectedObject() as unknown as YourFieldCardScene;
         console.log(`prevYourFieldCard: ${prevYourFieldCard}`)
 
         // this.activateExistNeonBorder(clickedYourFieldCard);
+        this.neonBorderHandler.deactivateEveryExistNeonBorder()
+        this.activePanelAreaRepository.delete();
         this.neonBorderHandler.activateExistNeonBorder(clickedYourFieldCard);
 
         if (prevYourFieldCard && prevYourFieldCard.getId() === clickedYourFieldCard.getId()) {
@@ -393,10 +414,54 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
     async handleOpponentFieldClick(x: number, y: number): Promise<void> {
         console.log(`handleOpponentFieldClick()`);
+
         const currentActivePanelButtonType = this.activePanelAreaRepository.getActivePanelButtonType();
 
         if (currentActivePanelButtonType === ActivePanelButtonType.NONE) {
             console.warn("현재 ActivePanelButtonType이 선택되지 않았습니다.");
+
+            // if (this.activePanelAreaRepository.exists()) {
+            //     return;
+            // }
+
+            const opponentFieldSceneList = this.opponentFieldCardSceneRepository.findAll();
+            const clickedOpponentFieldCard = this.leftClickHandDetectRepository.isYourHandAreaClicked({ x, y }, opponentFieldSceneList, this.camera);
+            if (clickedOpponentFieldCard === null) {
+                return;
+            }
+
+            let prevOpponentFieldCard: OpponentFieldCardScene | null = null;
+
+            if (this.currentMouseCursorDetectArea !== this.prevMouseCursorDetectArea) {
+                this.prevMouseCursorDetectArea = this.currentMouseCursorDetectArea;
+
+                this.dragMoveRepository.deleteSelectedObject()
+            }
+
+            prevOpponentFieldCard = this.dragMoveRepository.getSelectedObject() as unknown as OpponentFieldCardScene;
+            console.log(`prevOpponentFieldCard: ${prevOpponentFieldCard}`)
+
+            this.neonBorderHandler.deactivateEveryExistNeonBorder()
+            this.activePanelAreaRepository.delete();
+            this.neonBorderHandler.activateExistOpponentNeonBorder(clickedOpponentFieldCard);
+
+            if (prevOpponentFieldCard && prevOpponentFieldCard.getId() === clickedOpponentFieldCard.getId()) {
+                console.log('같은 카드를 선택하였습니다!')
+                return;
+            }
+
+            if (prevOpponentFieldCard !== null) {
+                this.neonBorderHandler.deactivateEveryExistOpponentNeonBorder()
+                this.neonBorderHandler.deactivateExistNeonBorder(prevOpponentFieldCard)
+                this.neonBorderHandler.deactivateOpponentMasterNeonBorder()
+                this.activePanelAreaRepository.delete();
+            }
+
+            this.dragMoveRepository.setSelectedObject(clickedOpponentFieldCard);
+            this.dragMoveRepository.setSelectedArea(LeftClickedArea.OPPONENT_FIELD)
+
+            this.neonBorderHandler.createNewOpponentNeonBorder(clickedOpponentFieldCard.getId())
+
             return;
         }
 

@@ -181,6 +181,7 @@ export class ActivePanelAreaRepositoryImpl implements ActivePanelAreaRepository 
             }
         });
         this.activeButtons = []; // 참조 초기화
+        this.buttonType = ActivePanelButtonType.NONE;
     }
 
     exists(): boolean {

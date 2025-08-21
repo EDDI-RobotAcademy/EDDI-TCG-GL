@@ -1,7 +1,7 @@
 import { MouseCursorDetectArea } from "./MouseCursorDetectArea";
 
 export class MouseCursorDetectAreaMap {
-    private areaBounds: Record<MouseCursorDetectArea, { x1: number; y1: number; x2: number; y2: number }>;
+    private areaBounds: Partial<Record<MouseCursorDetectArea, { x1: number; y1: number; x2: number; y2: number }>>;
 
     constructor() {
         this.areaBounds = {

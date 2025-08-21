@@ -1,4 +1,5 @@
 export enum MouseCursorDetectArea {
+    NONE = 0,
     YOUR_HAND = 1,
     YOUR_FIELD = 2,
     YOUR_TOMB = 3,

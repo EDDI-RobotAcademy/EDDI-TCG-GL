@@ -228,7 +228,16 @@ export class NeonBorderHandler {
         }
     }
 
-    private async createNewOpponentNeonBorder(opponentCardSceneId: number): Promise<void> {
+    public async createNewOpponentNeonBorder(opponentCardSceneId: number): Promise<void> {
+        const existingNeonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(
+            opponentCardSceneId, NeonBorderSceneType.HAND, NeonBorderType.ENEMY
+        );
+
+        if (existingNeonBorder) {
+            this.enableExistingNeonBorder(existingNeonBorder);
+            return;
+        }
+
         const opponentCardSceneMesh = await this.opponentFieldCardSceneRepository.findById(opponentCardSceneId);
         if (!opponentCardSceneMesh) return;
 
@@ -296,6 +305,15 @@ export class NeonBorderHandler {
         this.enableExistingNeonBorder(existingNeonBorder);
     }
 
+    public activateExistOpponentNeonBorder(clickedCard: ClickableCard): void {
+        const yourFieldSceneId = clickedCard.getId();
+        const existingNeonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(
+            yourFieldSceneId, NeonBorderSceneType.FIELD, NeonBorderType.ENEMY
+        );
+        if (!existingNeonBorder) return;
+        this.enableExistingNeonBorder(existingNeonBorder);
+    }
+
     public enableExistingNeonBorder(neonBorder: NeonBorder): void {
         this.setNeonBorderVisibility(neonBorder, true);
     }
@@ -321,6 +339,14 @@ export class NeonBorderHandler {
         const opponentMasterNeonBorder = this.neonBorderRepository.findOpponentMaster(NeonBorderType.OPPONENT_MASTER);
         if (!opponentMasterNeonBorder) return;
         this.setNeonBorderVisibility(opponentMasterNeonBorder, false);
+    }
+
+    public deactivateEveryExistNeonBorder(): void {
+        const allNeonBorders = this.neonBorderRepository.findAll();
+        const opponentBorders = allNeonBorders.filter(
+            border => border.getNeonBorderSceneType() === NeonBorderSceneType.FIELD
+        );
+        opponentBorders.forEach(border => this.setNeonBorderVisibility(border, false));
     }
 
     /** ================== Private 헬퍼 ================== */
