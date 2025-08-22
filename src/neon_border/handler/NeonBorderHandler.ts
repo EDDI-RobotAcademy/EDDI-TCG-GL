@@ -47,12 +47,13 @@ import {
 import {
     OpponentFieldCardAttributeMarkSceneRepositoryImpl
 } from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
+import {BattleFieldConstants} from "../../common/BattleFieldConstants";
 
 export class NeonBorderHandler {
     private static instance: NeonBorderHandler;
 
-    private readonly CARD_WIDTH: number = 0.06493506493;
-    private readonly CARD_HEIGHT: number = this.CARD_WIDTH * 1.615;
+    private readonly CARD_WIDTH_RATIO: number = BattleFieldConstants.CARD_WIDTH_RATIO;
+    private readonly CARD_HEIGHT_RATIO: number = BattleFieldConstants.CARD_HEIGHT_RATIO;
 
     private readonly OPPONENT_START_X: number = 0.4605885;
     private readonly OPPONENT_START_Y: number = 0.1920103;
@@ -120,8 +121,8 @@ export class NeonBorderHandler {
             attributeMesh.renderOrder = 2;
         });
 
-        const halfWidth = this.CARD_WIDTH * window.innerWidth / 2;
-        const halfHeight = this.CARD_HEIGHT * window.innerWidth / 2;
+        const halfWidth = this.CARD_WIDTH_RATIO * window.innerWidth / 2;
+        const halfHeight = this.CARD_HEIGHT_RATIO * window.innerWidth / 2;
 
         const cardSceneId = clickedCard.getId();
 
@@ -136,8 +137,8 @@ export class NeonBorderHandler {
 
         const startX = cardPosition.x - halfWidth;
         const startY = cardPosition.y - halfHeight;
-        const width = this.CARD_WIDTH * window.innerWidth;
-        const height = this.CARD_HEIGHT * window.innerWidth;
+        const width = this.CARD_WIDTH_RATIO * window.innerWidth;
+        const height = this.CARD_HEIGHT_RATIO * window.innerWidth;
 
         await this.createNeonBorderNormalization(
             startX, startY, width, height,
@@ -247,13 +248,13 @@ export class NeonBorderHandler {
         const attributeMarkIds = this.opponentFieldRepository.findAttributeMarkIdListByCardSceneId(opponentCardSceneId) || [];
         await this.updateOpponentMarkRenderOrder(attributeMarkIds);
 
-        const halfWidth = this.CARD_WIDTH * window.innerWidth / 2;
-        const halfHeight = this.CARD_HEIGHT * window.innerWidth / 2;
+        const halfWidth = this.CARD_WIDTH_RATIO * window.innerWidth / 2;
+        const halfHeight = this.CARD_HEIGHT_RATIO * window.innerWidth / 2;
 
         const startX = opponentCardMesh.position.x - halfWidth;
         const startY = opponentCardMesh.position.y - halfHeight;
-        const width = this.CARD_WIDTH * window.innerWidth;
-        const height = this.CARD_HEIGHT * window.innerWidth;
+        const width = this.CARD_WIDTH_RATIO * window.innerWidth;
+        const height = this.CARD_HEIGHT_RATIO * window.innerWidth;
 
         const { lines } = await this.neonShape.addNeonShaderRectangle(
             startX, startY, width, height,

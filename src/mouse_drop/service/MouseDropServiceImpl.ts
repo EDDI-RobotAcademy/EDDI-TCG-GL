@@ -39,29 +39,30 @@ import {NeonBorderLinePositionRepositoryImpl} from "../../neon_border_line_posit
 import {NeonBorderSceneType} from "../../neon_border/entity/NeonBorderSceneType";
 import chalk from "chalk";
 import {NeonBorderType} from "../../neon_border/entity/NeonBorderType";
+import {BattleFieldConstants} from "../../common/BattleFieldConstants";
 
 export class MouseDropServiceImpl implements MouseDropService {
     private static instance: MouseDropServiceImpl | null = null;
 
-    private readonly HALF: number = 0.5;
-    private readonly GAP_OF_EACH_CARD: number = 0.094696
-    private readonly HAND_X_CRITERIA: number = 0.311904
+    private readonly HALF: number = BattleFieldConstants.HALF;
+    private readonly GAP_OF_EACH_CARD: number = BattleFieldConstants.GAP_OF_EACH_CARD;
+    private readonly HAND_X_CRITERIA: number = BattleFieldConstants.HAND_X_CRITERIA;
     // 0.862217 + 0.06493506493 * 1.615 = 0.1048701
     // 0.862217 + 0.1048701
-    private readonly HAND_Y_CRITERIA: number = 0.972107
+    private readonly HAND_Y_CRITERIA: number = BattleFieldConstants.HAND_Y_CRITERIA;
     private readonly HAND_INITIAL_X: number = this.HAND_X_CRITERIA - this.HALF;
     private readonly HAND_INITIAL_Y: number = this.HALF - this.HAND_Y_CRITERIA;
 
-    private readonly YOUR_FIELD_X_CRITERIA: number = 0.186458
+    private readonly YOUR_FIELD_X_CRITERIA: number = BattleFieldConstants.YOUR_FIELD_X_CRITERIA
     // private readonly YOUR_FIELD_Y_CRITERIA: number = 0.972107
     // private readonly YOUR_FIELD_Y_CRITERIA: number = 0.328463
-    private readonly YOUR_FIELD_Y_CRITERIA: number = 0.653391 + 0.1048701
+    private readonly YOUR_FIELD_Y_CRITERIA: number = BattleFieldConstants.YOUR_FIELD_Y_CRITERIA
     // private readonly YOUR_FIELD_Y_CRITERIA: number = 0.770721
     private readonly YOUR_FIELD_INITIAL_X: number = this.YOUR_FIELD_X_CRITERIA - this.HALF
     private readonly YOUR_FIELD_INITIAL_Y: number = this.HALF - this.YOUR_FIELD_Y_CRITERIA;
 
-    private readonly CARD_WIDTH: number = 0.06493506493
-    private readonly CARD_HEIGHT: number = this.CARD_WIDTH * 1.615
+    private readonly CARD_WIDTH_RATIO: number = BattleFieldConstants.CARD_WIDTH_RATIO;
+    private readonly CARD_HEIGHT_RATIO: number = this.CARD_WIDTH_RATIO * 1.615
 
     private raycaster: THREE.Raycaster;
     private mouseDropFieldRepository: MouseDropFieldRepository;
@@ -184,7 +185,7 @@ export class MouseDropServiceImpl implements MouseDropService {
 
                 const cardPositionVector2d = cardPosition.getPosition()
 
-                const calculatedPosition = AttributeMarkPositionCalculator.getPositionForType(markSceneType, cardPositionVector2d, this.CARD_WIDTH, this.CARD_HEIGHT);
+                const calculatedPosition = AttributeMarkPositionCalculator.getPositionForType(markSceneType, cardPositionVector2d, this.CARD_WIDTH_RATIO, this.CARD_HEIGHT_RATIO);
 
                 const x = calculatedPosition.getX();
                 const y = calculatedPosition.getY();
@@ -257,13 +258,13 @@ export class MouseDropServiceImpl implements MouseDropService {
             return;
         }
 
-        const halfWidth = (this.CARD_WIDTH * window.innerWidth) / 2;
-        const halfHeight = (this.CARD_HEIGHT * window.innerWidth) / 2;
+        const halfWidth = (this.CARD_WIDTH_RATIO * window.innerWidth) / 2;
+        const halfHeight = (this.CARD_HEIGHT_RATIO * window.innerWidth) / 2;
 
         const startX = x - halfWidth;
         const startY = y - halfHeight;
-        const width = this.CARD_WIDTH * window.innerWidth;
-        const height = this.CARD_HEIGHT * window.innerWidth;
+        const width = this.CARD_WIDTH_RATIO * window.innerWidth;
+        const height = this.CARD_HEIGHT_RATIO * window.innerWidth;
 
         console.log(chalk.red.bold(`repositionNeonBorder() neonBorder: ${JSON.stringify(neonBorder, null, 2)}`));
         console.log(chalk.red.bold(`repositionNeonBorder() Repositioning Neon Border for sceneId: ${sceneId}`));
@@ -304,7 +305,7 @@ export class MouseDropServiceImpl implements MouseDropService {
     private calculateYourFieldPositionByIndex(index: number): Vector2d {
         const yourFieldPositionX = (this.YOUR_FIELD_INITIAL_X + index * this.GAP_OF_EACH_CARD) * window.innerWidth;
         const yourFieldPositionY = this.YOUR_FIELD_INITIAL_Y * window.innerHeight
-            + (this.CARD_HEIGHT * this.HALF * window.innerWidth);
+            + (this.CARD_HEIGHT_RATIO * this.HALF * window.innerWidth);
         return new Vector2d(yourFieldPositionX, yourFieldPositionY);
     }
 
@@ -385,8 +386,8 @@ export class MouseDropServiceImpl implements MouseDropService {
                         const calculatedAttributeMarkPosition = AttributeMarkPositionCalculator.getPositionForType(
                             markSceneType,
                             calculatedPosition, // 여기서 calculatedPosition을 사용
-                            this.CARD_WIDTH,
-                            this.CARD_HEIGHT
+                            this.CARD_WIDTH_RATIO,
+                            this.CARD_HEIGHT_RATIO
                         );
 
                         // 계산된 위치로 attributeMesh의 포지션 업데이트
@@ -434,13 +435,13 @@ export class MouseDropServiceImpl implements MouseDropService {
         }
 
         // mainCardScene과 calculatedPosition으로 새로운 위치 계산
-        const halfWidth = (this.CARD_WIDTH * window.innerWidth) / 2;
-        const halfHeight = (this.CARD_HEIGHT * window.innerWidth) / 2;
+        const halfWidth = (this.CARD_WIDTH_RATIO * window.innerWidth) / 2;
+        const halfHeight = (this.CARD_HEIGHT_RATIO * window.innerWidth) / 2;
 
         const startX = calculatedPosition.getX() - halfWidth;
         const startY = calculatedPosition.getY() - halfHeight;
-        const width = this.CARD_WIDTH * window.innerWidth;
-        const height = this.CARD_HEIGHT * window.innerWidth;
+        const width = this.CARD_WIDTH_RATIO * window.innerWidth;
+        const height = this.CARD_HEIGHT_RATIO * window.innerWidth;
 
         console.log(`Calculated position - StartX: ${startX}, StartY: ${startY}, Width: ${width}, Height: ${height}`);
 
@@ -498,7 +499,7 @@ export class MouseDropServiceImpl implements MouseDropService {
     private calculateHandPositionByIndex(index: number): Vector2d {
         const handPositionX = (this.HAND_INITIAL_X + index * this.GAP_OF_EACH_CARD) * window.innerWidth;
         const handPositionY = this.HAND_INITIAL_Y * window.innerHeight
-            + (this.CARD_HEIGHT * this.HALF * window.innerWidth);
+            + (this.CARD_HEIGHT_RATIO * this.HALF * window.innerWidth);
         return new Vector2d(handPositionX, handPositionY);
     }
 
@@ -685,38 +686,38 @@ export class MouseDropServiceImpl implements MouseDropService {
     }
 
     private calculateWeaponPosition(yourFieldPosition: Vector2d): Vector2d {
-        const x = yourFieldPosition.getX() + this.CARD_WIDTH * 0.44 * window.innerWidth;
-        const y = yourFieldPosition.getY() - this.CARD_HEIGHT * 0.45666 * window.innerWidth;
+        const x = yourFieldPosition.getX() + this.CARD_WIDTH_RATIO * 0.44 * window.innerWidth;
+        const y = yourFieldPosition.getY() - this.CARD_HEIGHT_RATIO * 0.45666 * window.innerWidth;
         return new Vector2d(x, y);
     }
 
     private calculateStaffPosition(yourFieldPosition: Vector2d): Vector2d {
-        const x = yourFieldPosition.getX() + this.CARD_WIDTH * 0.54 * window.innerWidth;
-        const y = yourFieldPosition.getY() - this.CARD_HEIGHT * 0.30666 * window.innerWidth;
+        const x = yourFieldPosition.getX() + this.CARD_WIDTH_RATIO * 0.54 * window.innerWidth;
+        const y = yourFieldPosition.getY() - this.CARD_HEIGHT_RATIO * 0.30666 * window.innerWidth;
         return new Vector2d(x, y);
     }
 
     private calculateKindsPosition(yourFieldPosition: Vector2d): Vector2d {
-        const x = yourFieldPosition.getX() + this.CARD_WIDTH * 0.5 * window.innerWidth;
-        const y = yourFieldPosition.getY() - this.CARD_HEIGHT * 0.5 * window.innerWidth;
+        const x = yourFieldPosition.getX() + this.CARD_WIDTH_RATIO * 0.5 * window.innerWidth;
+        const y = yourFieldPosition.getY() - this.CARD_HEIGHT_RATIO * 0.5 * window.innerWidth;
         return new Vector2d(x, y);
     }
 
     private calculateRacePosition(yourFieldPosition: Vector2d): Vector2d {
-        const x = yourFieldPosition.getX() + this.CARD_WIDTH * 0.5 * window.innerWidth;
-        const y = yourFieldPosition.getY() + this.CARD_HEIGHT * 0.5 * window.innerWidth;
+        const x = yourFieldPosition.getX() + this.CARD_WIDTH_RATIO * 0.5 * window.innerWidth;
+        const y = yourFieldPosition.getY() + this.CARD_HEIGHT_RATIO * 0.5 * window.innerWidth;
         return new Vector2d(x, y);
     }
 
     private calculateHpPosition(yourFieldPosition: Vector2d): Vector2d {
-        const x = yourFieldPosition.getX() - this.CARD_WIDTH * 0.5 * window.innerWidth;
-        const y = yourFieldPosition.getY() - this.CARD_HEIGHT * 0.43438 * window.innerWidth;
+        const x = yourFieldPosition.getX() - this.CARD_WIDTH_RATIO * 0.5 * window.innerWidth;
+        const y = yourFieldPosition.getY() - this.CARD_HEIGHT_RATIO * 0.43438 * window.innerWidth;
         return new Vector2d(x, y);
     }
 
     private calculateEnergyPosition(yourFieldPosition: Vector2d): Vector2d {
-        const x = yourFieldPosition.getX() - this.CARD_WIDTH * 0.5 * window.innerWidth;
-        const y = yourFieldPosition.getY() + this.CARD_HEIGHT * 0.5 * window.innerWidth;
+        const x = yourFieldPosition.getX() - this.CARD_WIDTH_RATIO * 0.5 * window.innerWidth;
+        const y = yourFieldPosition.getY() + this.CARD_HEIGHT_RATIO * 0.5 * window.innerWidth;
         return new Vector2d(x, y);
     }
 }
