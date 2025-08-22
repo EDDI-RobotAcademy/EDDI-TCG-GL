@@ -2,13 +2,23 @@ import * as THREE from "three";
 
 import {MyDeckBlockHoverDetectRepository} from "./MyDeckBlockHoverDetectRepository";
 import {MyDeckBlock} from "../../my_deck_block/entity/MyDeckBlock";
+import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
+import {SideScrollArea} from "../../side_scroll_area/entity/SideScrollArea";
+import {ClippingMaskManager} from "../../clipping_mask_manager/ClippingMaskManager";
 
 export class MyDeckBlockHoverDetectRepositoryImpl implements MyDeckBlockHoverDetectRepository {
     private static instance: MyDeckBlockHoverDetectRepositoryImpl;
     private raycaster = new THREE.Raycaster();
+    private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
+    private clippingMaskManager: ClippingMaskManager;
 
     private currentHoverBlockId: number | null = null;
     private blockHoverEnabled: boolean = false;
+
+    private constructor() {
+        this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
+        this.clippingMaskManager = ClippingMaskManager.getInstance();
+    }
 
     public static getInstance(): MyDeckBlockHoverDetectRepositoryImpl {
         if (!MyDeckBlockHoverDetectRepositoryImpl.instance) {
@@ -27,7 +37,25 @@ export class MyDeckBlockHoverDetectRepositoryImpl implements MyDeckBlockHoverDet
         this.raycaster.setFromCamera(normalizedMouse, camera);
 
         const meshes = blockList.map(block => block.getMesh());
-        const intersects = this.raycaster.intersectObjects(meshes);
+        const scrollArea = this.getScrollArea();
+
+        if (scrollArea == null) return null;
+
+        scrollArea.width = 0.202 * window.innerWidth;
+        scrollArea.height = 0.61 * window.innerHeight;
+        scrollArea.position.set(0.38 * window.innerWidth, -0.024 * window.innerHeight);
+
+        const clippingPlanes = this.clippingMaskManager.setClippingPlanes(scrollArea);
+        const candidateMeshes = meshes.filter(blockMesh =>
+            this.clippingMaskManager.isMeshVisible(blockMesh, clippingPlanes)
+        );
+
+        if (candidateMeshes.length === 0) return null;
+
+        const intersects = this.raycaster.intersectObjects(candidateMeshes, false);
+        if (intersects.length === 0) {
+            return null;
+        }
 
         if (intersects.length > 0) {
             const intersectedMesh = intersects[0].object;
@@ -41,6 +69,10 @@ export class MyDeckBlockHoverDetectRepositoryImpl implements MyDeckBlockHoverDet
             }
             return null;
         }
+    }
+
+    private getScrollArea(): SideScrollArea | null {
+        return this.sideScrollAreaRepository.findAreaByTypeAndId(3, 2);
     }
 
     public saveCurrentHoveredBlockId(id: number): void {

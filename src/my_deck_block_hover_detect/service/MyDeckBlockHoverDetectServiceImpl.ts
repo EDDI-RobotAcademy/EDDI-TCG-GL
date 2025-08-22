@@ -8,6 +8,8 @@ import {MyDeckBlockRepositoryImpl} from "../../my_deck_block/repository/MyDeckBl
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {DeckCardDeleteButtonRepositoryImpl} from "../../deck_card_delete_button/repository/DeckCardDeleteButtonRepositoryImpl";
 import {DeckCardAddButtonRepositoryImpl} from "../../deck_card_add_button/repository/DeckCardAddButtonRepositoryImpl";
+import {DeckCardDeleteButtonClickDetectRepositoryImpl} from "../../deck_card_delete_button_click_detect/repository/DeckCardDeleteButtonClickDetectRepositoryImpl";
+import {DeckCardAddButtonClickDetectRepositoryImpl} from "../../deck_card_add_button_click_detect/repository/DeckCardAddButtonClickDetectRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -20,6 +22,8 @@ export class MyDeckBlockHoverDetectServiceImpl implements MyDeckBlockHoverDetect
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private deckCardDeleteButtonRepository: DeckCardDeleteButtonRepositoryImpl;
     private deckCardAddButtonRepository: DeckCardAddButtonRepositoryImpl;
+    private deckCardDeleteButtonClickDetectRepository: DeckCardDeleteButtonClickDetectRepositoryImpl;
+    private deckCardAddButtonClickDetectRepository: DeckCardAddButtonClickDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -28,6 +32,8 @@ export class MyDeckBlockHoverDetectServiceImpl implements MyDeckBlockHoverDetect
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.deckCardDeleteButtonRepository = DeckCardDeleteButtonRepositoryImpl.getInstance(scene);
         this.deckCardAddButtonRepository = DeckCardAddButtonRepositoryImpl.getInstance(scene);
+        this.deckCardDeleteButtonClickDetectRepository = DeckCardDeleteButtonClickDetectRepositoryImpl.getInstance();
+        this.deckCardAddButtonClickDetectRepository = DeckCardAddButtonClickDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckBlockHoverDetectServiceImpl {
@@ -65,6 +71,9 @@ export class MyDeckBlockHoverDetectServiceImpl implements MyDeckBlockHoverDetect
                 this.setAllDeckCardAddButtonVisibility(currentClickedDeckButtonId, false);
                 this.setDeckCardDeleteButtonVisibility(blockUniqueId, true);
                 this.setDeckCardAddButtonVisibility(blockUniqueId, true);
+
+                return hoveredBlock;
+
             } else {
                 const blockUniqueId = this.getCurrentHoveredButtonId();
                 if (blockUniqueId !== null) {
@@ -81,7 +90,14 @@ export class MyDeckBlockHoverDetectServiceImpl implements MyDeckBlockHoverDetect
 
         if (event.button === 0) {
             const hoverPoint = { x: event.clientX, y: event.clientY };
-            return await this.handleHover(hoverPoint);
+            const result =  await this.handleHover(hoverPoint);
+
+            if (result) {
+                this.deckCardDeleteButtonClickDetectRepository.setButtonClickEnabled(true);
+                this.deckCardAddButtonClickDetectRepository.setButtonClickEnabled(true);
+
+                return result;
+            }
         }
         return null;
     }

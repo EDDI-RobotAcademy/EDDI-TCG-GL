@@ -24,6 +24,8 @@ import {MyDeckRemainingOutOfTotalSlashRepositoryImpl} from "../../my_deck_remain
 import {MyDeckNumberOfSelectedCardsPositionRepositoryImpl} from "../../my_deck_number_of_selected_cards_position/repository/MyDeckNumberOfSelectedCardsPositionRepositoryImpl";
 import {MyDeckBlockPositionRepositoryImpl} from "../../my_deck_block_position/repository/MyDeckBlockPositionRepositoryImpl";
 import {MyDeckCardNamePositionRepositoryImpl} from "../../my_deck_card_name_position/repository/MyDeckCardNamePositionRepositoryImpl";
+import {DeckEditButtonRepositoryImpl} from "../../deck_edit_button/repository/DeckEditButtonRepositoryImpl";
+import {DeckEditDoneButtonRepositoryImpl} from "../../deck_edit_done_button/repository/DeckEditDoneButtonRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -54,6 +56,8 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private myDeckNumberOfSelectedCardsPositionRepository: MyDeckNumberOfSelectedCardsPositionRepositoryImpl;
     private myDeckBlockPositionRepository: MyDeckBlockPositionRepositoryImpl;
     private myDeckCardNamePositionRepository: MyDeckCardNamePositionRepositoryImpl;
+    private deckEditButtonRepository: DeckEditButtonRepositoryImpl;
+    private deckEditDoneButtonRepository: DeckEditDoneButtonRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance(scene);
@@ -78,6 +82,8 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.myDeckNumberOfSelectedCardsPositionRepository = MyDeckNumberOfSelectedCardsPositionRepositoryImpl.getInstance();
         this.myDeckBlockPositionRepository = MyDeckBlockPositionRepositoryImpl.getInstance();
         this.myDeckCardNamePositionRepository = MyDeckCardNamePositionRepositoryImpl.getInstance();
+        this.deckEditButtonRepository = DeckEditButtonRepositoryImpl.getInstance();
+        this.deckEditDoneButtonRepository = DeckEditDoneButtonRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckButtonClickDetectServiceImpl {
@@ -134,6 +140,8 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                     this.setNumberOfTotalOwnedCardsVisibility(false);
                     this.setNumberOfRemainingCardsVisibility(false);
                     this.setRemainingOutOfTotalSlashVisibility(false);
+                    this.setDeckEditButtonVisibility(true);
+                    this.setDeckEditDoneButtonVisibility(false);
 
                 }
             }
@@ -267,6 +275,14 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.deckCardCountMarkerRepository.findMarkerListByDeckId(deckId)?.forEach(marker =>
             marker.setVisibility(isVisible)
         );
+    }
+
+    private setDeckEditButtonVisibility(isVisible: boolean): void {
+        this.deckEditButtonRepository.findButtonById(0)?.setVisibility(isVisible);
+    }
+
+    private setDeckEditDoneButtonVisibility(isVisible: boolean): void {
+        this.deckEditDoneButtonRepository.findButtonById(0)?.setVisibility(isVisible);
     }
 
     private getBlockGroup(deckId: number): THREE.Group {
