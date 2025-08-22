@@ -5,12 +5,13 @@ import {getCardById} from "../../card/utility";
 import {Vector2d} from "../../common/math/Vector2d";
 import {OpponentFieldCardSceneRepository} from "./OpponentFieldCradSceneRepository";
 import {OpponentFieldCardScene} from "../entity/OpponentFieldCardScene";
+import {BattleFieldConstants} from "../../common/BattleFieldConstants";
 
 export class OpponentFieldCardSceneRepositoryImpl implements OpponentFieldCardSceneRepository {
     private static instance: OpponentFieldCardSceneRepositoryImpl;
     private cardSceneMap: Map<number, OpponentFieldCardScene> = new Map();
 
-    private readonly CARD_WIDTH: number = 0.06493506493
+    private readonly CARD_WIDTH_RATIO: number = BattleFieldConstants.CARD_WIDTH_RATIO;
 
     private constructor() {}
 
@@ -37,7 +38,7 @@ export class OpponentFieldCardSceneRepositoryImpl implements OpponentFieldCardSc
             throw new Error(`Texture for card ${cardId} not found`);
         }
 
-        const cardWidth = this.CARD_WIDTH * window.innerWidth;
+        const cardWidth = this.CARD_WIDTH_RATIO * window.innerWidth;
         const cardHeight = cardWidth * 1.615;
 
         const mainCardMesh = MeshGenerator.createMesh(cardTexture, cardWidth, cardHeight, position);

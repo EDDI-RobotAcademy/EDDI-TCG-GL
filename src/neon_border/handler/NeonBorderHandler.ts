@@ -47,13 +47,13 @@ import {
 import {
     OpponentFieldCardAttributeMarkSceneRepositoryImpl
 } from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
-import {CardConstants} from "../../card/CardConstants";
+import {BattleFieldConstants} from "../../common/BattleFieldConstants";
 
 export class NeonBorderHandler {
     private static instance: NeonBorderHandler;
 
-    private readonly CARD_WIDTH_RATIO: number = CardConstants.CARD_WIDTH_RATIO;
-    private readonly CARD_HEIGHT_RATIO: number = CardConstants.CARD_HEIGHT_RATIO;
+    private readonly CARD_WIDTH_RATIO: number = BattleFieldConstants.CARD_WIDTH_RATIO;
+    private readonly CARD_HEIGHT_RATIO: number = BattleFieldConstants.CARD_HEIGHT_RATIO;
 
     private readonly OPPONENT_START_X: number = 0.4605885;
     private readonly OPPONENT_START_Y: number = 0.1920103;

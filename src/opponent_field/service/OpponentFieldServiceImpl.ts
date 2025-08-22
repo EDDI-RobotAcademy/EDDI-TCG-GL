@@ -27,6 +27,7 @@ import {OpponentFieldCardAttributeMarkPosition} from "../../opponent_field_card_
 import {OpponentFieldCardAttributeMarkScene} from "../../opponent_field_card_attribute_mark_scene/entity/OpponentFieldCardAttributeMarkScene";
 import {OpponentFieldCardAttributeMarkStatus} from "../../opponent_field_card_attribute_mark/entity/OpponentFieldCardAttributeMarkStatus";
 import {MarkSceneType} from "../../opponent_field_card_attribute_mark_scene/entity/MarkSceneType";
+import {BattleFieldConstants} from "../../common/BattleFieldConstants";
 
 export class OpponentFieldServiceImpl implements OpponentFieldService {
     private static instance: OpponentFieldServiceImpl;
@@ -42,15 +43,15 @@ export class OpponentFieldServiceImpl implements OpponentFieldService {
     private textureManager: TextureManager = TextureManager.getInstance();
 
     // 1848, 949 -> 349, 335
-    private readonly HALF: number = 0.5;
-    private readonly GAP_OF_EACH_CARD: number = 0.094696
-    private readonly OPPONENT_FIELD_X_CRITERIA: number = 0.186458
-    private readonly OPPONENT_FIELD_Y_CRITERIA: number = 0.44564
+    private readonly HALF: number = BattleFieldConstants.HALF;
+    private readonly GAP_OF_EACH_CARD: number = BattleFieldConstants.GAP_OF_EACH_CARD;
+    private readonly OPPONENT_FIELD_X_CRITERIA: number = BattleFieldConstants.OPPONENT_FIELD_X_CRITERIA;
+    private readonly OPPONENT_FIELD_Y_CRITERIA: number = BattleFieldConstants.OPPONENT_FIELD_Y_CRITERIA;
     private readonly OPPONENT_FIELD_INITIAL_X: number = this.OPPONENT_FIELD_X_CRITERIA - this.HALF;
     private readonly OPPONENT_FIELD_INITIAL_Y: number = this.HALF - this.OPPONENT_FIELD_Y_CRITERIA;
 
-    private readonly CARD_WIDTH: number = 0.06493506493
-    private readonly CARD_HEIGHT: number = this.CARD_WIDTH * 1.615
+    private readonly CARD_WIDTH_RATIO: number = BattleFieldConstants.CARD_WIDTH_RATIO;
+    private readonly CARD_HEIGHT_RATIO: number = this.CARD_WIDTH_RATIO * 1.615
 
     private static weaponTextureMap: { [key in CardJob]?: string } = {
         [CardJob.WARRIOR]: 'sword_power',
@@ -108,7 +109,7 @@ export class OpponentFieldServiceImpl implements OpponentFieldService {
         const opponentFieldPositionCount = this.opponentFieldCardPositionRepository.count();
         const opponentFieldPositionX = (this.OPPONENT_FIELD_INITIAL_X + opponentFieldPositionCount * this.GAP_OF_EACH_CARD) * window.innerWidth;
         const opponentFieldPositionY = this.OPPONENT_FIELD_INITIAL_Y * window.innerHeight
-            + (this.CARD_HEIGHT * this.HALF * window.innerWidth);
+            + (this.CARD_HEIGHT_RATIO * this.HALF * window.innerWidth);
         return new Vector2d(opponentFieldPositionX, opponentFieldPositionY);
     }
 
@@ -224,91 +225,91 @@ export class OpponentFieldServiceImpl implements OpponentFieldService {
     }
 
     private calculateWeaponPosition(handPosition: Vector2d): Vector2d {
-        const x = handPosition.getX() + this.CARD_WIDTH * 0.44 * window.innerWidth;
-        const y = handPosition.getY() - this.CARD_HEIGHT * 0.45666 * window.innerWidth;
+        const x = handPosition.getX() + this.CARD_WIDTH_RATIO * 0.44 * window.innerWidth;
+        const y = handPosition.getY() - this.CARD_HEIGHT_RATIO * 0.45666 * window.innerWidth;
         return new Vector2d(x, y);
     }
 
     private createWeaponMesh(texture: THREE.Texture, position: Vector2d): THREE.Mesh {
         return MeshGenerator.createMesh(
             texture,
-            this.CARD_WIDTH * 0.63 * window.innerWidth,
-            this.CARD_WIDTH * 0.63 * 1.651 * window.innerWidth,
+            this.CARD_WIDTH_RATIO * 0.63 * window.innerWidth,
+            this.CARD_WIDTH_RATIO * 0.63 * 1.651 * window.innerWidth,
             position
         );
     }
 
     private calculateStaffPosition(handPosition: Vector2d): Vector2d {
-        const x = handPosition.getX() + this.CARD_WIDTH * 0.54 * window.innerWidth;
-        const y = handPosition.getY() - this.CARD_HEIGHT * 0.30666 * window.innerWidth;
+        const x = handPosition.getX() + this.CARD_WIDTH_RATIO * 0.54 * window.innerWidth;
+        const y = handPosition.getY() - this.CARD_HEIGHT_RATIO * 0.30666 * window.innerWidth;
         return new Vector2d(x, y);
     }
 
     private createStaffMesh(texture: THREE.Texture, position: Vector2d): THREE.Mesh {
         return MeshGenerator.createMesh(
             texture,
-            this.CARD_WIDTH * 0.63 * window.innerWidth,
-            this.CARD_WIDTH * 0.63 * 1.9353 * window.innerWidth,
+            this.CARD_WIDTH_RATIO * 0.63 * window.innerWidth,
+            this.CARD_WIDTH_RATIO * 0.63 * 1.9353 * window.innerWidth,
             position
         );
     }
 
     private calculateKindsPosition(handPosition: Vector2d): Vector2d {
-        const x = handPosition.getX() + this.CARD_WIDTH * 0.5 * window.innerWidth;
-        const y = handPosition.getY() - this.CARD_HEIGHT * 0.5 * window.innerWidth;
+        const x = handPosition.getX() + this.CARD_WIDTH_RATIO * 0.5 * window.innerWidth;
+        const y = handPosition.getY() - this.CARD_HEIGHT_RATIO * 0.5 * window.innerWidth;
         return new Vector2d(x, y);
     }
 
     private createKindsMesh(texture: THREE.Texture, position: Vector2d): THREE.Mesh {
         return MeshGenerator.createMesh(
             texture,
-            this.CARD_WIDTH * 0.4 * window.innerWidth,
-            this.CARD_WIDTH * 0.4 * window.innerWidth,
+            this.CARD_WIDTH_RATIO * 0.4 * window.innerWidth,
+            this.CARD_WIDTH_RATIO * 0.4 * window.innerWidth,
             position
         );
     }
 
     private calculateRacePosition(handPosition: Vector2d): Vector2d {
-        const x = handPosition.getX() + this.CARD_WIDTH * 0.5 * window.innerWidth;
-        const y = handPosition.getY() + this.CARD_HEIGHT * 0.5 * window.innerWidth;
+        const x = handPosition.getX() + this.CARD_WIDTH_RATIO * 0.5 * window.innerWidth;
+        const y = handPosition.getY() + this.CARD_HEIGHT_RATIO * 0.5 * window.innerWidth;
         return new Vector2d(x, y);
     }
 
     private createRaceMesh(texture: THREE.Texture, position: Vector2d): THREE.Mesh {
         return MeshGenerator.createMesh(
             texture,
-            this.CARD_WIDTH * 0.4 * window.innerWidth,
-            this.CARD_WIDTH * 0.4 * window.innerWidth,
+            this.CARD_WIDTH_RATIO * 0.4 * window.innerWidth,
+            this.CARD_WIDTH_RATIO * 0.4 * window.innerWidth,
             position
         );
     }
 
     private calculateHpPosition(handPosition: Vector2d): Vector2d {
-        const x = handPosition.getX() - this.CARD_WIDTH * 0.5 * window.innerWidth;
-        const y = handPosition.getY() - this.CARD_HEIGHT * 0.43438 * window.innerWidth;
+        const x = handPosition.getX() - this.CARD_WIDTH_RATIO * 0.5 * window.innerWidth;
+        const y = handPosition.getY() - this.CARD_HEIGHT_RATIO * 0.43438 * window.innerWidth;
         return new Vector2d(x, y);
     }
 
     private createHpMesh(texture: THREE.Texture, position: Vector2d): THREE.Mesh {
         return MeshGenerator.createMesh(
             texture,
-            this.CARD_WIDTH * 0.31 * window.innerWidth,
-            this.CARD_WIDTH * 0.31 * 1.65454 * window.innerWidth,
+            this.CARD_WIDTH_RATIO * 0.31 * window.innerWidth,
+            this.CARD_WIDTH_RATIO * 0.31 * 1.65454 * window.innerWidth,
             position
         );
     }
 
     private calculateEnergyPosition(handPosition: Vector2d): Vector2d {
-        const x = handPosition.getX() - this.CARD_WIDTH * 0.5 * window.innerWidth;
-        const y = handPosition.getY() + this.CARD_HEIGHT * 0.5 * window.innerWidth;
+        const x = handPosition.getX() - this.CARD_WIDTH_RATIO * 0.5 * window.innerWidth;
+        const y = handPosition.getY() + this.CARD_HEIGHT_RATIO * 0.5 * window.innerWidth;
         return new Vector2d(x, y);
     }
 
     private createEnergyMesh(texture: THREE.Texture, position: Vector2d): THREE.Mesh {
         return MeshGenerator.createMesh(
             texture,
-            this.CARD_WIDTH * 0.39 * window.innerWidth,
-            this.CARD_WIDTH * 0.39 * 1.344907 * window.innerWidth,
+            this.CARD_WIDTH_RATIO * 0.39 * window.innerWidth,
+            this.CARD_WIDTH_RATIO * 0.39 * 1.344907 * window.innerWidth,
             position
         );
     }

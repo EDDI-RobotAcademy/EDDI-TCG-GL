@@ -1,15 +1,15 @@
 import * as THREE from "three";
 
 import {LeftClickOpponentMasterDetectRepository} from "./LeftClickOpponentMasterDetectRepository";
-import {CardConstants} from "../../card/CardConstants";
+import {BattleFieldConstants} from "../../common/BattleFieldConstants";
 
 export class LeftClickOpponentMasterDetectRepositoryImpl implements LeftClickOpponentMasterDetectRepository {
     private static instance: LeftClickOpponentMasterDetectRepositoryImpl;
 
-    private readonly OPPONENT_START_X_RATIO: number = CardConstants.OPPONENT_START_X_RATIO;
-    private readonly OPPONENT_START_Y_RATIO: number = CardConstants.OPPONENT_START_Y_RATIO;
-    private readonly OPPONENT_END_X_RATIO: number = CardConstants.OPPONENT_END_X_RATIO;
-    private readonly OPPONENT_END_Y_RATIO: number = CardConstants.OPPONENT_END_Y_RATIO;
+    private readonly OPPONENT_START_X_RATIO: number = BattleFieldConstants.OPPONENT_START_X_RATIO;
+    private readonly OPPONENT_START_Y_RATIO: number = BattleFieldConstants.OPPONENT_START_Y_RATIO;
+    private readonly OPPONENT_END_X_RATIO: number = BattleFieldConstants.OPPONENT_END_X_RATIO;
+    private readonly OPPONENT_END_Y_RATIO: number = BattleFieldConstants.OPPONENT_END_Y_RATIO;
 
     public static getInstance(): LeftClickOpponentMasterDetectRepositoryImpl {
         if (!LeftClickOpponentMasterDetectRepositoryImpl.instance) {

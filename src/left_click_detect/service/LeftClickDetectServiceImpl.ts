@@ -69,7 +69,7 @@ import {ActivePanelButtonHandler} from "../../active_panel_area/handler/ActivePa
 import {BattleFieldCommonAreaType} from "../../common/type/BattleFieldCommonAreaType";
 import {NeonBorderHandler} from "../../neon_border/handler/NeonBorderHandler";
 import {OpponentFieldCardScene} from "../../opponent_field_card_scene/entity/OpponentFieldCardScene";
-import {CardConstants} from "../../card/CardConstants";
+import {BattleFieldConstants} from "../../common/BattleFieldConstants";
 
 export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private static instance: LeftClickDetectServiceImpl | null = null;
@@ -83,8 +83,8 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private readonly HAND_INITIAL_X: number = this.HAND_X_CRITERIA - this.HALF;
     private readonly HAND_INITIAL_Y: number = this.HALF - this.HAND_Y_CRITERIA;
 
-    private readonly CARD_WIDTH_RATIO: number = CardConstants.CARD_WIDTH_RATIO;
-    private readonly CARD_HEIGHT_RATIO: number = CardConstants.CARD_HEIGHT_RATIO;
+    private readonly CARD_WIDTH_RATIO: number = BattleFieldConstants.CARD_WIDTH_RATIO;
+    private readonly CARD_HEIGHT_RATIO: number = BattleFieldConstants.CARD_HEIGHT_RATIO;
 
     private readonly OPPONENT_START_X: number = 0.4605885
     private readonly OPPONENT_START_Y: number = 0.1920103

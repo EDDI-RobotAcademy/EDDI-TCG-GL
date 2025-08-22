@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import {BattleFieldCardAttributeMarkScene} from "../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
 import {OpponentFieldCardScene} from "../../opponent_field_card_scene/entity/OpponentFieldCardScene";
-import {CardConstants} from "../../card/CardConstants";
+import {BattleFieldConstants} from "../../common/BattleFieldConstants";
 
 declare const TWEEN: {
     Tween: any;
@@ -13,8 +13,8 @@ export class GeneralAttackAnimation {
     private static instance: GeneralAttackAnimation;
 
     private scene!: THREE.Scene;
-    private readonly CARD_WIDTH_RATIO: number = CardConstants.CARD_WIDTH_RATIO
-    private readonly CARD_HEIGHT_RATIO: number = CardConstants.CARD_HEIGHT_RATIO
+    private readonly CARD_WIDTH_RATIO: number = BattleFieldConstants.CARD_WIDTH_RATIO
+    private readonly CARD_HEIGHT_RATIO: number = BattleFieldConstants.CARD_HEIGHT_RATIO
 
     private readonly OPPONENT_START_X: number = 0.4605885
     private readonly OPPONENT_START_Y: number = 0.1920103

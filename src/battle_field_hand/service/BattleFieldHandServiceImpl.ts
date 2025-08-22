@@ -29,7 +29,7 @@ import {BattleFieldCardAttributeMarkStatus} from "../../battle_field_card_attrib
 import {Texture} from "three";
 import {CardKind} from "../../card/kind";
 import {MarkSceneType} from "../../battle_field_card_attribute_mark_scene/entity/MarkSceneType";
-import {CardConstants} from "../../card/CardConstants";
+import {BattleFieldConstants} from "../../common/BattleFieldConstants";
 
 export class BattleFieldHandServiceImpl implements BattleFieldHandService {
     private static instance: BattleFieldHandServiceImpl;
@@ -45,15 +45,15 @@ export class BattleFieldHandServiceImpl implements BattleFieldHandService {
 
     private textureManager: TextureManager = TextureManager.getInstance();
 
-    private readonly HALF: number = 0.5;
-    private readonly GAP_OF_EACH_CARD: number = 0.094696
-    private readonly HAND_X_CRITERIA: number = 0.311904
-    private readonly HAND_Y_CRITERIA: number = 0.972107
+    private readonly HALF: number = BattleFieldConstants.HALF;
+    private readonly GAP_OF_EACH_CARD: number = BattleFieldConstants.GAP_OF_EACH_CARD;
+    private readonly HAND_X_CRITERIA: number = BattleFieldConstants.HAND_X_CRITERIA;
+    private readonly HAND_Y_CRITERIA: number = BattleFieldConstants.HAND_Y_CRITERIA;
     private readonly HAND_INITIAL_X: number = this.HAND_X_CRITERIA - this.HALF;
     private readonly HAND_INITIAL_Y: number = this.HALF - this.HAND_Y_CRITERIA;
 
-    private readonly CARD_WIDTH_RATIO: number = CardConstants.CARD_WIDTH_RATIO;
-    private readonly CARD_HEIGHT_RATIO: number = CardConstants.CARD_HEIGHT_RATIO;
+    private readonly CARD_WIDTH_RATIO: number = BattleFieldConstants.CARD_WIDTH_RATIO;
+    private readonly CARD_HEIGHT_RATIO: number = BattleFieldConstants.CARD_HEIGHT_RATIO;
 
     private static weaponTextureMap: { [key in CardJob]?: string } = {
         [CardJob.WARRIOR]: 'sword_power',
