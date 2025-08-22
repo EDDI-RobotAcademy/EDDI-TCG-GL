@@ -53,16 +53,16 @@ export class MouseDropServiceImpl implements MouseDropService {
     private readonly HAND_INITIAL_X: number = this.HAND_X_CRITERIA - this.HALF;
     private readonly HAND_INITIAL_Y: number = this.HALF - this.HAND_Y_CRITERIA;
 
+    private readonly CARD_WIDTH_RATIO: number = BattleFieldConstants.CARD_WIDTH_RATIO;
+    private readonly CARD_HEIGHT_RATIO: number = this.CARD_WIDTH_RATIO * 1.615
+
     private readonly YOUR_FIELD_X_CRITERIA: number = BattleFieldConstants.YOUR_FIELD_X_CRITERIA
     // private readonly YOUR_FIELD_Y_CRITERIA: number = 0.972107
     // private readonly YOUR_FIELD_Y_CRITERIA: number = 0.328463
     private readonly YOUR_FIELD_Y_CRITERIA: number = BattleFieldConstants.YOUR_FIELD_Y_CRITERIA
     // private readonly YOUR_FIELD_Y_CRITERIA: number = 0.770721
     private readonly YOUR_FIELD_INITIAL_X: number = this.YOUR_FIELD_X_CRITERIA - this.HALF
-    private readonly YOUR_FIELD_INITIAL_Y: number = this.HALF - this.YOUR_FIELD_Y_CRITERIA;
-
-    private readonly CARD_WIDTH_RATIO: number = BattleFieldConstants.CARD_WIDTH_RATIO;
-    private readonly CARD_HEIGHT_RATIO: number = this.CARD_WIDTH_RATIO * 1.615
+    private readonly YOUR_FIELD_INITIAL_Y: number = this.HALF - this.YOUR_FIELD_Y_CRITERIA - this.CARD_HEIGHT_RATIO;
 
     private raycaster: THREE.Raycaster;
     private mouseDropFieldRepository: MouseDropFieldRepository;
