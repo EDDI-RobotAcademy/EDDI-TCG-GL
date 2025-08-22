@@ -7,7 +7,7 @@ export class YourFieldCardSceneRepositoryImpl implements YourFieldCardSceneRepos
     private static instance: YourFieldCardSceneRepositoryImpl;
     private cardSceneMap: Map<number, YourFieldCardScene> = new Map();
 
-    private readonly CARD_WIDTH: number = 0.06493506493
+    private readonly CARD_WIDTH_RATIO: number = 0.06493506493
 
     private constructor() {}
 
