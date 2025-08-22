@@ -9,6 +9,8 @@ export class TextureManager {
     private static instance: TextureManager;
     private isTexturesPreloaded: boolean = false
 
+    private renderer: THREE.WebGLRenderer | undefined;
+
     private battleFieldUnitCardTextureList: { [id: number]: THREE.Texture } = {};
     private battleFieldUnitSwordPowerTextureList: { [id: number]: THREE.Texture } = {};
     private battleFieldUnitStaffPowerTextureList: { [id: number]: THREE.Texture } = {};
@@ -19,6 +21,9 @@ export class TextureManager {
 
     private battleFieldActivePanelGeneralTextureList: { [id: number]: THREE.Texture } = {};
     private battleFieldActivePanelDetailsTextureList: { [id: number]: THREE.Texture } = {};
+
+    private battleFieldHandPageButtonTextureList: { [id: number]: THREE.Texture } = {};
+
     private mainLobbyBackgroundTextureList: { [id: number]: THREE.Texture } = {};
     private mainLobbyButtonsTextureList: { [id: number]: THREE.Texture } = {};
     private shopBackgroundTextureList: { [id: number]: THREE.Texture } = {};
@@ -69,7 +74,21 @@ export class TextureManager {
     private cardCountTextureList: { [id: number]: THREE.Texture } = {};
     private cardCountNotationTextureList: { [id: number]: THREE.Texture } = {};
 
-    private constructor() {}
+    private constructor(renderer?: THREE.WebGLRenderer) {
+        if (renderer instanceof THREE.WebGLRenderer) {
+            this.renderer = renderer;
+        }
+    }
+
+    public static initialize(renderer: THREE.WebGLRenderer): TextureManager {
+        if (!TextureManager.instance) {
+            if (!renderer) {
+                throw new Error("TextureManager is not initialized yet. Pass a renderer the first time.");
+            }
+            TextureManager.instance = new TextureManager(renderer);
+        }
+        return TextureManager.instance;
+    }
 
     public static getInstance(): TextureManager {
         if (!TextureManager.instance) {
@@ -99,6 +118,8 @@ export class TextureManager {
                 this.loadTextures(imageData.active_panel_general, this.battleFieldActivePanelGeneralTextureList),
                 this.loadTextures(imageData.active_panel_details, this.battleFieldActivePanelDetailsTextureList),
                 this.loadSkillTextures(imageData.active_panel_skill, this.battleFieldActivePanelSkillTextureList),
+
+                this.loadTextures(imageData.hand_page_movement_button, this.battleFieldHandPageButtonTextureList),
 
                 this.loadTextures(imageData.main_lobby_background, this.mainLobbyBackgroundTextureList),
                 this.loadTextures(imageData.main_lobby_buttons, this.mainLobbyButtonsTextureList),
@@ -194,6 +215,12 @@ export class TextureManager {
                         texture.magFilter = THREE.LinearFilter;
                         texture.minFilter = THREE.LinearFilter;
                         texture.generateMipmaps = false;
+                        // texture.minFilter = THREE.LinearMipmapLinearFilter;
+                        // texture.magFilter = THREE.LinearFilter;
+                        // texture.generateMipmaps = true;  // 이제 안전하게 사용 가능
+                        // if (this.renderer) {
+                        //     texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+                        // }
                         textureList[id] = texture;
                         resolve();
                     },
@@ -203,6 +230,34 @@ export class TextureManager {
                         reject(error);
                     }
                 );
+                // textureLoader.load(
+                //     imagePath,
+                //     (texture) => {
+                //         // NPOT → POT 변환
+                //         if (!THREE.MathUtils.isPowerOfTwo(texture.image.width) ||
+                //             !THREE.MathUtils.isPowerOfTwo(texture.image.height)) {
+                //             texture.image = this.makePowerOfTwoWithPadding(texture.image);
+                //             texture.needsUpdate = true;
+                //         }
+                //
+                //         // 텍스처 설정
+                //         texture.colorSpace = THREE.SRGBColorSpace;
+                //         texture.minFilter = THREE.LinearMipmapLinearFilter;
+                //         texture.magFilter = THREE.LinearFilter;
+                //         texture.generateMipmaps = true;
+                //         if (this.renderer) {
+                //             texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+                //         }
+                //
+                //         textureList[id] = texture;
+                //         resolve();
+                //     },
+                //     undefined,
+                //     (error) => {
+                //         console.error(`Error loading texture for path: ${imagePath}`, error);
+                //         reject(error);
+                //     }
+                // );
             });
         });
         return Promise.all(texturePromises).then(() => {
@@ -244,6 +299,8 @@ export class TextureManager {
                 return this.battleFieldActivePanelGeneralTextureList[id];
             case 'active_panel_details':
                 return this.battleFieldActivePanelDetailsTextureList[id];
+            case 'hand_page_movement_button':
+                return this.battleFieldHandPageButtonTextureList[id];
             case 'main_lobby_background':
                 return this.mainLobbyBackgroundTextureList[id];
             case 'main_lobby_buttons':
