@@ -792,7 +792,6 @@ export class TCGJustTestMyDeckView {
                 }
             }
 
-            this.myDeckNumberOfSelectedCardsService.initializeNumberVisibility();
             this.myDeckNumberOfSelectedCardsService.applyClippingMaskToNumber();
 
             const numberGroup = this.myDeckNumberOfSelectedCardsService.getNumberGroupByDeckId(currentClickedDeckId);

@@ -26,6 +26,7 @@ import {MyDeckBlockPositionRepositoryImpl} from "../../my_deck_block_position/re
 import {MyDeckCardNamePositionRepositoryImpl} from "../../my_deck_card_name_position/repository/MyDeckCardNamePositionRepositoryImpl";
 import {DeckEditButtonRepositoryImpl} from "../../deck_edit_button/repository/DeckEditButtonRepositoryImpl";
 import {DeckEditDoneButtonRepositoryImpl} from "../../deck_edit_done_button/repository/DeckEditDoneButtonRepositoryImpl";
+import {MyDeckBlockHoverDetectRepositoryImpl} from "../../my_deck_block_hover_detect/repository/MyDeckBlockHoverDetectRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -58,6 +59,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private myDeckCardNamePositionRepository: MyDeckCardNamePositionRepositoryImpl;
     private deckEditButtonRepository: DeckEditButtonRepositoryImpl;
     private deckEditDoneButtonRepository: DeckEditDoneButtonRepositoryImpl;
+    private myDeckBlockHoverDetectRepository: MyDeckBlockHoverDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance(scene);
@@ -84,6 +86,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.myDeckCardNamePositionRepository = MyDeckCardNamePositionRepositoryImpl.getInstance();
         this.deckEditButtonRepository = DeckEditButtonRepositoryImpl.getInstance();
         this.deckEditDoneButtonRepository = DeckEditDoneButtonRepositoryImpl.getInstance();
+        this.myDeckBlockHoverDetectRepository = MyDeckBlockHoverDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckButtonClickDetectServiceImpl {
@@ -195,6 +198,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
             const result = await this.handleLeftClick(clickPoint);
             if (result) {
                 this.deckDeleteButtonClickDetectRepository.setButtonClickEnabled(true);
+                this.myDeckBlockHoverDetectRepository.setBlockHoverEnabled(false);
                 return result;
             }
         }
