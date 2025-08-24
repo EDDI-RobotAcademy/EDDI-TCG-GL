@@ -266,18 +266,7 @@ export class TCGJustTestMyDeckView {
             }
         }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.buildDeckButtonClickDetectService.onMouseDown(e), false);
-//         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckEditButtonClickDetectService.onMouseDown(e), false);
-        this.renderer.domElement.addEventListener('mousedown', async (e) => {
-            const buttonEvent = await this.deckEditButtonClickDetectService.onMouseDown(e);
-            if (buttonEvent) {
-                // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
-                await this.addMyDeckOwnedCards();
-                await this.addMyDeckTotalOwnedCards();
-                await this.addRemainingOutOfTotalSlash();
-                await this.addMyDeckRemainingCards();
-                await this.addCardSelectionBlocker();
-            }
-        }, false);
+        this.renderer.domElement.addEventListener('mousedown', (e) => this.deckEditButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckOwnedCardsScrollService.onWheelScroll(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckOwnedCardsClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckDeleteButtonClickDetectService.onMouseDown(e), false);
@@ -330,13 +319,13 @@ export class TCGJustTestMyDeckView {
         await this.addTotalNumberOfSelectedCards();
         await this.addMyDeckCard();
         await this.addMyDeckCardCountMarker();
-//         await this.addMyDeckOwnedCards();
-//         await this.addMyDeckTotalOwnedCards();
+        await this.addMyDeckOwnedCards();
+        await this.addMyDeckTotalOwnedCards();
         await this.addMyDeckNumberOfCards();
         await this.addMyDeckNumberOfSelectedCards();
-//         await this.addRemainingOutOfTotalSlash();
-//         await this.addCardSelectionBlocker();
-//         await this.addMyDeckRemainingCards();
+        await this.addRemainingOutOfTotalSlash();
+        await this.addMyDeckRemainingCards();
+        await this.addCardSelectionBlocker();
         await this.addMyDeckBlock();
         await this.addMyDeckCardName();
         await this.addDeckCardDeleteButton();
@@ -680,6 +669,7 @@ export class TCGJustTestMyDeckView {
                 await this.myDeckRemainingCardsService.createMyDeckRemainingCardsWithPosition(cardId, remainingCardCount);
             }
 
+            this.myDeckRemainingCardsService.setNumberOfRemainingCards(true);
             this.myDeckRemainingCardsService.saveRemainingCardGroup();
             this.myDeckRemainingCardsService.applyClippingMaskToRemainingCards();
 
@@ -718,7 +708,7 @@ export class TCGJustTestMyDeckView {
                 await this.cardSelectionBlockerService.createCardSelectionBlockerWithPosition(cardId);
             }
             this.cardSelectionBlockerService.saveBlockerGroup();
-            this.cardSelectionBlockerService.initializeBlockerVisibility();
+//             this.cardSelectionBlockerService.initializeBlockerVisibility();
             this.cardSelectionBlockerService.applyClippingMaskToBlocker();
 
             const blockerGroup = this.cardSelectionBlockerService.getBlockerGroup();

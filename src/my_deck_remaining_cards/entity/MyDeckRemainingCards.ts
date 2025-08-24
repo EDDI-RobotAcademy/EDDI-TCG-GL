@@ -11,7 +11,7 @@ export class MyDeckRemainingCards {
         this.id = IdGenerator.generateId("MyDeckRemainingCards");
         this.mesh = mesh;
         this.position = position;
-        this.mesh.visible = true;
+        this.mesh.visible = false;
     }
 
     public getMesh(): THREE.Mesh {

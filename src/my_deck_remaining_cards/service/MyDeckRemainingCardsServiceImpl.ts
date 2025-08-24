@@ -196,4 +196,10 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
         }
     }
 
+    public setNumberOfRemainingCards(isVisible: boolean): void {
+        this.myDeckRemainingCardsRepository.findAllRemainingCardsList()?.forEach(numberMesh =>
+            numberMesh.setVisibility(isVisible)
+        );
+    }
+
 }

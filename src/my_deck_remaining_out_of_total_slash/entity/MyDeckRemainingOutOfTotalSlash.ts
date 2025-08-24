@@ -11,7 +11,7 @@ export class MyDeckRemainingOutOfTotalSlash {
         this.id = IdGenerator.generateId("MyDeckRemainingOutOfTotalSlash");
         this.mesh = mesh;
         this.position = position;
-        this.mesh.visible = true;
+        this.mesh.visible = false;
     }
 
     public getMesh(): THREE.Mesh {

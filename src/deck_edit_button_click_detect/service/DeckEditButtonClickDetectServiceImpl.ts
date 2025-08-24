@@ -147,6 +147,13 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                 this.setDeckEditDoneButtonVisibility(true);
                 this.setChosenOutOfTotalSlashVisibility(true);
                 this.setRequiredNumberOfCardsVisibility(true);
+
+                this.setOwnedCardsVisibility(true);
+                this.initializeBlockerVisibility();
+                this.setNumberOfRemainingCardsVisibility(true);
+                this.setNumberOfTotalOwnedCardsVisibility(true);
+                this.setRemainingOutOfTotalSlashVisibility(true);
+
                 return clickedButton;
             }
         }
@@ -264,6 +271,45 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         const blocker = this.cardSelectionBlockerRepository.findBlockerByCardId(cardId);
         if (blocker !== null) {
             blocker.setVisibility(isVisible);
+        }
+    }
+
+    private setOwnedCardsVisibility(isVisible: boolean): void {
+        this.myDeckOwnedCardsRepository.findAllCards()?.forEach(card =>
+            card.setVisibility(isVisible)
+        );
+    }
+
+    private setNumberOfRemainingCardsVisibility(isVisible: boolean): void {
+        this.myDeckRemainingCardsRepository.findAllRemainingCardsList()?.forEach(numberMesh =>
+            numberMesh.setVisibility(isVisible)
+        );
+    }
+
+    private setNumberOfTotalOwnedCardsVisibility(isVisible: boolean): void {
+        this.myDeckTotalOwnedCardsRepository.findAllTotalOwnedCardsList()?.forEach(numberMesh =>
+            numberMesh.setVisibility(isVisible)
+        );
+    }
+
+    private setRemainingOutOfTotalSlashVisibility(isVisible: boolean): void {
+        this.myDeckRemainingOutOfTotalSlashRepository.findAllSlashList()?.forEach(slash =>
+            slash.setVisibility(isVisible)
+        );
+    }
+
+    private initializeBlockerVisibility(): void {
+        const cardIdList = this.cardSelectionBlockerRepository.findAllCardIdList();
+        if (cardIdList == null) return;
+
+        for (const cardId of cardIdList) {
+            const blocker = this.cardSelectionBlockerRepository.findBlockerByCardId(cardId);
+            if (blocker == null) return;
+
+            const remainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
+            if (remainingCardCount !== null && remainingCardCount == 0) {
+                blocker.setVisibility(true);
+            }
         }
     }
 
