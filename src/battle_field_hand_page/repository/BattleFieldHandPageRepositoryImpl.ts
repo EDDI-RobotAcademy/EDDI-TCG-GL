@@ -8,6 +8,9 @@ import {Vector2d} from "../../common/math/Vector2d";
 export class BattleFieldHandPageRepositoryImpl implements BattleFieldHandPageRepository {
     private static instance: BattleFieldHandPageRepositoryImpl | null = null;
 
+    private currentPage = 1;
+    private readonly cardsPerPage = 5;
+
     private readonly PREV_BUTTON_START_X: number = 0.26992708 - BattleFieldConstants.HALF;
     private readonly PREV_BUTTON_START_Y: number = BattleFieldConstants.HALF - 0.948453608;
 
@@ -31,6 +34,16 @@ export class BattleFieldHandPageRepositoryImpl implements BattleFieldHandPageRep
             this.instance = new BattleFieldHandPageRepositoryImpl();
         }
         return this.instance;
+    }
+
+    getCurrentPage(): number {
+        return this.currentPage;
+    }
+    setCurrentPage(page: number): void {
+        this.currentPage = page;
+    }
+    getCardsPerPage(): number {
+        return this.cardsPerPage;
     }
 
     async createPrevButton(): Promise<THREE.Mesh> {
