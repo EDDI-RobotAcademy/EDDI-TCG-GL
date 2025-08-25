@@ -13,8 +13,8 @@ export class BattleFieldHandMapRepositoryImpl implements BattleFieldHandMapRepos
         this.currentHandMap.set(2, 19);
         this.currentHandMap.set(3, 20);
         this.currentHandMap.set(4, 93);
-        this.currentHandMap.set(5, 26);
-        this.currentHandMap.set(6, 27);
+        // this.currentHandMap.set(5, 26);
+        // this.currentHandMap.set(6, 27);
     }
 
     public static getInstance(): BattleFieldHandMapRepositoryImpl {

@@ -36,6 +36,8 @@ import {OpponentFieldServiceImpl} from "../../src/opponent_field/service/Opponen
 import {RightClickDetectServiceImpl} from "../../src/right_click_detect/service/RightClickDetectServiceImpl";
 import {RightClickDetectService} from "../../src/right_click_detect/service/RightClickDetectService";
 import {LeftClickedArea} from "../../src/left_click_detect/entity/LeftClickedArea";
+import {BattleFieldHandPageServiceImpl} from "../../src/battle_field_hand_page/service/BattleFieldHandPageServiceImpl";
+import {BattleFieldHandPageService} from "../../src/battle_field_hand_page/service/BattleFieldHandPageService";
 
 declare const TWEEN: {
     Tween: any;
@@ -64,6 +66,7 @@ export class TCGJustTestBattleFieldView {
     private battleFieldHandService = BattleFieldHandServiceImpl.getInstance()
     private battleFieldHandMapRepository = BattleFieldHandMapRepositoryImpl.getInstance()
     private battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance()
+    private battleFieldHandPageService: BattleFieldHandPageService;
 
     private opponentFieldMapRepository = OpponentFieldMapRepositoryImpl.getInstance()
     private opponentFieldService = OpponentFieldServiceImpl.getInstance()
@@ -102,6 +105,8 @@ export class TCGJustTestBattleFieldView {
         this.simulationBattleFieldContainer.appendChild(this.renderer.domElement);
 
         this.userWindowSize = UserWindowSize.getInstance()
+
+        this.battleFieldHandPageService = BattleFieldHandPageServiceImpl.getInstance()
 
         const aspect = window.innerWidth / window.innerHeight;
         const viewSize = window.innerHeight;
@@ -213,6 +218,7 @@ export class TCGJustTestBattleFieldView {
         this.addOpponentField();
         this.addYourHandUnitList()
         this.addOpponentFieldUnitList()
+        this.addYourHandPagePrevButton()
 
         this.initialized = true;
         this.isAnimating = true;
@@ -273,7 +279,8 @@ export class TCGJustTestBattleFieldView {
     }
 
     private async addYourHandPagePrevButton(): Promise<void> {
-        // const handPagePrevButton = await this.battleFieldHandService.createPrevButton();
+        const createadPrevButton = await this.battleFieldHandPageService.createPrevButton();
+        this.scene.add(createadPrevButton);
         // await this.battleFieldHandPageButtonSceneRepository.addPrevButton();
     }
 
