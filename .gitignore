@@ -20,3 +20,5 @@ node_modules
 
 # exclude *.ttf
 *.ttf
+
+# exclude *.webp
