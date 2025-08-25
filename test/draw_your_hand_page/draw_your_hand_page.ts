@@ -98,6 +98,7 @@ export class TCGJustTestBattleFieldView {
         this.scene = this.windowSceneService.createScene('battle-field')
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
         this.simulationBattleFieldContainer.appendChild(this.renderer.domElement);
 
         this.userWindowSize = UserWindowSize.getInstance()
