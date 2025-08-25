@@ -19,6 +19,12 @@ export class KeyboardActionHandler {
             [KeyboardAction.DRAW, () => {
                 console.log("Handler: Drawing a card...");
                 this.battleFieldHandMapRepository.addBattleFieldHand(27)
+
+                const currentHand = this.battleFieldHandMapRepository.getBattleFieldHandList();
+                if (currentHand.length >= 5) {
+                    console.log("Handler: 페이지 생성 필요함.");
+
+                }
             }],
         ]);
     }
