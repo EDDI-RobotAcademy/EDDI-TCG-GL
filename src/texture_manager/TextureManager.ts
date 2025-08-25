@@ -211,16 +211,16 @@ export class TextureManager {
                 textureLoader.load(
                     imagePath,
                     (texture) => {
-                        texture.colorSpace = THREE.SRGBColorSpace;
-                        texture.magFilter = THREE.LinearFilter;
-                        texture.minFilter = THREE.LinearFilter;
-                        texture.generateMipmaps = false;
-                        // texture.minFilter = THREE.LinearMipmapLinearFilter;
+                        texture.colorSpace = THREE.LinearSRGBColorSpace;
                         // texture.magFilter = THREE.LinearFilter;
-                        // texture.generateMipmaps = true;  // 이제 안전하게 사용 가능
-                        // if (this.renderer) {
-                        //     texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
-                        // }
+                        // texture.minFilter = THREE.LinearFilter;
+                        // texture.generateMipmaps = false;
+                        texture.minFilter = THREE.LinearMipMapLinearFilter;
+                        texture.magFilter = THREE.LinearFilter;
+                        texture.generateMipmaps = true;  // 이제 안전하게 사용 가능
+                        if (this.renderer) {
+                            texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+                        }
                         textureList[id] = texture;
                         resolve();
                     },
