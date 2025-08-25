@@ -23,4 +23,8 @@ export class BattleFieldHandPageServiceImpl implements BattleFieldHandPageServic
     async createPrevButton(): Promise<THREE.Mesh> {
         return await this.battleFieldHandPageRepository.createPrevButton();
     }
+
+    async createNextButton(): Promise<THREE.Mesh> {
+        return await this.battleFieldHandPageRepository.createNextButton();
+    }
 }

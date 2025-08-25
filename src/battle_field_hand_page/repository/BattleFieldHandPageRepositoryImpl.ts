@@ -14,6 +14,12 @@ export class BattleFieldHandPageRepositoryImpl implements BattleFieldHandPageRep
     private readonly PREV_BUTTON_END_X: number = 0.30561979 - BattleFieldConstants.HALF;
     private readonly PREV_BUTTON_END_Y: number = BattleFieldConstants.HALF - 0.896907216;
 
+    private readonly NEXT_BUTTON_START_X: number = 0.69438021 - BattleFieldConstants.HALF;
+    private readonly NEXT_BUTTON_START_Y: number = BattleFieldConstants.HALF - 0.948453608;
+
+    private readonly NEXT_BUTTON_END_X: number = 0.73007292 - BattleFieldConstants.HALF;
+    private readonly NEXT_BUTTON_END_Y: number = BattleFieldConstants.HALF - 0.896907216;
+
     private textureManager: TextureManager;
 
     constructor() {
@@ -51,5 +57,31 @@ export class BattleFieldHandPageRepositoryImpl implements BattleFieldHandPageRep
         const prevButtonMesh = MeshGenerator.createMesh(cardTexture, prevButtonWidth, prevButtonHeight, position);
 
         return prevButtonMesh;
+    }
+
+    async createNextButton(): Promise<THREE.Mesh> {
+        const cardTexture = await this.textureManager.getTexture('hand_page_movement_button', 2);
+        if (!cardTexture) {
+            throw new Error(`Texture not found`);
+        }
+
+        const buttonStartX = this.NEXT_BUTTON_START_X * window.innerWidth;
+        const buttonStartY = this.NEXT_BUTTON_START_Y * window.innerHeight;
+
+        const buttonEndX = this.NEXT_BUTTON_END_X * window.innerWidth;
+        const buttonEndY = this.NEXT_BUTTON_END_Y * window.innerHeight;
+
+        const nextButtonWidth = buttonStartX - buttonEndX;
+        const nextButtonHeight = buttonStartY - buttonEndY;
+
+        const position = new Vector2d((buttonStartX + buttonEndX) / 2, (buttonStartY + buttonEndY) / 2)
+
+        console.log(`nextButtonWidth: ${nextButtonWidth}, nextButtonHeight: ${nextButtonHeight}`);
+        console.log(`buttonStartX: ${buttonStartX}, buttonStartY: ${buttonStartY}`);
+        console.log(`buttonEndX: ${buttonEndX}, buttonEndY: ${buttonEndY}`);
+
+        const nextButtonMesh = MeshGenerator.createMesh(cardTexture, nextButtonWidth, nextButtonHeight, position);
+
+        return nextButtonMesh;
     }
 }

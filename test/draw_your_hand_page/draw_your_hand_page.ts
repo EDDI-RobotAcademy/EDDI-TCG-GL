@@ -219,6 +219,7 @@ export class TCGJustTestBattleFieldView {
         this.addYourHandUnitList()
         this.addOpponentFieldUnitList()
         this.addYourHandPagePrevButton()
+        this.addYourHandPageNextButton()
 
         this.initialized = true;
         this.isAnimating = true;
@@ -281,7 +282,11 @@ export class TCGJustTestBattleFieldView {
     private async addYourHandPagePrevButton(): Promise<void> {
         const createadPrevButton = await this.battleFieldHandPageService.createPrevButton();
         this.scene.add(createadPrevButton);
-        // await this.battleFieldHandPageButtonSceneRepository.addPrevButton();
+    }
+
+    private async addYourHandPageNextButton(): Promise<void> {
+        const createadNextButton = await this.battleFieldHandPageService.createNextButton();
+        this.scene.add(createadNextButton);
     }
 
     private async addYourHandUnitList(): Promise<void> {
