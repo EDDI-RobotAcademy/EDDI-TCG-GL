@@ -266,12 +266,13 @@ export class TextureManager {
     }
 
     private isNameBasedTexture(path: string): boolean {
-        // 여기에 이름 기반 텍스처의 패턴을 정의합니다.
-        return /\.(png|jpg)$/i.test(path) && !this.extractIdFromPath(path);
+        // png, jpg, jpeg, webp 모두 허용
+        return /\.(png|jpe?g|webp)$/i.test(path) && !this.extractIdFromPath(path);
     }
 
     private extractIdFromPath(path: string): number | null {
-        const match = path.match(/(\d+)\.png$/);
+        // 확장자 상관없이 숫자 파일명(ID) 추출
+        const match = path.match(/(\d+)\.(png|jpe?g|webp)$/i);
         return match ? parseInt(match[1], 10) : null;
     }
 

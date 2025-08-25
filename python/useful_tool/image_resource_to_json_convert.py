@@ -321,6 +321,9 @@ image_paths = {
     "card_count_notation": [],
 }
 
+def is_image_file(file_name):
+    return file_name.lower().endswith((".png", ".webp"))
+
 ####### active_panel_skill은 실험 중 -> 문제 발생하면 이 부분 주석하고 생성 #######
 def clean_path(path):
     # Remove ../../ if present at the start of the path
@@ -335,17 +338,14 @@ def get_active_panel_skill_images(base_path):
     for unit_folder in os.listdir(base_path):
         unit_path = os.path.join(base_path, unit_folder)
         if os.path.isdir(unit_path):
-            # unit_folder별 이미지 리스트 초기화
             skill_images[unit_folder] = []
 
-            # 스킬 폴더 정렬 (1, 2, ...)
             sub_folders = [f for f in os.listdir(unit_path) if os.path.isdir(os.path.join(unit_path, f))]
             sub_folders.sort(key=lambda x: int(re.search(r'\d+', x).group()))
 
             for sub_folder in sub_folders:
                 sub_folder_path = os.path.join(unit_path, sub_folder)
-                # 각 폴더 내 파일도 정렬 (파일 이름에 번호 있으면)
-                files = [f for f in os.listdir(sub_folder_path) if f.endswith(".png")]
+                files = [f for f in os.listdir(sub_folder_path) if is_image_file(f)]
                 files.sort(key=lambda f: int(re.search(r'\d+', f).group()) if re.search(r'\d+', f) else 0)
 
                 for file_name in files:
@@ -365,7 +365,7 @@ for category, dir_path in relative_paths.items():
         continue
 
     for file_name in os.listdir(dir_path):
-        if file_name.endswith(".png"):
+        if is_image_file(file_name):
             file_path = os.path.join(dir_path, file_name)
             image_paths[category.name.lower()].append(clean_path(file_path))
 
