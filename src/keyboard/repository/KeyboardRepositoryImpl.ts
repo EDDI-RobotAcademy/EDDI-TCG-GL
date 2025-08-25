@@ -6,10 +6,14 @@ export class KeyboardRepositoryImpl implements KeyboardRepository {
     private keyTable: Map<string, () => KeyboardAction>;
 
     private constructor() {
-        this.keyTable = new Map([
+        this.keyTable = new Map<string, () => KeyboardAction>([
             ["d", () => {
                 console.log(`Action: ${KeyboardAction.DEPLOY}`);
                 return KeyboardAction.DEPLOY;
+            }],
+            ["g", () => {
+                console.log(`Action: ${KeyboardAction.DRAW}`);
+                return KeyboardAction.DRAW;
             }],
         ]);
     }

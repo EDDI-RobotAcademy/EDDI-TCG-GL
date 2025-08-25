@@ -361,7 +361,6 @@ export class TCGJustTestBattleFieldView {
         }
     }
 
-
     animate(time?: number): void {
         if (this.isAnimating) {
             requestAnimationFrame((t) => this.animate(t));

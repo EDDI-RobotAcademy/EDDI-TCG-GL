@@ -28,6 +28,13 @@ export class BattleFieldHandMapRepositoryImpl implements BattleFieldHandMapRepos
     public addBattleFieldHand(cardId: number): void {
         const newIndex = this.currentHandMap.size;
         this.currentHandMap.set(newIndex, cardId);
+
+        console.log(`[BattleFieldHandMapRepository] addBattleFieldHand`);
+        console.log(`- added index: ${newIndex}, cardId: ${cardId}`);
+
+        this.currentHandMap.forEach((value, key) => {
+            console.log(`  index=${key}, cardId=${value}`);
+        });
     }
 
     // Map을 Array로 변환하여 모든 cardId를 가져오는 메서드
