@@ -38,14 +38,16 @@ export class MyDeckBlockServiceImpl implements MyDeckBlockService {
         const blockGroup = new THREE.Group();
         try {
             const blockId = this.getBlockIdByDeckIdAndCardId(deckId, cardId);
-            if (blockId == null){
+            if (blockId == null) {
                 const position = this.createMyDeckBlockPosition(deckId, cardId);
                 console.log(`[Block] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
+                console.log(`%c [New Block] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`, 'color: #FE2EF7; font-weight: bold;');
 
                 const myDeckBlock = await this.createMyDeckBlock(deckId, cardId, position.position);
                 blockGroup.add(myDeckBlock.getMesh());
 
             } else {
+                console.log(`%c [Block 이미 존재] DeckId: ${deckId}, CardId: ${cardId}`, 'color: #FE2EF7; font-weight: bold;');
                 const existingPosition = this.getPositionByBlockUniqueId(blockId);
                 const existingBlockMesh = this.getBlockMeshByDeckIdAndCardId(deckId, cardId);
 
@@ -169,7 +171,7 @@ export class MyDeckBlockServiceImpl implements MyDeckBlockService {
 
     private getBlockIdByDeckIdAndCardId(deckId: number, cardId: number): number | null {
         const blockId = this.myDeckBlockRepository.findBlockIdByDeckIdAndCardId(deckId, cardId);
-        if (!blockId) {
+        if (blockId == null) {
             console.warn(`[WARN] Block ID ${blockId} not found`);
             return null;
         }
