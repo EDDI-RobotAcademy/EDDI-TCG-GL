@@ -178,7 +178,7 @@ export class MyDeckCardNameServiceImpl implements MyDeckCardNameService {
 
     private getCardNameIdByDeckIdAndCardId(deckId: number, cardId: number): number | null {
         const cardNameId = this.myDeckCardNameRepository.findCardNameIdByDeckIdAndCardId(deckId, cardId);
-        if (!cardNameId) {
+        if (cardNameId == null) {
             console.warn(`[WARN] Card Name Id ${cardNameId} not found`);
             return null;
         }

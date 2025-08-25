@@ -190,6 +190,7 @@ export class TCGJustTestMyDeckView {
         this.scene = this.windowSceneService.createScene('my-deck')
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
         this.simulationMyDeckContainer.appendChild(this.renderer.domElement);
         this.clippingMaskManager.setRenderer(this.renderer);
 
@@ -268,7 +269,15 @@ export class TCGJustTestMyDeckView {
         this.renderer.domElement.addEventListener('mousedown', (e) => this.buildDeckButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckEditButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckOwnedCardsScrollService.onWheelScroll(e), false);
-        this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckOwnedCardsClickDetectService.onMouseDown(e), false);
+//         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckOwnedCardsClickDetectService.onMouseDown(e), false);
+        this.renderer.domElement.addEventListener('mousedown', async (e) => {
+            const buttonEvent = await this.myDeckOwnedCardsClickDetectService.onMouseDown(e);
+            if (buttonEvent){
+                // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
+                await this.reAddMyDeckBlock();
+                this.reAddMyDeckCardName();
+            }
+        }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckDeleteButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckNameEditButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deleteDeckPopupButtonClickDetectService.onMouseDown(e), false);
@@ -832,6 +841,29 @@ export class TCGJustTestMyDeckView {
         }
     }
 
+    private async reAddMyDeckBlock(): Promise<void> {
+        try {
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            if (currentClickedDeckId == null) return;
+
+            const cardIdList = this.cardCountManager.findCardIdListByDeck(currentClickedDeckId);
+            for (const cardId of cardIdList) {
+                await this.myDeckBlockService.createMyDeckBlockWithPosition(currentClickedDeckId, cardId);
+            }
+            this.myDeckBlockService.saveBlockGroup(currentClickedDeckId);
+            this.myDeckBlockService.applyClippingMaskToBlock();
+
+            const blockGroup = this.myDeckBlockService.getBlockGroupByDeckId(currentClickedDeckId);
+            if (!this.scene.children.includes(blockGroup)) {
+                this.scene.add(blockGroup);
+            }
+            blockGroup.position.y = 0;
+
+        } catch (error) {
+            console.error('Failed to reAdd my deck blocks:', error);
+        }
+    }
+
     private async addMyDeckCardName(): Promise<void> {
         try {
             const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardLists();
@@ -856,6 +888,29 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add My Deck Card Name:', error);
+        }
+    }
+
+    private async reAddMyDeckCardName(): Promise<void> {
+        try {
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            if (currentClickedDeckId == null) return;
+
+            const cardIdList = this.cardCountManager.findCardIdListByDeck(currentClickedDeckId);
+            for (const cardId of cardIdList) {
+                await this.myDeckCardNameService.createMyDeckCardNameWithPosition(currentClickedDeckId, cardId);
+            }
+            this.myDeckCardNameService.saveCardNameGroup(currentClickedDeckId);
+            this.myDeckCardNameService.applyClippingMaskToCardName();
+
+            const cardNameGroup = this.myDeckCardNameService.getCardNameGroupByDeckId(currentClickedDeckId);
+            if (!this.scene.children.includes(cardNameGroup)) {
+                this.scene.add(cardNameGroup);
+            }
+            cardNameGroup.position.y = 0;
+
+        } catch (error) {
+            console.error('Failed to reAdd my deck card name:', error);
         }
     }
 
