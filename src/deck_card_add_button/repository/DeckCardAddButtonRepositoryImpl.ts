@@ -17,6 +17,9 @@ export class DeckCardAddButtonRepositoryImpl implements DeckCardAddButtonReposit
     private deckMap: Map<number, number[]> = new Map(); // deckId: button Unique ID List
     private buttonGroupMap: Map<number, THREE.Group> = new Map(); // deckId -> Group
 
+    private originalButtonMap: Map<number, { cardId: number, buttonMesh: DeckCardAddButton }> = new Map();
+    private originalDeckMap: Map<number, number[]> = new Map();
+
     private readonly BUTTON_WIDTH: number = 0.0295
 
     private constructor(textureManager: TextureManager, scene: THREE.Scene) {
@@ -76,6 +79,16 @@ export class DeckCardAddButtonRepositoryImpl implements DeckCardAddButtonReposit
 
     public findCardIdByButtonId(buttonId: number): number | null {
         return this.buttonMap.get(buttonId)?.cardId ?? null;
+    }
+
+
+    public findCardIdByButtonMesh(targetButtonMesh: DeckCardAddButton): number | null {
+        for (const { cardId, buttonMesh } of this.buttonMap.values()) {
+            if (buttonMesh === targetButtonMesh) {
+                return cardId;
+            }
+        }
+        return null;
     }
 
     public findButtonByDeckIdAndCardId(deckId: number, cardId: number): DeckCardAddButton | null {
@@ -222,6 +235,95 @@ export class DeckCardAddButtonRepositoryImpl implements DeckCardAddButtonReposit
             });
         }
         this.deckMap.delete(deckId);
+    }
+
+    // 원본 데이터 복제
+    public saveClonedOriginalDeckState(deckId: number): void {
+        this.originalButtonMap.clear();
+        this.originalDeckMap.set(deckId, [...(this.deckMap.get(deckId) || [])]);
+
+        const buttonIdList = this.deckMap.get(deckId);
+        if (!buttonIdList) {
+            console.warn(`[WARN] No buttonIdList for deck ${deckId}`);
+            return;
+        }
+
+        buttonIdList.forEach(buttonId => {
+            const entry = this.buttonMap.get(buttonId);
+            if (entry) {
+                const originalMesh = entry.buttonMesh.getMesh();
+                const clonedMesh = originalMesh.clone(true);
+                const clonedPosition = entry.buttonMesh.position.clone ? entry.buttonMesh.position.clone() : entry.buttonMesh.position;
+                const clonedWrapper = new DeckCardAddButton(clonedMesh, clonedPosition);
+
+                this.originalButtonMap.set(buttonId, {
+                    cardId: entry.cardId,
+                    buttonMesh: clonedWrapper
+                });
+
+            } else {
+                console.warn(`[WARN] buttonId ${buttonId} not found in buttonMap`);
+            }
+        });
+
+        // To-do: 확인 후 삭제하기
+        console.log(
+            `%c[INFO] Original deck state cloned and stored for deckId ${deckId}`, 'color: #2E9AFE; font-weight: bold;');
+        console.log(
+            'original Deck Card Add Button Map:',
+            Array.from(this.originalButtonMap.entries()).map(([id, data]) => ({
+                buttonId: id,
+                cardId: data.cardId
+            }))
+        );
+    }
+
+    public restoreOriginalDeckState(deckId: number): void {
+        const originalButtonIdList = this.originalDeckMap.get(deckId);
+        if (originalButtonIdList) {
+            this.deckMap.set(deckId, [...originalButtonIdList]);
+        }
+
+        const buttonIdList = this.deckMap.get(deckId);
+        if (!buttonIdList) return;
+
+        buttonIdList.forEach(buttonId => {
+            const originalButtonInfo = this.originalButtonMap.get(buttonId);
+            if (originalButtonInfo) {
+                const currentButtonInfo = this.buttonMap.get(buttonId);
+                if (currentButtonInfo) {
+                    this.meshDestroyer.destroyMesh(currentButtonInfo.buttonMesh.getMesh());
+                }
+
+                this.buttonMap.set(buttonId, {
+                    cardId: originalButtonInfo.cardId,
+                    buttonMesh: originalButtonInfo.buttonMesh
+                });
+
+                const group = this.buttonGroupMap.get(deckId);
+                if (group) {
+                    originalButtonInfo.buttonMesh.setVisibility(false);
+                    group.add(originalButtonInfo.buttonMesh.getMesh());
+                }
+            }
+        });
+
+        // To-do: 확인 후 없애야 함
+        const restoredData = buttonIdList.map(buttonId => {
+            const data = this.buttonMap.get(buttonId);
+            return data ? {
+                buttonId,
+                cardId: data.cardId,
+                buttonMesh: data.buttonMesh
+            } : { buttonId, cardId: null, buttonMesh: null };
+        });
+
+        console.log(
+            `%c[덱 편집 중단 후 다른 덱 버튼을 눌렀을 때] Deck ${deckId} restored.`,
+            'color: #2E9AFE; font-weight: bold;'
+        );
+        console.log('복원된 mesh 데이터:', restoredData);
+
     }
 
 }
