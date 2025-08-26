@@ -28,7 +28,7 @@ export class MyDeckBlockRepositoryImpl implements MyDeckBlockRepository {
 
     public static getInstance(scene: THREE.Scene): MyDeckBlockRepositoryImpl {
         if (!MyDeckBlockRepositoryImpl.instance) {
-            const textureManager = TextureManager.getInstance()
+            const textureManager = TextureManager.getInstance();
             MyDeckBlockRepositoryImpl.instance = new MyDeckBlockRepositoryImpl(textureManager, scene);
         }
         return MyDeckBlockRepositoryImpl.instance;

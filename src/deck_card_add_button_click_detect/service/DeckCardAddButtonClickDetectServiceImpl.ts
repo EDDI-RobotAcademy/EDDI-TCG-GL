@@ -86,7 +86,7 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
 
             this.saveCurrentClickedButtonId(buttonUniqueId);
 
-            const cardId = this.getCardIdByButtonId(buttonUniqueId);
+            const cardId = this.getCardIdByDeckIdAndButtonId(currentClickedDeckId, buttonUniqueId);
             if (cardId == null) return null;
             this.saveClickedCardCount(currentClickedDeckId, cardId);
 
@@ -130,8 +130,12 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
     }
 
-    private getCardIdByButtonId(buttonId: number): number | null {
-        return this.deckCardAddButtonRepository.findCardIdByButtonId(buttonId);
+    private getCardIdByDeckIdAndButtonId(deckId: number, buttonId: number): number | null {
+        const buttonList = this.deckCardAddButtonRepository.findButtonListByDeckId(deckId);
+        const buttonMesh = buttonList?.find(button => button.id === buttonId);
+        if (!buttonMesh) return null;
+
+        return this.deckCardAddButtonRepository.findCardIdByButtonMesh(buttonMesh);
     }
 
     private setCardBlockerVisibility(cardId: number, isVisible: boolean): void {
