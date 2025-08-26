@@ -28,6 +28,8 @@ const YOUR_FIELD_Y_CRITERIA: number = 0.65206185567
 const OPPONENT_FIELD_X_CRITERIA: number = 0.186458
 const OPPONENT_FIELD_Y_CRITERIA: number = 0.44564
 
+const MAX_HAND_REPRESENTATION: number = 5
+
 export const BattleFieldConstants = {
     CARD_WIDTH_RATIO,
     CARD_HEIGHT_RATIO: CARD_WIDTH_RATIO * 1.615,
@@ -56,4 +58,6 @@ export const BattleFieldConstants = {
 
     OPPONENT_FIELD_X_CRITERIA,
     OPPONENT_FIELD_Y_CRITERIA,
+
+    MAX_HAND_REPRESENTATION,
 };

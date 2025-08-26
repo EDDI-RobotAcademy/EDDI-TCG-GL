@@ -57,6 +57,10 @@ import {
     BattleFieldCardAttributeMarkSceneRepositoryImpl
 } from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
 import {BattleFieldCardAlignHandler} from "../../battle_field_card_alignment/handler/BattleFieldCardAlignHandler";
+import {BattleFieldHandPageRepository} from "../../battle_field_hand_page/repository/BattleFieldHandPageRepository";
+import {
+    BattleFieldHandPageRepositoryImpl
+} from "../../battle_field_hand_page/repository/BattleFieldHandPageRepositoryImpl";
 
 
 export class KeyboardActionHandler {
@@ -69,6 +73,9 @@ export class KeyboardActionHandler {
     private battleFieldHandRepository: BattleFieldHandRepository;
     private battleFieldHandCardPositionRepository: BattleFieldHandCardPositionRepository;
     private battleFieldHandSceneRepository: BattleFieldHandSceneRepository;
+
+    private battleFieldHandPageRepository: BattleFieldHandPageRepository ;
+
     private battleFieldCardSceneRepository: BattleFieldCardSceneRepository;
     private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository;
     private battleFieldCardAttributeMarkPositionRepository: BattleFieldCardAttributeMarkPositionRepository;
@@ -89,6 +96,9 @@ export class KeyboardActionHandler {
         this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance();
         this.battleFieldHandCardPositionRepository = BattleFieldHandCardPositionRepositoryImpl.getInstance();
         this.battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance();
+
+        this.battleFieldHandPageRepository = BattleFieldHandPageRepositoryImpl.getInstance();
+
         this.battleFieldCardSceneRepository = BattleFieldCardSceneRepositoryImpl.getInstance();
         this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance();
         this.battleFieldCardAttributeMarkPositionRepository = BattleFieldCardAttributeMarkPositionRepositoryImpl.getInstance();
@@ -112,16 +122,12 @@ export class KeyboardActionHandler {
 
                 const currentActiveHandNumber = this.battleFieldHandRepository.countActiveCards();
 
-                if (currentActiveHandNumber >= 5) {
-                    console.log("Handler: 페이지 생성 필요함.");
-                }
-
                 const createdHand = await this.createHand(handCardId)
 
                 if (createdHand) {
                     this.battleFieldHandSceneRepository.addBattleFieldHandScene(createdHand);
                     this.scene.add(createdHand);
-                    this.battleFieldCardAlignHandler.alignHandCard();
+                    // this.battleFieldCardAlignHandler.alignHandCard();
                 }
             }],
         ]);
@@ -144,27 +150,56 @@ export class KeyboardActionHandler {
     }
 
     private async createHand(cardId: number): Promise<THREE.Group> {
-        const cardGroup = new THREE.Group()
+        const cardGroup = new THREE.Group();
         const card = this.getCardByIdOrThrowError(cardId);
 
-        const handPosition = this.calculateHandPosition();
+        const currentActiveHandNumber = this.battleFieldHandRepository.countActiveCards();
+        const quotient = Math.floor(currentActiveHandNumber / BattleFieldConstants.MAX_HAND_REPRESENTATION) + 1;
+        const remainder = currentActiveHandNumber % BattleFieldConstants.MAX_HAND_REPRESENTATION; // 나머지 (페이지 내 위치)
+
+        const isNewPageStart = remainder === 0; // 5장 꽉 차서 새 페이지 시작 여부
+        const currentPage = this.battleFieldHandPageRepository.getCurrentPage();
+        console.log(`quotient: ${quotient}, currentPage: ${currentPage}`);
+
+        const shouldBeVisible =
+            (quotient === currentPage && !isNewPageStart); // 같은 페이지 + 새 페이지 아님 → 보여야 함
+
+        console.log(`shouldBeVisible: ${shouldBeVisible}`);
+
+        if (isNewPageStart) {
+            console.log("페이지 생성 필요 -> 새 카드들은 invisible 상태로 생성");
+        }
+
+        const handPosition = this.calculateHandPosition(remainder);
         const createdHandPosition = this.saveHandPosition(handPosition);
 
         const mainCardScene = await this.createMainCardScene(cardId, handPosition);
-        const mainCardMesh = mainCardScene.getMesh()
-        cardGroup.add(mainCardMesh)
+        const mainCardMesh = mainCardScene.getMesh();
+
+        mainCardMesh.visible = shouldBeVisible;
+        cardGroup.add(mainCardMesh);
 
         const unitJob = parseInt(card.병종, 10) as CardJob;
         const cardKind = parseInt(card.종류, 10) as CardKind;
 
         try {
             const textures = await this.loadCardTextures(unitJob, cardKind, card);
-            await this.addAttributesToCardGroup(mainCardScene, createdHandPosition, cardId, cardKind, unitJob, cardGroup, handPosition, textures);
+            await this.addAttributesToCardGroup(
+                mainCardScene,
+                createdHandPosition,
+                cardId,
+                cardKind,
+                unitJob,
+                cardGroup,
+                handPosition,
+                textures,
+                shouldBeVisible
+            );
         } catch (error) {
             console.error("Error loading textures:", error);
         }
 
-        return cardGroup
+        return cardGroup;
     }
 
     private getCardByIdOrThrowError(cardId: number): any {
@@ -175,9 +210,9 @@ export class KeyboardActionHandler {
         return card;
     }
 
-    private calculateHandPosition(): Vector2d {
-        const handPositionCount = this.battleFieldHandCardPositionRepository.count();
-        const handPositionX = (BattleFieldConstants.HAND_INITIAL_X + handPositionCount * BattleFieldConstants.GAP_OF_EACH_CARD) * window.innerWidth;
+    private calculateHandPosition(elementsInPage: number): Vector2d {
+        // const handPositionCount = this.battleFieldHandCardPositionRepository.count();
+        const handPositionX = (BattleFieldConstants.HAND_INITIAL_X + elementsInPage * BattleFieldConstants.GAP_OF_EACH_CARD) * window.innerWidth;
         const handPositionY = BattleFieldConstants.HAND_INITIAL_Y * window.innerHeight
             + (BattleFieldConstants.CARD_HEIGHT_RATIO * BattleFieldConstants.HALF * window.innerWidth);
         return new Vector2d(handPositionX, handPositionY);
@@ -226,7 +261,8 @@ export class KeyboardActionHandler {
         unitJob: number,
         cardGroup: THREE.Group,
         handPosition: Vector2d,
-        textures: (Texture | null)[]
+        textures: (Texture | null)[],
+        isNewPageStart: boolean
     ): Promise<void> {
         const [kindsOrWeaponTexture, raceTexture, hpTexture, energyTexture] = textures;
         const attributeMarks: BattleFieldCardAttributeMark[] = [];
@@ -234,60 +270,70 @@ export class KeyboardActionHandler {
         if (cardKind === CardKind.UNIT && unitJob === CardJob.WARRIOR && kindsOrWeaponTexture) {
             const weaponPosition = this.calculateWeaponPosition(handPosition);
             const weaponMesh = this.createWeaponMesh(kindsOrWeaponTexture, weaponPosition);
+            weaponMesh.visible = isNewPageStart; // 새 페이지 카드면 invisible
             cardGroup.add(weaponMesh);
 
             const weaponMark = await this.saveCardAttributeMark(weaponMesh, weaponPosition, MarkSceneType.SWORD);
-            // console.log(`weaponMark id -> ${weaponMark.getId()}`)
-            attributeMarks.push(weaponMark)
+            attributeMarks.push(weaponMark);
         }
 
         if (cardKind === CardKind.UNIT && unitJob === CardJob.MAGICIAN && kindsOrWeaponTexture) {
             const staffPosition = this.calculateStaffPosition(handPosition);
             const staffMesh = this.createStaffMesh(kindsOrWeaponTexture, staffPosition);
+            staffMesh.visible = isNewPageStart;
             cardGroup.add(staffMesh);
 
             const staffMark = await this.saveCardAttributeMark(staffMesh, staffPosition, MarkSceneType.STAFF);
-            attributeMarks.push(staffMark)
+            attributeMarks.push(staffMark);
         }
 
         if (cardKind !== CardKind.UNIT && kindsOrWeaponTexture) {
             const kindsPosition = this.calculateKindsPosition(handPosition);
-            const kinsMesh = this.createKindsMesh(kindsOrWeaponTexture, kindsPosition);
-            cardGroup.add(kinsMesh);
+            const kindsMesh = this.createKindsMesh(kindsOrWeaponTexture, kindsPosition);
+            kindsMesh.visible = isNewPageStart;
+            cardGroup.add(kindsMesh);
 
-            const kindsMark = await this.saveCardAttributeMark(kinsMesh, kindsPosition, MarkSceneType.KINDS);
-            attributeMarks.push(kindsMark)
+            const kindsMark = await this.saveCardAttributeMark(kindsMesh, kindsPosition, MarkSceneType.KINDS);
+            attributeMarks.push(kindsMark);
         }
 
         if (raceTexture) {
-            const racePosition = this.calculateRacePosition(handPosition)
+            const racePosition = this.calculateRacePosition(handPosition);
             const raceMesh = this.createRaceMesh(raceTexture, racePosition);
+            raceMesh.visible = isNewPageStart;
             cardGroup.add(raceMesh);
 
             const raceMark = await this.saveCardAttributeMark(raceMesh, racePosition, MarkSceneType.RACE);
-            attributeMarks.push(raceMark)
+            attributeMarks.push(raceMark);
         }
 
         if (hpTexture) {
-            const hpPosition = this.calculateHpPosition(handPosition)
+            const hpPosition = this.calculateHpPosition(handPosition);
             const hpMesh = this.createHpMesh(hpTexture, hpPosition);
+            hpMesh.visible = isNewPageStart;
             cardGroup.add(hpMesh);
 
             const hpMark = await this.saveCardAttributeMark(hpMesh, hpPosition, MarkSceneType.HP);
-            attributeMarks.push(hpMark)
+            attributeMarks.push(hpMark);
         }
 
         if (cardKind === CardKind.UNIT && energyTexture) {
-            const energyPosition = this.calculateEnergyPosition(handPosition)
+            const energyPosition = this.calculateEnergyPosition(handPosition);
             const energyMesh = this.createEnergyMesh(energyTexture, energyPosition);
+            energyMesh.visible = isNewPageStart;
             cardGroup.add(energyMesh);
 
             const energyMark = await this.saveCardAttributeMark(energyMesh, energyPosition, MarkSceneType.ENERGY);
-            attributeMarks.push(energyMark)
+            attributeMarks.push(energyMark);
         }
 
-        const attributeMarkIdList = attributeMarks.map((mark) => mark.getId())
-        this.battleFieldHandRepository.save(mainCardScene.getId(), createdHandPosition.getId(), attributeMarkIdList, cardId)
+        const attributeMarkIdList = attributeMarks.map((mark) => mark.getId());
+        this.battleFieldHandRepository.save(
+            mainCardScene.getId(),
+            createdHandPosition.getId(),
+            attributeMarkIdList,
+            cardId
+        );
     }
 
     private calculateWeaponPosition(handPosition: Vector2d): Vector2d {
