@@ -49,6 +49,12 @@ export class BattleFieldHandRepositoryImpl implements BattleFieldHandRepository 
         this.cardMap.forEach(hand => hand.cardId = -1); // 전체 삭제 시 모든 카드의 cardId를 -1로 변경
     }
 
+    countActiveCards(): number {
+        return Array.from(this.cardMap.values())
+            .filter(hand => hand.cardId !== -1)
+            .length;
+    }
+
     findByCardSceneId(cardSceneId: number): BattleFieldHand | null {
         const hand = Array.from(this.cardMap.values()).find(hand => hand.cardSceneId === cardSceneId && hand.cardId !== -1);
         return hand || null;
