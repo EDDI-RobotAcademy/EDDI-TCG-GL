@@ -27,6 +27,10 @@ import {MyDeckCardNamePositionRepositoryImpl} from "../../my_deck_card_name_posi
 import {DeckEditButtonRepositoryImpl} from "../../deck_edit_button/repository/DeckEditButtonRepositoryImpl";
 import {DeckEditDoneButtonRepositoryImpl} from "../../deck_edit_done_button/repository/DeckEditDoneButtonRepositoryImpl";
 import {MyDeckBlockHoverDetectRepositoryImpl} from "../../my_deck_block_hover_detect/repository/MyDeckBlockHoverDetectRepositoryImpl";
+import {DeckCardDeleteButtonRepositoryImpl} from "../../deck_card_delete_button/repository/DeckCardDeleteButtonRepositoryImpl";
+import {DeckCardDeleteButtonPositionRepositoryImpl} from "../../deck_card_delete_button_position/repository/DeckCardDeleteButtonPositionRepositoryImpl";
+import {DeckCardAddButtonRepositoryImpl} from "../../deck_card_add_button/repository/DeckCardAddButtonRepositoryImpl";
+import {DeckCardAddButtonPositionRepositoryImpl} from "../../deck_card_add_button_position/repository/DeckCardAddButtonPositionRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -60,6 +64,10 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private deckEditButtonRepository: DeckEditButtonRepositoryImpl;
     private deckEditDoneButtonRepository: DeckEditDoneButtonRepositoryImpl;
     private myDeckBlockHoverDetectRepository: MyDeckBlockHoverDetectRepositoryImpl;
+    private deckCardDeleteButtonRepository: DeckCardDeleteButtonRepositoryImpl;
+    private deckCardDeleteButtonPositionRepository: DeckCardDeleteButtonPositionRepositoryImpl;
+    private deckCardAddButtonRepository: DeckCardAddButtonRepositoryImpl;
+    private deckCardAddButtonPositionRepository: DeckCardAddButtonPositionRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance(scene);
@@ -87,6 +95,10 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.deckEditButtonRepository = DeckEditButtonRepositoryImpl.getInstance();
         this.deckEditDoneButtonRepository = DeckEditDoneButtonRepositoryImpl.getInstance();
         this.myDeckBlockHoverDetectRepository = MyDeckBlockHoverDetectRepositoryImpl.getInstance();
+        this.deckCardDeleteButtonRepository = DeckCardDeleteButtonRepositoryImpl.getInstance(scene);
+        this.deckCardDeleteButtonPositionRepository = DeckCardDeleteButtonPositionRepositoryImpl.getInstance();
+        this.deckCardAddButtonRepository = DeckCardAddButtonRepositoryImpl.getInstance(scene);
+        this.deckCardAddButtonPositionRepository = DeckCardAddButtonPositionRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckButtonClickDetectServiceImpl {
@@ -137,6 +149,11 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                     this.myDeckBlockPositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
                     this.myDeckCardNameRepository.restoreOriginalDeckState(previousClickedDeckButtonId);
                     this.myDeckCardNamePositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
+                    this.deckCardDeleteButtonRepository.restoreOriginalDeckState(previousClickedDeckButtonId);
+                    this.deckCardDeleteButtonPositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
+                    this.deckCardAddButtonRepository.restoreOriginalDeckState(previousClickedDeckButtonId);
+                    this.deckCardAddButtonPositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
+                    // To-do: countManager 도 원본 데이터로 수정 필요
 
                     this.setOwnedCardsVisibility(false);
                     this.setCardSelectionBlockerVisibility(false);
