@@ -185,7 +185,7 @@ export class TCGJustTestBattleFieldView {
             }
         }, true);
 
-        this.keyboardService = KeyboardServiceImpl.getInstance()
+        this.keyboardService = KeyboardServiceImpl.getInstance(this.scene)
 
         document.addEventListener("keydown", (event) => {
             console.log(`Key pressed: ${event.key}`); // 키가 눌릴 때 메시지가 출력되는지 확인

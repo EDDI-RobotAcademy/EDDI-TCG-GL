@@ -18,6 +18,7 @@ const OCTANT = 0.125;
 // const GAP_OF_EACH_CARD = 0.082859;
 const GAP_OF_EACH_CARD = 0.0769405;
 // const GAP_OF_EACH_CARD = 0.071022;
+
 const HAND_X_CRITERIA = 0.345904;
 const HAND_Y_CRITERIA = 0.972107;
 
@@ -43,6 +44,9 @@ export const BattleFieldConstants = {
 
     HALF,
     GAP_OF_EACH_CARD,
+
+    HAND_INITIAL_X: HAND_X_CRITERIA - HALF,
+    HAND_INITIAL_Y: HALF - HAND_Y_CRITERIA,
 
     HAND_X_CRITERIA,
     HAND_Y_CRITERIA,

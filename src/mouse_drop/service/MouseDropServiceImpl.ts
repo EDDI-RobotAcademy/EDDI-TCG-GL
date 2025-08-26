@@ -520,7 +520,7 @@ export class MouseDropServiceImpl implements MouseDropService {
 
         if (cardKind !== CardKind.UNIT) {
             this.restoreOriginalPosition(selectedObject as unknown as THREE.Object3D);
-            throw new Error('유닛이 아닙니다')
+            // throw new Error('유닛이 아닙니다')
         }
 
         // UNIT 카드에 대한 처리 로직
@@ -533,6 +533,8 @@ export class MouseDropServiceImpl implements MouseDropService {
         if (handCardIndex === null) {
             throw new Error(`sceneId ${cardSceneId} 존재하지 않음`);
         }
+
+        console.log(`handCardIndex: ${handCardIndex}`);
 
         let yourFieldCardScene;
         const willBePlaceYourFieldCardScene = this.battleFieldCardSceneRepository.extractByIndex(handCardIndex)

@@ -2,6 +2,7 @@ import { KeyboardService } from "./KeyboardService";
 import {KeyboardRepository} from "../repository/KeyboardRepository";
 import {KeyboardRepositoryImpl} from "../repository/KeyboardRepositoryImpl";
 import {KeyboardActionHandler} from "../handler/KeyboardActionHandler";
+import * as THREE from "three";
 
 export class KeyboardServiceImpl implements KeyboardService {
     private static instance: KeyboardServiceImpl | null = null;
@@ -9,14 +10,14 @@ export class KeyboardServiceImpl implements KeyboardService {
 
     private keyboardActionHandler: KeyboardActionHandler;
 
-    private constructor() {
+    private constructor(scene: THREE.Scene) {
         this.repository = KeyboardRepositoryImpl.getInstance();
-        this.keyboardActionHandler = KeyboardActionHandler.getInstance();
+        this.keyboardActionHandler = KeyboardActionHandler.getInstance(scene);
     }
 
-    static getInstance(): KeyboardServiceImpl {
+    static getInstance(scene: THREE.Scene): KeyboardServiceImpl {
         if (!KeyboardServiceImpl.instance) {
-            KeyboardServiceImpl.instance = new KeyboardServiceImpl();
+            KeyboardServiceImpl.instance = new KeyboardServiceImpl(scene);
         }
         return KeyboardServiceImpl.instance;
     }
