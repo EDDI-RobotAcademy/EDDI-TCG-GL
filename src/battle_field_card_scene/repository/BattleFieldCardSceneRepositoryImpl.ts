@@ -68,14 +68,35 @@ export class BattleFieldCardSceneRepositoryImpl implements BattleFieldCardSceneR
     }
 
     extractByIndex(index: number): BattleFieldCardScene | undefined {
-        const entries = Array.from(this.cardSceneMap.entries());
-        if (index < 0 || index >= entries.length) {
+        // const entries = Array.from(this.cardSceneMap.entries());
+        // console.log("All entries:", entries);
+        //
+        // if (index < 0 || index >= entries.length) {
+        //     return undefined;
+        // }
+        //
+        // const [key, value] = entries[index];
+        // this.cardSceneMap.delete(key);
+        // this.cardSceneMap.set(key, null as any);
+        // return value;
+
+        // console.log("==== All entries in cardSceneMap ====");
+        // this.cardSceneMap.forEach((value, key) => {
+        //     console.log(`key: ${key}, value:`, value);
+        // });
+        // console.log("=====================================");
+
+        // key === index 인 항목을 직접 꺼낸다
+        const value = this.cardSceneMap.get(index);
+
+        if (!value) {
             return undefined;
         }
 
-        const [key, value] = entries[index];
-        this.cardSceneMap.delete(key);
-        this.cardSceneMap.set(key, null as any);
+        // 삭제 후 null 대입
+        this.cardSceneMap.delete(index);
+        this.cardSceneMap.set(index, null as any);
+
         return value;
     }
 }

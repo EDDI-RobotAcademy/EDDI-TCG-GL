@@ -65,8 +65,20 @@ export class BattleFieldHandRepositoryImpl implements BattleFieldHandRepository 
     }
 
     findCardIndexByCardSceneId(cardSceneId: number): number | null {
-        const cardArray = Array.from(this.cardMap.values()).filter(card => card.cardId !== -1);
+        console.log("==== cardMap 전체 상태 ====");
+        this.cardMap.forEach((value, key) => {
+            console.log(`key: ${key}, value:`, value);
+        });
+        console.log("===========================");
+
+        // const cardArray = Array.from(this.cardMap.values()).filter(card => card.cardId !== -1);
+        // console.log("유효한 카드 배열:", cardArray);
+
+        const cardArray = Array.from(this.cardMap.values())
+
         const index = cardArray.findIndex(card => card.cardSceneId === cardSceneId);
+        console.log(`찾는 cardSceneId: ${cardSceneId}, 찾은 index: ${index}`);
+
         return index !== -1 ? index : null;
     }
 }
