@@ -60,11 +60,15 @@ import {
     NeonBorderLinePositionRepositoryImpl
 } from "../../neon_border_line_position/repository/NeonBorderLinePositionRepositoryImpl";
 import {YourField} from "../../your_field/entity/YourField";
+import {BattleFieldHandPageRepository} from "../../battle_field_hand_page/repository/BattleFieldHandPageRepository";
+import {BattleFieldHandPageRepositoryImpl} from "../../battle_field_hand_page/repository/BattleFieldHandPageRepositoryImpl";
 
 export class BattleFieldCardAlignHandler {
     private static instance: BattleFieldCardAlignHandler;
 
     private dragMoveRepository: DragMoveRepository;
+
+    private battleFieldHandPageRepository: BattleFieldHandPageRepository;
 
     private battleFieldHandRepository: BattleFieldHandRepository
     private battleFieldHandCardPositionRepository: BattleFieldHandCardPositionRepository
@@ -80,6 +84,8 @@ export class BattleFieldCardAlignHandler {
 
     private constructor() {
         this.dragMoveRepository = DragMoveRepositoryImpl.getInstance();
+
+        this.battleFieldHandPageRepository = BattleFieldHandPageRepositoryImpl.getInstance();
 
         this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance()
         this.battleFieldHandCardPositionRepository = BattleFieldHandCardPositionRepositoryImpl.getInstance()
@@ -102,7 +108,10 @@ export class BattleFieldCardAlignHandler {
     }
 
     async alignHandCard(): Promise<void> {
-        const currentHandCardList = this.battleFieldHandRepository.findAll();
+        const currentPage = this.battleFieldHandPageRepository.getCurrentPage();
+        const cardsPerPage = this.battleFieldHandPageRepository.getCardsPerPage();
+
+        const currentHandCardList = this.battleFieldHandRepository.findAll(currentPage, cardsPerPage);
 
         await Promise.all(currentHandCardList.map(async (handCard, index) => {
             console.log(`alignHandCard() -> index: ${index}`)
@@ -132,6 +141,7 @@ export class BattleFieldCardAlignHandler {
             if (mainCardSceneMesh) {
                 mainCardSceneMesh.position.x = calculatedPosition.getX();
                 mainCardSceneMesh.position.y = calculatedPosition.getY();
+                mainCardSceneMesh.visible = true;
                 // console.log(`Mesh updated for Card Scene ID: ${handCard.getCardSceneId()}, Position: (${mainCardSceneMesh.position.x}, ${mainCardSceneMesh.position.y})`);
             } else {
                 console.error(`Mesh not found for Card Scene ID: ${handCard.getCardSceneId()}`);
@@ -185,6 +195,7 @@ export class BattleFieldCardAlignHandler {
                         // 계산된 위치로 attributeMesh의 포지션 업데이트
                         attributeMesh.position.x = calculatedAttributeMarkPosition.getX();
                         attributeMesh.position.y = calculatedAttributeMarkPosition.getY();
+                        attributeMesh.visible = true;
 
                         // attributeMarkPosition에 계산된 값 설정
                         attributeMarkPosition.setPosition(calculatedAttributeMarkPosition.getX(), calculatedAttributeMarkPosition.getY());

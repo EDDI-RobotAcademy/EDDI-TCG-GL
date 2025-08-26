@@ -3,7 +3,7 @@ import {BattleFieldHand} from "../entity/BattleFieldHand";
 export interface BattleFieldHandRepository {
     save(cardSceneId: number, positionId: number, attributeMarkIdList: number[], cardId: number): BattleFieldHand;
     findById(id: number): BattleFieldHand | undefined;
-    findAll(): BattleFieldHand[];
+    findAll(currentPage: number, cardsPerPage: number): BattleFieldHand[]
     deleteById(id: number): boolean;
     deleteAll(): void;
 

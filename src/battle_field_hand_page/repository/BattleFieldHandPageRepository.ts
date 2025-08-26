@@ -6,4 +6,5 @@ export interface BattleFieldHandPageRepository {
 
     getCurrentPage(): number;
     setCurrentPage(page: number): void;
+    getCardsPerPage(): number;
 }
