@@ -105,7 +105,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
 
             this.saveCurrentClickedButtonId(buttonUniqueId);
 
-            const cardId = this.getCardIdByButtonId(buttonUniqueId);
+            const cardId = this.getCardIdByDeckIdAndButtonId(currentClickedDeckButtonId, buttonUniqueId);
             if (cardId == null) return null;
             this.saveClickedCardCount(currentClickedDeckButtonId, cardId);
 
@@ -154,8 +154,12 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
     }
 
-    private getCardIdByButtonId(buttonId: number): number | null {
-        return this.deckCardDeleteButtonRepository.findCardIdByButtonUniqueId(buttonId);
+    private getCardIdByDeckIdAndButtonId(deckId: number, buttonId: number): number | null {
+        const buttonList = this.deckCardDeleteButtonRepository.findButtonListByDeckId(deckId);
+        const buttonMesh = buttonList?.find(button => button.id === buttonId);
+        if (!buttonMesh) return null;
+
+        return this.deckCardDeleteButtonRepository.findCardIdByButtonMesh(buttonMesh);
     }
 
     private setCardBlockerVisibility(cardId: number, isVisible: boolean): void {
