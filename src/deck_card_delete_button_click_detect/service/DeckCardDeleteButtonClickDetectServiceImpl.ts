@@ -113,7 +113,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
             this.setCardBlockerVisibility(cardId, false);
             this.deleteRemainingCards(cardId);
 
-            const selectedCardCount = this.cardCountManager.findCardCountByDeck(currentClickedDeckButtonId, cardId);
+            const selectedCardCount = this.cardCountManager.findSelectedCardCountByDeck(currentClickedDeckButtonId, cardId);
             if (selectedCardCount == 0) {
                 this.deleteDeckElement(currentClickedDeckButtonId, cardId);
                 this.deleteNumberOfSelectedCardsPosition(currentClickedDeckButtonId, cardId);
@@ -179,7 +179,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
             return;
         }
 
-        const selectedCardCount = this.cardCountManager.findCardCountByDeck(deckId, cardId);
+        const selectedCardCount = this.cardCountManager.findSelectedCardCountByDeck(deckId, cardId);
         console.log(`%c [덱 카드 삭제 버튼]덱 ID: ${deckId}, 현재 선택한 카드(ID: ${cardId}) 개수는? ${selectedCardCount}`, 'color: #FE2EF7; font-weight: bold;');
         if (selectedCardCount == 0) {
             console.warn(`[DEBUG] Card id: ${cardId}, Count: ${selectedCardCount} No more cards to remove.`);
@@ -188,7 +188,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
 
         // 선택한 카드 개수는 감소, 남은 카드 개수는 증가
         this.cardCountManager.incrementRemainingCardCount(cardId);
-        this.cardCountManager.decrementCardCountByDeck(deckId, cardId);
+        this.cardCountManager.decrementSelectedCardCountByDeck(deckId, cardId);
         this.cardCountManager.decrementCardCountByGrade(deckId, grade);
 
         // To-do: 편집 완료 버튼 클릭시 map 데이터에 반영

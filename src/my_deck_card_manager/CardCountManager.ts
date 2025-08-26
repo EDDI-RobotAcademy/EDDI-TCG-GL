@@ -5,9 +5,13 @@ export class CardCountManager {
     // 남은 카드 개수(선택 가능한 카드 개수)
     private remainingCardCountMap: Map<number, number> = new Map(); // cardId: cardClickCount
     // 덱별 카드 개수(사용자가 덱을 만들기 위해 선택한 카드 개수)
-    private cardCountMap: Map<number, { cardId: number, count: number }[]> = new Map(); // deckId: {cardId: card Count}
+    private selectedCardCountMap: Map<number, { cardId: number, count: number }[]> = new Map(); // deckId: {cardId: card Count}
     // 등급별 카드 개수
     private cardCountByGradeMap: Map<number, { gradeId: number, count: number }[]> = new Map(); // deckId: {gradeId: card Count}
+
+    private originalRemainingCardCountMap: Map<number, number> = new Map();
+    private originalSelectedCardCountMap: Map<number, { cardId: number, count: number }[]> = new Map();
+    private originalCardCountByGradMap: Map<number, { gradeId: number, count: number }[]> = new Map();
 
     private constructor() {}
 
@@ -58,8 +62,8 @@ export class CardCountManager {
     }
 
     // 덱별 카드 개수
-    public findCardCountByDeck(deckId: number, cardId: number): number {
-        const cardCountList = this.cardCountMap.get(deckId);
+    public findSelectedCardCountByDeck(deckId: number, cardId: number): number {
+        const cardCountList = this.selectedCardCountMap.get(deckId);
         if (!cardCountList) return 0;
 
         const cardCountEntry = cardCountList.find(entry => entry.cardId === cardId);
@@ -67,14 +71,14 @@ export class CardCountManager {
     }
 
     public findCardIdListByDeck(deckId: number): number[] {
-        const cardList = this.cardCountMap.get(deckId);
+        const cardList = this.selectedCardCountMap.get(deckId);
         if (!cardList) return [];
 
         return cardList.map(entry => entry.cardId);
     }
 
-    public saveCardCountByDeck(deckId: number, cardId: number, count: number): void {
-        const existingCardCountList = this.cardCountMap.get(deckId);
+    public saveSelectedCardCountByDeck(deckId: number, cardId: number, count: number): void {
+        const existingCardCountList = this.selectedCardCountMap.get(deckId);
         if (existingCardCountList) {
             const cardEntry = existingCardCountList.find(entry => entry.cardId === cardId);
             if (cardEntry) {
@@ -83,12 +87,12 @@ export class CardCountManager {
                 existingCardCountList.push({cardId: cardId, count: count});
             }
         } else {
-            this.cardCountMap.set(deckId, [{ cardId: cardId, count: count }]);
+            this.selectedCardCountMap.set(deckId, [{ cardId: cardId, count: count }]);
         }
     }
 
-    public incrementCardCountByDeck(deckId: number, cardId: number): void {
-        const cardList = this.cardCountMap.get(deckId);
+    public incrementSelectedCardCountByDeck(deckId: number, cardId: number): void {
+        const cardList = this.selectedCardCountMap.get(deckId);
         if (cardList) {
             const cardEntry = cardList.find(entry => entry.cardId === cardId);
             if (cardEntry) {
@@ -97,16 +101,16 @@ export class CardCountManager {
                 cardList.push({ cardId, count: 1 });
             }
         } else {
-            this.cardCountMap.set(deckId, [{ cardId, count: 1 }]);
+            this.selectedCardCountMap.set(deckId, [{ cardId, count: 1 }]);
         }
 
         // 확인용 (나중에 지워야 함)
-        const count = this.findCardCountByDeck(deckId, cardId);
+        const count = this.findSelectedCardCountByDeck(deckId, cardId);
         console.log(`카드 개수 증가 Deck ID: ${deckId}, Card ID: ${cardId}, Card Count: ${count}`);
     }
 
-    public decrementCardCountByDeck(deckId: number, cardId: number): void {
-        const cardList = this.cardCountMap.get(deckId);
+    public decrementSelectedCardCountByDeck(deckId: number, cardId: number): void {
+        const cardList = this.selectedCardCountMap.get(deckId);
         if (cardList) {
             const cardEntry = cardList.find(entry => entry.cardId === cardId);
             if (cardEntry && cardEntry.count > 0) {
@@ -115,7 +119,7 @@ export class CardCountManager {
         }
 
         // 확인용 (나중에 지워야 함)
-        const count = this.findCardCountByDeck(deckId, cardId);
+        const count = this.findSelectedCardCountByDeck(deckId, cardId);
         console.log(`카드 개수 감소 Deck ID: ${deckId}, Card ID: ${cardId}, Card Count: ${count}`);
     }
 
@@ -186,7 +190,7 @@ export class CardCountManager {
 
     public deleteCardCount(deckId: number): void {
         this.cardCountByGradeMap.delete(deckId);
-        this.cardCountMap.delete(deckId);
+        this.selectedCardCountMap.delete(deckId);
     }
 
     public getMaxClickCountByGrade(gradeId: number): number {
@@ -201,5 +205,66 @@ export class CardCountManager {
                 return 0;
         }
     }
+
+    // 남은 카드 개수 복제
+    public cloneRemainingCardCount(): void {
+        this.originalRemainingCardCountMap = new Map(
+            Array.from(this.remainingCardCountMap.entries()).map(([cardId, count]) => [cardId, count])
+        );
+        console.log("remainingCardCountMap -> originalRemainingCardCountMap 복제 완료");
+    }
+
+    // 덱별 카드 개수 복제
+    public cloneSelectedCardCount(): void {
+        this.originalSelectedCardCountMap = new Map(
+            Array.from(this.selectedCardCountMap.entries()).map(([deckId, cardList]) => [
+                deckId,
+                cardList.map(entry => ({ ...entry })) // 깊은 복제
+            ])
+        );
+        console.log("selectedCardCountMap -> originalSelectedCardCountMap 복제 완료");
+    }
+
+    // 등급별 카드 개수 복제
+    public cloneCardCountByGrade(): void {
+        this.originalCardCountByGradMap = new Map(
+            Array.from(this.cardCountByGradeMap.entries()).map(([deckId, gradeList]) => [
+                deckId,
+                gradeList.map(entry => ({ ...entry })) // 깊은 복제
+            ])
+        );
+        console.log("cardCountByGradeMap -> originalCardCountByGradMap 복제 완료");
+    }
+
+    // 남은 카드 개수 복원
+    public restoreRemainingCardCount(): void {
+        this.remainingCardCountMap = new Map(
+            Array.from(this.originalRemainingCardCountMap.entries()).map(([cardId, count]) => [cardId, count])
+        );
+        console.log("originalRemainingCardCountMap -> remainingCardCountMap 복원 완료");
+    }
+
+    // 덱별 카드 개수 복원
+    public restoreSelectedCardCount(): void {
+        this.selectedCardCountMap = new Map(
+            Array.from(this.originalSelectedCardCountMap.entries()).map(([deckId, cardList]) => [
+                deckId,
+                cardList.map(entry => ({ ...entry })) // 깊은 복제
+            ])
+        );
+        console.log("originalSelectedCardCountMap -> selectedCardCountMap 복원 완료");
+    }
+
+    // 등급별 카드 개수 복원
+    public restoreCardCountByGrade(): void {
+        this.cardCountByGradeMap = new Map(
+            Array.from(this.originalCardCountByGradMap.entries()).map(([deckId, gradeList]) => [
+                deckId,
+                gradeList.map(entry => ({ ...entry })) // 깊은 복제
+            ])
+        );
+        console.log("originalCardCountByGradMap -> cardCountByGradeMap 복원 완료");
+    }
+
 
 }
