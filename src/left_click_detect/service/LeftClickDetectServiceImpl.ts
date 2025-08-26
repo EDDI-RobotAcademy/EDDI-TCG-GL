@@ -150,6 +150,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         [MouseCursorDetectArea.SETTINGS]: this.handleSettingsClick.bind(this),
         [MouseCursorDetectArea.TURN_END]: this.handleTurnEndClick.bind(this),
         [MouseCursorDetectArea.OPPONENT_MASETER]: this.handleOpponentMasterClick.bind(this),
+        [MouseCursorDetectArea.YOUR_HAND_PREV_BUTTON]: this.handleYourHandPrevButtonClick.bind(this),
     };
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
@@ -522,5 +523,9 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         }
 
         this.activePanelButtonHandler.execute(currentActivePanelButtonType, BattleFieldCommonAreaType.OPPONENT_MASTER, x, y)
+    }
+
+    private async handleYourHandPrevButtonClick(x: number, y: number): Promise<void> {
+        console.log('Your Hand 이전 버튼 클릭');
     }
 }

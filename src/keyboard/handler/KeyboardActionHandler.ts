@@ -110,9 +110,9 @@ export class KeyboardActionHandler {
                 const handCardId: number = 27
                 this.battleFieldHandMapRepository.addBattleFieldHand(handCardId)
 
-                const currentHandList = this.battleFieldHandRepository.findAll();
+                const currentActiveHandNumber = this.battleFieldHandRepository.countActiveCards();
 
-                if (currentHandList.length >= 5) {
+                if (currentActiveHandNumber >= 5) {
                     console.log("Handler: 페이지 생성 필요함.");
                 }
 
