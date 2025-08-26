@@ -31,6 +31,7 @@ import {DeckCardDeleteButtonRepositoryImpl} from "../../deck_card_delete_button/
 import {DeckCardDeleteButtonPositionRepositoryImpl} from "../../deck_card_delete_button_position/repository/DeckCardDeleteButtonPositionRepositoryImpl";
 import {DeckCardAddButtonRepositoryImpl} from "../../deck_card_add_button/repository/DeckCardAddButtonRepositoryImpl";
 import {DeckCardAddButtonPositionRepositoryImpl} from "../../deck_card_add_button_position/repository/DeckCardAddButtonPositionRepositoryImpl";
+import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -39,6 +40,7 @@ import * as THREE from "three";
 
 export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDetectService {
     private static instance: MyDeckButtonClickDetectServiceImpl | null = null;
+    private cardCountManager: CardCountManager;
     private cameraRepository: CameraRepository;
     private myDeckButtonRepository: MyDeckButtonRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
@@ -70,6 +72,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private deckCardAddButtonPositionRepository: DeckCardAddButtonPositionRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
+        this.cardCountManager = CardCountManager.getInstance();
         this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance(scene);
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -154,6 +157,9 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                     this.deckCardAddButtonRepository.restoreOriginalDeckState(previousClickedDeckButtonId);
                     this.deckCardAddButtonPositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
                     // To-do: countManager 도 원본 데이터로 수정 필요
+                    this.cardCountManager.restoreRemainingCardCount();
+                    this.cardCountManager.restoreSelectedCardCount();
+                    this.cardCountManager.restoreCardCountByGrade();
 
                     this.setOwnedCardsVisibility(false);
                     this.setCardSelectionBlockerVisibility(false);

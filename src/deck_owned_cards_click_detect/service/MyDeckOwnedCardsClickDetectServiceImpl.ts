@@ -121,7 +121,7 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
         const currentClickedDeckButtonId = this.getCurrentClickDeckButtonId();
         if (currentClickedDeckButtonId == null) return;
 
-        const currentSelectedCardCount = this.cardCountManager.findCardCountByDeck(currentClickedDeckButtonId, cardId);
+        const currentSelectedCardCount = this.cardCountManager.findSelectedCardCountByDeck(currentClickedDeckButtonId, cardId);
         const currentSelectedCardCountByGrade = this.cardCountManager.findCardCountByGrade(currentClickedDeckButtonId, grade);
 
         // 등급별 제한 검사
@@ -137,7 +137,7 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
         }
 
         this.cardCountManager.decrementRemainingCardCount(cardId);
-        this.cardCountManager.incrementCardCountByDeck(currentClickedDeckButtonId, cardId);
+        this.cardCountManager.incrementSelectedCardCountByDeck(currentClickedDeckButtonId, cardId);
         this.cardCountManager.incrementCardCountByGrade(currentClickedDeckButtonId, grade);
     }
 

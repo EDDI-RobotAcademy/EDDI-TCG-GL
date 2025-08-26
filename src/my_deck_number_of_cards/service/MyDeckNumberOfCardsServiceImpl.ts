@@ -136,7 +136,7 @@ export class MyDeckNumberOfCardsServiceImpl implements MyDeckNumberOfCardsServic
 
         const grade = Number(card.등급);
         this.cardCountManager.saveGradeCardCount(deckId, grade, cardCount);
-        this.cardCountManager.saveCardCountByDeck(deckId, cardId, cardCount);
+        this.cardCountManager.saveSelectedCardCountByDeck(deckId, cardId, cardCount);
 
         const mesh = await this.myDeckNumberOfCardsRepository.createMyDeckNumberOfCards(deckId, cardId, cardCount, position);
         return mesh;

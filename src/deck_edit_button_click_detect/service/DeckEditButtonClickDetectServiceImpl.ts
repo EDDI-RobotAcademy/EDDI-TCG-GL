@@ -341,6 +341,9 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.deckCardDeleteButtonPositionRepository.saveClonedOriginalPositionState(currentClickedDeckId);
         this.deckCardAddButtonRepository.saveClonedOriginalDeckState(currentClickedDeckId);
         this.deckCardAddButtonPositionRepository.saveClonedOriginalPositionState(currentClickedDeckId);
+        this.cardCountManager.cloneRemainingCardCount();
+        this.cardCountManager.cloneSelectedCardCount();
+        this.cardCountManager.cloneCardCountByGrade();
     }
 
 }

@@ -794,7 +794,7 @@ export class TCGJustTestMyDeckView {
 
             const cardIdList = this.cardCountManager.findCardIdListByDeck(currentClickedDeckId);
             for (const cardId of cardIdList) {
-                const cardCount = this.cardCountManager.findCardCountByDeck(currentClickedDeckId, cardId);
+                const cardCount = this.cardCountManager.findSelectedCardCountByDeck(currentClickedDeckId, cardId);
                 if (cardCount !== 0) {
                     await this.myDeckNumberOfSelectedCardsService.createMyDeckNumberOfSelectedCardsWithPosition(currentClickedDeckId, cardId, cardCount);
                     this.myDeckNumberOfSelectedCardsService.saveNumberGroup(currentClickedDeckId);

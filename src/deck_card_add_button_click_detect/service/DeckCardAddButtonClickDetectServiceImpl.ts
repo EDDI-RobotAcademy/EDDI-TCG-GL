@@ -158,7 +158,7 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
             return;
         }
 
-        const currentSelectedCardCount = this.cardCountManager.findCardCountByDeck(deckId, cardId);
+        const currentSelectedCardCount = this.cardCountManager.findSelectedCardCountByDeck(deckId, cardId);
         const currentSelectedCardCountByGrade = this.cardCountManager.findCardCountByGrade(deckId, grade);
 
         // 등급별 제한 검사
@@ -174,7 +174,7 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
         }
 
         this.cardCountManager.decrementRemainingCardCount(cardId);
-        this.cardCountManager.incrementCardCountByDeck(deckId, cardId);
+        this.cardCountManager.incrementSelectedCardCountByDeck(deckId, cardId);
         this.cardCountManager.incrementCardCountByGrade(deckId, grade);
     }
 
