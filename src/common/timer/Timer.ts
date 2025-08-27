@@ -144,7 +144,12 @@ export function showSandTimer(duration: number = 60) {
         updateGrains(surfaceY);
         drawGrains();
 
-        const remaining = Math.max(0, Math.ceil(duration - elapsed));
+        // 남은 시간 계산 (floor 사용해서 2,1,0 보장)
+        const remaining = Math.max(0, duration - Math.floor(elapsed));
+
+        // 20초 이하일 때 빨간색 표시
+        timeDisplay.style.color = remaining <= 20 ? "#ff3c3c" : "#fff";
+
         timeDisplay.innerText = remaining.toString();
     }
 
@@ -157,7 +162,10 @@ export function showSandTimer(duration: number = 60) {
         draw();
 
         if (elapsed < duration) requestAnimationFrame(animate);
-        else container.remove();
+        else {
+            grains.length = 0; // 남아 있는 떨어지는 모래 제거
+            draw();            // 최종 상태 다시 그리기
+        }
     }
 
     animate(lastTime);
