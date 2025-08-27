@@ -227,7 +227,7 @@ export class TCGJustTestBattleFieldView {
 
         this.animate();
 
-        // showGuideMessage("카드를 드래그하여 이동하세요!", 3000);
+        showGuideMessage("카드를 드래그하여 이동하세요!", 3000);
     }
 
     public show(): void {
