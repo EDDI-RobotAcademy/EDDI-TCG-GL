@@ -39,6 +39,7 @@ import {LeftClickedArea} from "../../src/left_click_detect/entity/LeftClickedAre
 import {BattleFieldHandPageServiceImpl} from "../../src/battle_field_hand_page/service/BattleFieldHandPageServiceImpl";
 import {BattleFieldHandPageService} from "../../src/battle_field_hand_page/service/BattleFieldHandPageService";
 import {showGuideMessage} from "../../src/common/guide_message/GuideMessage";
+import {showSandTimer} from "../../src/common/timer/Timer";
 
 declare const TWEEN: {
     Tween: any;
@@ -228,6 +229,7 @@ export class TCGJustTestBattleFieldView {
         this.animate();
 
         showGuideMessage("카드를 드래그하여 이동하세요!", 3000);
+        showSandTimer();
     }
 
     public show(): void {
