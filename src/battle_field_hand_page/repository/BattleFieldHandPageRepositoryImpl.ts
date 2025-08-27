@@ -9,7 +9,7 @@ export class BattleFieldHandPageRepositoryImpl implements BattleFieldHandPageRep
     private static instance: BattleFieldHandPageRepositoryImpl | null = null;
 
     private currentPage = 1;
-    private readonly cardsPerPage = 5;
+    private readonly cardsPerPage = 4;
 
     private readonly PREV_BUTTON_START_X: number = 0.26992708 - BattleFieldConstants.HALF;
     private readonly PREV_BUTTON_START_Y: number = BattleFieldConstants.HALF - 0.948453608;

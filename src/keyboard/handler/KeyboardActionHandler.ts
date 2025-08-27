@@ -127,7 +127,7 @@ export class KeyboardActionHandler {
                 if (createdHand) {
                     this.battleFieldHandSceneRepository.addBattleFieldHandScene(createdHand);
                     this.scene.add(createdHand);
-                    // this.battleFieldCardAlignHandler.alignHandCard();
+                    this.battleFieldCardAlignHandler.alignHandCard();
                 }
             }],
         ]);

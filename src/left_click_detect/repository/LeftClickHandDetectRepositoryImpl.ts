@@ -26,7 +26,9 @@ export class LeftClickHandDetectRepositoryImpl implements LeftClickHandDetectRep
 
         this.raycaster.setFromCamera(normalizedMouse, camera);
 
-        const meshes = cardSceneList.map(cardScene => cardScene.getMesh());
+        const meshes = cardSceneList
+            .map(cardScene => cardScene.getMesh())
+            .filter(mesh => mesh && mesh.visible);
         const intersects = this.raycaster.intersectObjects(meshes);
 
         if (intersects.length > 0) {
