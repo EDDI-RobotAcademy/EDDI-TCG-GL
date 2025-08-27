@@ -70,6 +70,11 @@ import {BattleFieldCommonAreaType} from "../../common/type/BattleFieldCommonArea
 import {NeonBorderHandler} from "../../neon_border/handler/NeonBorderHandler";
 import {OpponentFieldCardScene} from "../../opponent_field_card_scene/entity/OpponentFieldCardScene";
 import {BattleFieldConstants} from "../../common/BattleFieldConstants";
+import {BattleFieldHandPageRepository} from "../../battle_field_hand_page/repository/BattleFieldHandPageRepository";
+import {
+    BattleFieldHandPageRepositoryImpl
+} from "../../battle_field_hand_page/repository/BattleFieldHandPageRepositoryImpl";
+import {BattleFieldCardAlignHandler} from "../../battle_field_card_alignment/handler/BattleFieldCardAlignHandler";
 
 export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private static instance: LeftClickDetectServiceImpl | null = null;
@@ -101,6 +106,9 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private neonBorderLinePositionRepository: NeonBorderLinePositionRepository;
 
     private neonBorderHandler: NeonBorderHandler;
+
+    private battleFieldCardAlignHandler: BattleFieldCardAlignHandler;
+    private battleFieldHandPageRepository: BattleFieldHandPageRepository;
 
     private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository
     private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository
@@ -164,6 +172,10 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         this.neonBorderLinePositionRepository = NeonBorderLinePositionRepositoryImpl.getInstance()
 
         this.neonBorderHandler = NeonBorderHandler.getInstance(camera, scene);
+
+        this.battleFieldCardAlignHandler = BattleFieldCardAlignHandler.getInstance()
+
+        this.battleFieldHandPageRepository = BattleFieldHandPageRepositoryImpl.getInstance();
 
         this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance()
         this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance()
@@ -528,9 +540,26 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
     private async handleYourHandPrevButtonClick(x: number, y: number): Promise<void> {
         console.log('Your Hand 이전 버튼 클릭');
+
+        const currentPage = this.battleFieldHandPageRepository.getCurrentPage()
+        if (currentPage === 1) return;
+
+        this.battleFieldCardAlignHandler.alignHandCard(false)
+        this.battleFieldHandPageRepository.setCurrentPage(currentPage - 1)
+        this.battleFieldCardAlignHandler.alignHandCard(true)
     }
 
     private async handleYourHandNextButtonClick(x: number, y: number): Promise<void> {
         console.log('Your Hand 다음 버튼 클릭');
+
+        const activeCardNumber = this.battleFieldHandRepository.countActiveCards();
+        const maxPageSize = activeCardNumber / BattleFieldConstants.MAX_HAND_REPRESENTATION;
+
+        const currentPage = this.battleFieldHandPageRepository.getCurrentPage()
+        if (currentPage === maxPageSize) return;
+
+        this.battleFieldCardAlignHandler.alignHandCard(false)
+        this.battleFieldHandPageRepository.setCurrentPage(currentPage + 1)
+        this.battleFieldCardAlignHandler.alignHandCard(true)
     }
 }

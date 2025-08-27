@@ -32,8 +32,16 @@ export class BattleFieldHandRepositoryImpl implements BattleFieldHandRepository 
         return hand && hand.cardId !== -1 ? hand : undefined;
     }
 
-    findAll(): BattleFieldHand[] {
-        return Array.from(this.cardMap.values()).filter(hand => hand.cardId !== -1);
+    findAllWithPage(currentPage: number, cardsPerPage: number): BattleFieldHand[] {
+        // 유효한 카드 배열 생성
+        const validCards = Array.from(this.cardMap.values())
+            .filter(hand => hand.cardId !== -1);
+
+        // 페이지네이션 처리
+        const startIndex = (currentPage - 1) * cardsPerPage;
+        const endIndex = startIndex + cardsPerPage;
+
+        return validCards.slice(startIndex, endIndex);
     }
 
     deleteById(id: number): boolean {

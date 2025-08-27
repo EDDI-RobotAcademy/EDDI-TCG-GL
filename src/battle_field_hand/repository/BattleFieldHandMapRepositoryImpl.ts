@@ -9,12 +9,13 @@ export class BattleFieldHandMapRepositoryImpl implements BattleFieldHandMapRepos
     private constructor() {
         // 예시 데이터를 추가
         this.currentHandMap.set(0, 2);
-        this.currentHandMap.set(1, 8);
+        // this.currentHandMap.set(1, 8);
         this.currentHandMap.set(2, 19);
-        this.currentHandMap.set(3, 20);
-        this.currentHandMap.set(4, 93);
-        // this.currentHandMap.set(5, 26);
-        // this.currentHandMap.set(6, 27);
+        // this.currentHandMap.set(3, 20);
+        // this.currentHandMap.set(4, 93);
+        this.currentHandMap.set(1, 26);
+        this.currentHandMap.set(3, 17);
+        // this.currentHandMap.set(4, 17);
     }
 
     public static getInstance(): BattleFieldHandMapRepositoryImpl {

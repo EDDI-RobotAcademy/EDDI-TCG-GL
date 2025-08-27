@@ -2,7 +2,6 @@ import {MouseCursorDetectAreaMap} from "../entity/MouseCursorDetectAreaMap";
 import {MouseCursorDetectArea} from "../entity/MouseCursorDetectArea";
 import {MouseCursorDetectRepository} from "./MouseCursorDetectRepository";
 
-
 export class MouseCursorDetectRepositoryImpl implements MouseCursorDetectRepository {
     private static instance: MouseCursorDetectRepositoryImpl;
     private areaMap: MouseCursorDetectAreaMap;
