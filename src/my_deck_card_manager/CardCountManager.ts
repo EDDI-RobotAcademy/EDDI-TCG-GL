@@ -70,7 +70,7 @@ export class CardCountManager {
         return cardCountEntry ? cardCountEntry.count : 0;
     }
 
-    public findCardIdListByDeck(deckId: number): number[] {
+    public findSelectedCardIdListByDeck(deckId: number): number[] {
         const cardList = this.selectedCardCountMap.get(deckId);
         if (!cardList) return [];
 
@@ -106,21 +106,30 @@ export class CardCountManager {
 
         // 확인용 (나중에 지워야 함)
         const count = this.findSelectedCardCountByDeck(deckId, cardId);
-        console.log(`카드 개수 증가 Deck ID: ${deckId}, Card ID: ${cardId}, Card Count: ${count}`);
+        console.log(`선택한 카드 개수 증가 Deck ID: ${deckId}, Card ID: ${cardId}, Card Count: ${count}`);
     }
 
     public decrementSelectedCardCountByDeck(deckId: number, cardId: number): void {
         const cardList = this.selectedCardCountMap.get(deckId);
-        if (cardList) {
-            const cardEntry = cardList.find(entry => entry.cardId === cardId);
-            if (cardEntry && cardEntry.count > 0) {
-                cardEntry.count -= 1;
-            }
+        if (cardList == null) return;
+
+        const cardEntry = cardList.find(entry => entry.cardId === cardId);
+        if (cardEntry && cardEntry.count > 0) {
+            cardEntry.count -= 1;
         }
 
-        // 확인용 (나중에 지워야 함)
+        // 선택한 카드 삭제 후에 남은 개수가 0인 경우에 대한 처리
         const count = this.findSelectedCardCountByDeck(deckId, cardId);
-        console.log(`카드 개수 감소 Deck ID: ${deckId}, Card ID: ${cardId}, Card Count: ${count}`);
+        if (count == 0) {
+            const updatedList = cardList.filter(entry => entry.cardId !== cardId);
+            if (updatedList.length > 0) {
+                this.selectedCardCountMap.set(deckId, updatedList);
+            } else {
+                // 해당 덱에 카드가 하나도 없으면 전체 삭제
+                this.selectedCardCountMap.delete(deckId);
+            }
+        }
+        console.log(`선택한 카드 개수 감소 Deck ID: ${deckId}, Card ID: ${cardId}, Card Count: ${count}`);
     }
 
     // 등급별 카드 개수

@@ -73,9 +73,9 @@ export class MyDeckBlockScrollServiceImpl implements MyDeckBlockScrollService {
         ];
 
         if (scrollTargets.every(target => !target)) return;
-        console.log("Scroll Target Block Group:", scrollTargets[0]);
-        console.log("Scroll Target Block Group Children Count:", scrollTargets[0]?.children.length);
-        console.log(`Before Scroll- scrollTarget Deck Block position: ${scrollTargets[0]?.position.y}`);
+//         console.log("Scroll Target Block Group:", scrollTargets[0]);
+//         console.log("Scroll Target Block Group Children Count:", scrollTargets[0]?.children.length);
+//         console.log(`Before Scroll- scrollTarget Deck Block position: ${scrollTargets[0]?.position.y}`);
 
         event.preventDefault(); // 기본 스크롤 방지
 
@@ -84,8 +84,8 @@ export class MyDeckBlockScrollServiceImpl implements MyDeckBlockScrollService {
 
         const lowerLimit = 0.073 * window.innerHeight * (blockCount - 8) + (0.166 * (250/1130) / 3) * window.innerWidth;
         const upperLimit = 0;
-        console.log(`upperLimit: ${upperLimit}`); // 최대로 올릴 수 있는 범위
-        console.log(`lowerLimit: ${lowerLimit}`); // 최대로 내릴 수 있는 범위
+//         console.log(`upperLimit: ${upperLimit}`); // 최대로 올릴 수 있는 범위
+//         console.log(`lowerLimit: ${lowerLimit}`); // 최대로 내릴 수 있는 범위
 
         scrollTargets.forEach(target => {
             if (target) {
@@ -94,7 +94,7 @@ export class MyDeckBlockScrollServiceImpl implements MyDeckBlockScrollService {
             }
         });
 
-        console.log('After Scroll- Scroll Target Deck Block Position Y', scrollTargets[0]?.position.y);
+//         console.log('After Scroll- Scroll Target Deck Block Position Y', scrollTargets[0]?.position.y);
     }
 
     private getMyDeckScrollEnabledById(areaId: number): boolean {
