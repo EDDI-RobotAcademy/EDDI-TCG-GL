@@ -276,6 +276,7 @@ export class TCGJustTestMyDeckView {
                 // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
                 await this.reAddMyDeckBlock();
                 this.reAddMyDeckCardName();
+                this.reAddMyDeckNumberOfSelectedCards();
             }
         }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckDeleteButtonClickDetectService.onMouseDown(e), false);
@@ -792,7 +793,7 @@ export class TCGJustTestMyDeckView {
             if (currentClickedDeckId == null) return;
             console.log(`%c [delete card or add card button click] 현재 클릭한 덱 ID: ${currentClickedDeckId}`, 'color: #FE2EF7; font-weight: bold;');
 
-            const cardIdList = this.cardCountManager.findCardIdListByDeck(currentClickedDeckId);
+            const cardIdList = this.cardCountManager.findSelectedCardIdListByDeck(currentClickedDeckId);
             for (const cardId of cardIdList) {
                 const cardCount = this.cardCountManager.findSelectedCardCountByDeck(currentClickedDeckId, cardId);
                 if (cardCount !== 0) {
@@ -846,7 +847,7 @@ export class TCGJustTestMyDeckView {
             const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
             if (currentClickedDeckId == null) return;
 
-            const cardIdList = this.cardCountManager.findCardIdListByDeck(currentClickedDeckId);
+            const cardIdList = this.cardCountManager.findSelectedCardIdListByDeck(currentClickedDeckId);
             for (const cardId of cardIdList) {
                 await this.myDeckBlockService.createMyDeckBlockWithPosition(currentClickedDeckId, cardId);
             }
@@ -896,7 +897,7 @@ export class TCGJustTestMyDeckView {
             const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
             if (currentClickedDeckId == null) return;
 
-            const cardIdList = this.cardCountManager.findCardIdListByDeck(currentClickedDeckId);
+            const cardIdList = this.cardCountManager.findSelectedCardIdListByDeck(currentClickedDeckId);
             for (const cardId of cardIdList) {
                 await this.myDeckCardNameService.createMyDeckCardNameWithPosition(currentClickedDeckId, cardId);
             }
