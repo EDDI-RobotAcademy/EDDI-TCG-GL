@@ -58,6 +58,7 @@
     "draw-opponent-neon-border": "webpack serve --config ./test/draw_opponent_neon_border/config/webpack.dev.js",
     "simple-canvas-texture": "webpack serve --config ./test/simple_canvas_texture/config/webpack.dev.js",
     "draw-your-hand-page": "webpack serve --config ./test/draw_your_hand_page/config/webpack.dev.js",
-    "draw-guide-message": "webpack serve --config ./test/draw_guide_message/config/webpack.dev.js"
+    "draw-guide-message": "webpack serve --config ./test/draw_guide_message/config/webpack.dev.js",
+    "draw-field-energy": "webpack serve --config ./test/draw_field_energy/config/webpack.dev.js"
   }
 }
