@@ -29,13 +29,13 @@ export class MouseDropHandler {
     private handlers: Record<CardKind,
         (selectedObject: BattleFieldCardScene) => Promise<YourField | null>> = {
         [CardKind.UNIT]: this.handleCardKindUnit.bind(this),
-        [CardKind.ITEM]: async () => null,
-        [CardKind.TRAP]: async () => null,
-        [CardKind.SUPPORT]: async () => null,
-        [CardKind.TOOL]: async () => null,
-        [CardKind.ENERGY]: async () => null,
-        [CardKind.ENVIRONMENT]: async () => null,
-        [CardKind.TOKEN]: async () => null,
+        [CardKind.ITEM]: this.handleCardKindItem.bind(this),
+        [CardKind.TRAP]: this.handleCardKindTrap.bind(this),
+        [CardKind.SUPPORT]: this.handleCardKindSupport.bind(this),
+        [CardKind.TOOL]: this.handleCardKindTool.bind(this),
+        [CardKind.ENERGY]: this.handleCardKindEnergy.bind(this),
+        [CardKind.ENVIRONMENT]: this.handleCardKindEnvironment.bind(this),
+        [CardKind.TOKEN]: this.handleCardKindToken.bind(this),
     };
 
     private constructor() {
@@ -122,5 +122,47 @@ export class MouseDropHandler {
         this.battleFieldHandRepository.deleteById(handCardId);
 
         return createdYourField;
+    }
+
+    private async handleCardKindItem(selectedObject: BattleFieldCardScene): Promise<YourField | null> {
+        console.log(`아이템 타입 카드 사용`);
+        
+        return null
+    }
+
+    private async handleCardKindTrap(selectedObject: BattleFieldCardScene): Promise<YourField | null> {
+        console.log(`함정 타입 카드 사용`);
+
+        return null
+    }
+    
+    private async handleCardKindSupport(selectedObject: BattleFieldCardScene): Promise<YourField | null> {
+        console.log(`서포트 타입 카드 사용`);
+
+        return null
+    }
+
+    private async handleCardKindTool(selectedObject: BattleFieldCardScene): Promise<YourField | null> {
+        console.log(`도구 타입 카드 사용`);
+
+        return null
+    }
+
+    private async handleCardKindEnergy(selectedObject: BattleFieldCardScene): Promise<YourField | null> {
+        console.log(`에너지 타입 카드 사용`);
+
+        return null
+    }
+
+    private async handleCardKindEnvironment(selectedObject: BattleFieldCardScene): Promise<YourField | null> {
+        console.log(`환경 타입 카드 사용`);
+
+        return null
+    }
+
+    private async handleCardKindToken(selectedObject: BattleFieldCardScene): Promise<YourField | null> {
+        console.log(`토큰 타입 카드 사용`);
+
+        return null
     }
 }
