@@ -1,0 +1,394 @@
+import * as THREE from 'three';
+
+import battleFieldMusic from '@resource/music/battle_field/battle-field.mp3';
+import {TextureManager} from "../../src/texture_manager/TextureManager";
+import {NonBackgroundImage} from "../../src/shape/image/NonBackgroundImage";
+import {AudioController} from "../../src/audio/AudioController";
+import {MouseController} from "../../src/mouse/MouseController";
+import {BattleFieldHandSceneRepository} from "../../src/battle_field_hand/deprecated_repository/BattleFieldHandSceneRepository";
+
+import {UserWindowSize} from "../../src/window_size/WindowSize"
+import {UnitCardGenerator} from "../../src/card/unit/generate";
+import {SupportCardGenerator} from "../../src/card/support/generate";
+import {ItemCardGenerator} from "../../src/card/item/generate";
+import {EnergyCardGenerator} from "../../src/card/energy/generate";
+import {BattleFieldHandMapRepositoryImpl} from "../../src/battle_field_hand/repository/BattleFieldHandMapRepositoryImpl";
+
+import {BackgroundServiceImpl} from "../../src/background/service/BackgroundServiceImpl";
+import {BattleFieldHandServiceImpl} from "../../src/battle_field_hand/service/BattleFieldHandServiceImpl";
+import {LeftClickDetectService} from "../../src/left_click_detect/service/LeftClickDetectService";
+import {DragMoveService} from "../../src/drag_move/service/DragMoveService";
+import {MouseDropService} from "../../src/mouse_drop/service/MouseDropService";
+import {YourFieldAreaServiceImpl} from "../../src/your_field_area/service/YourFieldAreaServiceImpl";
+import {WindowSceneRepositoryImpl} from "../../src/window_scene/repository/WindowSceneRepositoryImpl";
+import {WindowSceneServiceImpl} from "../../src/window_scene/service/WindowSceneServiceImpl";
+import {CameraRepositoryImpl} from "../../src/camera/repository/CameraRepositoryImpl";
+import {CameraServiceImpl} from "../../src/camera/service/CameraServiceImpl";
+import {LeftClickDetectServiceImpl} from "../../src/left_click_detect/service/LeftClickDetectServiceImpl";
+import {DragMoveServiceImpl} from "../../src/drag_move/service/DragMoveServiceImpl";
+import {MouseDropServiceImpl} from "../../src/mouse_drop/service/MouseDropServiceImpl";
+import {NeonShape} from "../../src/neon/NeonShape";
+import {OpponentFieldAreaServiceImpl} from "../../src/opponent_field_area/service/OpponentFieldAreaServiceImpl";
+import {KeyboardService} from "../../src/keyboard/service/KeyboardService";
+import {KeyboardServiceImpl} from "../../src/keyboard/service/KeyboardServiceImpl";
+import {OpponentFieldMapRepositoryImpl} from "../../src/opponent_field_map/repository/OpponentFieldMapRepositoryImpl";
+import {OpponentFieldServiceImpl} from "../../src/opponent_field/service/OpponentFieldServiceImpl";
+import {RightClickDetectServiceImpl} from "../../src/right_click_detect/service/RightClickDetectServiceImpl";
+import {RightClickDetectService} from "../../src/right_click_detect/service/RightClickDetectService";
+import {LeftClickedArea} from "../../src/left_click_detect/entity/LeftClickedArea";
+import {BattleFieldHandPageServiceImpl} from "../../src/battle_field_hand_page/service/BattleFieldHandPageServiceImpl";
+import {BattleFieldHandPageService} from "../../src/battle_field_hand_page/service/BattleFieldHandPageService";
+import {showGuideMessage} from "../../src/common/guide_message/GuideMessage";
+import {showSandTimer} from "../../src/common/timer/Timer";
+import {showTurn} from "../../src/common/turn/Turn";
+import {showFieldEnergy} from "../../src/common/field_energy/FieldEnergy";
+
+declare const TWEEN: {
+    Tween: any;
+    Easing: any;
+    update: (time?: number) => void;
+};
+
+export class TCGJustTestBattleFieldView {
+    private static instance: TCGJustTestBattleFieldView | null = null;
+
+    private scene: THREE.Scene;
+    private cameraId: number;
+    private camera: THREE.OrthographicCamera;
+    private renderer: THREE.WebGLRenderer;
+    private textureManager: TextureManager;
+    private simulationBattleFieldContainer: HTMLElement;
+
+    private buttons: NonBackgroundImage[] = [];
+    private buttonInitialInfo: Map<string, { positionPercent: THREE.Vector2, widthPercent: number, heightPercent: number }> = new Map();
+    private audioController: AudioController;
+    private mouseController: MouseController;
+
+    private background: NonBackgroundImage | null = null;
+    private backgroundService = BackgroundServiceImpl.getInstance()
+
+    private battleFieldHandService = BattleFieldHandServiceImpl.getInstance()
+    private battleFieldHandMapRepository = BattleFieldHandMapRepositoryImpl.getInstance()
+    private battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance()
+    private battleFieldHandPageService: BattleFieldHandPageService;
+
+    private opponentFieldMapRepository = OpponentFieldMapRepositoryImpl.getInstance()
+    private opponentFieldService = OpponentFieldServiceImpl.getInstance()
+
+    private neonShape: NeonShape
+
+    private leftClickDetectService: LeftClickDetectService
+    private dragMoveService: DragMoveService
+    private mouseDropService: MouseDropService
+
+    private rightClickDetectService: RightClickDetectService
+
+    private keyboardService: KeyboardService
+
+    private yourFieldAreaService = YourFieldAreaServiceImpl.getInstance();
+    private opponentFieldAreaService = OpponentFieldAreaServiceImpl.getInstance();
+
+    private readonly windowSceneRepository = WindowSceneRepositoryImpl.getInstance();
+    private readonly windowSceneService = WindowSceneServiceImpl.getInstance(this.windowSceneRepository);
+
+    private readonly cameraRepository = CameraRepositoryImpl.getInstance()
+    private readonly cameraService = CameraServiceImpl.getInstance(this.cameraRepository)
+
+    private initialized = false;
+    private isAnimating = false;
+    private isDragging = false;
+
+    private userWindowSize: UserWindowSize;
+
+    constructor(simulationBattleFieldContainer: HTMLElement) {
+        this.simulationBattleFieldContainer = simulationBattleFieldContainer;
+        this.scene = this.windowSceneService.createScene('battle-field')
+        this.renderer = new THREE.WebGLRenderer();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+        this.simulationBattleFieldContainer.appendChild(this.renderer.domElement);
+
+        this.userWindowSize = UserWindowSize.getInstance()
+
+        this.battleFieldHandPageService = BattleFieldHandPageServiceImpl.getInstance()
+
+        const aspect = window.innerWidth / window.innerHeight;
+        const viewSize = window.innerHeight;
+        const cameraObject = this.cameraService.createCamera(aspect, viewSize)
+        this.cameraId = cameraObject.getId()
+        this.camera = cameraObject.getCamera()
+
+        this.cameraService.setCameraPosition(this.cameraId, 0, 0, 5)
+        this.cameraService.setCameraLookAt(this.cameraId, 0, 0, 0)
+
+        this.textureManager = TextureManager.getInstance();
+        this.audioController = AudioController.getInstance();
+        this.audioController.setMusic(battleFieldMusic);
+
+        this.neonShape = NeonShape.getInstance(this.scene, this.renderer, this.camera);
+
+        window.addEventListener('resize', this.onWindowResize.bind(this));
+
+        this.mouseController = new MouseController(this.camera, this.scene);
+
+        window.addEventListener('click', () => this.initializeAudio(), { once: true });
+
+        this.leftClickDetectService = LeftClickDetectServiceImpl.getInstance(this.camera, this.scene)
+        this.dragMoveService = DragMoveServiceImpl.getInstance(this.camera, this.scene)
+        this.mouseDropService = MouseDropServiceImpl.getInstance()
+
+        this.rightClickDetectService = RightClickDetectServiceImpl.getInstance(this.camera, this.scene)
+
+        this.renderer.domElement.addEventListener('mousedown', async (e) => {
+            if (e.button === 0) { // 좌클릭만 처리
+                const result = await this.leftClickDetectService.handleLeftClick(e);
+                // console.log(`result: ${JSON.stringify(result, null, 2)}`)
+                if (result !== null) {
+                    this.isDragging = false;
+                    this.leftClickDetectService.setLeftMouseDown(true);
+                }
+            } else if (e.button === 2) { // 우클릭 처리
+                e.preventDefault();
+                const result = await this.rightClickDetectService.handleRightClick(e);
+                if (result !== null) {
+                    this.rightClickDetectService.setRightMouseDown(true);
+                }
+            }
+        }, false)
+
+        this.renderer.domElement.addEventListener('mousemove', (e) => {
+            if (this.dragMoveService.getLeftClickedArea() === LeftClickedArea.YOUR_HAND && this.leftClickDetectService.isLeftMouseDown()) {
+                this.isDragging = true;
+                this.dragMoveService.onMouseMove(e);
+            }
+        });
+
+        this.renderer.domElement.addEventListener('mouseup', () => {
+            if (this.dragMoveService.getLeftClickedArea() === LeftClickedArea.YOUR_HAND && this.leftClickDetectService.isLeftMouseDown()) {
+                this.mouseDropService.onMouseUp();
+                this.leftClickDetectService.setLeftMouseDown(false); // 드롭 후 상태 초기화
+            }
+        }, false);
+
+        this.renderer.domElement.addEventListener('click', (e) => {
+            if (this.isDragging) {
+                e.stopPropagation();  // 드래그 후 발생하는 클릭 이벤트 차단
+                this.isDragging = false; // 다시 초기화
+            }
+        }, true);
+
+        this.keyboardService = KeyboardServiceImpl.getInstance(this.scene)
+
+        document.addEventListener("keydown", (event) => {
+            console.log(`Key pressed: ${event.key}`); // 키가 눌릴 때 메시지가 출력되는지 확인
+            this.keyboardService.processKeyboard(event.key);
+        });
+
+        this.renderer.domElement.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        }, false);
+    }
+
+    public static getInstance(lobbyContainer?: HTMLElement): TCGJustTestBattleFieldView {
+        if (!TCGJustTestBattleFieldView.instance) {
+            if (!lobbyContainer) throw new Error('Root container required for first initialization');
+            TCGJustTestBattleFieldView.instance = new TCGJustTestBattleFieldView(lobbyContainer);
+        }
+        return TCGJustTestBattleFieldView.instance;
+    }
+
+    private async initializeAudio(): Promise<void> {
+        try {
+            await this.audioController.playMusic();
+        } catch (error) {
+            console.error('Initial audio play failed:', error);
+        }
+    }
+
+    public async initialize(): Promise<void> {
+        if (this.initialized) {
+            console.log('Already initialized');
+            this.show();
+            return;
+        }
+
+        console.log('TCGBattleFieldView initialize() operate!!!');
+        await this.textureManager.preloadTextures("image-paths.json");
+
+        console.log("Textures preloaded. Adding background and buttons...");
+
+        await this.addBackground();
+        this.addYourField();
+        this.addOpponentField();
+        this.addYourHandUnitList()
+        this.addOpponentFieldUnitList()
+        this.addYourHandPagePrevButton()
+        this.addYourHandPageNextButton()
+
+        this.initialized = true;
+        this.isAnimating = true;
+
+        this.animate();
+
+        showGuideMessage("카드를 드래그하여 이동하세요!", 3000);
+        showSandTimer();
+        showTurn();
+        showFieldEnergy(1);
+    }
+
+    public show(): void {
+        console.log('Showing TCGMainLobbyView...');
+        this.renderer.domElement.style.display = 'block';
+        this.simulationBattleFieldContainer.style.display = 'block';
+        this.isAnimating = true;
+        if (!this.initialized) {
+            this.initialize(); // 초기화되지 않은 경우 초기화 호출
+        } else {
+            this.animate(); // 이미 초기화된 경우 애니메이션만 다시 시작
+        }
+    }
+
+    public hide(): void {
+        console.log('Hiding TCGMainLobbyView...');
+        this.isAnimating = false;
+        this.renderer.domElement.style.display = 'none';
+        this.simulationBattleFieldContainer.style.display = 'none';
+    }
+
+    private async addBackground(): Promise<void> {
+        try {
+            const background = await this.backgroundService.createBackground(
+                'battle_field_background',
+                1, // BackgroundType 값
+                window.innerWidth,
+                window.innerHeight
+            );
+
+            this.background = background;
+
+            if (this.background instanceof NonBackgroundImage) {
+                this.background.draw(this.scene);
+            }
+        } catch (error) {
+            console.error('Failed to add background:', error);
+        }
+    }
+
+    private addYourField(): void {
+        const yourField = this.yourFieldAreaService.createYourField()
+        const yourFieldAreaMesh = yourField.getArea()
+
+        this.scene.add(yourFieldAreaMesh);
+    }
+
+    private addOpponentField(): void {
+        const opponentField = this.opponentFieldAreaService.createOpponentField()
+        const opponentFieldAreaMesh = opponentField.getArea()
+
+        this.scene.add(opponentFieldAreaMesh);
+    }
+
+    private async addYourHandPagePrevButton(): Promise<void> {
+        const createadPrevButton = await this.battleFieldHandPageService.createPrevButton();
+        this.scene.add(createadPrevButton);
+    }
+
+    private async addYourHandPageNextButton(): Promise<void> {
+        const createadNextButton = await this.battleFieldHandPageService.createNextButton();
+        this.scene.add(createadNextButton);
+    }
+
+    private async addYourHandUnitList(): Promise<void> {
+        const battleFieldHandList = this.battleFieldHandMapRepository.getBattleFieldHandList()
+
+        for (const handCardId of battleFieldHandList) {
+            const createdHand = await this.battleFieldHandService.createHand(handCardId)
+
+            if (createdHand) {
+                this.battleFieldHandSceneRepository.addBattleFieldHandScene(createdHand);
+                this.scene.add(createdHand);
+            }
+        }
+    }
+
+    private async addOpponentFieldUnitList(): Promise<void> {
+        const opponentFieldUnitList = this.opponentFieldMapRepository.getOpponentFieldList()
+        console.log(`opponentFieldUnitList: ${opponentFieldUnitList}`)
+
+        for (const opponentCardId of opponentFieldUnitList) {
+            const opponentFieldUnit = await this.opponentFieldService.createFieldUnit(opponentCardId)
+            this.scene.add(opponentFieldUnit);
+        }
+    }
+
+    private onWindowResize(): void {
+        const newWidth = window.innerWidth;
+        const newHeight = window.innerHeight;
+
+        // 기존 크기와 비교해서 변경된 경우만 처리
+        if (newWidth !== this.userWindowSize.getWidth() || newHeight !== this.userWindowSize.getHeight()) {
+            const aspect = newWidth / newHeight;
+            const viewSize = newHeight;
+
+            this.camera.left = -aspect * viewSize / 2;
+            this.camera.right = aspect * viewSize / 2;
+            this.camera.top = viewSize / 2;
+            this.camera.bottom = -viewSize / 2;
+            this.camera.updateProjectionMatrix();
+
+            this.renderer.setSize(newWidth, newHeight);
+
+            if (this.background) {
+                const scaleX = newWidth / this.background.getWidth();
+                const scaleY = newHeight / this.background.getHeight();
+                this.background.setScale(scaleX, scaleY);
+            }
+
+            this.buttons.forEach(button => {
+                const initialInfo = this.buttonInitialInfo.get(button.getMesh()?.uuid ?? '');
+                if (initialInfo) {
+                    const buttonWidth = window.innerWidth * initialInfo.widthPercent;
+                    const buttonHeight = window.innerHeight * initialInfo.heightPercent;
+                    const newPosition = new THREE.Vector2(
+                        window.innerWidth * initialInfo.positionPercent.x,
+                        window.innerHeight * initialInfo.positionPercent.y
+                    );
+
+                    button.setPosition(newPosition.x, newPosition.y);
+                    button.setScale(buttonWidth / button.getWidth(), buttonHeight / button.getHeight());
+                }
+            });
+
+            // 창 크기 변경에 따라 배틀 필드도 리사이징
+            this.userWindowSize.calculateScaleFactors(newWidth, newHeight);
+            const { scaleX, scaleY } = this.userWindowSize.getScaleFactors();
+            // this.battleFieldHandSceneRepository.resizeHandSceneList(scaleX, scaleY);
+            UnitCardGenerator.adjustHandCardPositions();
+            SupportCardGenerator.adjustCardPositions()
+            ItemCardGenerator.adjustCardPositions()
+            EnergyCardGenerator.adjustCardPositions()
+        }
+    }
+
+    animate(time?: number): void {
+        if (this.isAnimating) {
+            requestAnimationFrame((t) => this.animate(t));
+            TWEEN.update(time);
+
+            this.neonShape.updateNeonEffect();
+            this.renderer.render(this.scene, this.camera);
+        } else {
+            console.log('Animation stopped.');
+        }
+    }
+}
+
+const rootElement = document.getElementById('app');
+
+if (!rootElement) {
+    throw new Error("Cannot find element with id 'app'.");
+}
+
+const userWindowSize = UserWindowSize.getInstance();
+const fieldView = TCGJustTestBattleFieldView.getInstance(rootElement);
+fieldView.initialize();

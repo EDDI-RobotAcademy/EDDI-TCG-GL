@@ -16,6 +16,7 @@ class WillBeReferenceImageLocation(Enum):
     RACE = "resource/card_race/"
     BACKGROUND = "resource/background/"
     HAND_PAGE_MOVEMENT_BUTTON = "resource/battle_field/your_hand/"
+    FIELD_ENERGY_BUTTON = "resource/battle_field/field_energy/"
     ACTIVE_PANEL_SKILL = "resource/active_panel/skill/"
     ACTIVE_PANEL_GENERAL = "resource/active_panel/general/"
     ACTIVE_PANEL_DETAILS = "resource/active_panel/details/"
@@ -78,6 +79,7 @@ class RelativeImageLocation(Enum):
     RACE = "../../resource/card_race/"
     BACKGROUND = "../../resource/background/"
     HAND_PAGE_MOVEMENT_BUTTON = "../../resource/battle_field/your_hand/"
+    FIELD_ENERGY_BUTTON = "../../resource/battle_field/field_energy/"
     ACTIVE_PANEL_SKILL = "../../resource/active_panel/skill/"
     ACTIVE_PANEL_GENERAL = "../../resource/active_panel/general/"
     ACTIVE_PANEL_DETAILS = "../../resource/active_panel/details/"
@@ -141,6 +143,7 @@ relative_paths = {
     RelativeImageLocation.RACE: RelativeImageLocation.RACE.value,
     RelativeImageLocation.BACKGROUND: RelativeImageLocation.BACKGROUND.value,
     RelativeImageLocation.HAND_PAGE_MOVEMENT_BUTTON: RelativeImageLocation.HAND_PAGE_MOVEMENT_BUTTON.value,
+    RelativeImageLocation.FIELD_ENERGY_BUTTON: RelativeImageLocation.FIELD_ENERGY_BUTTON.value,
     RelativeImageLocation.ACTIVE_PANEL_SKILL: RelativeImageLocation.ACTIVE_PANEL_SKILL.value,
     RelativeImageLocation.ACTIVE_PANEL_GENERAL: RelativeImageLocation.ACTIVE_PANEL_GENERAL.value,
     RelativeImageLocation.ACTIVE_PANEL_DETAILS: RelativeImageLocation.ACTIVE_PANEL_DETAILS.value,
@@ -204,6 +207,7 @@ reference_paths = {
     WillBeReferenceImageLocation.RACE: WillBeReferenceImageLocation.RACE.value,
     WillBeReferenceImageLocation.BACKGROUND: WillBeReferenceImageLocation.BACKGROUND.value,
     WillBeReferenceImageLocation.HAND_PAGE_MOVEMENT_BUTTON: WillBeReferenceImageLocation.HAND_PAGE_MOVEMENT_BUTTON.value,
+    WillBeReferenceImageLocation.FIELD_ENERGY_BUTTON: WillBeReferenceImageLocation.FIELD_ENERGY_BUTTON.value,
     WillBeReferenceImageLocation.ACTIVE_PANEL_SKILL: WillBeReferenceImageLocation.ACTIVE_PANEL_SKILL.value,
     WillBeReferenceImageLocation.ACTIVE_PANEL_GENERAL: WillBeReferenceImageLocation.ACTIVE_PANEL_GENERAL.value,
     WillBeReferenceImageLocation.ACTIVE_PANEL_DETAILS: WillBeReferenceImageLocation.ACTIVE_PANEL_DETAILS.value,
@@ -267,6 +271,7 @@ image_paths = {
     "race": [],
     "background": [],
     "hand_page_movement_button": [],
+    "field_energy_button": [],
     "active_panel_skill": [],
     "active_panel_general": [],
     "active_panel_details": [],

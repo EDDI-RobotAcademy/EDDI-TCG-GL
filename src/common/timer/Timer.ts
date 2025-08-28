@@ -14,31 +14,39 @@ export function showSandTimer(duration: number = 60) {
     container.style.zIndex = "1000";
     container.style.pointerEvents = "none";
 
-    // 네모 박스
+    // 화면 비율 기반 패딩
+    const paddingX = window.innerWidth * 0.00625;
+    const paddingY = window.innerHeight * 0.01210898082;
+
+    // 박스
     const box = document.createElement("div");
     box.style.display = "flex";
     box.style.alignItems = "center";
-    box.style.justifyContent = "center"; // 박스 안에서 중앙 정렬
-    box.style.padding = "8px";
+    box.style.justifyContent = "center";
+    box.style.padding = `${paddingY}px ${paddingX}px`;
     box.style.borderRadius = "6px";
     box.style.width = "100%";
     box.style.background = "linear-gradient(to right, rgba(255,255,255,0.2), rgba(139,69,19,0.3), rgba(0,0,0,0.2))";
     container.appendChild(box);
 
-    // 모래시계 캔버스
+    // 실제 캔버스 크기
+    const canvasWidth = window.innerWidth * 0.027;
+    const canvasHeight = window.innerHeight * 0.055;
     const canvas = document.createElement("canvas");
-    canvas.width = 30;
-    canvas.height = 60;
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
     box.appendChild(canvas);
-
     const ctx = canvas.getContext("2d")!;
 
-    // 숫자 표시 div (모래시계 옆)
+    // 숫자 div
     const timeDisplay = document.createElement("div");
     timeDisplay.style.color = "#fff";
-    timeDisplay.style.fontSize = "32px";
+    const baseHeight = 1080;
+    const baseFontSize = 32;
+    const fontSize = (window.innerHeight / baseHeight) * baseFontSize;
+    timeDisplay.style.fontSize = `${fontSize}px`;
     timeDisplay.style.fontWeight = "bold";
-    timeDisplay.style.marginLeft = "12px"; // 옆으로 공간 확보
+    timeDisplay.style.marginLeft = `${window.innerWidth * 0.0125}px`;
     box.appendChild(timeDisplay);
 
     document.body.appendChild(container);
@@ -47,7 +55,20 @@ export function showSandTimer(duration: number = 60) {
     const grains: Grain[] = [];
     const maxGrains = 60;
     let elapsed = 0;
+
+    // 기준 캔버스 크기
+    const baseWidth = 30;
+    const baseHeightCanvas = 60;
+
     const neckY = canvas.height / 2;
+
+    function scaleX(x:number) {
+        return (x / baseWidth) * canvas.width;
+    }
+
+    function scaleY(y:number) {
+        return (y / baseHeightCanvas) * canvas.height;
+    }
 
     function cubicBezier(p0:number, p1:number, p2:number, p3:number, t:number) {
         const mt = 1-t;
@@ -58,29 +79,32 @@ export function showSandTimer(duration: number = 60) {
         ctx.strokeStyle = "#fff";
         ctx.lineWidth = 2;
 
+        // 좌측
         ctx.beginPath();
-        ctx.moveTo(5, 0);
-        ctx.bezierCurveTo(11, 20, 13, neckY, 13, neckY);
-        ctx.bezierCurveTo(11, 40, 5, canvas.height, 5, canvas.height);
+        ctx.moveTo(scaleX(5), scaleY(0));
+        ctx.bezierCurveTo(scaleX(11), scaleY(20), scaleX(13), neckY, scaleX(13), neckY);
+        ctx.bezierCurveTo(scaleX(11), scaleY(40), scaleX(5), scaleY(60), scaleX(5), scaleY(60));
         ctx.stroke();
 
+        // 우측
         ctx.beginPath();
-        ctx.moveTo(25, 0);
-        ctx.bezierCurveTo(19, 20, 17, neckY, 17, neckY);
-        ctx.bezierCurveTo(19, 40, 25, canvas.height, 25, canvas.height);
+        ctx.moveTo(scaleX(25), scaleY(0));
+        ctx.bezierCurveTo(scaleX(19), scaleY(20), scaleX(17), neckY, scaleX(17), neckY);
+        ctx.bezierCurveTo(scaleX(19), scaleY(40), scaleX(25), scaleY(60), scaleX(25), scaleY(60));
         ctx.stroke();
 
-        ctx.beginPath(); ctx.moveTo(5,0); ctx.lineTo(25,0); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(5,canvas.height); ctx.lineTo(25,canvas.height); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(scaleX(5), scaleY(0)); ctx.lineTo(scaleX(25), scaleY(0)); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(scaleX(5), scaleY(60)); ctx.lineTo(scaleX(25), scaleY(60)); ctx.stroke();
     }
 
     function drawTopSand(topHeight:number) {
         ctx.fillStyle = "#ffd700";
         const yStart = neckY - topHeight;
+
         for (let y = yStart; y < neckY; y++) {
             const t = y / neckY;
-            const leftX = cubicBezier(5, 11, 13, 13, t);
-            const rightX = cubicBezier(25, 19, 17, 17, t);
+            const leftX = cubicBezier(scaleX(5), scaleX(11), scaleX(13), scaleX(13), t);
+            const rightX = cubicBezier(scaleX(25), scaleX(19), scaleX(17), scaleX(17), t);
             ctx.fillRect(leftX, y, rightX - leftX, 1);
         }
     }
@@ -88,10 +112,11 @@ export function showSandTimer(duration: number = 60) {
     function drawBottomSand(bottomHeight:number) {
         ctx.fillStyle = "#ffd700";
         const yEnd = canvas.height - bottomHeight;
+
         for (let y = canvas.height; y > yEnd; y--) {
             const t = (y - neckY) / (canvas.height - neckY);
-            const leftX = cubicBezier(13, 11, 5, 5, t);
-            const rightX = cubicBezier(17, 19, 25, 25, t);
+            const leftX = cubicBezier(scaleX(13), scaleX(11), scaleX(5), scaleX(5), t);
+            const rightX = cubicBezier(scaleX(17), scaleX(19), scaleX(25), scaleX(25), t);
             ctx.fillRect(leftX, y, rightX - leftX, 1);
         }
         return yEnd;
@@ -127,29 +152,18 @@ export function showSandTimer(duration: number = 60) {
 
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
         drawFrame();
-
         const progress = Math.min(1, elapsed / duration);
         const topHeight = (1 - progress) * neckY * 0.7;
         const bottomHeight = progress * neckY * 0.7;
-
         drawTopSand(topHeight);
         const surfaceY = drawBottomSand(bottomHeight);
-
-        if (grains.length < maxGrains && Math.random() < 0.5) {
-            spawnGrain(topHeight);
-        }
-
+        if (grains.length < maxGrains && Math.random() < 0.5) spawnGrain(topHeight);
         updateGrains(surfaceY);
         drawGrains();
 
-        // 남은 시간 계산 (floor 사용해서 2,1,0 보장)
         const remaining = Math.max(0, duration - Math.floor(elapsed));
-
-        // 20초 이하일 때 빨간색 표시
         timeDisplay.style.color = remaining <= 20 ? "#ff3c3c" : "#fff";
-
         timeDisplay.innerText = remaining.toString();
     }
 
@@ -158,13 +172,11 @@ export function showSandTimer(duration: number = 60) {
         const delta = (time - lastTime) / 1000;
         lastTime = time;
         elapsed += delta;
-
         draw();
-
         if (elapsed < duration) requestAnimationFrame(animate);
         else {
-            grains.length = 0; // 남아 있는 떨어지는 모래 제거
-            draw();            // 최종 상태 다시 그리기
+            grains.length = 0;
+            draw();
         }
     }
 

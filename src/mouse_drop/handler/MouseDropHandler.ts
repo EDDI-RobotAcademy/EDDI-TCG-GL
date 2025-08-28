@@ -151,6 +151,11 @@ export class MouseDropHandler {
     private async handleCardKindEnergy(selectedObject: BattleFieldCardScene): Promise<YourField | null> {
         console.log(`에너지 타입 카드 사용`);
 
+        const selectedObjectMesh = selectedObject.getMesh();
+        // 위의 메쉬와
+        // 현재 필드상의 카드 메쉬가 겹치는 구간이 있는지 확인
+        // 겹친다면 해당 카드로 에너지 카드 주입
+
         return null
     }
 
