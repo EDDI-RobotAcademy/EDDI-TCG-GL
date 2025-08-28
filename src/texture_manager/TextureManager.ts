@@ -23,6 +23,7 @@ export class TextureManager {
     private battleFieldActivePanelDetailsTextureList: { [id: number]: THREE.Texture } = {};
 
     private battleFieldHandPageButtonTextureList: { [id: number]: THREE.Texture } = {};
+    private battleFieldEnergyButtonTextureList: { [id: number]: THREE.Texture } = {};
 
     private mainLobbyBackgroundTextureList: { [id: number]: THREE.Texture } = {};
     private mainLobbyButtonsTextureList: { [id: number]: THREE.Texture } = {};
@@ -120,6 +121,7 @@ export class TextureManager {
                 this.loadSkillTextures(imageData.active_panel_skill, this.battleFieldActivePanelSkillTextureList),
 
                 this.loadTextures(imageData.hand_page_movement_button, this.battleFieldHandPageButtonTextureList),
+                this.loadTextures(imageData.field_energy_button, this.battleFieldEnergyButtonTextureList),
 
                 this.loadTextures(imageData.main_lobby_background, this.mainLobbyBackgroundTextureList),
                 this.loadTextures(imageData.main_lobby_buttons, this.mainLobbyButtonsTextureList),
@@ -302,6 +304,8 @@ export class TextureManager {
                 return this.battleFieldActivePanelDetailsTextureList[id];
             case 'hand_page_movement_button':
                 return this.battleFieldHandPageButtonTextureList[id];
+            case 'field_energy_button':
+                return this.battleFieldEnergyButtonTextureList[id];
             case 'main_lobby_background':
                 return this.mainLobbyBackgroundTextureList[id];
             case 'main_lobby_buttons':

@@ -41,6 +41,7 @@ import {BattleFieldHandPageService} from "../../src/battle_field_hand_page/servi
 import {showGuideMessage} from "../../src/common/guide_message/GuideMessage";
 import {showSandTimer} from "../../src/common/timer/Timer";
 import {showTurn} from "../../src/common/turn/Turn";
+import {showFieldEnergy} from "../../src/common/field_energy/FieldEnergy";
 
 declare const TWEEN: {
     Tween: any;
@@ -232,6 +233,7 @@ export class TCGJustTestBattleFieldView {
         showGuideMessage("카드를 드래그하여 이동하세요!", 3000);
         showSandTimer();
         showTurn();
+        showFieldEnergy(1);
     }
 
     public show(): void {
