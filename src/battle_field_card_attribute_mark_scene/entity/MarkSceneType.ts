@@ -4,5 +4,6 @@ export enum MarkSceneType {
     STAFF = "STAFF",
     KINDS = "KINDS",
     ENERGY = "ENERGY",
+    ENERGY_COUNT = "ENERGY_COUNT",
     HP = "HP"
 }

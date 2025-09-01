@@ -133,7 +133,7 @@ export class BattleFieldHandServiceImpl implements BattleFieldHandService {
         const commonTextures = await Promise.all([
             this.textureManager.getTexture('race', card.종족),
             this.textureManager.getTexture('hp', card.체력),
-            this.textureManager.getTexture('energy', 0),
+            this.textureManager.getTexture('energy', 1),
         ]);
 
         // CardKind.UNIT인 경우, 직업에 따라 무기 텍스처를 로드
@@ -220,6 +220,15 @@ export class BattleFieldHandServiceImpl implements BattleFieldHandService {
 
             const energyMark = await this.saveCardAttributeMark(energyMesh, energyPosition, MarkSceneType.ENERGY);
             attributeMarks.push(energyMark)
+
+            const energyTextMesh = this.createEnergyTextMesh(0, energyPosition, this.CARD_WIDTH_RATIO * 0.2 * window.innerWidth);
+            cardGroup.add(energyTextMesh);
+
+            const energyText = await this.saveCardAttributeMark(energyTextMesh, energyPosition, MarkSceneType.ENERGY_COUNT);
+            attributeMarks.push(energyText)
+
+            // const energyText = await this.saveCardAttributeTextNumber(energyTextMesh, energyPosition, 0, energyMark.getId());
+            // attributeMarks.push(energyText)
         }
 
         const attributeMarkIdList = attributeMarks.map((mark) => mark.getId())
@@ -316,6 +325,43 @@ export class BattleFieldHandServiceImpl implements BattleFieldHandService {
         );
     }
 
+    private createEnergyTextMesh(
+        value: number,
+        position: Vector2d,
+        baseScale: number
+    ): THREE.Mesh {
+
+        const canvas = document.createElement("canvas");
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext("2d")!;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "white";
+        ctx.font = "bold 96px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        const yOffset = canvas.height / 2 + 0.01030927835 * window.innerHeight;
+        ctx.fillText(value.toString(), canvas.width / 2, yOffset);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+
+        const geometry = new THREE.PlaneGeometry(1, 1); // 정사각형 단위
+        const mesh = new THREE.Mesh(geometry, material);
+
+        mesh.position.set(position.getX(), position.getY(), 0.01);
+
+        // 화면 크기에 따라 비율 유지
+        const scale = baseScale; // baseScale = CARD_WIDTH_RATIO * 0.2 * window.innerWidth 등
+        mesh.scale.set(scale, scale, 1);
+
+        return mesh;
+    }
+
     private async saveCardAttributeMark(mesh: THREE.Mesh, position: Vector2d, markSceneType: MarkSceneType): Promise<BattleFieldCardAttributeMark> {
         const attributeMarkPosition = new BattleFieldCardAttributeMarkPosition(position.getX(), position.getY());
         await this.battleFieldCardAttributeMarkPositionRepository.save(attributeMarkPosition);
@@ -330,4 +376,26 @@ export class BattleFieldHandServiceImpl implements BattleFieldHandService {
         );
         return await this.battleFieldCardAttributeMarkRepository.save(attributeMark);
     }
+
+    // private async saveCardAttributeNumber(
+    //     textMesh: THREE.Sprite,
+    //     position: Vector2d,
+    //     value: number,
+    //     markId: number
+    // ): Promise<BattleFieldCardAttributeNumber> {
+    //     const numberPosition = new BattleFieldCardAttributeMarkPosition(position.getX(), position.getY());
+    //     await this.battleFieldCardAttributeMarkPositionRepository.save(numberPosition);
+    //
+    //     const numberScene = new BattleFieldCardAttributeMarkScene(textMesh, MarkSceneType.ENERGY_NUMBER);
+    //     await this.battleFieldCardAttributeMarkSceneRepository.save(numberScene);
+    //
+    //     const numberEntity = new BattleFieldCardAttributeNumber(
+    //         value,
+    //         numberScene.getId(),
+    //         numberPosition.getId(),
+    //         markId
+    //     );
+    //     return await this.battleFieldCardAttributeNumberRepository.save(numberEntity);
+    // }
+
 }
