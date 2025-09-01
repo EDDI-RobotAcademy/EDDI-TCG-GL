@@ -2,6 +2,7 @@ import * as THREE from "three";
 import {BattleFieldCardAttributeMarkScene} from "../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
 import {OpponentFieldCardScene} from "../../opponent_field_card_scene/entity/OpponentFieldCardScene";
 import {BattleFieldConstants} from "../../common/BattleFieldConstants";
+import {SlashCutEffect} from "../../animation/sword/SlashCutEffect";
 
 declare const TWEEN: {
     Tween: any;
@@ -22,7 +23,11 @@ export class GeneralAttackAnimation {
     private readonly OPPONENT_END_X: number = 0.5410156
     private readonly OPPONENT_END_Y: number = 0.0476804
 
-    private constructor() {}
+    private screenCutEffect: SlashCutEffect;
+
+    private constructor() {
+        this.screenCutEffect = SlashCutEffect.getInstance();
+    }
 
     public static getInstance(): GeneralAttackAnimation {
         if (!GeneralAttackAnimation.instance) {
@@ -188,6 +193,8 @@ export class GeneralAttackAnimation {
 
     private attackOpponentMasterLeftToRightWithWeapon(mesh: THREE.Mesh, halfWidth: number, halfHeight: number, duration: number): Promise<void> {
         return new Promise(resolve => {
+            this.screenCutEffect.start();
+
             const startRot = mesh.rotation.z;
             const endRot = startRot - Math.PI;
             const originPos = mesh.position.clone();
