@@ -56,8 +56,11 @@ export class CardCountManager {
              this.remainingCardCountMap.set( cardId, currentCount - 1);
 
              // 확인용
-             const numberOfCardIncreased = this.findRemainingCardCountByCardId(cardId);
-             console.log(`남은 카드(ID: ${cardId}) 클릭 후 카드 수량: ${numberOfCardIncreased}`);
+             const numberOfCards = this.findRemainingCardCountByCardId(cardId);
+             if (numberOfCards == 0) {
+                 this.remainingCardCountMap.delete(cardId);
+             }
+             console.log(`남은 카드(ID: ${cardId}) 클릭 후 카드 수량: ${numberOfCards}`);
         }
     }
 
