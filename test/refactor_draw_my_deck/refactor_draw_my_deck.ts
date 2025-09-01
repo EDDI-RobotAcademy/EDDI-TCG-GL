@@ -275,8 +275,10 @@ export class TCGJustTestMyDeckView {
             if (buttonEvent){
                 // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
                 await this.reAddMyDeckBlock();
-                this.reAddMyDeckCardName();
-                this.reAddMyDeckNumberOfSelectedCards();
+                await this.reAddMyDeckCardName();
+                await this.reAddMyDeckNumberOfSelectedCards();
+                await this.reAddDeckCardDeleteButton();
+                await this.reAddDeckCardAddButton();
             }
         }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckDeleteButtonClickDetectService.onMouseDown(e), false);
@@ -964,6 +966,29 @@ export class TCGJustTestMyDeckView {
         }
     }
 
+    private async reAddDeckCardDeleteButton(): Promise<void> {
+        try {
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            if (currentClickedDeckId == null) return;
+
+            const cardIdList = this.cardCountManager.findSelectedCardIdListByDeck(currentClickedDeckId);
+            for (const cardId of cardIdList) {
+                await this.deckCardDeleteButtonService.createDeckCardDeleteButtonWithPosition(currentClickedDeckId, cardId);
+            }
+            this.deckCardDeleteButtonService.saveButtonGroup(currentClickedDeckId);
+            this.deckCardDeleteButtonService.applyClippingMaskToButton();
+
+            const buttonGroup = this.deckCardDeleteButtonService.getButtonGroupByDeckId(currentClickedDeckId);
+            if (!this.scene.children.includes(buttonGroup)) {
+                this.scene.add(buttonGroup);
+            }
+            buttonGroup.position.y = 0;
+
+        } catch (error) {
+            console.error('Failed to reAdd deck card delete button:', error);
+        }
+    }
+
     private async addDeckCardAddButton(): Promise<void> {
         try {
             const myDeckCardList = this.myDeckCardMapRepository.getDeckIdAndUniqueCardLists();
@@ -987,6 +1012,30 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add deck card add button:', error);
+        }
+    }
+
+    private async reAddDeckCardAddButton(): Promise<void> {
+        try {
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            if (currentClickedDeckId == null) return;
+
+            const cardIdList = this.cardCountManager.findSelectedCardIdListByDeck(currentClickedDeckId);
+            for (const cardId of cardIdList) {
+                await this.deckCardAddButtonService.createDeckCardAddButtonWithPosition(currentClickedDeckId, cardId);
+            }
+
+            this.deckCardAddButtonService.saveButtonGroup(currentClickedDeckId);
+            this.deckCardAddButtonService.applyClippingMaskToButton();
+
+            const buttonGroup = this.deckCardAddButtonService.getButtonGroupByDeckId(currentClickedDeckId);
+            if (!this.scene.children.includes(buttonGroup)) {
+                this.scene.add(buttonGroup);
+            }
+            buttonGroup.position.y = 0;
+
+        } catch (error) {
+            console.error('Failed to reAdd deck card add button:', error);
         }
     }
 
