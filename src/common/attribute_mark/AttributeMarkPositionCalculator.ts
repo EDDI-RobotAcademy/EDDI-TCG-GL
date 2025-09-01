@@ -9,6 +9,7 @@ export class AttributeMarkPositionCalculator {
         [MarkSceneType.RACE]: (handPosition, cardWidth, cardHeight) => AttributeMarkPositionCalculator.calculatePosition(handPosition, cardWidth, cardHeight, 0.5, 0.5),
         [MarkSceneType.HP]: (handPosition, cardWidth, cardHeight) => AttributeMarkPositionCalculator.calculatePosition(handPosition, cardWidth, cardHeight, -0.5, -0.43438),
         [MarkSceneType.ENERGY]: (handPosition, cardWidth, cardHeight) => AttributeMarkPositionCalculator.calculatePosition(handPosition, cardWidth, cardHeight, -0.5, 0.5),
+        [MarkSceneType.ENERGY_COUNT]: (handPosition, cardWidth, cardHeight) => AttributeMarkPositionCalculator.calculatePosition(handPosition, cardWidth, cardHeight, -0.5, 0.5),
     };
 
     static getPositionForType(markType: MarkSceneType, handPosition: Vector2d, cardWidth: number, cardHeight: number): Vector2d {
