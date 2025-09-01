@@ -43,9 +43,10 @@ export class DeckCardDeleteButtonServiceImpl implements DeckCardDeleteButtonServ
             const buttonId = this.getButtonIdByDeckIdAndCardId(deckId, cardId);
             if (buttonId == null) {
                 const position = this.createDeckCardDeleteButtonPosition(deckId, cardId);
-                console.log(`[Block] Card ID ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
+                console.log(`[Button] Card ID ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
 
                 const deckCardDeleteButton = await this.createDeckCardDeleteButton(deckId, cardId, position.position);
+                console.log(`%c[New Button] Card ID ${cardId}, buttonId: ${deckCardDeleteButton.id}`,'color: #49be86; font-weight: bold;');
                 buttonGroup.add(deckCardDeleteButton.getMesh());
 
             } else {
@@ -136,7 +137,7 @@ export class DeckCardDeleteButtonServiceImpl implements DeckCardDeleteButtonServ
 
     private getButtonIdByDeckIdAndCardId(deckId: number, cardId: number): number | null {
         const buttonId = this.deckCardDeleteButtonRepository.findButtonIdByDeckIdAndCardId(deckId, cardId);
-        if (!buttonId) {
+        if (buttonId == null) {
             console.warn(`[WARN] Deck Card Delete Button(ID: ${buttonId}) not found`);
             return null;
         }

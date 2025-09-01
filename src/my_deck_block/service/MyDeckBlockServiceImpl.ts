@@ -40,7 +40,6 @@ export class MyDeckBlockServiceImpl implements MyDeckBlockService {
             const blockId = this.getBlockIdByDeckIdAndCardId(deckId, cardId);
             if (blockId == null) {
                 const position = this.createMyDeckBlockPosition(deckId, cardId);
-                console.log(`[Block] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
                 console.log(`%c [New Block] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`, 'color: #FE2EF7; font-weight: bold;');
 
                 const myDeckBlock = await this.createMyDeckBlock(deckId, cardId, position.position);

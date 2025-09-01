@@ -170,6 +170,11 @@ export class MyDeckBlockPositionRepositoryImpl implements MyDeckBlockPositionRep
             }
         });
 
+        const originalIndex = this.originalDeckPositionIndexMap.get(deckId);
+        if (originalIndex !== undefined) {
+            this.deckPositionIndexMap.set(deckId, originalIndex);
+        }
+
         // To-do: 확인 후 없애야 함
         const restoredData = positionIdList.map(positionId => {
             const data = this.positionMap.get(positionId);
