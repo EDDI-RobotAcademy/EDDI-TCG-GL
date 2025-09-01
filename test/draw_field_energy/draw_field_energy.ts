@@ -44,6 +44,7 @@ import {showTurn} from "../../src/common/turn/Turn";
 import {showFieldEnergy} from "../../src/common/field_energy/FieldEnergy";
 import {showFieldEnergyRace} from "../../src/common/card_race/CardRace";
 import {showFieldEnergyCount} from "../../src/common/field_energy/FieldEnergyCount";
+import {AnimationHandler} from "../../src/animation/handler/AnimationHandler";
 
 declare const TWEEN: {
     Tween: any;
@@ -96,6 +97,8 @@ export class TCGJustTestBattleFieldView {
     private readonly cameraRepository = CameraRepositoryImpl.getInstance()
     private readonly cameraService = CameraServiceImpl.getInstance(this.cameraRepository)
 
+    private animationHandler: AnimationHandler;
+
     private initialized = false;
     private isAnimating = false;
     private isDragging = false;
@@ -126,6 +129,8 @@ export class TCGJustTestBattleFieldView {
         this.textureManager = TextureManager.getInstance();
         this.audioController = AudioController.getInstance();
         this.audioController.setMusic(battleFieldMusic);
+
+        this.animationHandler = AnimationHandler.initialize(this.camera, this.scene, this.renderer);
 
         this.neonShape = NeonShape.getInstance(this.scene, this.renderer, this.camera);
 
