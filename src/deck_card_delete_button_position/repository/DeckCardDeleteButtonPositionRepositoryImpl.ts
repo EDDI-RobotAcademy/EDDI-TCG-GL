@@ -26,7 +26,7 @@ export class DeckCardDeleteButtonPositionRepositoryImpl implements DeckCardDelet
     }
 
     public addDeckCardDeleteButtonPosition(deckId: number, cardId: number): DeckCardDeleteButtonPosition {
-        console.log(`%c [Block] deckID?: ${deckId}, cardId?: ${cardId}`, 'color: #FE2EF7; font-weight: bold;');
+        console.log(`%c [Delete Button] deckID?: ${deckId}, cardId?: ${cardId}`, 'color: #FE2EF7; font-weight: bold;');
 
         if (!this.deckPositionIndexMap.has(deckId)) {
             this.deckPositionIndexMap.set(deckId, 0);
@@ -65,30 +65,28 @@ export class DeckCardDeleteButtonPositionRepositoryImpl implements DeckCardDelet
         return this.deckToPositionMap.get(deckId) || [];
     }
 
-    // To-do: 삭제 부분 후에 수정해야 함
+    // To-do: 메서드명 수정 필요
     public deleteById(deckId: number, positionId: number): void {
         this.positionMap.delete(positionId);
-        this.deckPositionIndexMap.set(deckId, 0);
 
-        const positionIdList = this.findPositionIdListByDeckId(deckId);
-        if (!positionIdList) return;
-
-        const updatedPositionIdList = positionIdList.filter(id => id !== positionId);
+        // deckId에 매핑된 positionId 리스트 갱신
+        const updatedPositionIdList = (this.deckToPositionMap.get(deckId) || []).filter(id => id !== positionId);
         this.deckToPositionMap.set(deckId, updatedPositionIdList);
 
-        for (const id of updatedPositionIdList) {
-            const positionIndex = this.deckPositionIndexMap.get(deckId)!;
+        // 남은 블록들 순서대로 다시 배치
+        updatedPositionIdList.forEach((id, index) => {
             const entry = this.positionMap.get(id);
             if (!entry) return;
 
-            const { cardId } = entry;
             const newX = this.initialX;
-            const newY = this.initialY + positionIndex * this.incrementY;
-            const newPosition = new DeckCardDeleteButtonPosition(newX, newY);
+            const newY = this.initialY + index * this.incrementY;
 
-            this.positionMap.set(id, { cardId, position: newPosition });
-            this.deckPositionIndexMap.set(deckId, positionIndex + 1);
-        }
+            // 위치는 바꾸되 id는 그대로 유지
+            entry.position.setPosition(newX, newY);
+        });
+
+        // 인덱스는 남은 블록 개수로 업데이트
+        this.deckPositionIndexMap.set(deckId, updatedPositionIdList.length);
     }
 
     public deletePositionByDeckId(deckId: number): void {
@@ -171,6 +169,11 @@ export class DeckCardDeleteButtonPositionRepositoryImpl implements DeckCardDelet
                 });
             }
         });
+
+        const originalIndex = this.originalDeckPositionIndexMap.get(deckId);
+        if (originalIndex !== undefined) {
+            this.deckPositionIndexMap.set(deckId, originalIndex);
+        }
 
         // To-do: 확인 후 없애야 함
         const restoredData = positionIdList.map(positionId => {

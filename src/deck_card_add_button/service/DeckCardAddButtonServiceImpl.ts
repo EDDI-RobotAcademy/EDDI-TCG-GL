@@ -136,7 +136,7 @@ export class DeckCardAddButtonServiceImpl implements DeckCardAddButtonService {
 
     private getButtonIdByDeckIdAndCardId(deckId: number, cardId: number): number | null {
         const buttonId = this.deckCardAddButtonRepository.findButtonIdByDeckIdAndCardId(deckId, cardId);
-        if (!buttonId) {
+        if (buttonId == null) {
             console.warn(`[WARN] Deck Card Add Button(ID: ${buttonId}) not found`);
             return null;
         }
