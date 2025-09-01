@@ -43,6 +43,7 @@ import {showSandTimer} from "../../src/common/timer/Timer";
 import {showTurn} from "../../src/common/turn/Turn";
 import {showFieldEnergy} from "../../src/common/field_energy/FieldEnergy";
 import {showFieldEnergyRace} from "../../src/common/card_race/CardRace";
+import {showFieldEnergyCount} from "../../src/common/field_energy/FieldEnergyCount";
 
 declare const TWEEN: {
     Tween: any;
@@ -233,10 +234,10 @@ export class TCGJustTestBattleFieldView {
 
         showFieldEnergy(1);
         showFieldEnergyRace(1);
+        showFieldEnergyCount(1);
         showGuideMessage("카드를 드래그하여 이동하세요!", 3000);
         showSandTimer();
         showTurn();
-
     }
 
     public show(): void {
