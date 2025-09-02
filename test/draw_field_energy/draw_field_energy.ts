@@ -237,7 +237,7 @@ export class TCGJustTestBattleFieldView {
 
         this.animate();
 
-        showFieldEnergy(1);
+        showFieldEnergy(7);
         showFieldEnergyRace(1);
         showFieldEnergyCount(1);
         showGuideMessage("카드를 드래그하여 이동하세요!", 3000);

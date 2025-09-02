@@ -17,4 +17,6 @@ export enum MouseCursorDetectArea {
     OPPONENT_MASETER = 15,
     YOUR_HAND_PREV_BUTTON = 16,
     YOUR_HAND_NEXT_BUTTON = 17,
+    FIELD_ENERGY_PREV = 18,
+    FIELD_ENERGY_NEXT = 19,
 }

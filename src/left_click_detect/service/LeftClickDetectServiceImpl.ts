@@ -75,6 +75,7 @@ import {
     BattleFieldHandPageRepositoryImpl
 } from "../../battle_field_hand_page/repository/BattleFieldHandPageRepositoryImpl";
 import {BattleFieldCardAlignHandler} from "../../battle_field_card_alignment/handler/BattleFieldCardAlignHandler";
+import {updateFieldEnergyCount} from "../../common/field_energy/FieldEnergyCount";
 
 export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private static instance: LeftClickDetectServiceImpl | null = null;
@@ -160,6 +161,8 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         [MouseCursorDetectArea.OPPONENT_MASETER]: this.handleOpponentMasterClick.bind(this),
         [MouseCursorDetectArea.YOUR_HAND_PREV_BUTTON]: this.handleYourHandPrevButtonClick.bind(this),
         [MouseCursorDetectArea.YOUR_HAND_NEXT_BUTTON]: this.handleYourHandNextButtonClick.bind(this),
+        [MouseCursorDetectArea.FIELD_ENERGY_PREV]: this.handleFieldEnergyPrevButtonClick.bind(this),
+        [MouseCursorDetectArea.FIELD_ENERGY_NEXT]: this.handleFieldEnergyNextButtonClick.bind(this),
     };
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
@@ -561,5 +564,37 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         this.battleFieldCardAlignHandler.alignHandCard(false)
         this.battleFieldHandPageRepository.setCurrentPage(currentPage + 1)
         this.battleFieldCardAlignHandler.alignHandCard(true)
+    }
+
+    private async handleFieldEnergyPrevButtonClick(x: number, y: number): Promise<void> {
+        console.log('Energy Field 이전 버튼 클릭');
+
+        const numberDisplay = document.getElementById("battle-field-energy-count");
+        if (numberDisplay) {
+            let currentValue = parseInt(numberDisplay.innerText, 10);
+            if (!isNaN(currentValue) && currentValue > 0) {
+                updateFieldEnergyCount(currentValue - 1);
+            }
+        }
+    }
+
+    private async handleFieldEnergyNextButtonClick(x: number, y: number): Promise<void> {
+        console.log('Energy Field 다음 버튼 클릭');
+
+        const fieldEnergyYouHave = document.getElementById("battle-field-energy-text");
+        if (!fieldEnergyYouHave) return;
+
+        const fieldEnergyCount = document.getElementById("battle-field-energy-count");
+        if (!fieldEnergyCount) return;
+
+        let available = parseInt(fieldEnergyYouHave.textContent || "0", 10);
+        if (isNaN(available)) available = 0;
+
+        let currentCount = parseInt(fieldEnergyCount.textContent || "0", 10);
+        if (isNaN(currentCount)) currentCount = 0;
+
+        const nextCount = Math.min(currentCount + 1, available);
+
+        updateFieldEnergyCount(nextCount);
     }
 }
