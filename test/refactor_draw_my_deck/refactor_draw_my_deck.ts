@@ -95,6 +95,10 @@ import {DeckCardDeleteButtonClickDetectService} from "../../src/deck_card_delete
 import {DeckCardDeleteButtonClickDetectServiceImpl} from "../../src/deck_card_delete_button_click_detect/service/DeckCardDeleteButtonClickDetectServiceImpl";
 import {DeckCardAddButtonClickDetectService} from "../../src/deck_card_add_button_click_detect/service/DeckCardAddButtonClickDetectService";
 import {DeckCardAddButtonClickDetectServiceImpl} from "../../src/deck_card_add_button_click_detect/service/DeckCardAddButtonClickDetectServiceImpl";
+import {DeckEditDoneButtonHoverDetectService} from "../../src/deck_edit_done_button_hover_detect/service/DeckEditDoneButtonHoverDetectService";
+import {DeckEditDoneButtonHoverDetectServiceImpl} from "../../src/deck_edit_done_button_hover_detect/service/DeckEditDoneButtonHoverDetectServiceImpl";
+import {DeckEditDoneButtonClickDetectService} from "../../src/deck_edit_done_button_click_detect/service/DeckEditDoneButtonClickDetectService";
+import {DeckEditDoneButtonClickDetectServiceImpl} from "../../src/deck_edit_done_button_click_detect/service/DeckEditDoneButtonClickDetectServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 import {CardCountManager} from "../../src/my_deck_card_manager/CardCountManager";
@@ -179,6 +183,8 @@ export class TCGJustTestMyDeckView {
     private myDeckBlockHoverDetectService: MyDeckBlockHoverDetectService;
     private deckCardDeleteButtonClickDetectService: DeckCardDeleteButtonClickDetectService;
     private deckCardAddButtonClickDetectService: DeckCardAddButtonClickDetectService;
+    private deckEditDoneButtonHoverDetectService: DeckEditDoneButtonHoverDetectService;
+    private deckEditDoneButtonClickDetectService: DeckEditDoneButtonClickDetectService;
 
     private initialized = false;
     private isAnimating = false;
@@ -249,6 +255,8 @@ export class TCGJustTestMyDeckView {
         this.deleteDeckPopupButtonClickDetectService = DeleteDeckPopupButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckMakePopupButtonsClickDetectService = DeckMakePopupButtonsClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckCardAddButtonClickDetectService = DeckCardAddButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.deckEditDoneButtonHoverDetectService = DeckEditDoneButtonHoverDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.deckEditDoneButtonClickDetectService = DeckEditDoneButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
 
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousemove', (e) => this.sideScrollAreaDetectService.onMouseMoveMyDeck(e), false);
@@ -294,6 +302,8 @@ export class TCGJustTestMyDeckView {
                 this.reAddMyDeckRemainingCards();
             }
         }, false);
+        this.renderer.domElement.addEventListener('mousemove', (e) => this.deckEditDoneButtonHoverDetectService.onMouseMove(e), false);
+        this.renderer.domElement.addEventListener('mousedown', (e) => this.deckEditDoneButtonClickDetectService.onMouseDown(e), false);
     }
 
     public static getInstance(simulationMyDeckContainer: HTMLElement): TCGJustTestMyDeckView {

@@ -42,7 +42,7 @@ import {DeckCardDeleteButtonRepositoryImpl} from "../../deck_card_delete_button/
 import {DeckCardDeleteButtonPositionRepositoryImpl} from "../../deck_card_delete_button_position/repository/DeckCardDeleteButtonPositionRepositoryImpl";
 import {DeckCardAddButtonRepositoryImpl} from "../../deck_card_add_button/repository/DeckCardAddButtonRepositoryImpl";
 import {DeckCardAddButtonPositionRepositoryImpl} from "../../deck_card_add_button_position/repository/DeckCardAddButtonPositionRepositoryImpl";
-
+import {DeckEditDoneButtonHoverDetectRepositoryImpl} from "../../deck_edit_done_button_hover_detect/repository/DeckEditDoneButtonHoverDetectRepositoryImpl";
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClickDetectService {
@@ -78,6 +78,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private deckCardDeleteButtonPositionRepository: DeckCardDeleteButtonPositionRepositoryImpl;
     private deckCardAddButtonRepository: DeckCardAddButtonRepositoryImpl;
     private deckCardAddButtonPositionRepository: DeckCardAddButtonPositionRepositoryImpl;
+    private deckEditDoneButtonHoverDetectRepository: DeckEditDoneButtonHoverDetectRepositoryImpl;
     private cardCountManager: CardCountManager;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
@@ -112,6 +113,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.deckCardDeleteButtonPositionRepository = DeckCardDeleteButtonPositionRepositoryImpl.getInstance();
         this.deckCardAddButtonRepository = DeckCardAddButtonRepositoryImpl.getInstance(scene);
         this.deckCardAddButtonPositionRepository = DeckCardAddButtonPositionRepositoryImpl.getInstance();
+        this.deckEditDoneButtonHoverDetectRepository = DeckEditDoneButtonHoverDetectRepositoryImpl.getInstance();
         this.cardCountManager = CardCountManager.getInstance();
     }
 
@@ -190,6 +192,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private setInteractionStatesAfterClick(): void {
         this.myDeckOwnedCardsClickDetectRepository.setCardClickEnabled(true);
         this.myDeckBlockHoverDetectRepository.setBlockHoverEnabled(true);
+        this.deckEditDoneButtonHoverDetectRepository.setButtonHoverEnabled(true);
     }
 
     private getDeckEditButton(): DeckEditButton | null {
