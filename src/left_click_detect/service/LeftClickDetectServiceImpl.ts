@@ -491,7 +491,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     }
 
     async handleFieldEnergyClick(x: number, y: number): Promise<void> {
-        // FIELD_ENERGY 영역에 대한 처리
+        console.log('Field Energy 클릭');
     }
 
     async handleTombClick(x: number, y: number): Promise<void> {
