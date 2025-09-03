@@ -227,4 +227,16 @@ export class MyDeckCardMapRepositoryImpl implements MyDeckCardMapRepository {
         return Array.from(this.currentMyDeckCardMap.keys());
     }
 
+    // To-do: 확인용 메서드
+    public findCardInfosByDeckId(deckId: number): void {
+        const cardInfos = this.currentMyDeckCardMap.get(deckId) ?? [];
+
+        // 콘솔 출력용 (확인용)
+        console.log(`Deck ID: ${deckId}`);
+        cardInfos.forEach(({ cardId, cardCount }) => {
+            console.log(`%c [저장된 데이터] Card ID: ${cardId}, Card Count: ${cardCount}`, 'color: #f97b06; font-weight: bold;');
+        });
+
+    }
+
 }
