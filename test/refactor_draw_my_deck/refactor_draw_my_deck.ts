@@ -288,6 +288,7 @@ export class TCGJustTestMyDeckView {
                 await this.reAddDeckCardDeleteButton();
                 await this.reAddDeckCardAddButton();
                 await this.reAddMyDeckCard();
+                await this.reAddMyDeckRemainingCards();
             }
         }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckDeleteButtonClickDetectService.onMouseDown(e), false);
