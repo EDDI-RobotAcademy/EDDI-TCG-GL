@@ -19,6 +19,8 @@ import {MyDeckRemainingCardsRepositoryImpl} from "../../my_deck_remaining_cards/
 import {CardSelectionBlockerRepositoryImpl} from "../../card_selection_blocker/repository/CardSelectionBlockerRepositoryImpl";
 import {DeckCardAddButtonRepositoryImpl} from "../../deck_card_add_button/repository/DeckCardAddButtonRepositoryImpl";
 import {DeckCardAddButtonPositionRepositoryImpl} from "../../deck_card_add_button_position/repository/DeckCardAddButtonPositionRepositoryImpl";
+import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardRepositoryImpl";
+import {MyDeckCardPositionRepositoryImpl} from "../../my_deck_card_position/repository/MyDeckCardPositionRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -44,6 +46,8 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
     private cardSelectionBlockerRepository: CardSelectionBlockerRepositoryImpl;
     private deckCardAddButtonRepository: DeckCardAddButtonRepositoryImpl;
     private deckCardAddButtonPositionRepository: DeckCardAddButtonPositionRepositoryImpl;
+    private myDeckCardRepository: MyDeckCardRepositoryImpl;
+    private myDeckCardPositionRepository: MyDeckCardPositionRepositoryImpl;
 
     private cardCountManager: CardCountManager;
     private myDeckElementAdjuster: MyDeckElementAdjuster;
@@ -65,6 +69,8 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         this.cardSelectionBlockerRepository = CardSelectionBlockerRepositoryImpl.getInstance(scene);
         this.deckCardAddButtonRepository = DeckCardAddButtonRepositoryImpl.getInstance(scene);
         this.deckCardAddButtonPositionRepository = DeckCardAddButtonPositionRepositoryImpl.getInstance();
+        this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance(scene);
+        this.myDeckCardPositionRepository = MyDeckCardPositionRepositoryImpl.getInstance();
 
         this.cardCountManager = CardCountManager.getInstance();
         this.myDeckElementAdjuster = MyDeckElementAdjuster.getInstance();
@@ -117,11 +123,14 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
             if (selectedCardCount == 0) {
                 this.deleteDeckElement(currentClickedDeckButtonId, cardId);
                 this.deleteNumberOfSelectedCardsPosition(currentClickedDeckButtonId, cardId);
+                this.deleteCard(currentClickedDeckButtonId, cardId);
+
                 this.adjustDeckCardDeleteButton(currentClickedDeckButtonId);
                 this.adjustCardBlock(currentClickedDeckButtonId);
                 this.adjustCardName(currentClickedDeckButtonId);
                 this.adjustNumberOfSelectedCards(currentClickedDeckButtonId);
                 this.adjustDeckCardAddButton(currentClickedDeckButtonId);
+                this.adjustDeckCard(currentClickedDeckButtonId);
             }
             return clickedButton;
         }
@@ -236,6 +245,15 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         this.deckCardAddButtonPositionRepository.deleteById(deckId, buttonId);
     }
 
+    private deleteCard(deckId: number, cardId: number): void {
+        const cardUniqueId = this.myDeckCardRepository.findCardUniqueIdByDeckIdAndCardId(deckId, cardId);
+        if (cardUniqueId == null) return;
+
+        this.myDeckCardRepository.deleteCardMesh(deckId, cardUniqueId);
+        this.myDeckCardRepository.deleteCard(deckId, cardUniqueId);
+        this.myDeckCardPositionRepository.deletePositionAndReorder(deckId, cardUniqueId);
+    }
+
     private adjustDeckCardDeleteButton(deckId: number): void {
         const buttonIdList = this.deckCardDeleteButtonRepository.findButtonIdListByDeckId(deckId);
         for (const buttonId of buttonIdList) {
@@ -334,6 +352,26 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
             nameMesh.geometry.dispose();
             nameMesh.geometry = new THREE.PlaneGeometry(width, height);
             nameMesh.position.set(newPositionX, newPositionY, 0);
+        }
+    }
+
+    private adjustDeckCard(deckId: number): void {
+        const cardUniqueIdList = this.myDeckCardRepository.findCardUniqueIdListByDeckId(deckId);
+        for (const cardUniqueId of cardUniqueIdList) {
+            const card = this.myDeckCardRepository.findCardByCardUniqueId(cardUniqueId);
+            if (card == null) return;
+
+            const cardMesh = card.getMesh();
+            const cardPosition = this.myDeckCardPositionRepository.findPositionByPositionId(cardUniqueId);
+
+            if (cardPosition == null) return;
+
+            const widthPercent = 0.096;
+            const heightPercent = (1540 / 952);
+            const positionX = cardPosition.getX();
+            const positionY = cardPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(cardMesh, widthPercent, heightPercent, positionX, positionY);
         }
     }
 
