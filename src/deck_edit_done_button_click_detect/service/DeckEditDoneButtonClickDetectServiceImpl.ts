@@ -13,6 +13,22 @@ import {DeckEditDoneButtonRepositoryImpl} from "../../deck_edit_done_button/repo
 import {DeckEditButtonClickDetectRepositoryImpl} from "../../deck_edit_button_click_detect/repository/DeckEditButtonClickDetectRepositoryImpl";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {MyDeckCardMapRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardMapRepositoryImpl";
+import {DeckEditButtonRepositoryImpl} from "../../deck_edit_button/repository/DeckEditButtonRepositoryImpl";
+import {MyDeckOwnedCardsRepositoryImpl} from "../../my_deck_owned_cards/repository/MyDeckOwnedCardsRepositoryImpl";
+import {MyDeckRemainingCardsRepositoryImpl} from "../../my_deck_remaining_cards/repository/MyDeckRemainingCardsRepositoryImpl";
+import {MyDeckRemainingOutOfTotalSlashRepositoryImpl} from "../../my_deck_remaining_out_of_total_slash/repository/MyDeckRemainingOutOfTotalSlashRepositoryImpl";
+import {MyDeckTotalOwnedCardsRepositoryImpl} from "../../my_deck_total_owned_cards/repository/MyDeckTotalOwnedCardsRepositoryImpl";
+import {CardSelectionBlockerRepositoryImpl} from "../../card_selection_blocker/repository/CardSelectionBlockerRepositoryImpl";
+import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardRepositoryImpl";
+import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/repository/MyDeckNumberOfCardsRepositoryImpl";
+import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
+import {TotalNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_total_number_of_selected_cards/repository/TotalNumberOfSelectedCardsRepositoryImpl";
+import {MyDeckChosenOutOfTotalSlashRepositoryImpl} from "../../my_deck_chosen_out_of_total_slash/repository/MyDeckChosenOutOfTotalSlashRepositoryImpl";
+import {RequiredNumberOfCardsRepositoryImpl} from "../../required_number_of_cards_in_the_deck/repository/RequiredNumberOfCardsRepositoryImpl";
+import {DeckCardAddButtonRepositoryImpl} from "../../deck_card_add_button/repository/DeckCardAddButtonRepositoryImpl";
+import {DeckCardDeleteButtonRepositoryImpl} from "../../deck_card_delete_button/repository/DeckCardDeleteButtonRepositoryImpl";
+import {MyDeckBlockHoverDetectRepositoryImpl} from "../../my_deck_block_hover_detect/repository/MyDeckBlockHoverDetectRepositoryImpl";
+import {DeckEditDoneButtonHoverDetectRepositoryImpl} from "../../deck_edit_done_button_hover_detect/repository/DeckEditDoneButtonHoverDetectRepositoryImpl";
 
 export class DeckEditDoneButtonClickDetectServiceImpl implements DeckEditDoneButtonClickDetectService {
     private static instance: DeckEditDoneButtonClickDetectServiceImpl | null = null;
@@ -23,6 +39,22 @@ export class DeckEditDoneButtonClickDetectServiceImpl implements DeckEditDoneBut
     private deckEditButtonClickDetectRepository: DeckEditButtonClickDetectRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private myDeckCardMapRepository: MyDeckCardMapRepositoryImpl;
+    private deckEditButtonRepository: DeckEditButtonRepositoryImpl;
+    private myDeckOwnedCardsRepository: MyDeckOwnedCardsRepositoryImpl;
+    private myDeckRemainingCardsRepository: MyDeckRemainingCardsRepositoryImpl;
+    private myDeckRemainingOutOfTotalSlashRepository: MyDeckRemainingOutOfTotalSlashRepositoryImpl;
+    private myDeckTotalOwnedCardsRepository: MyDeckTotalOwnedCardsRepositoryImpl;
+    private cardSelectionBlockerRepository: CardSelectionBlockerRepositoryImpl;
+    private myDeckCardRepository: MyDeckCardRepositoryImpl;
+    private myDeckNumberOfCardsRepository: MyDeckNumberOfCardsRepositoryImpl;
+    private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
+    private totalNumberOfSelectedCardsRepository: TotalNumberOfSelectedCardsRepositoryImpl;
+    private myDeckChosenOutOfTotalSlashRepository: MyDeckChosenOutOfTotalSlashRepositoryImpl;
+    private requiredNumberOfCardsRepository: RequiredNumberOfCardsRepositoryImpl;
+    private deckCardAddButtonRepository: DeckCardAddButtonRepositoryImpl;
+    private deckCardDeleteButtonRepository: DeckCardDeleteButtonRepositoryImpl;
+    private myDeckBlockHoverDetectRepository: MyDeckBlockHoverDetectRepositoryImpl;
+    private deckEditDoneButtonHoverDetectRepository: DeckEditDoneButtonHoverDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -32,6 +64,22 @@ export class DeckEditDoneButtonClickDetectServiceImpl implements DeckEditDoneBut
         this.deckEditButtonClickDetectRepository = DeckEditButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckCardMapRepository = MyDeckCardMapRepositoryImpl.getInstance();
+        this.deckEditButtonRepository = DeckEditButtonRepositoryImpl.getInstance();
+        this.myDeckOwnedCardsRepository = MyDeckOwnedCardsRepositoryImpl.getInstance();
+        this.myDeckRemainingCardsRepository = MyDeckRemainingCardsRepositoryImpl.getInstance(scene);
+        this.myDeckRemainingOutOfTotalSlashRepository = MyDeckRemainingOutOfTotalSlashRepositoryImpl.getInstance();
+        this.myDeckTotalOwnedCardsRepository = MyDeckTotalOwnedCardsRepositoryImpl.getInstance();
+        this.cardSelectionBlockerRepository = CardSelectionBlockerRepositoryImpl.getInstance(scene);
+        this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance(scene);
+        this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance(scene);
+        this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
+        this.totalNumberOfSelectedCardsRepository = TotalNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
+        this.myDeckChosenOutOfTotalSlashRepository = MyDeckChosenOutOfTotalSlashRepositoryImpl.getInstance();
+        this.requiredNumberOfCardsRepository = RequiredNumberOfCardsRepositoryImpl.getInstance(scene);
+        this.deckCardAddButtonRepository = DeckCardAddButtonRepositoryImpl.getInstance(scene);
+        this.deckCardDeleteButtonRepository = DeckCardDeleteButtonRepositoryImpl.getInstance(scene);
+        this.myDeckBlockHoverDetectRepository = MyDeckBlockHoverDetectRepositoryImpl.getInstance();
+        this.deckEditDoneButtonHoverDetectRepository = DeckEditDoneButtonHoverDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckEditDoneButtonClickDetectServiceImpl {
@@ -72,6 +120,23 @@ export class DeckEditDoneButtonClickDetectServiceImpl implements DeckEditDoneBut
                 // To-do: 편집 완료 버튼 클릭시 map 데이터에 반영
                 this.saveDeckCardCountInfo(currentClickedDeckButtonId);
 
+                this.setDeckEditButtonVisibility(true);
+                this.setDeckEditDoneButtonVisibility(false);
+                this.setOwnedCardsVisibility(false);
+                this.setNumberOfRemainingCardsVisibility(false);
+                this.setRemainingOutOfTotalSlashVisibility(false);
+                this.setNumberOfTotalOwnedCardsVisibility(false);
+                this.setTotalNumberOfSelectedCardsVisibility(currentClickedDeckButtonId, false);
+                this.setChosenOutOfTotalSlashVisibility(false);
+                this.setRequiredNumberOfCardsVisibility(false);
+                this.setCardBlockerVisibility(false);
+                this.setDeckCardAddButtonVisibility(currentClickedDeckButtonId, false);
+                this.setDeckCardDeleteButtonVisibility(currentClickedDeckButtonId, false);
+
+                this.setMyDeckCardVisibilityByDeckId(currentClickedDeckButtonId, true);
+                this.setMyDeckNumberOfCards(currentClickedDeckButtonId, true);
+                this.setDeckCardCountMarkerVisibilityByDeckId(currentClickedDeckButtonId, true);
+
             } else {
                 // To-do: 미충족 알림 팝업창 제작 필요
                 console.warn(
@@ -103,6 +168,8 @@ export class DeckEditDoneButtonClickDetectServiceImpl implements DeckEditDoneBut
     private setInteractionStatesAfterClick(): void {
         this.deckEditButtonClickDetectRepository.setButtonClickEnabled(true);
         this.setButtonClickEnabled(false);
+        this.myDeckBlockHoverDetectRepository.setBlockHoverEnabled(false);
+        this.deckEditDoneButtonHoverDetectRepository.setButtonHoverEnabled(false);
     }
 
     private getDeckEditDoneButton(): DeckEditDoneButton | null {
@@ -143,6 +210,83 @@ export class DeckEditDoneButtonClickDetectServiceImpl implements DeckEditDoneBut
 
         // To-do: 확인용 나중에 제거 필요
         this.myDeckCardMapRepository.findCardInfosByDeckId(deckId);
+    }
+
+    private setDeckEditButtonVisibility(isVisible: boolean): void {
+        this.deckEditButtonRepository.findButtonById(0)?.setVisibility(isVisible);
+    }
+
+    private setDeckEditDoneButtonVisibility(isVisible: boolean): void {
+        const buttons = this.deckEditDoneButtonRepository.findAll();
+        buttons.forEach((button) => button.setVisibility(isVisible));
+    }
+
+    private setOwnedCardsVisibility(isVisible: boolean): void {
+        this.myDeckOwnedCardsRepository.findAllCards()?.forEach(card =>
+            card.setVisibility(isVisible)
+        );
+    }
+
+    private setNumberOfRemainingCardsVisibility(isVisible: boolean): void {
+        this.myDeckRemainingCardsRepository.findAllRemainingCardsList()?.forEach(numberMesh =>
+            numberMesh.setVisibility(isVisible)
+        );
+    }
+
+    private setRemainingOutOfTotalSlashVisibility(isVisible: boolean): void {
+        this.myDeckRemainingOutOfTotalSlashRepository.findAllSlashList()?.forEach(slash =>
+            slash.setVisibility(isVisible)
+        );
+    }
+
+    private setNumberOfTotalOwnedCardsVisibility(isVisible: boolean): void {
+        this.myDeckTotalOwnedCardsRepository.findAllTotalOwnedCardsList()?.forEach(numberMesh =>
+            numberMesh.setVisibility(isVisible)
+        );
+    }
+
+    private setCardBlockerVisibility(isVisible: boolean): void {
+        const allBlockers = this.cardSelectionBlockerRepository.findAllBlockers();
+        allBlockers.forEach((blocker) => blocker.setVisibility(isVisible));
+    }
+
+    private setMyDeckCardVisibilityByDeckId(deckId: number, isVisible: boolean): void {
+        this.myDeckCardRepository.findCardListByDeckId(deckId)?.forEach(card =>
+            card.setVisibility(isVisible)
+        );
+    }
+
+    private setMyDeckNumberOfCards(deckId: number, isVisible: boolean): void {
+        const numberList = this.myDeckNumberOfCardsRepository.findNumberListByDeckId(deckId);
+        numberList?.forEach((number) => number.setVisibility(isVisible));
+    }
+
+    private setDeckCardCountMarkerVisibilityByDeckId(deckId: number, isVisible: boolean): void {
+        this.deckCardCountMarkerRepository.findMarkerListByDeckId(deckId)?.forEach(marker =>
+            marker.setVisibility(isVisible)
+        );
+    }
+
+    private setTotalNumberOfSelectedCardsVisibility(deckId: number, isVisible: boolean): void {
+        this.totalNumberOfSelectedCardsRepository.findNumberByDeckId(deckId)?.setVisibility(isVisible);
+    }
+
+    private setChosenOutOfTotalSlashVisibility(isVisible: boolean): void {
+        this.myDeckChosenOutOfTotalSlashRepository.findSlash()?.setVisibility(isVisible);
+    }
+
+    private setRequiredNumberOfCardsVisibility(isVisible: boolean): void {
+        this.requiredNumberOfCardsRepository.findNumber()?.setVisibility(isVisible);
+    }
+
+    private setDeckCardAddButtonVisibility(deckId: number, isVisible: boolean): void {
+        const buttonList = this.deckCardAddButtonRepository.findButtonListByDeckId(deckId);
+        buttonList?.forEach((button) => button.setVisibility(isVisible));
+    }
+
+    private setDeckCardDeleteButtonVisibility(deckId: number, isVisible: boolean): void {
+        const buttonList = this.deckCardDeleteButtonRepository.findButtonListByDeckId(deckId);
+        buttonList?.forEach((button) => button.setVisibility(isVisible));
     }
 
 }
