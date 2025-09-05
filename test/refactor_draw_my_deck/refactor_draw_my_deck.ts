@@ -287,6 +287,7 @@ export class TCGJustTestMyDeckView {
                 await this.reAddMyDeckNumberOfSelectedCards();
                 await this.reAddDeckCardDeleteButton();
                 await this.reAddDeckCardAddButton();
+                await this.reAddMyDeckCard();
             }
         }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckDeleteButtonClickDetectService.onMouseDown(e), false);
@@ -590,6 +591,29 @@ export class TCGJustTestMyDeckView {
             });
         } catch (error) {
             console.error('Failed to add my deck cards:', error);
+        }
+    }
+
+    private async reAddMyDeckCard(): Promise<void> {
+        try {
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            if (currentClickedDeckId == null) return;
+
+            const cardIdList = this.cardCountManager.findSelectedCardIdListByDeck(currentClickedDeckId);
+            for (const cardId of cardIdList) {
+                await this.myDeckCardService.createMyDeckCardWithPosition(currentClickedDeckId, cardId);
+            }
+            this.myDeckCardService.saveCardGroup(currentClickedDeckId);
+            this.myDeckCardService.applyClippingMaskToMyDeckCards();
+
+            const cardGroup = this.myDeckCardService.getCardGroupByDeckId(currentClickedDeckId);
+            if (!this.scene.children.includes(cardGroup)) {
+                this.scene.add(cardGroup);
+            }
+            cardGroup.position.y = 0;
+
+        } catch (error) {
+            console.error('Failed to reAdd my deck card:', error);
         }
     }
 
