@@ -11,7 +11,10 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
     private static instance: MyDeckCardRepositoryImpl;
     private cardMap: Map<number, { cardId: number, cardMesh: MyDeckCard }> = new Map(); // card Unique ID: [card ID: card mesh]
     private deckMap: Map<number, number[]> = new Map(); // deckId: card Unique ID List
-    private deckGroupMap: Map<number, THREE.Group> = new Map(); // deckId -> Group
+    private cardGroupMap: Map<number, THREE.Group> = new Map(); // deckId -> Group
+
+    private originalCardMap: Map<number, { cardId: number, cardMesh: MyDeckCard }> = new Map();
+    private originalDeckMap: Map<number, number[]> = new Map();
 
     private textureManager: TextureManager;
     private meshDestroyer: MeshDestroyer;
@@ -172,11 +175,11 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
             }
         });
 
-        this.deckGroupMap.set(deckId, cardGroup);
+        this.cardGroupMap.set(deckId, cardGroup);
     }
 
     public findCardGroupByDeckId(deckId: number): THREE.Group {
-        const cardGroup = this.deckGroupMap.get(deckId);
+        const cardGroup = this.cardGroupMap.get(deckId);
         if (!cardGroup) {
             throw new Error(`Deck group with ID ${deckId} not found`);
         }
@@ -184,15 +187,9 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
     }
 
     // 특정 덱의 특정 카드 삭제
-    public deleteCardByDeckIdAndCardUniqueId(deckId: number, cardUniqueId: number): void {
+    public deleteCard(deckId: number, cardUniqueId: number): void {
         const cardInfo = this.cardMap.get(cardUniqueId);
         if (cardInfo) {
-            this.meshDestroyer.destroyMesh(cardInfo.cardMesh.getMesh());
-
-            const group = this.deckGroupMap.get(deckId);
-            if (group) {
-                group.remove(cardInfo.cardMesh.getMesh());
-            }
 
             this.cardMap.delete(cardUniqueId);
         }
@@ -208,8 +205,20 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
         }
     }
 
+    public deleteCardMesh(deckId: number, cardUniqueId: number): void {
+        const cardInfo = this.cardMap.get(cardUniqueId);
+        if (cardInfo) {
+            this.meshDestroyer.destroyMesh(cardInfo.cardMesh.getMesh());
+
+            const group = this.cardGroupMap.get(deckId);
+            if (group) {
+                group.remove(cardInfo.cardMesh.getMesh());
+            }
+        }
+    }
+
     public resetCardGroup(): void {
-        this.deckGroupMap.clear();
+        this.cardGroupMap.clear();
     }
 
     // 모든 정보 삭제(덱, 카드 모두)
@@ -220,10 +229,10 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
 
     // 특정 덱 삭제
     public deleteDeckByDeckId(deckId: number): void {
-        const group = this.deckGroupMap.get(deckId);
+        const group = this.cardGroupMap.get(deckId);
         if (group) {
             this.meshDestroyer.destroyGroup(group);
-            this.deckGroupMap.delete(deckId);
+            this.cardGroupMap.delete(deckId);
         }
 
         const cardUniqueIdList = this.findCardUniqueIdListByDeckId(deckId);
@@ -235,6 +244,95 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
         this.deckMap.delete(deckId);
         const deckIdList = this.findDeckIdList();
         console.log(`%c삭제 후 남은 덱 id 리스트는? ${deckIdList}`, 'color: #FE2EF7; font-weight: bold;');
+    }
+
+    // 원본 데이터 복제
+    public saveClonedOriginalDeckState(deckId: number): void {
+        this.originalCardMap.clear();
+        this.originalDeckMap.set(deckId, [...(this.deckMap.get(deckId) || [])]);
+
+        const cardUniqueIdList = this.deckMap.get(deckId);
+        if (!cardUniqueIdList) {
+            console.warn(`[WARN] No cardUniqueIdList for deck ${deckId}`);
+            return;
+        }
+
+        cardUniqueIdList.forEach(cardUniqueId => {
+            const entry = this.cardMap.get(cardUniqueId);
+            if (entry) {
+                const originalMesh = entry.cardMesh.getMesh();
+                const clonedMesh = originalMesh.clone(true);
+                const clonedPosition = entry.cardMesh.position.clone ? entry.cardMesh.position.clone() : entry.cardMesh.position;
+                const clonedWrapper = new MyDeckCard(clonedMesh, clonedPosition);
+
+                this.originalCardMap.set(cardUniqueId, {
+                    cardId: entry.cardId,
+                    cardMesh: clonedWrapper
+                });
+
+            } else {
+                console.warn(`[WARN] cardUniqueId ${cardUniqueId} not found in cardMap`);
+            }
+        });
+
+        // To-do: 확인 후 삭제하기
+        console.log(
+            `%c[INFO] Original deck state cloned and stored for deckId ${deckId}`, 'color: #2E9AFE; font-weight: bold;');
+        console.log(
+            'originalCardMap:',
+            Array.from(this.originalCardMap.entries()).map(([id, data]) => ({
+                cardUniqueId: id,
+                cardId: data.cardId
+            }))
+        );
+    }
+
+    public restoreOriginalDeckState(deckId: number): void {
+        const originalCardUniqueIdList = this.originalDeckMap.get(deckId);
+        if (originalCardUniqueIdList) {
+            this.deckMap.set(deckId, [...originalCardUniqueIdList]);
+        }
+
+        const cardUniqueIdList = this.deckMap.get(deckId);
+        if (!cardUniqueIdList) return;
+
+        cardUniqueIdList.forEach(cardUniqueId => {
+            const originalCardInfo = this.originalCardMap.get(cardUniqueId);
+            if (originalCardInfo) {
+                const currentCardInfo = this.cardMap.get(cardUniqueId);
+                if (currentCardInfo) {
+                    this.meshDestroyer.destroyMesh(currentCardInfo.cardMesh.getMesh());
+                }
+
+                this.cardMap.set(cardUniqueId, {
+                    cardId: originalCardInfo.cardId,
+                    cardMesh: originalCardInfo.cardMesh
+                });
+
+                const group = this.cardGroupMap.get(deckId);
+                if (group) {
+                    originalCardInfo.cardMesh.setVisibility(false);
+                    group.add(originalCardInfo.cardMesh.getMesh());
+                }
+            }
+        });
+
+        // To-do: 확인 후 없애야 함
+        const restoredData = cardUniqueIdList.map(cardUniqueId => {
+            const data = this.cardMap.get(cardUniqueId);
+            return data ? {
+                cardUniqueId,
+                cardId: data.cardId,
+                cardMesh: data.cardMesh
+            } : { cardUniqueId, cardId: null, cardMesh: null };
+        });
+
+        console.log(
+            `%c[덱 편집 중단 후 다른 덱 버튼을 눌렀을 때] Deck ${deckId} restored.`,
+            'color: #2E9AFE; font-weight: bold;'
+        );
+        console.log('복원된 mesh 데이터:', restoredData);
+
     }
 
 }
