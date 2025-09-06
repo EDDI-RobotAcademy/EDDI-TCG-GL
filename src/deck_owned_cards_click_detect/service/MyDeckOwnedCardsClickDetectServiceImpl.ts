@@ -52,6 +52,9 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
 
     async handleCardClick(clickPoint: { x: number; y: number }): Promise<MyDeckOwnedCards | null> {
         const { x, y } = clickPoint;
+        const currentClickedDeckButtonId = this.getCurrentClickDeckButtonId();
+        if (currentClickedDeckButtonId == null) return null;
+
         const allCards = this.getAllOwnedCardsList();
         const clickedCard = this.myDeckOwnedCardsClickDetectRepository.isMyDeckOwnedCardsClicked(
             { x, y },
@@ -65,10 +68,10 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
 
             if (cardId == null) return null;
 
-            console.log(`Clicked My Deck Owned Card Unique ID: ${cardUniqueId}, Card ID: ${cardId}`);
+            console.log(`%c Clicked My Deck Owned Card Unique ID: ${cardUniqueId}, Card ID: ${cardId}`, 'color: #ff0033; font-weight: bold;');
 
             this.saveCurrentClickedCardId(cardId);
-            this.saveClickedCardCount(cardId);
+            this.saveClickedCardCount(currentClickedDeckButtonId, cardId);
             this.deleteRemainingCards(cardId);
 
             return clickedCard;
@@ -106,7 +109,7 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
     }
 
-    private saveClickedCardCount(cardId: number): void {
+    private saveClickedCardCount(deckId: number, cardId: number): void {
         const card = getCardById(cardId);
         if (!card) {
             console.warn(`[WARN] Card with ID ${cardId} not found`);
@@ -122,11 +125,8 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
             return;
         }
 
-        const currentClickedDeckButtonId = this.getCurrentClickDeckButtonId();
-        if (currentClickedDeckButtonId == null) return;
-
-        const currentSelectedCardCount = this.cardCountManager.findSelectedCardCountByDeck(currentClickedDeckButtonId, cardId);
-        const currentSelectedCardCountByGrade = this.cardCountManager.findCardCountByGrade(currentClickedDeckButtonId, grade);
+        const currentSelectedCardCount = this.cardCountManager.findSelectedCardCountByDeck(deckId, cardId);
+        const currentSelectedCardCountByGrade = this.cardCountManager.findCardCountByGrade(deckId, grade);
 
         // 등급별 제한 검사
         if (currentSelectedCardCountByGrade >= maxSelectableCardCountByGrade) {
@@ -141,8 +141,8 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
         }
 
         this.cardCountManager.decrementRemainingCardCount(cardId);
-        this.cardCountManager.incrementSelectedCardCountByDeck(currentClickedDeckButtonId, cardId);
-        this.cardCountManager.incrementCardCountByGrade(currentClickedDeckButtonId, grade);
+        this.cardCountManager.incrementSelectedCardCountByDeck(deckId, cardId);
+        this.cardCountManager.incrementCardCountByGrade(deckId, grade);
     }
 
     private deleteRemainingCards(cardId: number): void {

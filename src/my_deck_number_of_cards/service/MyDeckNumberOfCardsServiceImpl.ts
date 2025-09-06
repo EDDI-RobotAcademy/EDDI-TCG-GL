@@ -129,6 +129,10 @@ export class MyDeckNumberOfCardsServiceImpl implements MyDeckNumberOfCardsServic
     }
 
     private async createMyDeckNumberOfCards(deckId: number, cardId: number, cardCount: number, position: Vector2d): Promise<MyDeckNumberOfCards> {
+        return await this.myDeckNumberOfCardsRepository.createMyDeckNumberOfCards(deckId, cardId, cardCount, position);
+    }
+
+    public saveCardCountInfo(deckId: number, cardId: number, cardCount: number): void {
         const card = getCardById(cardId);
         if (!card) {
             throw new Error(`Card with ID ${cardId} not found`);
@@ -137,9 +141,6 @@ export class MyDeckNumberOfCardsServiceImpl implements MyDeckNumberOfCardsServic
         const grade = Number(card.등급);
         this.cardCountManager.saveGradeCardCount(deckId, grade, cardCount);
         this.cardCountManager.saveSelectedCardCountByDeck(deckId, cardId, cardCount);
-
-        const mesh = await this.myDeckNumberOfCardsRepository.createMyDeckNumberOfCards(deckId, cardId, cardCount, position);
-        return mesh;
     }
 
     private myDeckNumberOfCardsPosition(deckId: number, cardId: number): MyDeckNumberOfCardsPosition {
@@ -156,7 +157,7 @@ export class MyDeckNumberOfCardsServiceImpl implements MyDeckNumberOfCardsServic
 
     private getNumberByNumberId(numberId: number): THREE.Mesh | null {
         const number = this.myDeckNumberOfCardsRepository.findNumberById(numberId);
-        if (!number) {
+        if (number == null) {
             console.warn(`[WARN] My Deck Number Of Cards with Unique ID ${numberId} not found`);
             return null;
         }
@@ -170,7 +171,7 @@ export class MyDeckNumberOfCardsServiceImpl implements MyDeckNumberOfCardsServic
 
     private getNumberMeshByDeckIdAndCardId(deckId: number, cardId: number): THREE.Mesh | null {
         const number = this.myDeckNumberOfCardsRepository.findNumberByDeckIdAndCardId(deckId, cardId);
-        if (!number) {
+        if (number == null) {
             console.warn(`[WARN] Number with Deck ID: ${deckId}, Card ID ${cardId} not found`);
             return null;
         }
@@ -179,7 +180,7 @@ export class MyDeckNumberOfCardsServiceImpl implements MyDeckNumberOfCardsServic
 
     private getNumberIdByDeckIdAndCardId(deckId: number, cardId: number): number | null {
         const numberId = this.myDeckNumberOfCardsRepository.findNumberIdByDeckIdAndCardId(deckId, cardId);
-        if (!numberId) {
+        if (numberId == null) {
             console.warn(`[WARN] My Deck Number Of Cards ID ${numberId} not found`);
             return null;
         }

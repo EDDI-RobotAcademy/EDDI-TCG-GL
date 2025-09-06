@@ -70,6 +70,36 @@ export class MyDeckNumberOfCardsPositionRepositoryImpl implements MyDeckNumberOf
         return this.deckToPositionMap.get(deckId) || [];
     }
 
+    public findPositionByDeckIdAndCardId(deckId: number, cardId: number): MyDeckNumberOfCardsPosition | null {
+        const positionIdList = this.deckToPositionMap.get(deckId);
+        if (!positionIdList) {
+            return null;
+        }
+
+        for (const positionId of positionIdList) {
+            const positionInfo = this.positionMap.get(positionId);
+            if (positionInfo && positionInfo.cardId === cardId) {
+                return positionInfo.position;
+            }
+        }
+        return null;
+    }
+
+    public findPositionIdByDeckIdAndCardId(deckId: number, cardId: number): number | null {
+        const positionIdList = this.deckToPositionMap.get(deckId);
+        if (!positionIdList) {
+            return null;
+        }
+
+        for (const positionId of positionIdList) {
+            const positionInfo = this.positionMap.get(positionId);
+            if (positionInfo && positionInfo.cardId === cardId) {
+                return positionId;
+            }
+        }
+        return null;
+    }
+
     // To-do: 삭제 부분 후에 수정해야 함
     public deletePositionAndReorder(deckId: number, positionId: number): void {
         this.positionMap.delete(positionId);

@@ -272,6 +272,7 @@ export class TCGJustTestMyDeckView {
                 // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
                 this.reAddMyDeckNumberOfSelectedCards();
                 this.reAddMyDeckRemainingCards();
+                this.reAddMyDeckNumberOfCards();
             }
         }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.buildDeckButtonClickDetectService.onMouseDown(e), false);
@@ -776,6 +777,7 @@ export class TCGJustTestMyDeckView {
                 for (const cardId of cardIdList) {
                     const cardCount = this.myDeckCardMapRepository.findCardCountByDeckIdAndCardId(deckId, cardId);
                     await this.myDeckNumberOfCardsService.createMyDeckNumberOfCardsWithPosition(deckId, cardId, cardCount);
+                    this.myDeckNumberOfCardsService.saveCardCountInfo(deckId, cardId, cardCount);
                     this.myDeckNumberOfCardsService.saveNumberGroup(deckId);
                 }
             }
@@ -791,6 +793,33 @@ export class TCGJustTestMyDeckView {
                 }
                 numberGroup.position.y = 0;
             });
+        } catch (error) {
+            console.error('Failed to add my deck number of cards:', error);
+        }
+    }
+
+    private async reAddMyDeckNumberOfCards(): Promise<void> {
+        try {
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            if (currentClickedDeckId == null) return;
+
+            const cardIdList = this.cardCountManager.findSelectedCardIdListByDeck(currentClickedDeckId);
+            for (const cardId of cardIdList) {
+                const cardCount = this.cardCountManager.findSelectedCardCountByDeck(currentClickedDeckId, cardId);
+                if (cardCount !== 0) {
+                    await this.myDeckNumberOfCardsService.createMyDeckNumberOfCardsWithPosition(currentClickedDeckId, cardId, cardCount);
+                    this.myDeckNumberOfCardsService.saveNumberGroup(currentClickedDeckId);
+                }
+            }
+
+            this.myDeckNumberOfCardsService.applyClippingMaskToMyDeckNumberOfCards();
+
+            const numberGroup = this.myDeckNumberOfCardsService.getNumberGroupByDeckId(currentClickedDeckId);
+            if (!this.scene.children.includes(numberGroup)) {
+                this.scene.add(numberGroup);
+            }
+            numberGroup.position.y = 0;
+
         } catch (error) {
             console.error('Failed to add my deck number of cards:', error);
         }
