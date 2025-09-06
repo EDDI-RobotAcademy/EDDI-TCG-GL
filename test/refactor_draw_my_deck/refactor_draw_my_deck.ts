@@ -290,6 +290,7 @@ export class TCGJustTestMyDeckView {
                 await this.reAddDeckCardAddButton();
                 await this.reAddMyDeckCard();
                 await this.reAddMyDeckRemainingCards();
+                await this.reAddMyDeckNumberOfCards();
             }
         }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckDeleteButtonClickDetectService.onMouseDown(e), false);
@@ -303,6 +304,7 @@ export class TCGJustTestMyDeckView {
                 // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
                 this.reAddMyDeckNumberOfSelectedCards();
                 this.reAddMyDeckRemainingCards();
+                this.reAddMyDeckNumberOfCards();
             }
         }, false);
         this.renderer.domElement.addEventListener('mousemove', (e) => this.deckEditDoneButtonHoverDetectService.onMouseMove(e), false);
