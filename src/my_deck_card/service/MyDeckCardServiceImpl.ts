@@ -157,7 +157,7 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
 
     private getCardMeshByDeckIdAndCardId(deckId: number, cardId: number): THREE.Mesh | null {
         const card = this.myDeckCardRepository.findCardByDeckIdAndCardId(deckId, cardId);
-        if (!card) {
+        if (card == null) {
             console.warn(`[WARN] Card with Deck ID: ${deckId}, Card ID ${cardId} not found`);
             return null;
         }
@@ -166,7 +166,7 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
 
     private getCardUniqueIdByDeckIdAndCardId(deckId: number, cardId: number): number | null {
         const cardUniqueId = this.myDeckCardRepository.findCardUniqueIdByDeckIdAndCardId(deckId, cardId);
-        if (!cardUniqueId) {
+        if (cardUniqueId == null) {
             console.warn(`[WARN] Card Unique ID ${cardUniqueId} not found`);
             return null;
         }
