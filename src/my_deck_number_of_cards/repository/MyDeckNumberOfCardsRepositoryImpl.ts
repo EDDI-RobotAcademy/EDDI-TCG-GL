@@ -14,6 +14,9 @@ export class MyDeckNumberOfCardsRepositoryImpl implements MyDeckNumberOfCardsRep
     private deckMap: Map<number, number[]> = new Map(); // deckId: number ID List
     private numberGroupMap: Map<number, THREE.Group> = new Map(); // deckId -> Group
 
+    private originalNumberMap: Map<number, { cardId: number, cardCount: number, numberMesh: MyDeckNumberOfCards }> = new Map();
+    private originalDeckMap: Map<number, number[]> = new Map();
+
     private textureManager: TextureManager;
     private meshDestroyer: MeshDestroyer;
 
@@ -210,6 +213,97 @@ export class MyDeckNumberOfCardsRepositoryImpl implements MyDeckNumberOfCardsRep
         this.deckMap.delete(deckId);
         const deckIdList = this.findDeckIdList();
         console.log(`%c삭제 후 남은 덱 id 리스트는? ${deckIdList}`, 'color: #FE2EF7; font-weight: bold;');
+    }
+
+    public saveClonedOriginalDeckState(deckId: number): void {
+        this.originalNumberMap.clear();
+        this.originalDeckMap.set(deckId, [...(this.deckMap.get(deckId) || [])]);
+
+        const numberIdList = this.deckMap.get(deckId);
+        if (!numberIdList) {
+            console.warn(`[WARN] No numberIdList for deck ${deckId}`);
+            return;
+        }
+
+        numberIdList.forEach(numberId => {
+            const entry = this.numberMap.get(numberId);
+            if (entry) {
+                const originalMesh = entry.numberMesh.getMesh();
+                const clonedMesh = originalMesh.clone(true);
+                const clonedPosition = entry.numberMesh.position.clone ? entry.numberMesh.position.clone() : entry.numberMesh.position;
+                const clonedWrapper = new MyDeckNumberOfCards(clonedMesh, clonedPosition);
+
+                this.originalNumberMap.set(numberId, {
+                    cardId: entry.cardId,
+                    cardCount: entry.cardCount,
+                    numberMesh: clonedWrapper
+                });
+
+            } else {
+                console.warn(`[WARN] numberId ${numberId} not found in cardMap`);
+            }
+        });
+
+        // To-do: 확인 후 삭제하기
+        console.log(
+            `%c[INFO] Original deck state cloned and stored for deckId ${deckId}`, 'color: #2E9AFE; font-weight: bold;');
+        console.log(
+            'originalNumberMap:',
+            Array.from(this.originalNumberMap.entries()).map(([id, data]) => ({
+                numberId: id,
+                cardId: data.cardId,
+                cardCount: data.cardCount
+            }))
+        );
+    }
+
+    public restoreOriginalDeckState(deckId: number): void {
+        const originalNumberIdList = this.originalDeckMap.get(deckId);
+        if (originalNumberIdList) {
+            this.deckMap.set(deckId, [...originalNumberIdList]);
+        }
+
+        const numberIdList = this.deckMap.get(deckId);
+        if (!numberIdList) return;
+
+        numberIdList.forEach(numberId => {
+            const originalNumberInfo = this.originalNumberMap.get(numberId);
+            if (originalNumberInfo) {
+                const currentNumberInfo = this.numberMap.get(numberId);
+                if (currentNumberInfo) {
+                    this.meshDestroyer.destroyMesh(currentNumberInfo.numberMesh.getMesh());
+                }
+
+                this.numberMap.set(numberId, {
+                    cardId: originalNumberInfo.cardId,
+                    cardCount: originalNumberInfo.cardCount,
+                    numberMesh: originalNumberInfo.numberMesh
+                });
+
+                const group = this.numberGroupMap.get(deckId);
+                if (group) {
+                    originalNumberInfo.numberMesh.setVisibility(false);
+                    group.add(originalNumberInfo.numberMesh.getMesh());
+                }
+            }
+        });
+
+        // To-do: 확인 후 없애야 함
+        const restoredData = numberIdList.map(numberId => {
+            const data = this.numberMap.get(numberId);
+            return data ? {
+                numberId,
+                cardId: data.cardId,
+                cardCount: data.cardCount,
+                numberMesh: data.numberMesh
+            } : { numberId, cardId: null, cardCount: null, numberMesh: null };
+        });
+
+        console.log(
+            `%c[덱 편집 중단 후 다른 덱 버튼을 눌렀을 때] Deck ${deckId} restored.`,
+            'color: #2E9AFE; font-weight: bold;'
+        );
+        console.log('복원된 mesh 데이터:', restoredData);
     }
 
 }
