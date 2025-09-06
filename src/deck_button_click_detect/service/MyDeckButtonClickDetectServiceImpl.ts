@@ -33,6 +33,7 @@ import {DeckCardAddButtonRepositoryImpl} from "../../deck_card_add_button/reposi
 import {DeckCardAddButtonPositionRepositoryImpl} from "../../deck_card_add_button_position/repository/DeckCardAddButtonPositionRepositoryImpl";
 import {DeckEditDoneButtonHoverDetectRepositoryImpl} from "../../deck_edit_done_button_hover_detect/repository/DeckEditDoneButtonHoverDetectRepositoryImpl";
 import {MyDeckCardPositionRepositoryImpl} from "../../my_deck_card_position/repository/MyDeckCardPositionRepositoryImpl";
+import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of_cards_position/repository/MyDeckNumberOfCardsPositionRepositoryImpl";
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
@@ -74,6 +75,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private deckCardAddButtonPositionRepository: DeckCardAddButtonPositionRepositoryImpl;
     private deckEditDoneButtonHoverDetectRepository: DeckEditDoneButtonHoverDetectRepositoryImpl;
     private myDeckCardPositionRepository: MyDeckCardPositionRepositoryImpl;
+    private myDeckNumberOfCardsPositionRepository: MyDeckNumberOfCardsPositionRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cardCountManager = CardCountManager.getInstance();
@@ -108,6 +110,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.deckCardAddButtonPositionRepository = DeckCardAddButtonPositionRepositoryImpl.getInstance();
         this.deckEditDoneButtonHoverDetectRepository = DeckEditDoneButtonHoverDetectRepositoryImpl.getInstance();
         this.myDeckCardPositionRepository = MyDeckCardPositionRepositoryImpl.getInstance();
+        this.myDeckNumberOfCardsPositionRepository = MyDeckNumberOfCardsPositionRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckButtonClickDetectServiceImpl {
@@ -164,6 +167,8 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                     this.deckCardAddButtonPositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
                     this.myDeckCardRepository.restoreOriginalDeckState(previousClickedDeckButtonId);
                     this.myDeckCardPositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
+                    this.myDeckNumberOfCardsRepository.restoreOriginalDeckState(previousClickedDeckButtonId);
+                    this.myDeckNumberOfCardsPositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
                     // To-do: countManager 도 원본 데이터로 수정 필요
                     this.cardCountManager.restoreRemainingCardCount();
                     this.cardCountManager.restoreSelectedCardCount();
