@@ -9,6 +9,8 @@ import {MeshDestroyer} from "../../mesh/destroyer"
 export class TotalNumberOfSelectedCardsRepositoryImpl implements TotalNumberOfSelectedCardsRepository {
     private static instance: TotalNumberOfSelectedCardsRepositoryImpl;
     private numberMap: Map<number, { numberId: number, totalCardCount: number, numberMesh: TotalNumberOfSelectedCards }> = new Map();
+    private originalNumberMap: Map<number, { numberId: number, totalCardCount: number, numberMesh: TotalNumberOfSelectedCards }> = new Map();
+
     private textureManager: TextureManager;
     private meshDestroyer: MeshDestroyer;
 
@@ -83,6 +85,58 @@ export class TotalNumberOfSelectedCardsRepositoryImpl implements TotalNumberOfSe
         }
 
         this.numberMap.clear();
+    }
+
+    public saveClonedOriginalDeckState(deckId: number): void {
+        this.originalNumberMap.clear();
+
+        const entry = this.numberMap.get(deckId);
+        if (entry) {
+            const originalMesh = entry.numberMesh.getMesh();
+            const clonedMesh = originalMesh.clone(true);
+            const clonedPosition = entry.numberMesh.position.clone ? entry.numberMesh.position.clone() : entry.numberMesh.position;
+            const clonedWrapper = new TotalNumberOfSelectedCards(clonedMesh, clonedPosition);
+
+            this.originalNumberMap.set(deckId, {
+                numberId: entry.numberId,
+                totalCardCount: entry.totalCardCount,
+                numberMesh: clonedWrapper
+            });
+        } else {
+            console.warn(`[WARN] deckId ${deckId} not found in numberMap`);
+        }
+
+        // To-do: 확인 후 삭제하기
+        console.log(
+            `%c[INFO] Original deck state cloned and stored for deckId ${deckId}`, 'color: #2E9AFE; font-weight: bold;');
+        console.log(
+            'originalNumberMap:',
+            Array.from(this.originalNumberMap.entries()).map(([id, data]) => ({
+                deckId: id,
+                numberId: data.numberId,
+                totalCardCount: data.totalCardCount
+            }))
+        );
+    }
+
+    public restoreOriginalDeckState(deckId: number): void {
+        const originalNumberInfo = this.originalNumberMap.get(deckId);
+        if (originalNumberInfo) {
+            // 기존 numberMap의 mesh를 삭제/교체
+            const currentNumberInfo = this.numberMap.get(deckId);
+            if (currentNumberInfo) {
+                // 현재 mesh를 scene에서 제거
+                this.meshDestroyer.destroyMesh(currentNumberInfo.numberMesh.getMesh());
+            }
+            // 원래대로 복원
+            this.numberMap.set(deckId, {
+                numberId: originalNumberInfo.numberId,
+                totalCardCount: originalNumberInfo.totalCardCount,
+                numberMesh: originalNumberInfo.numberMesh
+            });
+
+            // To-do: scene 에 다시 추가해야 함,,
+        }
     }
 
 }

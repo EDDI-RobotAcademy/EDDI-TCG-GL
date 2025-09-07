@@ -77,4 +77,8 @@ export class TotalNumberOfSelectedCardsServiceImpl implements TotalNumberOfSelec
         return this.totalNumberOfSelectedCardsRepository.findDeckIdList();
     }
 
+    public setNumberVisibility(deckId: number, isVisible: boolean): void {
+        this.totalNumberOfSelectedCardsRepository.findNumberByDeckId(deckId)?.setVisibility(isVisible);
+    }
+
 }

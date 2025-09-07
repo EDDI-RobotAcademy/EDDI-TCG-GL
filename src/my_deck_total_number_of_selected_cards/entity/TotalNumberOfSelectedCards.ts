@@ -4,7 +4,6 @@ import {IdGenerator} from "../../common/id_generator/IdGenerator";
 
 export class TotalNumberOfSelectedCards {
     id: number;
-    isVisible: boolean;
     mesh: THREE.Mesh;
     position: Vector2d;
 
@@ -12,7 +11,6 @@ export class TotalNumberOfSelectedCards {
         this.id = IdGenerator.generateId("TotalNumberOfSelectedCards");
         this.mesh = mesh;
         this.position = position;
-        this.isVisible = false;
         this.mesh.visible = false;
     }
 
@@ -21,11 +19,10 @@ export class TotalNumberOfSelectedCards {
     }
 
     public getVisibility(): boolean {
-        return this.isVisible;
+        return this.mesh.visible;
     }
 
     public setVisibility(state: boolean): void {
-        this.isVisible = state;
         this.mesh.visible = state;
     }
 
