@@ -35,6 +35,7 @@ import {DeckEditDoneButtonHoverDetectRepositoryImpl} from "../../deck_edit_done_
 import {MyDeckCardPositionRepositoryImpl} from "../../my_deck_card_position/repository/MyDeckCardPositionRepositoryImpl";
 import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of_cards_position/repository/MyDeckNumberOfCardsPositionRepositoryImpl";
 import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_marker_position/repository/DeckCardCountMarkerPositionRepositoryImpl";
+import {TotalNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_total_number_of_selected_cards/repository/TotalNumberOfSelectedCardsRepositoryImpl";
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
@@ -78,6 +79,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private myDeckCardPositionRepository: MyDeckCardPositionRepositoryImpl;
     private myDeckNumberOfCardsPositionRepository: MyDeckNumberOfCardsPositionRepositoryImpl;
     private deckCardCountMarkerPositionRepository: DeckCardCountMarkerPositionRepositoryImpl;
+    private totalNumberOfSelectedCardsRepository: TotalNumberOfSelectedCardsRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cardCountManager = CardCountManager.getInstance();
@@ -114,6 +116,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.myDeckCardPositionRepository = MyDeckCardPositionRepositoryImpl.getInstance();
         this.myDeckNumberOfCardsPositionRepository = MyDeckNumberOfCardsPositionRepositoryImpl.getInstance();
         this.deckCardCountMarkerPositionRepository = DeckCardCountMarkerPositionRepositoryImpl.getInstance();
+        this.totalNumberOfSelectedCardsRepository = TotalNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckButtonClickDetectServiceImpl {
@@ -155,6 +158,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                 this.setNumberOfCardsVisibilityByDeckId(previousClickedDeckButtonId, false);
                 this.setNumberOfSelectedCardsVisibilityByDeckId(previousClickedDeckButtonId, false);
                 this.setDeckCardCountMarkerVisibilityByDeckId(previousClickedDeckButtonId, false);
+                this.setTotalNumberOfSelectedCardsVisibility(previousClickedDeckButtonId, false);
 
                 // To-do: 편집 화면에서 편집 다 못하고 나올 때 원본 데이터로 돌려야 함
                 if (this.deckEditButtonClickDetectRepository.getCurrentButtonClickState() == true) {
@@ -174,6 +178,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                     this.myDeckNumberOfCardsPositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
                     this.deckCardCountMarkerRepository.restoreOriginalDeckState(previousClickedDeckButtonId);
                     this.deckCardCountMarkerPositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
+                    this.totalNumberOfSelectedCardsRepository.restoreOriginalDeckState(previousClickedDeckButtonId);
                     // To-do: countManager 도 원본 데이터로 수정 필요
                     this.cardCountManager.restoreRemainingCardCount();
                     this.cardCountManager.restoreSelectedCardCount();
@@ -330,6 +335,10 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private setDeckEditDoneButtonVisibility(isVisible: boolean): void {
         const allButton = this.deckEditDoneButtonRepository.findAll();
         allButton.forEach(button => button.setVisibility(isVisible));
+    }
+
+    private setTotalNumberOfSelectedCardsVisibility(deckId: number, isVisible: boolean): void {
+        this.totalNumberOfSelectedCardsRepository.findNumberByDeckId(deckId)?.setVisibility(isVisible);
     }
 
     private getBlockGroup(deckId: number): THREE.Group {
