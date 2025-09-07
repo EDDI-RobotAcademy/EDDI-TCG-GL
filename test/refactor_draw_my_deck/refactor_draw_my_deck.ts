@@ -273,7 +273,6 @@ export class TCGJustTestMyDeckView {
                 this.reAddMyDeckNumberOfSelectedCards();
                 this.reAddMyDeckRemainingCards();
                 this.reAddMyDeckNumberOfCards();
-                this.reAddMyDeckCardCountMarker();
             }
         }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.buildDeckButtonClickDetectService.onMouseDown(e), false);
@@ -292,6 +291,7 @@ export class TCGJustTestMyDeckView {
                 await this.reAddMyDeckCard();
                 await this.reAddMyDeckRemainingCards();
                 await this.reAddMyDeckNumberOfCards();
+                await this.reAddMyDeckCardCountMarker();
             }
         }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckDeleteButtonClickDetectService.onMouseDown(e), false);
