@@ -36,6 +36,8 @@ import {MyDeckCardPositionRepositoryImpl} from "../../my_deck_card_position/repo
 import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of_cards_position/repository/MyDeckNumberOfCardsPositionRepositoryImpl";
 import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_marker_position/repository/DeckCardCountMarkerPositionRepositoryImpl";
 import {TotalNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_total_number_of_selected_cards/repository/TotalNumberOfSelectedCardsRepositoryImpl";
+import {MyDeckChosenOutOfTotalSlashRepositoryImpl} from "../../my_deck_chosen_out_of_total_slash/repository/MyDeckChosenOutOfTotalSlashRepositoryImpl";
+import {RequiredNumberOfCardsRepositoryImpl} from "../../required_number_of_cards_in_the_deck/repository/RequiredNumberOfCardsRepositoryImpl";
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
@@ -80,6 +82,8 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private myDeckNumberOfCardsPositionRepository: MyDeckNumberOfCardsPositionRepositoryImpl;
     private deckCardCountMarkerPositionRepository: DeckCardCountMarkerPositionRepositoryImpl;
     private totalNumberOfSelectedCardsRepository: TotalNumberOfSelectedCardsRepositoryImpl;
+    private myDeckChosenOutOfTotalSlashRepository: MyDeckChosenOutOfTotalSlashRepositoryImpl;
+    private requiredNumberOfCardsRepository: RequiredNumberOfCardsRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cardCountManager = CardCountManager.getInstance();
@@ -117,6 +121,8 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.myDeckNumberOfCardsPositionRepository = MyDeckNumberOfCardsPositionRepositoryImpl.getInstance();
         this.deckCardCountMarkerPositionRepository = DeckCardCountMarkerPositionRepositoryImpl.getInstance();
         this.totalNumberOfSelectedCardsRepository = TotalNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
+        this.myDeckChosenOutOfTotalSlashRepository = MyDeckChosenOutOfTotalSlashRepositoryImpl.getInstance();
+        this.requiredNumberOfCardsRepository = RequiredNumberOfCardsRepositoryImpl.getInstance(scene);
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckButtonClickDetectServiceImpl {
@@ -191,7 +197,8 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                     this.setRemainingOutOfTotalSlashVisibility(false);
                     this.setDeckEditButtonVisibility(true);
                     this.setDeckEditDoneButtonVisibility(false);
-
+                    this.setChosenOutOfTotalSlashVisibility(false);
+                    this.setRequiredNumberOfCardsVisibility(false);
                 }
             }
 
@@ -407,6 +414,14 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.myDeckRemainingOutOfTotalSlashRepository.findAllSlashList()?.forEach(slash =>
             slash.setVisibility(isVisible)
         );
+    }
+
+    private setChosenOutOfTotalSlashVisibility(isVisible: boolean): void {
+        this.myDeckChosenOutOfTotalSlashRepository.findSlash()?.setVisibility(isVisible);
+    }
+
+    private setRequiredNumberOfCardsVisibility(isVisible: boolean): void {
+        this.requiredNumberOfCardsRepository.findNumber()?.setVisibility(isVisible);
     }
 
 }
