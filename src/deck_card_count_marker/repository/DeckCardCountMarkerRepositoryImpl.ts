@@ -17,6 +17,9 @@ export class DeckCardCountMarkerRepositoryImpl implements DeckCardCountMarkerRep
     private deckMap: Map<number, number[]> = new Map(); // deckId: marker Unique ID List
     private markerGroupMap: Map<number, THREE.Group> = new Map(); // deckId -> Group
 
+    private originalMarkerMap: Map<number, { cardId: number, markerMesh: DeckCardCountMarker }> = new Map();
+    private originalDeckMap: Map<number, number[]> = new Map();
+
     private readonly MARKER_WIDTH: number = 0.012
 
     private constructor(textureManager: TextureManager, scene: THREE.Scene) {
@@ -174,13 +177,6 @@ export class DeckCardCountMarkerRepositoryImpl implements DeckCardCountMarkerRep
     public deleteMarkerByDeckIdAndMarkerId(deckId: number, markerId: number): void {
         const markerInfo = this.markerMap.get(markerId);
         if (markerInfo) {
-            this.meshDestroyer.destroyMesh(markerInfo.markerMesh.getMesh());
-
-            const group = this.markerGroupMap.get(deckId);
-            if (group) {
-                group.remove(markerInfo.markerMesh.getMesh());
-            }
-
             this.markerMap.delete(markerId);
         }
 
@@ -192,6 +188,18 @@ export class DeckCardCountMarkerRepositoryImpl implements DeckCardCountMarkerRep
 //             if (updatedList.length === 0) {
 //                 this.deckMap.delete(deckId);
 //             }
+        }
+    }
+
+    public deleteMarkerMesh(deckId: number, markerId: number): void {
+        const markerInfo = this.markerMap.get(markerId);
+        if (markerInfo) {
+            this.meshDestroyer.destroyMesh(markerInfo.markerMesh.getMesh());
+
+            const group = this.markerGroupMap.get(deckId);
+            if (group) {
+                group.remove(markerInfo.markerMesh.getMesh());
+            }
         }
     }
 
@@ -216,6 +224,94 @@ export class DeckCardCountMarkerRepositoryImpl implements DeckCardCountMarkerRep
         }
 
         this.deckMap.delete(deckId);
+    }
+
+    // 원본 데이터 복제
+    public saveClonedOriginalDeckState(deckId: number): void {
+        this.originalMarkerMap.clear();
+        this.originalDeckMap.set(deckId, [...(this.deckMap.get(deckId) || [])]);
+
+        const markerIdList = this.deckMap.get(deckId);
+        if (!markerIdList) {
+            console.warn(`[WARN] No markerIdList for deck ${deckId}`);
+            return;
+        }
+
+        markerIdList.forEach(markerId => {
+            const entry = this.markerMap.get(markerId);
+            if (entry) {
+                const originalMesh = entry.markerMesh.getMesh();
+                const clonedMesh = originalMesh.clone(true);
+                const clonedPosition = entry.markerMesh.position.clone ? entry.markerMesh.position.clone() : entry.markerMesh.position;
+                const clonedWrapper = new DeckCardCountMarker(clonedMesh, clonedPosition);
+
+                this.originalMarkerMap.set(markerId, {
+                    cardId: entry.cardId,
+                    markerMesh: clonedWrapper
+                });
+
+            } else {
+                console.warn(`[WARN] markerId ${markerId} not found in markerMap`);
+            }
+        });
+
+        // To-do: 확인 후 삭제하기
+        console.log(
+            `%c[INFO] Original deck state cloned and stored for deckId ${deckId}`, 'color: #2E9AFE; font-weight: bold;');
+        console.log(
+            'originalMarkerMap:',
+            Array.from(this.originalMarkerMap.entries()).map(([id, data]) => ({
+                markerId: id,
+                cardId: data.cardId
+            }))
+        );
+    }
+
+    public restoreOriginalDeckState(deckId: number): void {
+        const originalMarkerIdList = this.originalDeckMap.get(deckId);
+        if (originalMarkerIdList) {
+            this.deckMap.set(deckId, [...originalMarkerIdList]);
+        }
+
+        const markerIdList = this.deckMap.get(deckId);
+        if (!markerIdList) return;
+
+        markerIdList.forEach(markerId => {
+            const originalMarkerInfo = this.originalMarkerMap.get(markerId);
+            if (originalMarkerInfo) {
+                const currentMarkerInfo = this.markerMap.get(markerId);
+                if (currentMarkerInfo) {
+                    this.meshDestroyer.destroyMesh(currentMarkerInfo.markerMesh.getMesh());
+                }
+
+                this.markerMap.set(markerId, {
+                    cardId: originalMarkerInfo.cardId,
+                    markerMesh: originalMarkerInfo.markerMesh
+                });
+
+                const group = this.markerGroupMap.get(deckId);
+                if (group) {
+                    originalMarkerInfo.markerMesh.setVisibility(false);
+                    group.add(originalMarkerInfo.markerMesh.getMesh());
+                }
+            }
+        });
+
+        // To-do: 확인 후 없애야 함
+        const restoredData = markerIdList.map(markerId => {
+            const data = this.markerMap.get(markerId);
+            return data ? {
+                markerId,
+                cardId: data.cardId,
+                markerMesh: data.markerMesh
+            } : { markerId, cardId: null, markerMesh: null };
+        });
+
+        console.log(
+            `%c[덱 편집 중단 후 다른 덱 버튼을 눌렀을 때] Deck ${deckId} restored.`,
+            'color: #2E9AFE; font-weight: bold;'
+        );
+        console.log('복원된 mesh 데이터:', restoredData);
     }
 
 }

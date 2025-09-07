@@ -4,7 +4,6 @@ import {IdGenerator} from "../../common/id_generator/IdGenerator";
 
 export class DeckCardCountMarker {
     id: number;
-    isVisible: boolean;
     mesh: THREE.Mesh;
     position: Vector2d;
 
@@ -12,8 +11,7 @@ export class DeckCardCountMarker {
         this.id = IdGenerator.generateId("DeckCardCountMarker");
         this.mesh = mesh;
         this.position = position;
-        this.isVisible = true;
-        this.mesh.visible = true;
+        this.mesh.visible = false;
     }
 
     public getMesh(): THREE.Mesh {
@@ -21,11 +19,10 @@ export class DeckCardCountMarker {
     }
 
     public getVisibility(): boolean {
-        return this.isVisible;
+        return this.mesh.visible;
     }
 
     public setVisibility(state: boolean): void {
-        this.isVisible = state;
         this.mesh.visible = state;
     }
 
