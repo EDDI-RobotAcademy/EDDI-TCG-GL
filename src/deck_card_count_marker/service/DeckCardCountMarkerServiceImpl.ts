@@ -43,10 +43,9 @@ export class DeckCardCountMarkerServiceImpl implements DeckCardCountMarkerServic
             const markerId = this.getMarkerIdByDeckIdAndCardId(deckId, cardId);
             if (markerId == null) {
                 const position = this.createDeckCardCountMarkerPosition(deckId, cardId);
-                console.log(`[Marker] Card ID ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
+                console.log(`[New Marker] Card ID ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
 
                 const deckCardCountMarker = await this.createDeckCardCountMarker(deckId, cardId, position.position);
-                console.log(`[Marker] Deck ID: ${deckId}, Card ID: ${cardId}`);
                 markerGroup.add(deckCardCountMarker.getMesh());
 
             } else {
@@ -135,7 +134,7 @@ export class DeckCardCountMarkerServiceImpl implements DeckCardCountMarkerServic
 
     private getMarkerIdByDeckIdAndCardId(deckId: number, cardId: number): number | null {
         const markerId = this.deckCardCountMarkerRepository.findMarkerIdByDeckIdAndCardId(deckId, cardId);
-        if (!markerId) {
+        if (markerId == null) {
             console.warn(`[WARN] Deck Card Count Marker(With Marker ID: ${markerId}) not found`);
             return null;
         }

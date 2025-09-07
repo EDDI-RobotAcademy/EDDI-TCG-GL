@@ -42,19 +42,23 @@ export class MyDeckNumberOfCardsServiceImpl implements MyDeckNumberOfCardsServic
     public async createMyDeckNumberOfCardsWithPosition(deckId: number, cardId: number, cardCount: number): Promise<THREE.Group | null> {
         const numberGroup = new THREE.Group();
         try {
-            const numberId = this.getNumberIdByDeckIdAndCardId(deckId, cardId);
-            if (numberId == null) {
+            const existingPosition = this.getPositionByDeckIdAndCardId(deckId, cardId);
+            if (existingPosition == null) {
                 const position = this.myDeckNumberOfCardsPosition(deckId, cardId);
-                console.log(`[Block] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
+                console.log(`%c [New Number] CardId ${cardId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`, 'color: #FE2EF7; font-weight: bold;');
 
                 const myDeckNumberOfCards = await this.createMyDeckNumberOfCards(deckId, cardId, cardCount, position.position);
                 numberGroup.add(myDeckNumberOfCards.getMesh());
 
             } else {
-                const existingPosition = this.getPositionByNumberId(numberId);
                 const existingNumberMesh = this.getNumberMeshByDeckIdAndCardId(deckId, cardId);
+                if (existingNumberMesh == null) {
+                    const myDeckNumberOfCards = await this.createMyDeckNumberOfCards(deckId, cardId, cardCount, existingPosition.position);
+                    numberGroup.add(myDeckNumberOfCards.getMesh());
+                    console.log(`%c [New Number-position 존재] DeckId: ${deckId}, CardId: ${cardId}`, 'color: #FE2EF7; font-weight: bold;');
 
-                if (existingPosition && existingNumberMesh) {
+                } else {
+                    console.log(`%c [Number 존재] DeckId: ${deckId}, CardId: ${cardId}`, 'color: #FE2EF7; font-weight: bold;');
                     const positionX = existingPosition.getX() * window.innerWidth;
                     const positionY = existingPosition.getY() * window.innerHeight;
 
@@ -167,6 +171,14 @@ export class MyDeckNumberOfCardsServiceImpl implements MyDeckNumberOfCardsServic
 
     private getPositionByNumberId(numberId: number): MyDeckNumberOfCardsPosition | null {
         return this.myDeckNumberOfCardsPositionRepository.findPositionByPositionId(numberId);
+    }
+
+    private getPositionByDeckIdAndCardId(deckId: number, cardId: number): MyDeckNumberOfCardsPosition | null {
+        const numberPosition = this.myDeckNumberOfCardsPositionRepository.findPositionByDeckIdAndCardId(deckId, cardId);
+        if (!numberPosition) {
+            console.warn(`[WARN] My Deck Number Of Cards Position not found`);
+        }
+        return numberPosition;
     }
 
     private getNumberMeshByDeckIdAndCardId(deckId: number, cardId: number): THREE.Mesh | null {

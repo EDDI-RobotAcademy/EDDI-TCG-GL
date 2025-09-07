@@ -28,7 +28,7 @@ export class DeckCardCountMarkerPositionRepositoryImpl implements DeckCardCountM
     }
 
     public addDeckCardCountMarkerPosition(deckId: number, cardId: number): DeckCardCountMarkerPosition {
-        console.log(`%c [Block] deckID?: ${deckId}, cardId?: ${cardId}`, 'color: #FE2EF7; font-weight: bold;');
+        console.log(`%c [Marker] deckID?: ${deckId}, cardId?: ${cardId}`, 'color: #FE2EF7; font-weight: bold;');
 
         if (!this.deckPositionIndexMap.has(deckId)) {
             this.deckPositionIndexMap.set(deckId, 0);
