@@ -273,6 +273,7 @@ export class TCGJustTestMyDeckView {
                 this.reAddMyDeckNumberOfSelectedCards();
                 this.reAddMyDeckRemainingCards();
                 this.reAddMyDeckNumberOfCards();
+                this.reAddTotalNumberOfSelectedCards();
             }
         }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.buildDeckButtonClickDetectService.onMouseDown(e), false);
@@ -292,6 +293,7 @@ export class TCGJustTestMyDeckView {
                 await this.reAddMyDeckRemainingCards();
                 await this.reAddMyDeckNumberOfCards();
                 await this.reAddMyDeckCardCountMarker();
+                await this.reAddTotalNumberOfSelectedCards();
             }
         }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckDeleteButtonClickDetectService.onMouseDown(e), false);
@@ -306,6 +308,7 @@ export class TCGJustTestMyDeckView {
                 this.reAddMyDeckNumberOfSelectedCards();
                 this.reAddMyDeckRemainingCards();
                 this.reAddMyDeckNumberOfCards();
+                this.reAddTotalNumberOfSelectedCards();
             }
         }, false);
         this.renderer.domElement.addEventListener('mousemove', (e) => this.deckEditDoneButtonHoverDetectService.onMouseMove(e), false);
@@ -482,6 +485,29 @@ export class TCGJustTestMyDeckView {
             }
         } catch (error) {
             console.error('Failed To Add Total Number Of Selected Cards:', error);
+        }
+    }
+
+    private async reAddTotalNumberOfSelectedCards(): Promise<void> {
+        try {
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            if (currentClickedDeckId == null) return;
+
+            const totalCardCount = this.cardCountManager.findTotalSelectedCardCount(currentClickedDeckId);
+            console.log(`%c 선택한 총 카드 개수는? ${totalCardCount}`, 'color: #ffbb00; font-weight: bold;');
+            await this.totalNumberOfSelectedCardsService.createTotalNumberOfSelectedCards(currentClickedDeckId, totalCardCount);
+            this.totalNumberOfSelectedCardsService.setNumberVisibility(currentClickedDeckId, true);
+
+            const numberMesh = this.totalNumberOfSelectedCardsService.getTotalNumberOfSelectedCardsByDeckId(currentClickedDeckId);
+            if (numberMesh) {
+                console.log(`%c 여기 실행됨?`, 'color: #ffbb00; font-weight: bold;');
+                this.scene.add(numberMesh.getMesh());
+            } else {
+                console.warn(`Total Number Of Selected Cards Mesh Not found`);
+            }
+
+        } catch (error) {
+            console.error('Failed to reAdd Total Number Of Selected Cards:', error);
         }
     }
 
