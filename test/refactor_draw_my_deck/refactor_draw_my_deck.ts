@@ -273,6 +273,7 @@ export class TCGJustTestMyDeckView {
                 this.reAddMyDeckNumberOfSelectedCards();
                 this.reAddMyDeckRemainingCards();
                 this.reAddMyDeckNumberOfCards();
+                this.reAddMyDeckCardCountMarker();
             }
         }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.buildDeckButtonClickDetectService.onMouseDown(e), false);
@@ -645,6 +646,29 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add my deck card count marker:', error);
+        }
+    }
+
+    private async reAddMyDeckCardCountMarker(): Promise<void> {
+        try {
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            if (currentClickedDeckId == null) return;
+
+            const cardIdList = this.cardCountManager.findSelectedCardIdListByDeck(currentClickedDeckId);
+            for (const cardId of cardIdList) {
+                await this.deckCardCountMarkerService.createDeckCardCountMarkerWithPosition(currentClickedDeckId, cardId);
+            }
+            this.deckCardCountMarkerService.saveMarkerGroup(currentClickedDeckId);
+            this.deckCardCountMarkerService.applyClippingMaskToMarker();
+
+            const markerGroup = this.deckCardCountMarkerService.getMarkerGroupByDeckId(currentClickedDeckId);
+            if (!this.scene.children.includes(markerGroup)) {
+                this.scene.add(markerGroup);
+            }
+            markerGroup.position.y = 0;
+
+        } catch (error) {
+            console.error('Failed to reAdd my deck card count marker:', error);
         }
     }
 

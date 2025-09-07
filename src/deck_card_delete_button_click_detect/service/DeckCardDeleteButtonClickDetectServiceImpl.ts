@@ -23,6 +23,8 @@ import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCard
 import {MyDeckCardPositionRepositoryImpl} from "../../my_deck_card_position/repository/MyDeckCardPositionRepositoryImpl";
 import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/repository/MyDeckNumberOfCardsRepositoryImpl";
 import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of_cards_position/repository/MyDeckNumberOfCardsPositionRepositoryImpl";
+import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
+import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_marker_position/repository/DeckCardCountMarkerPositionRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -52,6 +54,8 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
     private myDeckCardPositionRepository: MyDeckCardPositionRepositoryImpl;
     private myDeckNumberOfCardsRepository: MyDeckNumberOfCardsRepositoryImpl;
     private myDeckNumberOfCardsPositionRepository: MyDeckNumberOfCardsPositionRepositoryImpl;
+    private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
+    private deckCardCountMarkerPositionRepository: DeckCardCountMarkerPositionRepositoryImpl;
 
     private cardCountManager: CardCountManager;
     private myDeckElementAdjuster: MyDeckElementAdjuster;
@@ -77,6 +81,8 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         this.myDeckCardPositionRepository = MyDeckCardPositionRepositoryImpl.getInstance();
         this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance(scene);
         this.myDeckNumberOfCardsPositionRepository = MyDeckNumberOfCardsPositionRepositoryImpl.getInstance();
+        this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
+        this.deckCardCountMarkerPositionRepository = DeckCardCountMarkerPositionRepositoryImpl.getInstance();
 
         this.cardCountManager = CardCountManager.getInstance();
         this.myDeckElementAdjuster = MyDeckElementAdjuster.getInstance();
@@ -132,6 +138,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
                 this.deleteNumberOfSelectedCardsPosition(currentClickedDeckButtonId, cardId);
                 this.deleteCard(currentClickedDeckButtonId, cardId);
                 this.deleteNumberOfCardsPosition(currentClickedDeckButtonId, cardId);
+                this.deleteDeckCardCountMarker(currentClickedDeckButtonId, cardId);
 
                 this.adjustDeckCardDeleteButton(currentClickedDeckButtonId);
                 this.adjustCardBlock(currentClickedDeckButtonId);
@@ -140,6 +147,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
                 this.adjustDeckCardAddButton(currentClickedDeckButtonId);
                 this.adjustDeckCard(currentClickedDeckButtonId);
                 this.adjustNumberOfDeckCard(currentClickedDeckButtonId);
+                this.adjustDeckCardCountMarker(currentClickedDeckButtonId);
             }
             return clickedButton;
         }
@@ -276,6 +284,15 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         if (positionId == null) return;
 
         this.myDeckNumberOfCardsPositionRepository.deletePositionAndReorder(deckId, positionId);
+    }
+
+    private deleteDeckCardCountMarker(deckId: number, cardId: number): void {
+        const markerId = this.deckCardCountMarkerRepository.findMarkerIdByDeckIdAndCardId(deckId, cardId);
+        if (markerId == null) return;
+
+        this.deckCardCountMarkerRepository.deleteMarkerMesh(deckId, markerId);
+        this.deckCardCountMarkerRepository.deleteMarkerByDeckIdAndMarkerId(deckId, markerId);
+        this.deckCardCountMarkerPositionRepository.deletePositionAndReorder(deckId, markerId);
     }
 
     private adjustDeckCardDeleteButton(deckId: number): void {
@@ -416,6 +433,26 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
             const positionY = numberOfCardsPosition.getY();
 
             this.myDeckElementAdjuster.adjustElementPosition(numberOfCardsMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    private adjustDeckCardCountMarker(deckId: number): void {
+        const markerIdList = this.deckCardCountMarkerRepository.findMarkerIdListByDeckId(deckId);
+        for (const markerId of markerIdList) {
+            const marker = this.deckCardCountMarkerRepository.findMarkerByMarkerId(markerId);
+            if (marker == null) return;
+
+            const markerMesh = marker.getMesh();
+            const markerPosition = this.deckCardCountMarkerPositionRepository.findPositionByPositionId(markerId);
+
+            if (markerPosition == null) return;
+
+            const widthPercent = 0.012;
+            const heightPercent = 1;
+            const positionX = markerPosition.getX();
+            const positionY = markerPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(markerMesh, widthPercent, heightPercent, positionX, positionY);
         }
     }
 
