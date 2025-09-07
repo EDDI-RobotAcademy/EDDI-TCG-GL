@@ -97,6 +97,7 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
             this.deleteNumberOfRemainingCards(cardId);
             this.deleteNumberOfSelectedCards(currentClickedDeckId, cardId);
             this.deleteNumberOfDeckCards(currentClickedDeckId, cardId);
+            this.totalNumberOfSelectedCardsRepository.deleteNumberByDeckId(currentClickedDeckId);
 
             const currentRemainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
             if (currentRemainingCardCount == 0) {

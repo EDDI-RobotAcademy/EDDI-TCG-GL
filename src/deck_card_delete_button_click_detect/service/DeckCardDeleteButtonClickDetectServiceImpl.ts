@@ -25,6 +25,7 @@ import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/r
 import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of_cards_position/repository/MyDeckNumberOfCardsPositionRepositoryImpl";
 import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
 import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_marker_position/repository/DeckCardCountMarkerPositionRepositoryImpl";
+import {TotalNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_total_number_of_selected_cards/repository/TotalNumberOfSelectedCardsRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -56,6 +57,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
     private myDeckNumberOfCardsPositionRepository: MyDeckNumberOfCardsPositionRepositoryImpl;
     private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
     private deckCardCountMarkerPositionRepository: DeckCardCountMarkerPositionRepositoryImpl;
+    private totalNumberOfSelectedCardsRepository: TotalNumberOfSelectedCardsRepositoryImpl;
 
     private cardCountManager: CardCountManager;
     private myDeckElementAdjuster: MyDeckElementAdjuster;
@@ -83,6 +85,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         this.myDeckNumberOfCardsPositionRepository = MyDeckNumberOfCardsPositionRepositoryImpl.getInstance();
         this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
         this.deckCardCountMarkerPositionRepository = DeckCardCountMarkerPositionRepositoryImpl.getInstance();
+        this.totalNumberOfSelectedCardsRepository = TotalNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
 
         this.cardCountManager = CardCountManager.getInstance();
         this.myDeckElementAdjuster = MyDeckElementAdjuster.getInstance();
@@ -131,6 +134,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
             this.deleteNumberOfCards(currentClickedDeckButtonId, cardId);
             this.setCardBlockerVisibility(cardId, false);
             this.deleteRemainingCards(cardId);
+            this.totalNumberOfSelectedCardsRepository.deleteNumberByDeckId(currentClickedDeckButtonId);
 
             const selectedCardCount = this.cardCountManager.findSelectedCardCountByDeck(currentClickedDeckButtonId, cardId);
             if (selectedCardCount == 0) {
