@@ -97,8 +97,11 @@ export class MyDeckNumberOfSelectedCardsServiceImpl implements MyDeckNumberOfSel
                     continue;
                 }
 
+                const cardId = this.myDeckNumberOfSelectedCardsRepository.findCardIdByNumberId(numberId);
+                if (cardId == null) return;
+
                 // To-do: position 을 number ID 로 가져오면 안 됨. (scene 에서 삭제 후 다시 그릴 때 number 객체 고유 ID 달라지기 때문)
-                const initialPosition = this.getPositionByNumberId(numberId);
+                const initialPosition = this.getPositionByDeckIdAndCardId(deckId, cardId);
                 console.log(`[DEBUG] (adjust) InitialPosition: ${initialPosition}`);
 
                 if (!initialPosition) {

@@ -72,6 +72,10 @@ export class MyDeckNumberOfCardsRepositoryImpl implements MyDeckNumberOfCardsRep
         return this.numberMap.get(numberId)?.cardCount ?? null;
     }
 
+    public findCardIdByNumberId(numberId: number): number | null {
+        return this.numberMap.get(numberId)?.cardId ?? null;
+    }
+
     public findNumberByDeckIdAndCardId(deckId: number, cardId: number): MyDeckNumberOfCards | null {
         const numberIdList = this.deckMap.get(deckId);
         if (!numberIdList) {

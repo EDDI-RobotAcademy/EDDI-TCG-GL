@@ -97,7 +97,10 @@ export class MyDeckNumberOfCardsServiceImpl implements MyDeckNumberOfCardsServic
                     continue;
                 }
 
-                const initialPosition = this.getPositionByNumberId(numberId);
+                const cardId = this.myDeckNumberOfCardsRepository.findCardIdByNumberId(numberId);
+                if (cardId == null) return;
+
+                const initialPosition = this.getPositionByDeckIdAndCardId(deckId, cardId);
                 console.log(`[DEBUG] (adjust) InitialPosition: ${initialPosition}`);
 
                 if (!initialPosition) {
@@ -160,17 +163,12 @@ export class MyDeckNumberOfCardsServiceImpl implements MyDeckNumberOfCardsServic
     }
 
     private getNumberByNumberId(numberId: number): THREE.Mesh | null {
-        const number = this.myDeckNumberOfCardsRepository.findNumberById(numberId);
-        if (number == null) {
+        const numberOfCards = this.myDeckNumberOfCardsRepository.findNumberById(numberId);
+        if (numberOfCards == null) {
             console.warn(`[WARN] My Deck Number Of Cards with Unique ID ${numberId} not found`);
             return null;
         }
-        const numberMesh = number.getMesh();
-        return numberMesh;
-    }
-
-    private getPositionByNumberId(numberId: number): MyDeckNumberOfCardsPosition | null {
-        return this.myDeckNumberOfCardsPositionRepository.findPositionByPositionId(numberId);
+        return numberOfCards.getMesh();
     }
 
     private getPositionByDeckIdAndCardId(deckId: number, cardId: number): MyDeckNumberOfCardsPosition | null {
@@ -182,12 +180,12 @@ export class MyDeckNumberOfCardsServiceImpl implements MyDeckNumberOfCardsServic
     }
 
     private getNumberMeshByDeckIdAndCardId(deckId: number, cardId: number): THREE.Mesh | null {
-        const number = this.myDeckNumberOfCardsRepository.findNumberByDeckIdAndCardId(deckId, cardId);
-        if (number == null) {
+        const numberOfCards = this.myDeckNumberOfCardsRepository.findNumberByDeckIdAndCardId(deckId, cardId);
+        if (numberOfCards == null) {
             console.warn(`[WARN] Number with Deck ID: ${deckId}, Card ID ${cardId} not found`);
             return null;
         }
-        return number.getMesh();
+        return numberOfCards.getMesh();
     }
 
     private getNumberIdByDeckIdAndCardId(deckId: number, cardId: number): number | null {
