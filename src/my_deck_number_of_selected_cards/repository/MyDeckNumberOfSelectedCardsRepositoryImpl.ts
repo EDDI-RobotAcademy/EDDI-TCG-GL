@@ -73,6 +73,10 @@ export class MyDeckNumberOfSelectedCardsRepositoryImpl implements MyDeckNumberOf
         return this.numberMap.get(numberId)?.cardCount ?? null;
     }
 
+    public findCardIdByNumberId(numberId: number): number | null {
+        return this.numberMap.get(numberId)?.cardId ?? null;
+    }
+
     public findNumberByDeckIdAndCardId(deckId: number, cardId: number): MyDeckNumberOfSelectedCards | null {
         const numberIdList = this.deckMap.get(deckId);
         if (!numberIdList) {
