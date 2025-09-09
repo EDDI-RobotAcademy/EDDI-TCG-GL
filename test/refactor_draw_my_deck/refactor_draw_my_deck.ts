@@ -100,6 +100,8 @@ import {DeckEditDoneButtonHoverDetectService} from "../../src/deck_edit_done_but
 import {DeckEditDoneButtonHoverDetectServiceImpl} from "../../src/deck_edit_done_button_hover_detect/service/DeckEditDoneButtonHoverDetectServiceImpl";
 import {DeckEditDoneButtonClickDetectService} from "../../src/deck_edit_done_button_click_detect/service/DeckEditDoneButtonClickDetectService";
 import {DeckEditDoneButtonClickDetectServiceImpl} from "../../src/deck_edit_done_button_click_detect/service/DeckEditDoneButtonClickDetectServiceImpl";
+import {DeckCardSearchInputEnterDetectService} from "../../src/deck_card_search_input_enter_detect/service/DeckCardSearchInputEnterDetectService";
+import {DeckCardSearchInputEnterDetectServiceImpl} from "../../src/deck_card_search_input_enter_detect/service/DeckCardSearchInputEnterDetectServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 import {CardCountManager} from "../../src/my_deck_card_manager/CardCountManager";
@@ -187,6 +189,7 @@ export class TCGJustTestMyDeckView {
     private deckCardAddButtonClickDetectService: DeckCardAddButtonClickDetectService;
     private deckEditDoneButtonHoverDetectService: DeckEditDoneButtonHoverDetectService;
     private deckEditDoneButtonClickDetectService: DeckEditDoneButtonClickDetectService;
+    private deckCardSearchInputEnterDetectService: DeckCardSearchInputEnterDetectService;
 
     private initialized = false;
     private isAnimating = false;
@@ -259,6 +262,7 @@ export class TCGJustTestMyDeckView {
         this.deckCardAddButtonClickDetectService = DeckCardAddButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckEditDoneButtonHoverDetectService = DeckEditDoneButtonHoverDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckEditDoneButtonClickDetectService = DeckEditDoneButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.deckCardSearchInputEnterDetectService = DeckCardSearchInputEnterDetectServiceImpl.getInstance();
 
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousemove', (e) => this.sideScrollAreaDetectService.onMouseMoveMyDeck(e), false);
@@ -424,7 +428,19 @@ export class TCGJustTestMyDeckView {
 
     private async addMyDeckSearchInputContainer():  Promise<void> {
         try {
-            await this.myDeckSearchInputContainerService.createMyDeckSearchInputContainer();
+            const searchInputContainer = await this.myDeckSearchInputContainerService.createMyDeckSearchInputContainer();
+
+            // 생성 완료 후 이벤트 등록
+            if (searchInputContainer) {
+                const inputContainer = this.myDeckSearchInputContainerService.getMyDeckSearchInputContainer();
+                if (inputContainer == null) return;
+
+                const inputElement = inputContainer.getInputElement();
+                inputElement.addEventListener("keydown", (e) => {
+                    this.deckCardSearchInputEnterDetectService.onKeyDown(e);
+                });
+                console.log('Search input keydown event registered!');
+            }
 
         } catch (error) {
             console.error('Failed to add MyDeckSearchInputContainer:', error);
