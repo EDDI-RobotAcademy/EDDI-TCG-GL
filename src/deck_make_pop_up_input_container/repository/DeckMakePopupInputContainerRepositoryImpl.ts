@@ -36,12 +36,12 @@ export class DeckMakePopupInputContainerRepositoryImpl implements DeckMakePopupI
 
         const maxLength = 12;
 
-        const inputContainerMesh = InputContainerGenerator.createInputContainer(
+        const { container: inputContainerMesh, input: inputElement } = InputContainerGenerator.createInputContainer(
             containerWidth, containerHeight, containerPosition,
-            inputWidth, inputHeight, inputFontSize,
-            maxLength, 'Deck Create' // placeholder
+            inputWidth, inputHeight, inputFontSize, maxLength, 'Deck Create'
         );
-        const newInputContainer = new DeckMakePopupInputContainer(inputContainerMesh, containerPosition);
+
+        const newInputContainer = new DeckMakePopupInputContainer(inputContainerMesh, inputElement, containerPosition);
         this.inputContainer = newInputContainer;
 
         return newInputContainer;
@@ -72,11 +72,7 @@ export class DeckMakePopupInputContainerRepositoryImpl implements DeckMakePopupI
     public updateUserInput(): void {
         const inputContainer = this.findDeckMakePopupInputContainer();
         if (inputContainer){
-            const inputContainerMesh = inputContainer.getContainer();
-            const inputElement = inputContainerMesh.querySelector('input');
-            if (inputElement) {
-                this.userInput = inputElement.value;
-            }
+            this.userInput = inputContainer.getInputElement().value;
         }
         console.log(`user input: ${this.userInput}`);
     }
@@ -84,11 +80,7 @@ export class DeckMakePopupInputContainerRepositoryImpl implements DeckMakePopupI
     public clearUserInput(): void {
         const inputContainer = this.findDeckMakePopupInputContainer();
         if (inputContainer) {
-            const inputContainerMesh = inputContainer.getContainer();
-            const inputElement = inputContainerMesh.querySelector('input');
-            if (inputElement) {
-                inputElement.value = ''; // 입력창의 값을 초기화
-            }
+            inputContainer.getInputElement().value = '';
         }
     }
 
