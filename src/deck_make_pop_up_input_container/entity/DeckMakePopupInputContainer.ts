@@ -6,7 +6,7 @@ export class DeckMakePopupInputContainer {
     containerPosition: { top: number, left: number };
 
     constructor(container: HTMLDivElement, containerPosition: { top: number, left: number }) {
-        this.id = IdGenerator.generateId("DeckMakePopupButtons");
+        this.id = IdGenerator.generateId("DeckMakePopupInputContainer");
         this.container = container;
         this.containerPosition = containerPosition;
     }

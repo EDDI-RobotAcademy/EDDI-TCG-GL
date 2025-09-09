@@ -37,10 +37,9 @@ export class DeckMakePopupInputContainerRepositoryImpl implements DeckMakePopupI
         const maxLength = 12;
 
         const inputContainerMesh = InputContainerGenerator.createInputContainer(
-            'Deck Create', // placeholder
             containerWidth, containerHeight, containerPosition,
             inputWidth, inputHeight, inputFontSize,
-            maxLength
+            maxLength, 'Deck Create' // placeholder
         );
         const newInputContainer = new DeckMakePopupInputContainer(inputContainerMesh, containerPosition);
         this.inputContainer = newInputContainer;
