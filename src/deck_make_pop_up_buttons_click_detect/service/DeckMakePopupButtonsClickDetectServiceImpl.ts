@@ -59,7 +59,7 @@ export class DeckMakePopupButtonsClickDetectServiceImpl implements DeckMakePopup
             console.log(`Clicked Deck Make Pop-up Button ID: ${clickedDeckMakePopupButton.id}`);
             this.saveCurrentButtonClickState(clickedDeckMakePopupButton);
 
-            if (clickedDeckMakePopupButton.id === 1) {
+            if (clickedDeckMakePopupButton.id === 0) {
                 console.log(`[DEBUG] click cancel button!`);
                 this.setTransparentBackgroundVisible(false);
                 this.setDeckMakePopupBackgroundVisible(false);
@@ -68,7 +68,7 @@ export class DeckMakePopupButtonsClickDetectServiceImpl implements DeckMakePopup
                 this.clearUserInput();
             }
 
-            if (clickedDeckMakePopupButton.id === 2) {
+            if (clickedDeckMakePopupButton.id === 1) {
                 console.log(`[DEBUG] click create button!`);
                 this.saveUserInput();
                 this.clearUserInput();

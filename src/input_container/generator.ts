@@ -1,9 +1,13 @@
 export class InputContainerGenerator {
     public static createInputContainer(
-        placeholder: string,
-        containerWidth: number, containerHeight: number, containerPosition: { top: number, left: number },
-        inputWidth: number, inputHeight: number, inputFontSize: number,
-        maxLength: number
+        containerWidth: number,
+        containerHeight: number,
+        containerPosition: { top: number, left: number },
+        inputWidth: number,
+        inputHeight: number,
+        inputFontSize: number,
+        maxLength: number,
+        placeholder?: string
     ): HTMLDivElement {
         // 컨테이너 생성
         const inputContainer = document.createElement('div');
@@ -18,7 +22,9 @@ export class InputContainerGenerator {
         // 입력창 생성
         const inputElement = document.createElement('input');
         inputElement.type = 'text';
-        inputElement.placeholder = placeholder;
+        if (placeholder) {
+            inputElement.placeholder = placeholder;
+        }
         inputElement.style.width = `${inputWidth}px`;
         inputElement.style.height = `${inputHeight}px`;
         inputElement.style.fontSize = `${inputFontSize}px`;
@@ -37,4 +43,19 @@ export class InputContainerGenerator {
     public static setContainerVisible(inputContainer: HTMLDivElement, displayState: 'block' | 'none'): void {
         inputContainer.style.display = displayState;
     }
+
+    public static setInputStyle(
+        inputContainer: HTMLDivElement,
+        backgroundColor: string,
+        borderStyle: string,
+        textColor: string
+    ): void {
+        const inputElement = inputContainer.querySelector('input');
+        if (inputElement) {
+            inputElement.style.backgroundColor = backgroundColor;
+            inputElement.style.border = borderStyle;
+            inputElement.style.color = textColor;
+        }
+    }
+
 }
