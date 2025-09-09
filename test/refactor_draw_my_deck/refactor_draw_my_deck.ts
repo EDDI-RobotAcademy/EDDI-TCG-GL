@@ -262,7 +262,7 @@ export class TCGJustTestMyDeckView {
         this.deckCardAddButtonClickDetectService = DeckCardAddButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckEditDoneButtonHoverDetectService = DeckEditDoneButtonHoverDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckEditDoneButtonClickDetectService = DeckEditDoneButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
-        this.deckCardSearchInputEnterDetectService = DeckCardSearchInputEnterDetectServiceImpl.getInstance();
+        this.deckCardSearchInputEnterDetectService = DeckCardSearchInputEnterDetectServiceImpl.getInstance(this.camera, this.scene);
 
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousemove', (e) => this.sideScrollAreaDetectService.onMouseMoveMyDeck(e), false);
@@ -350,7 +350,6 @@ export class TCGJustTestMyDeckView {
         await TextGenerator.loadFont('../../resource/font/GowunBatang-Regular.ttf');
 
         await this.addBackground();
-        await this.addMyDeckSearchInputContainer();
         await this.addScrollArea();
         await this.addChosenOutOfTotalSlash();
         await this.addRequiredNumberOfCards();
@@ -366,6 +365,7 @@ export class TCGJustTestMyDeckView {
         await this.addCardSelectionBlocker();
         await this.addMyDeckBlock();
         await this.addMyDeckCardName();
+        await this.addMyDeckSearchInputContainer();
         await this.addDeckCardDeleteButton();
         await this.addDeckCardAddButton();
         await this.addMyDeckButton();
