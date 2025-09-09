@@ -10,11 +10,11 @@ import {MeshDestroyer} from "../../mesh/destroyer"
 
 export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
     private static instance: MyDeckCardNameRepositoryImpl;
-    private cardNameMap: Map<number, { cardId: number, cardNameMesh: MyDeckCardName }> = new Map(); // card name unique id: {card id: mesh}
+    private cardNameMap: Map<number, { cardId: number, cardNameMesh: MyDeckCardName, cardNameText: string }> = new Map(); // card name unique id: {card id: mesh}
     private deckMap: Map<number, number[]> = new Map(); // deckId: card name unique ID List
     private nameGroupMap: Map<number, THREE.Group> = new Map(); // deckId -> Group
 
-    private originalCardNameMap: Map<number, { cardId: number, cardNameMesh: MyDeckCardName }> = new Map();
+    private originalCardNameMap: Map<number, { cardId: number, cardNameMesh: MyDeckCardName, cardNameText: string }> = new Map();
     private originalDeckMap: Map<number, number[]> = new Map();
 
     private textureManager: TextureManager;
@@ -60,7 +60,7 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
         cardNameMesh.position.set(cardNamePositionX, cardNamePositionY, 0);
 
         const newCardName = new MyDeckCardName(cardNameMesh, position, cardNameWidth, cardNameHeight);
-        this.cardNameMap.set(newCardName.id, { cardId, cardNameMesh: newCardName });
+        this.cardNameMap.set(newCardName.id, { cardId, cardNameMesh: newCardName, cardNameText: cardName});
 
         if (!this.deckMap.has(deckId)) {
             this.deckMap.set(deckId, []);
@@ -97,6 +97,30 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
         } else {
             return null;
         }
+    }
+
+    public findCardNameTextByCardNameId(cardNameId: number): string | null {
+        const card = this.cardNameMap.get(cardNameId);
+        if (card) {
+            return card.cardNameText;
+        } else {
+            return null;
+        }
+    }
+
+    public findCardIdByDeckIdAndCardNameText(deckId: number, cardNameText: string): number | null {
+        const cardNameIdList = this.deckMap.get(deckId);
+        if (!cardNameIdList) {
+            return null;
+        }
+
+        for (const cardNameId of cardNameIdList) {
+            const cardInfo = this.cardNameMap.get(cardNameId);
+            if (cardInfo && cardInfo.cardNameText === cardNameText) {
+                return cardInfo.cardId;
+            }
+        }
+        return null;
     }
 
     public findCardNameByDeckIdAndCardId(deckId: number, cardId: number): MyDeckCardName | null {
@@ -268,7 +292,8 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
 
                 this.originalCardNameMap.set(cardNameId, {
                     cardId: entry.cardId,
-                    cardNameMesh: clonedWrapper
+                    cardNameMesh: clonedWrapper,
+                    cardNameText: entry.cardNameText
                 });
 
             } else {
@@ -283,7 +308,8 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
             'originalCardNameMap:',
             Array.from(this.originalCardNameMap.entries()).map(([id, data]) => ({
                 cardNameId: id,
-                cardId: data.cardId
+                cardId: data.cardId,
+                cardNameText: data.cardNameText
             }))
         );
     }
@@ -307,7 +333,8 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
 
                 this.cardNameMap.set(cardNameId, {
                     cardId: originalCardNameInfo.cardId,
-                    cardNameMesh: originalCardNameInfo.cardNameMesh
+                    cardNameMesh: originalCardNameInfo.cardNameMesh,
+                    cardNameText: originalCardNameInfo.cardNameText
                 });
 
                 const group = this.nameGroupMap.get(deckId);
@@ -324,8 +351,9 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
             return data ? {
                 cardNameId,
                 cardId: data.cardId,
-                cardNameMesh: data.cardNameMesh
-            } : { cardNameId, cardId: null, cardNameMesh: null };
+                cardNameMesh: data.cardNameMesh,
+                cardNameText: data.cardNameText
+            } : { cardNameId, cardId: null, cardNameMesh: null, cardNameText: null };
         });
 
         console.log(
