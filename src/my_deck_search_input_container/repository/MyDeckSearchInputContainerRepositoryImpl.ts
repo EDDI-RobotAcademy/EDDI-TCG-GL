@@ -34,14 +34,15 @@ export class MyDeckSearchInputContainerRepositoryImpl implements MyDeckSearchInp
         const inputHeight = 0.007 * windowHeight;
         const inputFontSize = 0.008 * windowWidth;
 
-        const maxLength = 12;
+        const maxLength = 20;
 
-        const inputContainerMesh = InputContainerGenerator.createInputContainer(
+        const { container: inputContainerMesh, input: inputElement } = InputContainerGenerator.createInputContainer(
             containerWidth, containerHeight, containerPosition,
             inputWidth, inputHeight, inputFontSize, maxLength
         );
+
         InputContainerGenerator.setInputStyle(inputContainerMesh, "rgba(0, 0, 0, 0.4)", "0.5px solid #595959", "#f0f0f0");
-        const newInputContainer = new MyDeckSearchInputContainer(inputContainerMesh, containerPosition);
+        const newInputContainer = new MyDeckSearchInputContainer(inputContainerMesh, inputElement, containerPosition);
         this.inputContainer = newInputContainer;
 
         return newInputContainer;
@@ -57,12 +58,8 @@ export class MyDeckSearchInputContainerRepositoryImpl implements MyDeckSearchInp
 
     public updateUserInput(): void {
         const inputContainer = this.findMyDeckSearchInputContainer();
-        if (inputContainer){
-            const inputContainerMesh = inputContainer.getContainer();
-            const inputElement = inputContainerMesh.querySelector('input');
-            if (inputElement) {
-                this.userInput = inputElement.value;
-            }
+        if (inputContainer) {
+            this.userInput = inputContainer.getInputElement().value;
         }
         console.log(`user input: ${this.userInput}`);
     }
@@ -70,11 +67,7 @@ export class MyDeckSearchInputContainerRepositoryImpl implements MyDeckSearchInp
     public clearUserInput(): void {
         const inputContainer = this.findMyDeckSearchInputContainer();
         if (inputContainer) {
-            const inputContainerMesh = inputContainer.getContainer();
-            const inputElement = inputContainerMesh.querySelector('input');
-            if (inputElement) {
-                inputElement.value = ''; // 입력창의 값을 초기화
-            }
+            inputContainer.getInputElement().value = '';
         }
     }
 

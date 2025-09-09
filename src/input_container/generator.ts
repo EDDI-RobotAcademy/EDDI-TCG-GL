@@ -8,7 +8,7 @@ export class InputContainerGenerator {
         inputFontSize: number,
         maxLength: number,
         placeholder?: string
-    ): HTMLDivElement {
+    ): { container: HTMLDivElement; input: HTMLInputElement } {
         // 컨테이너 생성
         const inputContainer = document.createElement('div');
         inputContainer.style.position = 'absolute';
@@ -29,6 +29,8 @@ export class InputContainerGenerator {
         inputElement.style.height = `${inputHeight}px`;
         inputElement.style.fontSize = `${inputFontSize}px`;
         inputElement.style.padding = '12px';
+        inputElement.style.outline = "none";
+        inputElement.style.boxShadow = "none";
 
         inputElement.maxLength = maxLength;
 
@@ -37,7 +39,7 @@ export class InputContainerGenerator {
 
         // 전체 컨테이너 반환
         document.body.appendChild(inputContainer);
-        return inputContainer;
+        return { container: inputContainer, input: inputElement };
     }
 
     public static setContainerVisible(inputContainer: HTMLDivElement, displayState: 'block' | 'none'): void {

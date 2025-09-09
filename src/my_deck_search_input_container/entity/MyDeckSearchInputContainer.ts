@@ -3,17 +3,23 @@ import {IdGenerator} from "../../common/id_generator/IdGenerator";
 export class MyDeckSearchInputContainer {
     id: number;
     container: HTMLDivElement;
+    inputElement: HTMLInputElement;
     containerPosition: { top: number, left: number };
 
-    constructor(container: HTMLDivElement, containerPosition: { top: number, left: number }) {
+    constructor(container: HTMLDivElement, inputElement: HTMLInputElement, containerPosition: { top: number, left: number }) {
         this.id = IdGenerator.generateId("MyDeckSearchInputContainer");
         this.container = container;
+        this.inputElement = inputElement;
         this.container.style.display = 'block'
         this.containerPosition = containerPosition;
     }
 
     public getContainer(): HTMLDivElement {
         return this.container;
+    }
+
+    public getInputElement(): HTMLInputElement {
+        return this.inputElement;
     }
 
     public setVisibility(isVisible: 'block' | 'none'): void {
