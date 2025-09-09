@@ -72,6 +72,17 @@ export class MyDeckCardPositionRepositoryImpl implements MyDeckCardPositionRepos
         return this.deckToPositionMap.get(deckId) || [];
     }
 
+    public findPositionByDeckIdAndCardId(deckId: number, cardId: number): MyDeckCardPosition | null {
+        const positionIdList = this.deckToPositionMap.get(deckId) || [];
+        for (const positionId of positionIdList) {
+            const entry = this.positionMap.get(positionId);
+            if (entry && entry.cardId === cardId) {
+                return entry.position;
+            }
+        }
+        return null;
+    }
+
     // 특정 덱의 특정 카드의 Position 삭제 후 재정렬
     public deletePositionAndReorder(deckId: number, positionId: number): void {
         this.positionMap.delete(positionId);
@@ -92,6 +103,24 @@ export class MyDeckCardPositionRepositoryImpl implements MyDeckCardPositionRepos
         });
 
         this.deckPositionIndexMap.set(deckId, updatedPositionIdList.length);
+    }
+
+    // 검색용 position
+    public findSearchCardPosition(deckId: number, searchResultCount: number): MyDeckCardPosition[] {
+        const positionIdList = this.deckToPositionMap.get(deckId) || [];
+
+        // 검색 결과 개수만큼 positionId만 추출
+        const limitedPositionIdList = positionIdList.slice(0, searchResultCount);
+
+        // 각 positionId에 해당하는 MyDeckCardPosition 가져오기
+        const positions: MyDeckCardPosition[] = [];
+        for (const positionId of limitedPositionIdList) {
+            const entry = this.positionMap.get(positionId);
+            if (entry) {
+                positions.push(entry.position);
+            }
+        }
+        return positions;
     }
 
     public deletePositionByDeckId(deckId: number): void {
