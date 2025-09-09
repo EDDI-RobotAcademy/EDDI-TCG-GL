@@ -58,6 +58,7 @@ import {DeckCardDeleteButtonServiceImpl} from "../../src/deck_card_delete_button
 import {DeckCardCountMarkerServiceImpl} from "../../src/deck_card_count_marker/service/DeckCardCountMarkerServiceImpl";
 import {DeckCardAddButtonServiceImpl} from "../../src/deck_card_add_button/service/DeckCardAddButtonServiceImpl";
 import {RequiredNumberOfCardsServiceImpl} from "../../src/required_number_of_cards_in_the_deck/service/RequiredNumberOfCardsServiceImpl";
+import {MyDeckSearchInputContainerServiceImpl} from "../../src/my_deck_search_input_container/service/MyDeckSearchInputContainerServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -132,6 +133,7 @@ export class TCGJustTestMyDeckView {
     private myDeckTotalOwnedCardsService = MyDeckTotalOwnedCardsServiceImpl.getInstance();
     private myDeckRemainingOutOfTotalSlashService = MyDeckRemainingOutOfTotalSlashServiceImpl.getInstance();
     private myDeckChosenOutOfTotalSlashService = MyDeckChosenOutOfTotalSlashServiceImpl.getInstance();
+    private myDeckSearchInputContainerService = MyDeckSearchInputContainerServiceImpl.getInstance();
 
     private deckCardDeleteButtonService: DeckCardDeleteButtonServiceImpl;
     private deckCardCountMarkerService: DeckCardCountMarkerServiceImpl;
@@ -344,6 +346,7 @@ export class TCGJustTestMyDeckView {
         await TextGenerator.loadFont('../../resource/font/GowunBatang-Regular.ttf');
 
         await this.addBackground();
+        await this.addMyDeckSearchInputContainer();
         await this.addScrollArea();
         await this.addChosenOutOfTotalSlash();
         await this.addRequiredNumberOfCards();
@@ -416,6 +419,15 @@ export class TCGJustTestMyDeckView {
             }
         } catch (error) {
             console.error('Failed to add background:', error);
+        }
+    }
+
+    private async addMyDeckSearchInputContainer():  Promise<void> {
+        try {
+            await this.myDeckSearchInputContainerService.createMyDeckSearchInputContainer();
+
+        } catch (error) {
+            console.error('Failed to add MyDeckSearchInputContainer:', error);
         }
     }
 
@@ -1306,6 +1318,7 @@ export class TCGJustTestMyDeckView {
 
             this.userWindowSize.calculateScaleFactors(newWidth, newHeight);
             const { scaleX, scaleY } = this.userWindowSize.getScaleFactors();
+            this.myDeckSearchInputContainerService.adjustMyDeckSearchInputContainerPosition();
             this.sideScrollAreaService.adjustMyDeckSideScrollAreaPosition();
             this.sideScrollAreaService.adjustMyDeckCardScrollAreaPosition();
             this.sideScrollAreaService.adjustMyDeckBlockScrollAreaPosition();
