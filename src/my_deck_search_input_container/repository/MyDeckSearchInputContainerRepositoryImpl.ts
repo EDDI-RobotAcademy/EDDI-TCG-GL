@@ -56,6 +56,14 @@ export class MyDeckSearchInputContainerRepositoryImpl implements MyDeckSearchInp
         this.inputContainer = null;
     }
 
+    public findInputValue(): string | null {
+        const inputContainer = this.findMyDeckSearchInputContainer();
+        if (!inputContainer) return null;
+
+        const inputElement = inputContainer.getInputElement();
+        return inputElement.value.trim();
+    }
+
     public updateUserInput(): void {
         const inputContainer = this.findMyDeckSearchInputContainer();
         if (inputContainer) {
