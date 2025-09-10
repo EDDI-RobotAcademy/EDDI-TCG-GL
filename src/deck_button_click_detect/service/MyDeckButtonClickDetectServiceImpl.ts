@@ -38,6 +38,7 @@ import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_m
 import {TotalNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_total_number_of_selected_cards/repository/TotalNumberOfSelectedCardsRepositoryImpl";
 import {MyDeckChosenOutOfTotalSlashRepositoryImpl} from "../../my_deck_chosen_out_of_total_slash/repository/MyDeckChosenOutOfTotalSlashRepositoryImpl";
 import {RequiredNumberOfCardsRepositoryImpl} from "../../required_number_of_cards_in_the_deck/repository/RequiredNumberOfCardsRepositoryImpl";
+import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
@@ -84,6 +85,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private totalNumberOfSelectedCardsRepository: TotalNumberOfSelectedCardsRepositoryImpl;
     private myDeckChosenOutOfTotalSlashRepository: MyDeckChosenOutOfTotalSlashRepositoryImpl;
     private requiredNumberOfCardsRepository: RequiredNumberOfCardsRepositoryImpl;
+    private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cardCountManager = CardCountManager.getInstance();
@@ -123,6 +125,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.totalNumberOfSelectedCardsRepository = TotalNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
         this.myDeckChosenOutOfTotalSlashRepository = MyDeckChosenOutOfTotalSlashRepositoryImpl.getInstance();
         this.requiredNumberOfCardsRepository = RequiredNumberOfCardsRepositoryImpl.getInstance(scene);
+        this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckButtonClickDetectServiceImpl {
@@ -151,6 +154,12 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         );
 
         if (clickedDeckButton) {
+            const searchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
+            if (searchInputText !== null && searchInputText.length > 0) {
+                this.myDeckSearchInputContainerRepository.clearUserInput();
+                this.myDeckSearchInputContainerRepository.deleteUserInput();
+            }
+
             const previousClickedDeckButtonId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
             if (previousClickedDeckButtonId !== null) {
                 this.setButtonVisibility(previousClickedDeckButtonId, true);
