@@ -46,6 +46,7 @@ import {DeckEditDoneButtonHoverDetectRepositoryImpl} from "../../deck_edit_done_
 import {MyDeckCardPositionRepositoryImpl} from "../../my_deck_card_position/repository/MyDeckCardPositionRepositoryImpl";
 import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of_cards_position/repository/MyDeckNumberOfCardsPositionRepositoryImpl";
 import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_marker_position/repository/DeckCardCountMarkerPositionRepositoryImpl";
+import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClickDetectService {
@@ -85,6 +86,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private myDeckCardPositionRepository: MyDeckCardPositionRepositoryImpl;
     private myDeckNumberOfCardsPositionRepository: MyDeckNumberOfCardsPositionRepositoryImpl;
     private deckCardCountMarkerPositionRepository: DeckCardCountMarkerPositionRepositoryImpl;
+    private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
     private cardCountManager: CardCountManager;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
@@ -123,6 +125,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.myDeckCardPositionRepository = MyDeckCardPositionRepositoryImpl.getInstance();
         this.myDeckNumberOfCardsPositionRepository = MyDeckNumberOfCardsPositionRepositoryImpl.getInstance();
         this.deckCardCountMarkerPositionRepository = DeckCardCountMarkerPositionRepositoryImpl.getInstance();
+        this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
         this.cardCountManager = CardCountManager.getInstance();
     }
 
@@ -151,11 +154,16 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                 this.camera);
 
             if (clickedButton) {
+                const searchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
+                if (searchInputText !== null && searchInputText.length > 0) {
+                    this.myDeckSearchInputContainerRepository.clearUserInput();
+                    this.myDeckSearchInputContainerRepository.deleteUserInput();
+                }
+
                 this.saveCurrentButtonClickState(true);
                 console.log(`[DEBUG] Clicked Deck Edit Button`);
                 console.log(`%c Clicked Deck Edit Button`, 'color: #ffbb00; font-weight: bold;');
 
-//                 this.hideAllCardBlocker();
                 const currentClickedDeckButtonId = this.getCurrentClickedDeckButtonId();
                 if (currentClickedDeckButtonId !== null) {
                     console.log(`Deck Button Id?: ${currentClickedDeckButtonId}`);
