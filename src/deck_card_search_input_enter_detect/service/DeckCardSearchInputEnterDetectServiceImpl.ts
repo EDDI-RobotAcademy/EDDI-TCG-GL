@@ -8,6 +8,7 @@ import {MyDeckCardNameRepositoryImpl} from "../../my_deck_card_name/repository/M
 import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardRepositoryImpl";
 import {MyDeckCardPositionRepositoryImpl} from "../../my_deck_card_position/repository/MyDeckCardPositionRepositoryImpl";
 import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
+import {InputContainerGenerator} from "../../input_container/generator";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -90,13 +91,13 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         return cardNames;
     }
 
-    // 입력값으로 시작하는 카드 이름을 찾아 반환
+    // 특정 한 글자만 포함해도 매칭, 공백 무시 가능
     private findMatchingCardNames(deckId: number, name: string): string[] {
         const cardNames = this.getCardNameList(deckId);
         const normalizedInput = name.replace(/\s+/g, '').toLowerCase();
 
         return cardNames.filter(cardName =>
-            cardName.replace(/\s+/g, '').toLowerCase().startsWith(normalizedInput)
+            cardName.replace(/\s+/g, '').toLowerCase().includes(normalizedInput)
         );
     }
 
