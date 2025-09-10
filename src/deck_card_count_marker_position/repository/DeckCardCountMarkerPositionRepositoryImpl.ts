@@ -70,6 +70,24 @@ export class DeckCardCountMarkerPositionRepositoryImpl implements DeckCardCountM
         return this.deckToPositionMap.get(deckId) || [];
     }
 
+    // 검색용 position 가져오기
+    public findSearchMarkerPosition(deckId: number, searchResultCount: number): DeckCardCountMarkerPosition[] {
+        const positionIdList = this.deckToPositionMap.get(deckId) || [];
+
+        // 검색 결과 개수만큼 positionId만 추출
+        const limitedPositionIdList = positionIdList.slice(0, searchResultCount);
+
+        // 각 positionId에 해당하는 DeckCardCountMarkerPosition 가져오기
+        const positions: DeckCardCountMarkerPosition[] = [];
+        for (const positionId of limitedPositionIdList) {
+            const entry = this.positionMap.get(positionId);
+            if (entry) {
+                positions.push(entry.position);
+            }
+        }
+        return positions;
+    }
+
     // To-do: 삭제 부분 후에 수정해야 함
     public deletePositionAndReorder(deckId: number, positionId: number): void {
         this.positionMap.delete(positionId);
