@@ -10,9 +10,9 @@ export class MyDeckCardSearchCancelButtonRepositoryImpl implements MyDeckCardSea
     private button: MyDeckCardSearchCancelButton | null = null;
     private textureManager: TextureManager;
 
-    private readonly BUTTON_WIDTH: number = 0.013
-    private readonly BUTTON_POSITION_X: number = - 0.036
-    private readonly BUTTON_POSITION_Y: number = 0.274
+    private readonly BUTTON_WIDTH: number = 0.009
+    private readonly BUTTON_POSITION_X: number = - 0.037
+    private readonly BUTTON_POSITION_Y: number = 0.2735
 
     private constructor(textureManager: TextureManager) {
         this.textureManager = textureManager;

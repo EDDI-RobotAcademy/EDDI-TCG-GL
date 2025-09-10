@@ -103,6 +103,8 @@ import {DeckEditDoneButtonClickDetectService} from "../../src/deck_edit_done_but
 import {DeckEditDoneButtonClickDetectServiceImpl} from "../../src/deck_edit_done_button_click_detect/service/DeckEditDoneButtonClickDetectServiceImpl";
 import {DeckCardSearchInputEnterDetectService} from "../../src/deck_card_search_input_enter_detect/service/DeckCardSearchInputEnterDetectService";
 import {DeckCardSearchInputEnterDetectServiceImpl} from "../../src/deck_card_search_input_enter_detect/service/DeckCardSearchInputEnterDetectServiceImpl";
+import {DeckCardSearchCancelButtonClickDetectService} from "../../src/deck_card_search_cancel_button_click_detect/service/DeckCardSearchCancelButtonClickDetectService";
+import {DeckCardSearchCancelButtonClickDetectServiceImpl} from "../../src/deck_card_search_cancel_button_click_detect/service/DeckCardSearchCancelButtonClickDetectServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 import {CardCountManager} from "../../src/my_deck_card_manager/CardCountManager";
@@ -192,6 +194,7 @@ export class TCGJustTestMyDeckView {
     private deckEditDoneButtonHoverDetectService: DeckEditDoneButtonHoverDetectService;
     private deckEditDoneButtonClickDetectService: DeckEditDoneButtonClickDetectService;
     private deckCardSearchInputEnterDetectService: DeckCardSearchInputEnterDetectService;
+    private deckCardSearchCancelButtonClickDetectService: DeckCardSearchCancelButtonClickDetectService;
 
     private initialized = false;
     private isAnimating = false;
@@ -265,6 +268,7 @@ export class TCGJustTestMyDeckView {
         this.deckEditDoneButtonHoverDetectService = DeckEditDoneButtonHoverDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckEditDoneButtonClickDetectService = DeckEditDoneButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckCardSearchInputEnterDetectService = DeckCardSearchInputEnterDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.deckCardSearchCancelButtonClickDetectService = DeckCardSearchCancelButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
 
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousemove', (e) => this.sideScrollAreaDetectService.onMouseMoveMyDeck(e), false);
@@ -321,6 +325,7 @@ export class TCGJustTestMyDeckView {
         }, false);
         this.renderer.domElement.addEventListener('mousemove', (e) => this.deckEditDoneButtonHoverDetectService.onMouseMove(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckEditDoneButtonClickDetectService.onMouseDown(e), false);
+        this.renderer.domElement.addEventListener('mousedown', (e) => this.deckCardSearchCancelButtonClickDetectService.onMouseDown(e), false);
     }
 
     public static getInstance(simulationMyDeckContainer: HTMLElement): TCGJustTestMyDeckView {
