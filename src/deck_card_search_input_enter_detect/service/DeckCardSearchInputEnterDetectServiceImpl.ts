@@ -68,6 +68,8 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
 
         if (inputText.length === 0) {
             this.restoreAllCardPositions(deckId);
+            this.restoreAllNumberOfCardsPositions(deckId);
+            this.restoreAllMarkerPositions(deckId);
             this.showEmptyInputPopup();
             return;
         }
@@ -88,6 +90,8 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
 
         } else {
             this.restoreAllCardPositions(deckId);
+            this.restoreAllNumberOfCardsPositions(deckId);
+            this.restoreAllMarkerPositions(deckId);
             this.showNotFoundPopup();
         }
 
@@ -262,7 +266,6 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         }
     }
 
-
     private restoreAllCardPositions(deckId: number): void {
         const cardUniqueIdList = this.myDeckCardRepository.findCardUniqueIdListByDeckId(deckId);
         for (const cardUniqueId of cardUniqueIdList) {
@@ -283,6 +286,52 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
 
             this.myDeckElementAdjuster.adjustElementPosition(cardMesh, widthPercent, heightPercent, positionX, positionY);
             card.setVisibility(true);
+        }
+    }
+
+    private restoreAllNumberOfCardsPositions(deckId: number): void {
+        const numberIdList = this.myDeckNumberOfCardsRepository.findNumberIdListByDeckId(deckId);
+        for (const numberId of numberIdList) {
+            const cardId = this.myDeckNumberOfCardsRepository.findCardIdByNumberId(numberId);
+            if (cardId == null) return;
+
+            const numberOfCards = this.myDeckNumberOfCardsRepository.findNumberByDeckIdAndCardId(deckId, cardId);
+            if (numberOfCards == null) return;
+            const numberOfCardsMesh = numberOfCards.getMesh();
+
+            const numberPosition = this.myDeckNumberOfCardsPositionRepository.findPositionByDeckIdAndCardId(deckId, cardId);
+            if (numberPosition == null) return;
+
+            const widthPercent = 0.013;
+            const heightPercent = 1;
+            const positionX = numberPosition.getX();
+            const positionY = numberPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(numberOfCardsMesh, widthPercent, heightPercent, positionX, positionY);
+            numberOfCards.setVisibility(true);
+        }
+    }
+
+    private restoreAllMarkerPositions(deckId: number): void {
+        const markerIdList = this.deckCardCountMarkerRepository.findMarkerIdListByDeckId(deckId);
+        for (const markerId of markerIdList) {
+            const cardId = this.deckCardCountMarkerRepository.findCardIdByMarkerId(markerId);
+            if (cardId == null) return;
+
+            const marker = this.deckCardCountMarkerRepository.findMarkerByDeckIdAndCardId(deckId, cardId);
+            if (marker == null) return;
+            const markerMesh = marker.getMesh();
+
+            const markerPosition = this.deckCardCountMarkerPositionRepository.findPositionByDeckIdAndCardId(deckId, cardId);
+            if (markerPosition == null) return;
+
+            const widthPercent = 0.012;
+            const heightPercent = 1;
+            const positionX = markerPosition.getX();
+            const positionY = markerPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(markerMesh, widthPercent, heightPercent, positionX, positionY);
+            marker.setVisibility(true);
         }
     }
 
