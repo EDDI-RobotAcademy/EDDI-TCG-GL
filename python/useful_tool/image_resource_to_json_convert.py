@@ -69,6 +69,7 @@ class WillBeReferenceImageLocation(Enum):
     CARD_SELECTION_BLOCKER = "resource/card_selection_blocker/"
     CARD_COUNT = "resource/card_count/"
     CARD_COUNT_NOTATION = "resource/card_count_notation/"
+    SEARCH_CANCEL_BUTTON = "resource/search/"
 
 class RelativeImageLocation(Enum):
     CARD = "../../resource/battle_field_unit/card/"
@@ -132,6 +133,7 @@ class RelativeImageLocation(Enum):
     CARD_SELECTION_BLOCKER = "../../resource/card_selection_blocker/"
     CARD_COUNT = "../../resource/card_count/"
     CARD_COUNT_NOTATION = "../../resource/card_count_notation/"
+    SEARCH_CANCEL_BUTTON = "../../resource/search/"
 
 # 디렉토리 경로 설정
 relative_paths = {
@@ -196,6 +198,7 @@ relative_paths = {
     RelativeImageLocation.CARD_SELECTION_BLOCKER: RelativeImageLocation.CARD_SELECTION_BLOCKER.value,
     RelativeImageLocation.CARD_COUNT: RelativeImageLocation.CARD_COUNT.value,
     RelativeImageLocation.CARD_COUNT_NOTATION: RelativeImageLocation.CARD_COUNT_NOTATION.value,
+    RelativeImageLocation.SEARCH_CANCEL_BUTTON: RelativeImageLocation.SEARCH_CANCEL_BUTTON.value,
 }
 
 reference_paths = {
@@ -260,6 +263,7 @@ reference_paths = {
     WillBeReferenceImageLocation.CARD_SELECTION_BLOCKER: WillBeReferenceImageLocation.CARD_SELECTION_BLOCKER.value,
     WillBeReferenceImageLocation.CARD_COUNT: WillBeReferenceImageLocation.CARD_COUNT.value,
     WillBeReferenceImageLocation.CARD_COUNT_NOTATION: WillBeReferenceImageLocation.CARD_COUNT_NOTATION.value,
+    WillBeReferenceImageLocation.SEARCH_CANCEL_BUTTON: WillBeReferenceImageLocation.SEARCH_CANCEL_BUTTON.value,
 }
 
 image_paths = {
@@ -324,6 +328,7 @@ image_paths = {
     "card_selection_blocker": [],
     "card_count": [],
     "card_count_notation": [],
+    "search_cancel_button": [],
 }
 
 def is_image_file(file_name):

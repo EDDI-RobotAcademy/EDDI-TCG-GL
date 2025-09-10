@@ -74,6 +74,7 @@ export class TextureManager {
     private cardSelectionBlockerTextureList: { [id: number]: THREE.Texture } = {};
     private cardCountTextureList: { [id: number]: THREE.Texture } = {};
     private cardCountNotationTextureList: { [id: number]: THREE.Texture } = {};
+    private searchCancelButtonTextureList: { [id: number]: THREE.Texture } = {};
 
     private constructor(renderer?: THREE.WebGLRenderer) {
         if (renderer instanceof THREE.WebGLRenderer) {
@@ -172,6 +173,7 @@ export class TextureManager {
                 this.loadTextures(imageData.card_selection_blocker, this.cardSelectionBlockerTextureList),
                 this.loadTextures(imageData.card_count, this.cardCountTextureList),
                 this.loadTextures(imageData.card_count_notation, this.cardCountNotationTextureList),
+                this.loadTextures(imageData.search_cancel_button, this.searchCancelButtonTextureList),
             ]);
 
             console.log('All textures preloaded from TextureManager.ts');
@@ -404,6 +406,8 @@ export class TextureManager {
                 return this.cardCountTextureList[id];
             case 'card_count_notation':
                 return this.cardCountNotationTextureList[id];
+            case 'search_cancel_button':
+                return this.searchCancelButtonTextureList[id];
             default:
                 return undefined;
         }
