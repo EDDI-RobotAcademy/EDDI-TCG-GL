@@ -37,7 +37,7 @@ export class MyDeckCardSearchCancelButtonServiceImpl implements MyDeckCardSearch
             const buttonMesh = button.getMesh();
             const initialPosition = button.position;
 
-            const buttonWidth = 0.013 * windowWidth;
+            const buttonWidth = 0.009 * windowWidth;
             const buttonHeight = buttonWidth;
 
             const newPositionX = initialPosition.getX() * windowWidth;
