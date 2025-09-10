@@ -70,6 +70,36 @@ export class DeckCardCountMarkerPositionRepositoryImpl implements DeckCardCountM
         return this.deckToPositionMap.get(deckId) || [];
     }
 
+    public findPositionByDeckIdAndCardId(deckId: number, cardId: number): DeckCardCountMarkerPosition | null {
+        const positionIdList = this.deckToPositionMap.get(deckId);
+        if (!positionIdList) {
+            return null;
+        }
+
+        for (const positionId of positionIdList) {
+            const positionInfo = this.positionMap.get(positionId);
+            if (positionInfo && positionInfo.cardId === cardId) {
+                return positionInfo.position;
+            }
+        }
+        return null;
+    }
+
+    public findPositionIdByDeckIdAndCardId(deckId: number, cardId: number): number | null {
+        const positionIdList = this.deckToPositionMap.get(deckId);
+        if (!positionIdList) {
+            return null;
+        }
+
+        for (const positionId of positionIdList) {
+            const positionInfo = this.positionMap.get(positionId);
+            if (positionInfo && positionInfo.cardId === cardId) {
+                return positionId;
+            }
+        }
+        return null;
+    }
+
     // 검색용 position 가져오기
     public findSearchMarkerPosition(deckId: number, searchResultCount: number): DeckCardCountMarkerPosition[] {
         const positionIdList = this.deckToPositionMap.get(deckId) || [];
