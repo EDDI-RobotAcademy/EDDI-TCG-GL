@@ -7,7 +7,7 @@ export class DeckCardSearchCancelButtonClickDetectRepositoryImpl implements Deck
     private static instance: DeckCardSearchCancelButtonClickDetectRepositoryImpl;
     private raycaster = new THREE.Raycaster();
 
-    private buttonClickEnabled: boolean = true;
+    private buttonClickEnabled: boolean = false;
 
     public static getInstance(): DeckCardSearchCancelButtonClickDetectRepositoryImpl {
         if (!DeckCardSearchCancelButtonClickDetectRepositoryImpl.instance) {

@@ -74,7 +74,6 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
     }
 
     public async onMouseDown(event: MouseEvent): Promise<DeckDeleteButton | null> {
-        console.log(`%c 삭제 버튼 마우스 이벤트 등록`, 'color: #00d5ff; font-weight: bold;');
         if (this.isButtonClickEnabled() == false) return null;
 
         const currentClickedDeckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();

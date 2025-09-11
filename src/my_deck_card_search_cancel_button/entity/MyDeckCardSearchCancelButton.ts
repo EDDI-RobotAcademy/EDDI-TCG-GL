@@ -11,7 +11,7 @@ export class MyDeckCardSearchCancelButton {
         this.id = IdGenerator.generateId("MyDeckCardSearchCancelButton");
         this.mesh = mesh;
         this.position = position;
-        this.mesh.visible = true;
+        this.mesh.visible = false;
     }
 
     public getMesh(): THREE.Mesh {
