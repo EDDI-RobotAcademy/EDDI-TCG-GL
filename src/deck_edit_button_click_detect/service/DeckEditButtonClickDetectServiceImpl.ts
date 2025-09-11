@@ -47,6 +47,9 @@ import {MyDeckCardPositionRepositoryImpl} from "../../my_deck_card_position/repo
 import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of_cards_position/repository/MyDeckNumberOfCardsPositionRepositoryImpl";
 import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_marker_position/repository/DeckCardCountMarkerPositionRepositoryImpl";
 import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
+import {MyDeckCardSearchCancelButtonRepositoryImpl} from "../../my_deck_card_search_cancel_button/repository/MyDeckCardSearchCancelButtonRepositoryImpl";
+import {DeckCardSearchCancelButtonClickDetectRepositoryImpl} from "../../deck_card_search_cancel_button_click_detect/repository/DeckCardSearchCancelButtonClickDetectRepositoryImpl";
+
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClickDetectService {
@@ -87,6 +90,8 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private myDeckNumberOfCardsPositionRepository: MyDeckNumberOfCardsPositionRepositoryImpl;
     private deckCardCountMarkerPositionRepository: DeckCardCountMarkerPositionRepositoryImpl;
     private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
+    private myDeckCardSearchCancelButtonRepository: MyDeckCardSearchCancelButtonRepositoryImpl;
+    private deckCardSearchCancelButtonClickDetectRepository: DeckCardSearchCancelButtonClickDetectRepositoryImpl;
     private cardCountManager: CardCountManager;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
@@ -126,6 +131,8 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.myDeckNumberOfCardsPositionRepository = MyDeckNumberOfCardsPositionRepositoryImpl.getInstance();
         this.deckCardCountMarkerPositionRepository = DeckCardCountMarkerPositionRepositoryImpl.getInstance();
         this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
+        this.myDeckCardSearchCancelButtonRepository = MyDeckCardSearchCancelButtonRepositoryImpl.getInstance();
+        this.deckCardSearchCancelButtonClickDetectRepository = DeckCardSearchCancelButtonClickDetectRepositoryImpl.getInstance();
         this.cardCountManager = CardCountManager.getInstance();
     }
 
@@ -159,6 +166,9 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                     this.myDeckSearchInputContainerRepository.clearUserInput();
                     this.myDeckSearchInputContainerRepository.deleteUserInput();
                 }
+
+                this.setSearchCancelButtonVisibility(false);
+                this.setSearchCancelButtonClickEnabled(false);
 
                 this.saveCurrentButtonClickState(true);
                 console.log(`[DEBUG] Clicked Deck Edit Button`);
@@ -328,6 +338,14 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.myDeckRemainingOutOfTotalSlashRepository.findAllSlashList()?.forEach(slash =>
             slash.setVisibility(isVisible)
         );
+    }
+
+    private setSearchCancelButtonVisibility(isVisible: boolean): void {
+        this.myDeckCardSearchCancelButtonRepository.findButton()?.setVisibility(isVisible);
+    }
+
+    private setSearchCancelButtonClickEnabled(isEnable: boolean): void {
+        this.deckCardSearchCancelButtonClickDetectRepository.setButtonClickEnabled(isEnable);
     }
 
     private initializeBlockerVisibility(): void {
