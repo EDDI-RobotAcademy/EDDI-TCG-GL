@@ -26,8 +26,4 @@ export class DeckCardSearchInputEnterDetectRepositoryImpl implements DeckCardSea
         return document.activeElement === inputElement && event.key === "Enter";
     }
 
-    public getInputValue(inputElement: HTMLInputElement): string {
-        return inputElement.value.trim();
-    }
-
 }

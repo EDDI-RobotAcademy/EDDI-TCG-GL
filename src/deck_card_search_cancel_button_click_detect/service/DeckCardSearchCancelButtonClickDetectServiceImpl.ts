@@ -5,20 +5,48 @@ import {DeckCardSearchCancelButtonClickDetectRepositoryImpl} from "../repository
 
 import {MyDeckCardSearchCancelButton} from "../../my_deck_card_search_cancel_button/entity/MyDeckCardSearchCancelButton";
 import {MyDeckCardSearchCancelButtonRepositoryImpl} from "../../my_deck_card_search_cancel_button/repository/MyDeckCardSearchCancelButtonRepositoryImpl";
+import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
+import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardRepositoryImpl";
+import {MyDeckCardPositionRepositoryImpl} from "../../my_deck_card_position/repository/MyDeckCardPositionRepositoryImpl";
+import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/repository/MyDeckNumberOfCardsRepositoryImpl";
+import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of_cards_position/repository/MyDeckNumberOfCardsPositionRepositoryImpl";
+import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
+import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_marker_position/repository/DeckCardCountMarkerPositionRepositoryImpl";
+import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
 
+import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
+
 export class DeckCardSearchCancelButtonClickDetectServiceImpl implements DeckCardSearchCancelButtonClickDetectService {
     private static instance: DeckCardSearchCancelButtonClickDetectServiceImpl | null = null;
     private cameraRepository: CameraRepository;
+    private myDeckElementAdjuster: MyDeckElementAdjuster;
     private deckCardSearchCancelButtonClickDetectRepository: DeckCardSearchCancelButtonClickDetectRepositoryImpl;
     private myDeckCardSearchCancelButtonRepository: MyDeckCardSearchCancelButtonRepositoryImpl;
+    private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
+    private myDeckCardRepository: MyDeckCardRepositoryImpl;
+    private myDeckCardPositionRepository: MyDeckCardPositionRepositoryImpl;
+    private myDeckNumberOfCardsRepository: MyDeckNumberOfCardsRepositoryImpl;
+    private myDeckNumberOfCardsPositionRepository: MyDeckNumberOfCardsPositionRepositoryImpl;
+    private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
+    private deckCardCountMarkerPositionRepository: DeckCardCountMarkerPositionRepositoryImpl;
+    private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
+        this.myDeckElementAdjuster = MyDeckElementAdjuster.getInstance();
         this.deckCardSearchCancelButtonClickDetectRepository = DeckCardSearchCancelButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckCardSearchCancelButtonRepository = MyDeckCardSearchCancelButtonRepositoryImpl.getInstance();
+        this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
+        this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance(scene);
+        this.myDeckCardPositionRepository = MyDeckCardPositionRepositoryImpl.getInstance();
+        this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance(scene);
+        this.myDeckNumberOfCardsPositionRepository = MyDeckNumberOfCardsPositionRepositoryImpl.getInstance();
+        this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
+        this.deckCardCountMarkerPositionRepository = DeckCardCountMarkerPositionRepositoryImpl.getInstance();
+        this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckCardSearchCancelButtonClickDetectServiceImpl {
@@ -38,15 +66,29 @@ export class DeckCardSearchCancelButtonClickDetectServiceImpl implements DeckCar
 
     public async handleClick(clickPoint: { x: number; y: number }): Promise<MyDeckCardSearchCancelButton | null> {
         const { x, y } = clickPoint;
+        const currentClickedDeckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+        if (currentClickedDeckId == null) return null;
+
         const button = this.getSearchCancelButton();
         if (button !== null) {
             const clickedButton = this.deckCardSearchCancelButtonClickDetectRepository.isButtonClicked(
                 { x, y },
                 button,
-                this.camera);
+                this.camera
+            );
 
             if (clickedButton) {
                 console.log(`[DEBUG] Clicked Search Cancel Button`);
+                this.restoreAllCardPositions(currentClickedDeckId);
+                this.restoreAllNumberOfCardsPositions(currentClickedDeckId);
+                this.restoreAllMarkerPositions(currentClickedDeckId);
+                this.setSearchCancelButtonVisibility(false);
+
+                const searchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
+                if (searchInputText !== null && searchInputText.length > 0) {
+                    this.myDeckSearchInputContainerRepository.clearUserInput();
+                    this.myDeckSearchInputContainerRepository.deleteUserInput();
+                }
 
                 return clickedButton;
             }
@@ -59,13 +101,90 @@ export class DeckCardSearchCancelButtonClickDetectServiceImpl implements DeckCar
 
         if (event.button === 0) {
             const hoverPoint = { x: event.clientX, y: event.clientY };
-            return await this.handleClick(hoverPoint);
+            const result = await this.handleClick(hoverPoint);
+            if (result) {
+                this.setButtonClickEnabled(false);
+                return result;
+            }
         }
         return null;
     }
 
     private getSearchCancelButton(): MyDeckCardSearchCancelButton | null {
         return this.myDeckCardSearchCancelButtonRepository.findButton();
+    }
+
+    private setSearchCancelButtonVisibility(isVisible: boolean): void {
+        this.myDeckCardSearchCancelButtonRepository.findButton()?.setVisibility(isVisible);
+    }
+
+    private restoreAllCardPositions(deckId: number): void {
+        const cardUniqueIdList = this.myDeckCardRepository.findCardUniqueIdListByDeckId(deckId);
+        for (const cardUniqueId of cardUniqueIdList) {
+            const cardId = this.myDeckCardRepository.findCardIdByCardUniqueId(cardUniqueId);
+            if (cardId == null) return;
+
+            const card = this.myDeckCardRepository.findCardByDeckIdAndCardId(deckId, cardId);
+            if (card == null) return;
+            const cardMesh = card.getMesh();
+
+            const cardPosition = this.myDeckCardPositionRepository.findPositionByDeckIdAndCardId(deckId, cardId);
+            if (cardPosition == null) return;
+
+            const widthPercent = 0.096;
+            const heightPercent = (1540 / 952);
+            const positionX = cardPosition.getX();
+            const positionY = cardPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(cardMesh, widthPercent, heightPercent, positionX, positionY);
+            card.setVisibility(true);
+        }
+    }
+
+    private restoreAllNumberOfCardsPositions(deckId: number): void {
+        const numberIdList = this.myDeckNumberOfCardsRepository.findNumberIdListByDeckId(deckId);
+        for (const numberId of numberIdList) {
+            const cardId = this.myDeckNumberOfCardsRepository.findCardIdByNumberId(numberId);
+            if (cardId == null) return;
+
+            const numberOfCards = this.myDeckNumberOfCardsRepository.findNumberByDeckIdAndCardId(deckId, cardId);
+            if (numberOfCards == null) return;
+            const numberOfCardsMesh = numberOfCards.getMesh();
+
+            const numberPosition = this.myDeckNumberOfCardsPositionRepository.findPositionByDeckIdAndCardId(deckId, cardId);
+            if (numberPosition == null) return;
+
+            const widthPercent = 0.013;
+            const heightPercent = 1;
+            const positionX = numberPosition.getX();
+            const positionY = numberPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(numberOfCardsMesh, widthPercent, heightPercent, positionX, positionY);
+            numberOfCards.setVisibility(true);
+        }
+    }
+
+    private restoreAllMarkerPositions(deckId: number): void {
+        const markerIdList = this.deckCardCountMarkerRepository.findMarkerIdListByDeckId(deckId);
+        for (const markerId of markerIdList) {
+            const cardId = this.deckCardCountMarkerRepository.findCardIdByMarkerId(markerId);
+            if (cardId == null) return;
+
+            const marker = this.deckCardCountMarkerRepository.findMarkerByDeckIdAndCardId(deckId, cardId);
+            if (marker == null) return;
+            const markerMesh = marker.getMesh();
+
+            const markerPosition = this.deckCardCountMarkerPositionRepository.findPositionByDeckIdAndCardId(deckId, cardId);
+            if (markerPosition == null) return;
+
+            const widthPercent = 0.012;
+            const heightPercent = 1;
+            const positionX = markerPosition.getX();
+            const positionY = markerPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(markerMesh, widthPercent, heightPercent, positionX, positionY);
+            marker.setVisibility(true);
+        }
     }
 
 }
