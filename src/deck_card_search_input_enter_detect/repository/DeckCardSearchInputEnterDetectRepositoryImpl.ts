@@ -3,6 +3,7 @@ import {DeckCardSearchInputEnterDetectRepository} from "./DeckCardSearchInputEnt
 export class DeckCardSearchInputEnterDetectRepositoryImpl implements DeckCardSearchInputEnterDetectRepository {
     private static instance: DeckCardSearchInputEnterDetectRepositoryImpl;
     private enterDetectionEnabled: boolean = true;
+    private enterPressedState: boolean = false;
 
     private constructor() {}
 
@@ -24,6 +25,14 @@ export class DeckCardSearchInputEnterDetectRepositoryImpl implements DeckCardSea
     public isEnterPressed(inputElement: HTMLInputElement, event: KeyboardEvent): boolean {
         if (!this.enterDetectionEnabled) return false;
         return document.activeElement === inputElement && event.key === "Enter";
+    }
+
+    public findEnterPressedState(): boolean {
+        return this.enterPressedState;
+    }
+
+    public setEnterPressedState(isPressed: boolean): void {
+        this.enterPressedState = isPressed;
     }
 
 }

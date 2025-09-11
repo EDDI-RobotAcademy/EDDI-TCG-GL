@@ -13,6 +13,7 @@ import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of
 import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
 import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_marker_position/repository/DeckCardCountMarkerPositionRepositoryImpl";
 import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
+import {DeckCardSearchInputEnterDetectRepositoryImpl} from "../../deck_card_search_input_enter_detect/repository/DeckCardSearchInputEnterDetectRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -33,6 +34,7 @@ export class DeckCardSearchCancelButtonClickDetectServiceImpl implements DeckCar
     private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
     private deckCardCountMarkerPositionRepository: DeckCardCountMarkerPositionRepositoryImpl;
     private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
+    private deckCardSearchInputEnterDetectRepository: DeckCardSearchInputEnterDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -47,6 +49,7 @@ export class DeckCardSearchCancelButtonClickDetectServiceImpl implements DeckCar
         this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
         this.deckCardCountMarkerPositionRepository = DeckCardCountMarkerPositionRepositoryImpl.getInstance();
         this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
+        this.deckCardSearchInputEnterDetectRepository = DeckCardSearchInputEnterDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckCardSearchCancelButtonClickDetectServiceImpl {
@@ -89,6 +92,8 @@ export class DeckCardSearchCancelButtonClickDetectServiceImpl implements DeckCar
                     this.myDeckSearchInputContainerRepository.clearUserInput();
                     this.myDeckSearchInputContainerRepository.deleteUserInput();
                 }
+
+                this.deckCardSearchInputEnterDetectRepository.setEnterPressedState(false);
 
                 return clickedButton;
             }
