@@ -60,6 +60,7 @@ import {DeckCardAddButtonServiceImpl} from "../../src/deck_card_add_button/servi
 import {RequiredNumberOfCardsServiceImpl} from "../../src/required_number_of_cards_in_the_deck/service/RequiredNumberOfCardsServiceImpl";
 import {MyDeckSearchInputContainerServiceImpl} from "../../src/my_deck_search_input_container/service/MyDeckSearchInputContainerServiceImpl";
 import {MyDeckCardSearchCancelButtonServiceImpl} from "../../src/my_deck_card_search_cancel_button/service/MyDeckCardSearchCancelButtonServiceImpl";
+import {MyDeckCardSearchBoxServiceImpl} from "../../src/my_deck_card_search_box/service/MyDeckCardSearchBoxServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -140,6 +141,7 @@ export class TCGJustTestMyDeckView {
     private myDeckChosenOutOfTotalSlashService = MyDeckChosenOutOfTotalSlashServiceImpl.getInstance();
     private myDeckSearchInputContainerService = MyDeckSearchInputContainerServiceImpl.getInstance();
     private myDeckCardSearchCancelButtonService = MyDeckCardSearchCancelButtonServiceImpl.getInstance();
+    private myDeckCardSearchBoxService = MyDeckCardSearchBoxServiceImpl.getInstance();
 
     private deckCardDeleteButtonService: DeckCardDeleteButtonServiceImpl;
     private deckCardCountMarkerService: DeckCardCountMarkerServiceImpl;
@@ -373,6 +375,7 @@ export class TCGJustTestMyDeckView {
         await this.addMyDeckBlock();
         await this.addMyDeckCardName();
         await this.addMyDeckSearchInputContainer();
+        await this.addMyDeckCardSearchBox();
         await this.addMyDeckCardSearchCancelButton();
         await this.addDeckCardDeleteButton();
         await this.addDeckCardAddButton();
@@ -499,6 +502,21 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add Search Cancel Button:', error);
+        }
+    }
+
+    private async addMyDeckCardSearchBox(): Promise<void> {
+        try {
+            await this.myDeckCardSearchBoxService.createMyDeckCardSearchBox();
+            const searchBox = this.myDeckCardSearchBoxService.getSearchBox();
+            if (searchBox) {
+                this.scene.add(searchBox.getMesh());
+            } else {
+                console.warn(`My Deck Card Search Box Not found`);
+            }
+
+        } catch (error) {
+            console.error('Failed to add My Deck Card Search Box:', error);
         }
     }
 
@@ -1358,6 +1376,7 @@ export class TCGJustTestMyDeckView {
             this.userWindowSize.calculateScaleFactors(newWidth, newHeight);
             const { scaleX, scaleY } = this.userWindowSize.getScaleFactors();
             this.myDeckSearchInputContainerService.adjustMyDeckSearchInputContainerPosition();
+            this.myDeckCardSearchBoxService.adjustMyDeckCardSearchBoxPosition();
             this.myDeckCardSearchCancelButtonService.adjustMyDeckCardSearchCancelButtonPosition();
             this.sideScrollAreaService.adjustMyDeckSideScrollAreaPosition();
             this.sideScrollAreaService.adjustMyDeckCardScrollAreaPosition();
