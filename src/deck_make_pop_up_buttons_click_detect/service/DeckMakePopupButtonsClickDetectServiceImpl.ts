@@ -9,6 +9,7 @@ import {DeckMakePopupButtonsRepositoryImpl} from "../../deck_make_pop_up_buttons
 import {DeckMakePopupBackgroundRepositoryImpl} from "../../deck_make_pop_up_background/repository/DeckMakePopupBackgroundRepositoryImpl";
 import {TransparentBackgroundRepositoryImpl} from "../../transparent_background/repository/TransparentBackgroundRepositoryImpl";
 import {DeckMakePopupInputContainerRepositoryImpl} from "../../deck_make_pop_up_input_container/repository/DeckMakePopupInputContainerRepositoryImpl";
+import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -20,6 +21,7 @@ export class DeckMakePopupButtonsClickDetectServiceImpl implements DeckMakePopup
     private deckMakePopupBackgroundRepository: DeckMakePopupBackgroundRepositoryImpl;
     private transparentBackgroundRepository: TransparentBackgroundRepositoryImpl;
     private deckMakePopupInputContainerRepository: DeckMakePopupInputContainerRepositoryImpl;
+    private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
     private cameraRepository: CameraRepository;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
@@ -28,6 +30,7 @@ export class DeckMakePopupButtonsClickDetectServiceImpl implements DeckMakePopup
         this.deckMakePopupBackgroundRepository = DeckMakePopupBackgroundRepositoryImpl.getInstance();
         this.transparentBackgroundRepository = TransparentBackgroundRepositoryImpl.getInstance();
         this.deckMakePopupInputContainerRepository = DeckMakePopupInputContainerRepositoryImpl.getInstance();
+        this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
         this.cameraRepository = CameraRepositoryImpl.getInstance();
     }
 
@@ -58,6 +61,11 @@ export class DeckMakePopupButtonsClickDetectServiceImpl implements DeckMakePopup
         if (clickedDeckMakePopupButton) {
             console.log(`Clicked Deck Make Pop-up Button ID: ${clickedDeckMakePopupButton.id}`);
             this.saveCurrentButtonClickState(clickedDeckMakePopupButton);
+
+            const searchContainer = this.myDeckSearchInputContainerRepository.findMyDeckSearchInputContainer();
+            if (searchContainer) {
+                searchContainer.setVisibility('block');
+            }
 
             if (clickedDeckMakePopupButton.id === 0) {
                 console.log(`[DEBUG] click cancel button!`);

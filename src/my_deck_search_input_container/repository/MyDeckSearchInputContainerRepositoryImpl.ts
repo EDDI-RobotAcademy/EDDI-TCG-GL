@@ -41,7 +41,8 @@ export class MyDeckSearchInputContainerRepositoryImpl implements MyDeckSearchInp
             inputWidth, inputHeight, inputFontSize, maxLength
         );
 
-        InputContainerGenerator.setInputStyle(inputContainerMesh, "rgba(0, 0, 0, 0.4)", "0.5px solid #595959", "#f0f0f0");
+//         InputContainerGenerator.setInputStyle(inputContainerMesh, "rgba(0, 0, 0, 0.4)", "0.5px solid #595959", "#f0f0f0");
+        InputContainerGenerator.setInputStyle(inputContainerMesh, "transparent", "none", "#f0f0f0");
         const newInputContainer = new MyDeckSearchInputContainer(inputContainerMesh, inputElement, containerPosition);
         this.inputContainer = newInputContainer;
 

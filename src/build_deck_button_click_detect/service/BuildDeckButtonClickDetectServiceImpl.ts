@@ -75,6 +75,11 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
                     this.myDeckSearchInputContainerRepository.deleteUserInput();
                 }
 
+                const searchContainer = this.myDeckSearchInputContainerRepository.findMyDeckSearchInputContainer();
+                if (searchContainer) {
+                    searchContainer.setVisibility('none');
+                }
+
                 this.setTransparentBackgroundVisible(true);
                 this.setDeckMakePopupBackgroundVisible(true);
                 this.setDeckMakePopupButtonsVisible(true);
