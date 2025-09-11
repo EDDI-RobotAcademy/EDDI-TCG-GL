@@ -14,6 +14,8 @@ import {DeckMakePopupButtonsRepositoryImpl} from "../../deck_make_pop_up_buttons
 import {DeckMakePopupInputContainerRepositoryImpl} from "../../deck_make_pop_up_input_container/repository/DeckMakePopupInputContainerRepositoryImpl";
 import {DeckMakePopupButtonsClickDetectRepositoryImpl} from "../../deck_make_pop_up_buttons_click_detect/repository/DeckMakePopupButtonsClickDetectRepositoryImpl";
 import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
+import {MyDeckCardSearchCancelButtonRepositoryImpl} from "../../my_deck_card_search_cancel_button/repository/MyDeckCardSearchCancelButtonRepositoryImpl";
+import {DeckCardSearchCancelButtonClickDetectRepositoryImpl} from "../../deck_card_search_cancel_button_click_detect/repository/DeckCardSearchCancelButtonClickDetectRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -29,6 +31,8 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
     private deckMakePopupInputContainerRepository: DeckMakePopupInputContainerRepositoryImpl;
     private deckMakePopupButtonsClickDetectRepository: DeckMakePopupButtonsClickDetectRepositoryImpl;
     private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
+    private myDeckCardSearchCancelButtonRepository: MyDeckCardSearchCancelButtonRepositoryImpl;
+    private deckCardSearchCancelButtonClickDetectRepository: DeckCardSearchCancelButtonClickDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -40,6 +44,8 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
         this.deckMakePopupInputContainerRepository = DeckMakePopupInputContainerRepositoryImpl.getInstance();
         this.deckMakePopupButtonsClickDetectRepository = DeckMakePopupButtonsClickDetectRepositoryImpl.getInstance();
         this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
+        this.myDeckCardSearchCancelButtonRepository = MyDeckCardSearchCancelButtonRepositoryImpl.getInstance();
+        this.deckCardSearchCancelButtonClickDetectRepository = DeckCardSearchCancelButtonClickDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): BuildDeckButtonClickDetectServiceImpl {
@@ -79,6 +85,9 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
                 if (searchContainer) {
                     searchContainer.setVisibility('none');
                 }
+
+                this.setSearchCancelButtonVisibility(false);
+                this.setSearchCancelButtonClickEnabled(false);
 
                 this.setTransparentBackgroundVisible(true);
                 this.setDeckMakePopupBackgroundVisible(true);
@@ -139,6 +148,14 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
         } else {
             this.deckMakePopupInputContainerRepository.hideDeckMakePopupInputContainer();
         }
+    }
+
+    private setSearchCancelButtonVisibility(isVisible: boolean): void {
+        this.myDeckCardSearchCancelButtonRepository.findButton()?.setVisibility(isVisible);
+    }
+
+    private setSearchCancelButtonClickEnabled(isEnable: boolean): void {
+        this.deckCardSearchCancelButtonClickDetectRepository.setButtonClickEnabled(isEnable);
     }
 
 }
