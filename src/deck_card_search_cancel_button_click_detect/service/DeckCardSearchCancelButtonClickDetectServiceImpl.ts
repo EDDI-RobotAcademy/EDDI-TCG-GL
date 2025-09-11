@@ -12,6 +12,7 @@ import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/r
 import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of_cards_position/repository/MyDeckNumberOfCardsPositionRepositoryImpl";
 import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
 import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_marker_position/repository/DeckCardCountMarkerPositionRepositoryImpl";
+import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -31,6 +32,7 @@ export class DeckCardSearchCancelButtonClickDetectServiceImpl implements DeckCar
     private myDeckNumberOfCardsPositionRepository: MyDeckNumberOfCardsPositionRepositoryImpl;
     private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
     private deckCardCountMarkerPositionRepository: DeckCardCountMarkerPositionRepositoryImpl;
+    private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -44,6 +46,7 @@ export class DeckCardSearchCancelButtonClickDetectServiceImpl implements DeckCar
         this.myDeckNumberOfCardsPositionRepository = MyDeckNumberOfCardsPositionRepositoryImpl.getInstance();
         this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
         this.deckCardCountMarkerPositionRepository = DeckCardCountMarkerPositionRepositoryImpl.getInstance();
+        this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckCardSearchCancelButtonClickDetectServiceImpl {
@@ -79,6 +82,13 @@ export class DeckCardSearchCancelButtonClickDetectServiceImpl implements DeckCar
                 this.restoreAllCardPositions(currentClickedDeckId);
                 this.restoreAllNumberOfCardsPositions(currentClickedDeckId);
                 this.restoreAllMarkerPositions(currentClickedDeckId);
+                this.setSearchCancelButtonVisibility(false);
+
+                const searchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
+                if (searchInputText !== null && searchInputText.length > 0) {
+                    this.myDeckSearchInputContainerRepository.clearUserInput();
+                    this.myDeckSearchInputContainerRepository.deleteUserInput();
+                }
 
                 return clickedButton;
             }
@@ -91,13 +101,21 @@ export class DeckCardSearchCancelButtonClickDetectServiceImpl implements DeckCar
 
         if (event.button === 0) {
             const hoverPoint = { x: event.clientX, y: event.clientY };
-            return await this.handleClick(hoverPoint);
+            const result = await this.handleClick(hoverPoint);
+            if (result) {
+                this.setButtonClickEnabled(false);
+                return result;
+            }
         }
         return null;
     }
 
     private getSearchCancelButton(): MyDeckCardSearchCancelButton | null {
         return this.myDeckCardSearchCancelButtonRepository.findButton();
+    }
+
+    private setSearchCancelButtonVisibility(isVisible: boolean): void {
+        this.myDeckCardSearchCancelButtonRepository.findButton()?.setVisibility(isVisible);
     }
 
     private restoreAllCardPositions(deckId: number): void {
