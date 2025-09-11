@@ -64,6 +64,8 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         const isEnter = this.deckCardSearchInputEnterDetectRepository.isEnterPressed(inputElement, event);
         if (isEnter == false) return;
 
+        this.deckCardSearchInputEnterDetectRepository.setEnterPressedState(true);
+
         const inputText = this.myDeckSearchInputContainerRepository.findInputValue() || "";
 
         if (inputText.length === 0) {
