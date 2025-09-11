@@ -10,6 +10,8 @@ import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCard
 import {MyDeckCardPositionRepositoryImpl} from "../../my_deck_card_position/repository/MyDeckCardPositionRepositoryImpl";
 import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/repository/MyDeckNumberOfCardsRepositoryImpl";
 import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of_cards_position/repository/MyDeckNumberOfCardsPositionRepositoryImpl";
+import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
+import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_marker_position/repository/DeckCardCountMarkerPositionRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -27,6 +29,8 @@ export class DeckCardSearchCancelButtonClickDetectServiceImpl implements DeckCar
     private myDeckCardPositionRepository: MyDeckCardPositionRepositoryImpl;
     private myDeckNumberOfCardsRepository: MyDeckNumberOfCardsRepositoryImpl;
     private myDeckNumberOfCardsPositionRepository: MyDeckNumberOfCardsPositionRepositoryImpl;
+    private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
+    private deckCardCountMarkerPositionRepository: DeckCardCountMarkerPositionRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -38,6 +42,8 @@ export class DeckCardSearchCancelButtonClickDetectServiceImpl implements DeckCar
         this.myDeckCardPositionRepository = MyDeckCardPositionRepositoryImpl.getInstance();
         this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance(scene);
         this.myDeckNumberOfCardsPositionRepository = MyDeckNumberOfCardsPositionRepositoryImpl.getInstance();
+        this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
+        this.deckCardCountMarkerPositionRepository = DeckCardCountMarkerPositionRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckCardSearchCancelButtonClickDetectServiceImpl {
@@ -72,6 +78,7 @@ export class DeckCardSearchCancelButtonClickDetectServiceImpl implements DeckCar
                 console.log(`[DEBUG] Clicked Search Cancel Button`);
                 this.restoreAllCardPositions(currentClickedDeckId);
                 this.restoreAllNumberOfCardsPositions(currentClickedDeckId);
+                this.restoreAllMarkerPositions(currentClickedDeckId);
 
                 return clickedButton;
             }
@@ -136,6 +143,29 @@ export class DeckCardSearchCancelButtonClickDetectServiceImpl implements DeckCar
 
             this.myDeckElementAdjuster.adjustElementPosition(numberOfCardsMesh, widthPercent, heightPercent, positionX, positionY);
             numberOfCards.setVisibility(true);
+        }
+    }
+
+    private restoreAllMarkerPositions(deckId: number): void {
+        const markerIdList = this.deckCardCountMarkerRepository.findMarkerIdListByDeckId(deckId);
+        for (const markerId of markerIdList) {
+            const cardId = this.deckCardCountMarkerRepository.findCardIdByMarkerId(markerId);
+            if (cardId == null) return;
+
+            const marker = this.deckCardCountMarkerRepository.findMarkerByDeckIdAndCardId(deckId, cardId);
+            if (marker == null) return;
+            const markerMesh = marker.getMesh();
+
+            const markerPosition = this.deckCardCountMarkerPositionRepository.findPositionByDeckIdAndCardId(deckId, cardId);
+            if (markerPosition == null) return;
+
+            const widthPercent = 0.012;
+            const heightPercent = 1;
+            const positionX = markerPosition.getX();
+            const positionY = markerPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(markerMesh, widthPercent, heightPercent, positionX, positionY);
+            marker.setVisibility(true);
         }
     }
 
