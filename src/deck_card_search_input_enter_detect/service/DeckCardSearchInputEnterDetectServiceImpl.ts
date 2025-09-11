@@ -12,8 +12,6 @@ import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/r
 import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of_cards_position/repository/MyDeckNumberOfCardsPositionRepositoryImpl";
 import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
 import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_marker_position/repository/DeckCardCountMarkerPositionRepositoryImpl";
-import {MyDeckCardSearchCancelButtonRepositoryImpl} from "../../my_deck_card_search_cancel_button/repository/MyDeckCardSearchCancelButtonRepositoryImpl";
-import {DeckCardSearchCancelButtonClickDetectRepositoryImpl} from "../../deck_card_search_cancel_button_click_detect/repository/DeckCardSearchCancelButtonClickDetectRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -32,8 +30,6 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
     private myDeckNumberOfCardsPositionRepository: MyDeckNumberOfCardsPositionRepositoryImpl;
     private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
     private deckCardCountMarkerPositionRepository: DeckCardCountMarkerPositionRepositoryImpl;
-    private myDeckCardSearchCancelButtonRepository: MyDeckCardSearchCancelButtonRepositoryImpl;
-    private deckCardSearchCancelButtonClickDetectRepository: DeckCardSearchCancelButtonClickDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -48,8 +44,6 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         this.myDeckNumberOfCardsPositionRepository = MyDeckNumberOfCardsPositionRepositoryImpl.getInstance();
         this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
         this.deckCardCountMarkerPositionRepository = DeckCardCountMarkerPositionRepositoryImpl.getInstance();
-        this.myDeckCardSearchCancelButtonRepository = MyDeckCardSearchCancelButtonRepositoryImpl.getInstance();
-        this.deckCardSearchCancelButtonClickDetectRepository = DeckCardSearchCancelButtonClickDetectRepositoryImpl.getInstance();
     }
 
     public static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckCardSearchInputEnterDetectServiceImpl {
@@ -73,9 +67,6 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         const inputText = this.deckCardSearchInputEnterDetectRepository.getInputValue(inputElement);
 
         if (inputText.length === 0) {
-            this.setSearchCancelButtonVisibility(false);
-            this.setSearchCancelButtonClickEnabled(false);
-
             this.restoreAllCardPositions(deckId);
             this.restoreAllNumberOfCardsPositions(deckId);
             this.restoreAllMarkerPositions(deckId);
@@ -97,15 +88,11 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
             this.adjustMatchedNumberOfCardsPosition(deckId, matchedCardNames);
             this.adjustMatchedMarkerPosition(deckId, matchedCardNames);
 
-            this.setSearchCancelButtonVisibility(true);
-            this.setSearchCancelButtonClickEnabled(true);
 
         } else {
             this.restoreAllCardPositions(deckId);
             this.restoreAllNumberOfCardsPositions(deckId);
             this.restoreAllMarkerPositions(deckId);
-            this.setSearchCancelButtonVisibility(true);
-            this.setSearchCancelButtonClickEnabled(true);
             this.showNotFoundPopup();
         }
 
@@ -127,14 +114,6 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         }
 
         return cardNames;
-    }
-
-    private setSearchCancelButtonVisibility(isVisible: boolean): void {
-        this.myDeckCardSearchCancelButtonRepository.findButton()?.setVisibility(isVisible);
-    }
-
-    private setSearchCancelButtonClickEnabled(isEnable: boolean): void {
-        this.deckCardSearchCancelButtonClickDetectRepository.setButtonClickEnabled(isEnable);
     }
 
     // 특정 한 글자만 포함해도 매칭, 공백 무시 가능

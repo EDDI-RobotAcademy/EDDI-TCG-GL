@@ -6,17 +6,23 @@ import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl
 import {DeckCardSearchInputChangeDetectService} from "./DeckCardSearchInputChangeDetectService";
 import {DeckCardSearchInputChangeDetectRepositoryImpl} from "../repository/DeckCardSearchInputChangeDetectRepositoryImpl";
 import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
+import {MyDeckCardSearchCancelButtonRepositoryImpl} from "../../my_deck_card_search_cancel_button/repository/MyDeckCardSearchCancelButtonRepositoryImpl";
+import {DeckCardSearchCancelButtonClickDetectRepositoryImpl} from "../../deck_card_search_cancel_button_click_detect/repository/DeckCardSearchCancelButtonClickDetectRepositoryImpl";
 
 export class DeckCardSearchInputChangeDetectServiceImpl implements DeckCardSearchInputChangeDetectService {
     private static instance: DeckCardSearchInputChangeDetectServiceImpl | null = null;
     private cameraRepository: CameraRepository;
     private deckCardSearchInputChangeDetectRepository: DeckCardSearchInputChangeDetectRepositoryImpl;
     private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
+    private myDeckCardSearchCancelButtonRepository: MyDeckCardSearchCancelButtonRepositoryImpl;
+    private deckCardSearchCancelButtonClickDetectRepository: DeckCardSearchCancelButtonClickDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.deckCardSearchInputChangeDetectRepository = DeckCardSearchInputChangeDetectRepositoryImpl.getInstance();
         this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
+        this.myDeckCardSearchCancelButtonRepository = MyDeckCardSearchCancelButtonRepositoryImpl.getInstance();
+        this.deckCardSearchCancelButtonClickDetectRepository = DeckCardSearchCancelButtonClickDetectRepositoryImpl.getInstance();
     }
 
     public static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckCardSearchInputChangeDetectServiceImpl {
@@ -39,7 +45,6 @@ export class DeckCardSearchInputChangeDetectServiceImpl implements DeckCardSearc
         const isDeleting = currentValue.length < prevValue.length;
 
         if (currentValue.length === 0) {
-            // 입력창이 전부 지워진 경우
             this.handleEmptyInputChange();
 
         } else if (isDeleting) {
@@ -60,8 +65,10 @@ export class DeckCardSearchInputChangeDetectServiceImpl implements DeckCardSearc
     }
 
     private handleEmptyInputChange(): void {
-        console.log("[EVENT] 입력창 비움 감지");
+        console.log("[EVENT] 입력창 비움 감지(모든 글자 삭제)");
         // 전체 카드 복원, UI 초기화 등 처리
+        this.setSearchCancelButtonVisibility(false);
+        this.setSearchCancelButtonClickEnabled(false);
     }
 
     private handleSingleCharacterDelete(): void {
@@ -76,7 +83,16 @@ export class DeckCardSearchInputChangeDetectServiceImpl implements DeckCardSearc
 
     private handleTyping(currentValue: string): void {
         console.log("[EVENT] 실시간 입력 중:", currentValue);
-        // 실시간 감지
+        this.setSearchCancelButtonVisibility(true);
+        this.setSearchCancelButtonClickEnabled(true);
+    }
+
+    private setSearchCancelButtonVisibility(isVisible: boolean): void {
+        this.myDeckCardSearchCancelButtonRepository.findButton()?.setVisibility(isVisible);
+    }
+
+    private setSearchCancelButtonClickEnabled(isEnable: boolean): void {
+        this.deckCardSearchCancelButtonClickDetectRepository.setButtonClickEnabled(isEnable);
     }
 
 }
