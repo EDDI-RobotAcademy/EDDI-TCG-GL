@@ -41,14 +41,6 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
         return DeckDeleteButtonClickDetectServiceImpl.instance;
     }
 
-    private setButtonClickEnabled(isEnabled: boolean): void {
-        this.deckDeleteButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
-    }
-
-    private isButtonClickEnabled(): boolean {
-        return this.deckDeleteButtonClickDetectRepository.isButtonClickEnabled();
-    }
-
     public async handleButtonClick(clickPoint: { x: number; y: number }): Promise<DeckDeleteButton | null> {
         const { x, y } = clickPoint;
         const buttonList = this.getAllButtons();
@@ -61,7 +53,11 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
         if (clickedButton) {
             const buttonId = clickedButton.id;
             console.log(`[DEBUG] Clicked Deck Delete Button ID: ${buttonId}`);
-            this.saveCurrentClickedButtonId(buttonId);
+
+            const deckId = this.getDeckIdByDeleteButtonId(buttonId);
+            if (deckId == null) return null;
+
+            this.saveCurrentClickedButtonId(deckId);
 
             this.setTransparentBackgroundVisibility(true);
             this.setPopupWindowVisibility(true);
@@ -74,24 +70,20 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
     }
 
     public async onMouseDown(event: MouseEvent): Promise<DeckDeleteButton | null> {
-        if (this.isButtonClickEnabled() == false) return null;
-
         const currentClickedDeckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
         if (currentClickedDeckId == null) return null;
         console.log(`%c 클릭한 덱 ID?: ${currentClickedDeckId}`, 'color: #00d5ff; font-weight: bold;');
 
         const deleteDeckButtonVisible = this.getDeckDeleteButtonVisibility(currentClickedDeckId);
-        if (!deleteDeckButtonVisible) return null;
         console.log(`%c 버튼 visible 상태?: ${deleteDeckButtonVisible}`, 'color: #00d5ff; font-weight: bold;');
 
-//         this.myDeckButtonClickDetectRepository.setButtonClickEnabled(false);
+        if (this.isDeckDeleteButtonClickEnabled(currentClickedDeckId) !== true && deleteDeckButtonVisible == false) return null;
 
         if (event.button === 0) {
             const clickPoint = { x: event.clientX, y: event.clientY };
             const result = await this.handleButtonClick(clickPoint);
             if (result) {
-                this.setButtonClickEnabled(false);
-//                 this.myDeckButtonClickDetectRepository.setButtonClickEnabled(true);
+                this.setDeckDeleteButtonClickEnabled(currentClickedDeckId, false);
                 return result;
             }
         }
@@ -131,6 +123,18 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
             return button.getVisibility();
         }
         return undefined;
+    }
+
+    private getDeckIdByDeleteButtonId(buttonId: number): number | null {
+        return this.deckDeleteButtonRepository.findDeckIdByButtonUniqueId(buttonId);
+    }
+
+    private isDeckDeleteButtonClickEnabled(deckId: number): boolean | undefined {
+        return this.deckDeleteButtonClickDetectRepository.isButtonClickEnabled(deckId);
+    }
+
+    private setDeckDeleteButtonClickEnabled(deckId: number, isEnabled: boolean): void {
+        this.deckDeleteButtonClickDetectRepository.saveButtonClickEnabled(deckId, isEnabled);
     }
 
 }

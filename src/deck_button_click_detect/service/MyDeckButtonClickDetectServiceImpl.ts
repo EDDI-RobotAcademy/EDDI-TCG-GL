@@ -244,11 +244,17 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                 this.setCardVisibilityByDeckId(currentClickedDeckButtonId, true);
                 this.setBlockVisibilityByDeckId(currentClickedDeckButtonId, true);
                 this.setCardNameVisibilityByDeckId(currentClickedDeckButtonId, true);
-                this.setDeckNameEditButtonVisibility(currentClickedDeckButtonId, true);
-                this.setDeckDeleteButtonVisibility(currentClickedDeckButtonId, true);
                 this.setNumberOfCardsVisibilityByDeckId(currentClickedDeckButtonId, true);
                 this.setNumberOfSelectedCardsVisibilityByDeckId(currentClickedDeckButtonId, true);
                 this.setDeckCardCountMarkerVisibilityByDeckId(currentClickedDeckButtonId, true);
+
+                setTimeout(() => {
+                    this.setDeckNameEditButtonVisibility(currentClickedDeckButtonId, true);
+                    this.setDeckDeleteButtonVisibility(currentClickedDeckButtonId, true);
+
+                    this.deckDeleteButtonClickDetectRepository.saveButtonClickEnabled(currentClickedDeckButtonId, true);
+                }, 10);
+
                 console.log(`Deck Button ID ${currentClickedDeckButtonId} is now hidden.`);
             }
 
@@ -265,7 +271,6 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
             const clickPoint = { x: event.clientX, y: event.clientY };
             const result = await this.handleLeftClick(clickPoint);
             if (result) {
-                this.deckDeleteButtonClickDetectRepository.setButtonClickEnabled(true);
                 this.myDeckBlockHoverDetectRepository.setBlockHoverEnabled(false);
                 this.deckEditDoneButtonHoverDetectRepository.setButtonHoverEnabled(false);
                 return result;
