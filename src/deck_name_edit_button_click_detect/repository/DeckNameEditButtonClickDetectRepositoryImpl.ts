@@ -8,7 +8,7 @@ export class DeckNameEditButtonClickDetectRepositoryImpl implements DeckNameEdit
     private raycaster = new THREE.Raycaster();
 
     private currentClickedButtonId: number | null = null;
-    private buttonClickEnabled: boolean = false;
+    private buttonClickEnabledMap: Map<number, boolean> = new Map(); //deck button Id: false or true
 
     public static getInstance(): DeckNameEditButtonClickDetectRepositoryImpl {
         if (!DeckNameEditButtonClickDetectRepositoryImpl.instance) {
@@ -56,12 +56,12 @@ export class DeckNameEditButtonClickDetectRepositoryImpl implements DeckNameEdit
         this.currentClickedButtonId = null;
     }
 
-    public setButtonClickEnabled(isEnabled: boolean): void {
-        this.buttonClickEnabled = isEnabled;
+    public saveButtonClickEnabled(deckId: number, isEnabled: boolean): void {
+        this.buttonClickEnabledMap.set(deckId, isEnabled);
     }
 
-    public isButtonClickEnabled(): boolean {
-        return this.buttonClickEnabled;
+    public isButtonClickEnabled(deckId: number): boolean | undefined {
+        return this.buttonClickEnabledMap.get(deckId);
     }
 
 }
