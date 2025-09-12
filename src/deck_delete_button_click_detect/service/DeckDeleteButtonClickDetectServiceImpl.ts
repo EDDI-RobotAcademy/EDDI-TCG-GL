@@ -76,8 +76,11 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
 
         const deleteDeckButtonVisible = this.getDeckDeleteButtonVisibility(currentClickedDeckId);
         console.log(`%c 버튼 visible 상태?: ${deleteDeckButtonVisible}`, 'color: #00d5ff; font-weight: bold;');
+        if (deleteDeckButtonVisible !== true) return null;
 
-        if (this.isDeckDeleteButtonClickEnabled(currentClickedDeckId) !== true && deleteDeckButtonVisible == false) return null;
+        const deckDeleteButtonClickEnabled = this.isDeckDeleteButtonClickEnabled(currentClickedDeckId);
+        console.log(`%c 버튼 클릭 가능?: ${deckDeleteButtonClickEnabled}`, 'color: #00d5ff; font-weight: bold;');
+        if (deckDeleteButtonClickEnabled !== true) return null;
 
         if (event.button === 0) {
             const clickPoint = { x: event.clientX, y: event.clientY };

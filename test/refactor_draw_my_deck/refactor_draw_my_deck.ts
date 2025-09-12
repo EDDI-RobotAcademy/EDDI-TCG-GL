@@ -277,6 +277,7 @@ export class TCGJustTestMyDeckView {
         this.deckCardSearchInputChangeDetectService = DeckCardSearchInputChangeDetectServiceImpl.getInstance(this.camera, this.scene);
 
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckButtonClickDetectService.onMouseDown(e), false);
+        this.renderer.domElement.addEventListener('mouseup', (e) => this.myDeckButtonClickDetectService.onMouseUp(e), false);
         this.renderer.domElement.addEventListener('mousemove', (e) => this.sideScrollAreaDetectService.onMouseMoveMyDeck(e), false);
         this.renderer.domElement.addEventListener('mousemove', (e) => this.buildDeckButtonHoverDetectService.onMouseMove(e), false);
         this.renderer.domElement.addEventListener('wheel', (e) => this.myDeckScrollService.onWheelScroll(e), false);
