@@ -197,24 +197,9 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                 this.restoreAllMyDeckMarkerPositions(previousClickedDeckButtonId);
 
                 // To-do: 편집 화면에서 편집 다 못하고 나올 때 원본 데이터로 돌려야 함
-                if (this.deckEditButtonClickDetectRepository.getCurrentButtonClickState() == true) {
-                    this.myDeckNumberOfSelectedCardsRepository.restoreOriginalDeckState(previousClickedDeckButtonId);
-                    this.myDeckNumberOfSelectedCardsPositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
-                    this.myDeckBlockRepository.restoreOriginalDeckState(previousClickedDeckButtonId);
-                    this.myDeckBlockPositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
-                    this.myDeckCardNameRepository.restoreOriginalDeckState(previousClickedDeckButtonId);
-                    this.myDeckCardNamePositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
-                    this.deckCardDeleteButtonRepository.restoreOriginalDeckState(previousClickedDeckButtonId);
-                    this.deckCardDeleteButtonPositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
-                    this.deckCardAddButtonRepository.restoreOriginalDeckState(previousClickedDeckButtonId);
-                    this.deckCardAddButtonPositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
-                    this.myDeckCardRepository.restoreOriginalDeckState(previousClickedDeckButtonId);
-                    this.myDeckCardPositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
-                    this.myDeckNumberOfCardsRepository.restoreOriginalDeckState(previousClickedDeckButtonId);
-                    this.myDeckNumberOfCardsPositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
-                    this.deckCardCountMarkerRepository.restoreOriginalDeckState(previousClickedDeckButtonId);
-                    this.deckCardCountMarkerPositionRepository.restoreOriginalPositionState(previousClickedDeckButtonId);
-                    this.totalNumberOfSelectedCardsRepository.restoreOriginalDeckState(previousClickedDeckButtonId);
+                if (this.getDeckEditButtonClickState() == true) {
+                    this.restoreOriginalDeckState(previousClickedDeckButtonId);
+
                     // To-do: countManager 도 원본 데이터로 수정 필요
                     this.cardCountManager.restoreRemainingCardCount();
                     this.cardCountManager.restoreSelectedCardCount();
@@ -307,6 +292,10 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
 
     public getButtonVisibility(deckId: number): boolean | undefined {
         return this.myDeckButtonRepository.findButtonByDeckId(deckId)?.getVisibility();
+    }
+
+    private getDeckEditButtonClickState(): boolean | null {
+        return this.deckEditButtonClickDetectRepository.getCurrentButtonClickState();
     }
 
     public setButtonVisibility(deckId: number, isVisible: boolean): void {
@@ -460,6 +449,26 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
 
     private setSearchCancelButtonClickEnabled(isEnable: boolean): void {
         this.deckCardSearchCancelButtonClickDetectRepository.setButtonClickEnabled(isEnable);
+    }
+
+    private restoreOriginalDeckState(deckId: number): void {
+        this.myDeckNumberOfSelectedCardsRepository.restoreOriginalDeckState(deckId);
+        this.myDeckNumberOfSelectedCardsPositionRepository.restoreOriginalPositionState(deckId);
+        this.myDeckBlockRepository.restoreOriginalDeckState(deckId);
+        this.myDeckBlockPositionRepository.restoreOriginalPositionState(deckId);
+        this.myDeckCardNameRepository.restoreOriginalDeckState(deckId);
+        this.myDeckCardNamePositionRepository.restoreOriginalPositionState(deckId);
+        this.deckCardDeleteButtonRepository.restoreOriginalDeckState(deckId);
+        this.deckCardDeleteButtonPositionRepository.restoreOriginalPositionState(deckId);
+        this.deckCardAddButtonRepository.restoreOriginalDeckState(deckId);
+        this.deckCardAddButtonPositionRepository.restoreOriginalPositionState(deckId);
+        this.myDeckCardRepository.restoreOriginalDeckState(deckId);
+        this.myDeckCardPositionRepository.restoreOriginalPositionState(deckId);
+        this.myDeckNumberOfCardsRepository.restoreOriginalDeckState(deckId);
+        this.myDeckNumberOfCardsPositionRepository.restoreOriginalPositionState(deckId);
+        this.deckCardCountMarkerRepository.restoreOriginalDeckState(deckId);
+        this.deckCardCountMarkerPositionRepository.restoreOriginalPositionState(deckId);
+        this.totalNumberOfSelectedCardsRepository.restoreOriginalDeckState(deckId);
     }
 
     private restoreAllMyDeckCardPositions(deckId: number): void {
