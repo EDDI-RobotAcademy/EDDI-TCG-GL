@@ -51,6 +51,7 @@ import {MyDeckCardSearchCancelButtonRepositoryImpl} from "../../my_deck_card_sea
 import {DeckCardSearchCancelButtonClickDetectRepositoryImpl} from "../../deck_card_search_cancel_button_click_detect/repository/DeckCardSearchCancelButtonClickDetectRepositoryImpl";
 
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
+import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
 
 export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClickDetectService {
     private static instance: DeckEditButtonClickDetectServiceImpl | null = null;
@@ -93,6 +94,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private myDeckCardSearchCancelButtonRepository: MyDeckCardSearchCancelButtonRepositoryImpl;
     private deckCardSearchCancelButtonClickDetectRepository: DeckCardSearchCancelButtonClickDetectRepositoryImpl;
     private cardCountManager: CardCountManager;
+    private myDeckElementAdjuster: MyDeckElementAdjuster;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -134,6 +136,7 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.myDeckCardSearchCancelButtonRepository = MyDeckCardSearchCancelButtonRepositoryImpl.getInstance();
         this.deckCardSearchCancelButtonClickDetectRepository = DeckCardSearchCancelButtonClickDetectRepositoryImpl.getInstance();
         this.cardCountManager = CardCountManager.getInstance();
+        this.myDeckElementAdjuster = MyDeckElementAdjuster.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckEditButtonClickDetectServiceImpl {
@@ -177,6 +180,10 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                 const currentClickedDeckButtonId = this.getCurrentClickedDeckButtonId();
                 if (currentClickedDeckButtonId !== null) {
                     console.log(`Deck Button Id?: ${currentClickedDeckButtonId}`);
+                    this.restoreAllMyDeckCardPositions(currentClickedDeckButtonId);
+                    this.restoreAllMyDeckNumberOfCardsPositions(currentClickedDeckButtonId);
+                    this.restoreAllMyDeckMarkerPositions(currentClickedDeckButtonId);
+
                     this.setMyDeckCardVisibilityByDeckId(currentClickedDeckButtonId, false);
                     this.setMyDeckNumberOfCards(currentClickedDeckButtonId, false);
                     this.setTotalNumberOfSelectedCardsVisibility(currentClickedDeckButtonId, true);
@@ -390,5 +397,72 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.cardCountManager.cloneSelectedCardCount();
         this.cardCountManager.cloneCardCountByGrade();
     }
+
+    private restoreAllMyDeckCardPositions(deckId: number): void {
+        const cardUniqueIdList = this.myDeckCardRepository.findCardUniqueIdListByDeckId(deckId);
+        for (const cardUniqueId of cardUniqueIdList) {
+            const cardId = this.myDeckCardRepository.findCardIdByCardUniqueId(cardUniqueId);
+            if (cardId == null) return;
+
+            const card = this.myDeckCardRepository.findCardByDeckIdAndCardId(deckId, cardId);
+            if (card == null) return;
+            const cardMesh = card.getMesh();
+
+            const cardPosition = this.myDeckCardPositionRepository.findPositionByDeckIdAndCardId(deckId, cardId);
+            if (cardPosition == null) return;
+
+            const widthPercent = 0.096;
+            const heightPercent = (1540 / 952);
+            const positionX = cardPosition.getX();
+            const positionY = cardPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(cardMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    private restoreAllMyDeckNumberOfCardsPositions(deckId: number): void {
+        const numberIdList = this.myDeckNumberOfCardsRepository.findNumberIdListByDeckId(deckId);
+        for (const numberId of numberIdList) {
+            const cardId = this.myDeckNumberOfCardsRepository.findCardIdByNumberId(numberId);
+            if (cardId == null) return;
+
+            const numberOfCards = this.myDeckNumberOfCardsRepository.findNumberByDeckIdAndCardId(deckId, cardId);
+            if (numberOfCards == null) return;
+            const numberOfCardsMesh = numberOfCards.getMesh();
+
+            const numberPosition = this.myDeckNumberOfCardsPositionRepository.findPositionByDeckIdAndCardId(deckId, cardId);
+            if (numberPosition == null) return;
+
+            const widthPercent = 0.013;
+            const heightPercent = 1;
+            const positionX = numberPosition.getX();
+            const positionY = numberPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(numberOfCardsMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    private restoreAllMyDeckMarkerPositions(deckId: number): void {
+        const markerIdList = this.deckCardCountMarkerRepository.findMarkerIdListByDeckId(deckId);
+        for (const markerId of markerIdList) {
+            const cardId = this.deckCardCountMarkerRepository.findCardIdByMarkerId(markerId);
+            if (cardId == null) return;
+
+            const marker = this.deckCardCountMarkerRepository.findMarkerByDeckIdAndCardId(deckId, cardId);
+            if (marker == null) return;
+            const markerMesh = marker.getMesh();
+
+            const markerPosition = this.deckCardCountMarkerPositionRepository.findPositionByDeckIdAndCardId(deckId, cardId);
+            if (markerPosition == null) return;
+
+            const widthPercent = 0.012;
+            const heightPercent = 1;
+            const positionX = markerPosition.getX();
+            const positionY = markerPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(markerMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
 
 }
