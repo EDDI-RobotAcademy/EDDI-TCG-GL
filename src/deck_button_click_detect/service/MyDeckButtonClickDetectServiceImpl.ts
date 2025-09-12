@@ -248,12 +248,8 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                 this.setNumberOfSelectedCardsVisibilityByDeckId(currentClickedDeckButtonId, true);
                 this.setDeckCardCountMarkerVisibilityByDeckId(currentClickedDeckButtonId, true);
 
-                setTimeout(() => {
-                    this.setDeckNameEditButtonVisibility(currentClickedDeckButtonId, true);
-                    this.setDeckDeleteButtonVisibility(currentClickedDeckButtonId, true);
-
-                    this.deckDeleteButtonClickDetectRepository.saveButtonClickEnabled(currentClickedDeckButtonId, true);
-                }, 10);
+                this.setDeckNameEditButtonVisibility(currentClickedDeckButtonId, true);
+                this.setDeckDeleteButtonVisibility(currentClickedDeckButtonId, true);
 
                 console.log(`Deck Button ID ${currentClickedDeckButtonId} is now hidden.`);
             }
@@ -275,6 +271,19 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                 this.deckEditDoneButtonHoverDetectRepository.setButtonHoverEnabled(false);
                 return result;
             }
+        }
+        return null;
+    }
+
+    public async onMouseUp(event: MouseEvent): Promise<MyDeckButton | null> {
+        if (!this.isButtonClickEnabled()) return null;
+
+        if (event.button === 0) {
+            const deckButtonId = this.getCurrentClickDeckButtonId();
+            if (deckButtonId == null) return null;
+
+            this.deckDeleteButtonClickDetectRepository.saveButtonClickEnabled(deckButtonId, true);
+
         }
         return null;
     }
