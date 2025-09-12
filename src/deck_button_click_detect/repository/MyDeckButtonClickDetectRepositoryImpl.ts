@@ -9,6 +9,7 @@ export class MyDeckButtonClickDetectRepositoryImpl implements MyDeckButtonClickD
 
     private currentClickDeckButtonId: number | null = null;
     private buttonClickEnabled: boolean = true;
+    private buttonClickStateMap: Map<number, boolean> = new Map();
 
     public static getInstance(): MyDeckButtonClickDetectRepositoryImpl {
         if (!MyDeckButtonClickDetectRepositoryImpl.instance) {
@@ -65,6 +66,14 @@ export class MyDeckButtonClickDetectRepositoryImpl implements MyDeckButtonClickD
 
     public isButtonClickEnabled(): boolean {
         return this.buttonClickEnabled;
+    }
+
+    public saveButtonClickState(deckId: number, state: boolean): void {
+        this.buttonClickStateMap.set(deckId, state);
+    }
+
+    public getButtonClickState(deckId: number): boolean | undefined {
+        return this.buttonClickStateMap.get(deckId);
     }
 
 }
