@@ -167,6 +167,7 @@ export class DeckEditDoneButtonClickDetectServiceImpl implements DeckEditDoneBut
 
     private setInteractionStatesAfterClick(): void {
         this.deckEditButtonClickDetectRepository.setButtonClickEnabled(true);
+        this.deckEditButtonClickDetectRepository.saveCurrentButtonClickState(false);
         this.setButtonClickEnabled(false);
         this.myDeckBlockHoverDetectRepository.setBlockHoverEnabled(false);
         this.deckEditDoneButtonHoverDetectRepository.setButtonHoverEnabled(false);
