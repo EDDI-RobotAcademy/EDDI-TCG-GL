@@ -10,11 +10,11 @@ export class DeckMakePopupButtonsConfigList {
     public buttonConfigs: ButtonConfig[] = [
         {
             id: 1,
-            position: new Vector2d(155 / 1920, -134 / 1080)
+            position: new Vector2d(-126 / 1920, -108 / 1080)
         },
         {
             id: 2,
-            position: new Vector2d(-155 / 1920, -134 / 1080)
+            position: new Vector2d(126 / 1920, -108 / 1080)
         },
     ];
 }

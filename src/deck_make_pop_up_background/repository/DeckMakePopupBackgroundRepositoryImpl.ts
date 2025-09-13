@@ -33,7 +33,7 @@ export class DeckMakePopupBackgroundRepositoryImpl implements DeckMakePopupBackg
         }
 
         const backgroundWidth = this.BACKGROUND_WIDTH * window.innerWidth;
-        const backgroundHeight = this.BACKGROUND_HEIGHT * window.innerHeight;
+        const backgroundHeight = backgroundWidth * (440/1000);
         const backgroundPosition = new Vector2d(0, 0);
 
         const backgroundMesh = MeshGenerator.createMesh(texture, backgroundWidth, backgroundHeight, backgroundPosition);

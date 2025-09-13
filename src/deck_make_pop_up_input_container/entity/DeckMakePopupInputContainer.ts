@@ -30,4 +30,12 @@ export class DeckMakePopupInputContainer {
         return this.container.style.display;
     }
 
+    public setInputDisabled(isDisabled: boolean): void {
+        this.inputElement.disabled = isDisabled;
+    }
+
+    public isInputDisabled(): boolean {
+        return this.inputElement.disabled;
+    }
+
 }

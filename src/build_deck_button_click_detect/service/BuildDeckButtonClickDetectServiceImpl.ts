@@ -86,7 +86,7 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
                 this.setTransparentBackgroundVisible(true);
                 this.setDeckMakePopupBackgroundVisible(true);
                 this.setDeckMakePopupButtonsVisible(true);
-                this.setDeckMakePopupInputContainerVisible(true);
+                this.setDeckMakePopupInputContainerVisible(`block`);
                 return clickedButton;
             }
         }
@@ -136,12 +136,11 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
         }
     }
 
-    private setDeckMakePopupInputContainerVisible(isVisible: boolean): void {
-        if (isVisible == true) {
-            this.deckMakePopupInputContainerRepository.showDeckMakePopupInputContainer();
-        } else {
-            this.deckMakePopupInputContainerRepository.hideDeckMakePopupInputContainer();
-        }
+    private setDeckMakePopupInputContainerVisible(isVisible: 'block' | 'none'): void {
+        const container = this.deckMakePopupInputContainerRepository.findDeckMakePopupInputContainer();
+        if (container == null) return;
+
+        container.setVisibility(isVisible);
     }
 
     private setSearchCancelButtonVisibility(isVisible: boolean): void {
