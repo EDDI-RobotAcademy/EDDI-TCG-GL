@@ -80,7 +80,7 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
                     searchContainer.setInputDisabled(true);
                 }
 
-                this.setSearchCancelButtonVisibility(false);
+//                 this.setSearchCancelButtonVisibility(false);
                 this.setSearchCancelButtonClickEnabled(false);
 
                 this.setTransparentBackgroundVisible(true);
