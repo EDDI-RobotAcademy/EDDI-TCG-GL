@@ -24,22 +24,24 @@ export class DeckMakePopupInputContainerRepositoryImpl implements DeckMakePopupI
         const windowWidth = window.innerWidth;
         const windowHeight = window.innerHeight;
 
-        const containerWidth = 0.25 * windowWidth;
+        const containerWidth = 0.28 * windowWidth;
         const containerHeight = 0.05 * windowHeight;
-        const containerTop = 0.4975 * windowHeight;
-        const containerLeft = 0.387 * windowWidth;
+        const containerTop = 0.4675 * windowHeight;
+        const containerLeft = 0.3705 * windowWidth;
         const containerPosition = { top: containerTop, left: containerLeft };
 
-        const inputWidth = 0.21 * windowWidth;
-        const inputHeight = 0.017 * windowHeight;
-        const inputFontSize = 0.01 * windowWidth;
+        const inputWidth = 0.245 * windowWidth;
+        const inputHeight = 0.014 * windowHeight;
+        const inputFontSize = 0.009 * windowWidth;
 
         const maxLength = 12;
 
         const { container: inputContainerMesh, input: inputElement } = InputContainerGenerator.createInputContainer(
             containerWidth, containerHeight, containerPosition,
-            inputWidth, inputHeight, inputFontSize, maxLength, 'Deck Create'
+            inputWidth, inputHeight, inputFontSize, maxLength, 'deck name'
         );
+
+        InputContainerGenerator.setInputStyle(inputContainerMesh, "rgba(0, 0, 0, 0.5)", "none", "#f0f0f0");
 
         const newInputContainer = new DeckMakePopupInputContainer(inputContainerMesh, inputElement, containerPosition);
         this.inputContainer = newInputContainer;
@@ -55,18 +57,12 @@ export class DeckMakePopupInputContainerRepositoryImpl implements DeckMakePopupI
         this.inputContainer = null;
     }
 
-    public hideDeckMakePopupInputContainer(): void {
+    public findInputValue(): string | null {
         const inputContainer = this.findDeckMakePopupInputContainer();
-        if (inputContainer) {
-            InputContainerGenerator.setContainerVisible(inputContainer.container, 'none');
-        }
-    }
+        if (!inputContainer) return null;
 
-    public showDeckMakePopupInputContainer(): void {
-        const inputContainer = this.findDeckMakePopupInputContainer();
-        if (inputContainer) {
-            InputContainerGenerator.setContainerVisible(inputContainer.container, 'block');
-        }
+        const inputElement = inputContainer.getInputElement();
+        return inputElement.value.trim();
     }
 
     public updateUserInput(): void {

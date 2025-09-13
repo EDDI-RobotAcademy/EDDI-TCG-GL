@@ -80,7 +80,7 @@ export class DeckMakePopupButtonsClickDetectServiceImpl implements DeckMakePopup
                 this.setTransparentBackgroundVisible(false);
                 this.setDeckMakePopupBackgroundVisible(false);
                 this.setDeckMakePopupButtonsVisible(false);
-                this.setDeckMakePopupInputContainerVisible(false);
+                this.setDeckMakePopupInputContainerVisible(`none`);
                 this.clearUserInput();
             }
 
@@ -147,12 +147,11 @@ export class DeckMakePopupButtonsClickDetectServiceImpl implements DeckMakePopup
         }
     }
 
-    private setDeckMakePopupInputContainerVisible(isVisible: boolean): void {
-        if (isVisible == true) {
-            this.deckMakePopupInputContainerRepository.showDeckMakePopupInputContainer();
-        } else {
-            this.deckMakePopupInputContainerRepository.hideDeckMakePopupInputContainer();
-        }
+    private setDeckMakePopupInputContainerVisible(isVisible: 'block' | 'none'): void {
+        const container = this.deckMakePopupInputContainerRepository.findDeckMakePopupInputContainer();
+        if (container == null) return;
+
+        container.setVisibility(isVisible);
     }
 
     private saveUserInput(): void {

@@ -11,7 +11,7 @@ export class DeckMakePopupButtonsRepositoryImpl implements DeckMakePopupButtonsR
     private buttonMap: Map<number, DeckMakePopupButtons> = new Map();
     private textureManager: TextureManager;
 
-    private readonly BUTTON_WIDTH: number = 138 / 1920
+    private readonly BUTTON_WIDTH: number = 150 / 1920
     private readonly BUTTON_HEIGHT: number = 45 / 1080
 
     private constructor(textureManager: TextureManager) {
@@ -38,7 +38,7 @@ export class DeckMakePopupButtonsRepositoryImpl implements DeckMakePopupButtonsR
         }
 
         const buttonWidth = this.BUTTON_WIDTH * window.innerWidth;
-        const buttonHeight = this.BUTTON_HEIGHT * window.innerHeight;
+        const buttonHeight = buttonWidth * (80/360);
 
         const buttonPositionX = position.getX() * window.innerWidth;
         const buttonPositionY = position.getY() * window.innerHeight;

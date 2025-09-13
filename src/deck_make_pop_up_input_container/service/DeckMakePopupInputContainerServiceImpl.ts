@@ -40,15 +40,15 @@ export class DeckMakePopupInputContainerServiceImpl implements DeckMakePopupInpu
         const windowHeight = window.innerHeight;
 
 
-        const containerWidth = 0.25 * windowWidth; // 컨테이너 너비
+        const containerWidth = 0.28 * windowWidth; // 컨테이너 너비
         const containerHeight = 0.05 * windowHeight; // 컨테이너 높이
-        const containerTop = 0.4975 * windowHeight; // 컨테이너 Y 위치
-        const containerLeft = 0.387 * windowWidth; // 컨테이너 X 위치
+        const containerTop = 0.4675 * windowHeight; // 컨테이너 Y 위치
+        const containerLeft = 0.3705 * windowWidth; // 컨테이너 X 위치
         const containerPosition = { top: containerTop, left: containerLeft };
 
-        const inputWidth = 0.21 * windowWidth; // 입력창 너비
-        const inputHeight = 0.017 * windowHeight; // 입력창 높이
-        const inputFontSize = 0.01 * windowWidth; // 입력창 폰트 크기
+        const inputWidth = 0.25 * windowWidth; // 입력창 너비
+        const inputHeight = 0.014 * windowHeight; // 입력창 높이
+        const inputFontSize = 0.009 * windowWidth; // 입력창 폰트 크기
 
         // 컨테이너 업데이트
         inputContainerMesh.style.width = `${containerWidth}px`;

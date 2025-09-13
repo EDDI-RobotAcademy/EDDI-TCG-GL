@@ -47,8 +47,8 @@ export class DeckMakePopupButtonsServiceImpl implements DeckMakePopupButtonsServ
             const buttonMesh = button.getMesh();
             const initialPosition = button.position;
 
-            const buttonWidth = (138 / 1920) * windowWidth;
-            const buttonHeight = (45 / 1080) * windowHeight;
+            const buttonWidth = (150 / 1920) * windowWidth;
+            const buttonHeight = buttonWidth * (80/360);
 
             const newPositionX = initialPosition.getX() * windowWidth;
             const newPositionY = initialPosition.getY() * windowHeight;

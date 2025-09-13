@@ -42,7 +42,7 @@ export class DeckMakePopupBackgroundServiceImpl implements DeckMakePopupBackgrou
         const backgroundMesh = background.getMesh();
 
         const backgroundWidth = 0.425 * windowWidth;
-        const backgroundHeight = 0.422 * windowHeight;
+        const backgroundHeight = backgroundWidth * (440/1000);
 
         const newPositionX = windowWidth / background.getWidth();
         const newPositionY = windowHeight / background.getHeight();

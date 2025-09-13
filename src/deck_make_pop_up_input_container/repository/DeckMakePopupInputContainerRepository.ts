@@ -5,6 +5,4 @@ export interface DeckMakePopupInputContainerRepository {
     createDeckMakePopupInputContainer(): Promise<DeckMakePopupInputContainer>;
     findDeckMakePopupInputContainer(): DeckMakePopupInputContainer | null;
     deleteDeckMakePopupInputContainer(): void;
-    hideDeckMakePopupInputContainer(): void;
-    showDeckMakePopupInputContainer(): void;
 }
