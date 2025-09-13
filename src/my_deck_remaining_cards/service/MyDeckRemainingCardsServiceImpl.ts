@@ -42,6 +42,7 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
         try {
             const existingPosition = this.getPositionByCardId(cardId);
             if (existingPosition == null) {
+                console.log(`%c 남은 카드 수량 처음 생성, cardId: ${cardId}`, 'color: #00d5ff; font-weight: bold;');
                 const newPosition = this.myDeckRemainingCardsPosition(cardId);
                 console.log(`[DEBUG] CardId ${cardId}: Position X=${newPosition.position.getX()}, Y=${newPosition.position.getY()}`);
 
@@ -51,10 +52,12 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
             } else {
                 const existingRemainingCardsMesh = this.getRemainingCardsMeshByCardId(cardId);
                 if (existingRemainingCardsMesh == null) {
+                    console.log(`%c 남은 카드 수량 숫자 바꿔서 생성, cardId: ${cardId}`, 'color: #00d5ff; font-weight: bold;');
                     const myDeckRemainingCards = await this.createMyDeckRemainingCards(cardId, cardCount, existingPosition.position);
                     remainingCardsGroup.add(myDeckRemainingCards.getMesh());
 
                 } else {
+                    console.log(`%c 남은 카드 수량 이미 있음, cardId: ${cardId}`, 'color: #00d5ff; font-weight: bold;');
                     const positionX = existingPosition.getX() * window.innerWidth;
                     const positionY = existingPosition.getY() * window.innerHeight;
 
