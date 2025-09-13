@@ -13,6 +13,8 @@ import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_det
 import {SideScrollArea} from "../../side_scroll_area/entity/SideScrollArea";
 import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
 import {ClippingMaskManager} from "../../clipping_mask_manager/ClippingMaskManager";
+import {DeckDeleteButtonClickDetectRepositoryImpl} from "../../deck_delete_button_click_detect/repository/DeckDeleteButtonClickDetectRepositoryImpl";
+import {DeckNameEditButtonClickDetectRepositoryImpl} from "../../deck_name_edit_button_click_detect/repository/DeckNameEditButtonClickDetectRepositoryImpl";
 
 export class MyDeckButtonServiceImpl implements MyDeckButtonService {
     private static instance: MyDeckButtonServiceImpl;
@@ -21,6 +23,8 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
     private clippingMaskManager: ClippingMaskManager;
+    private deckDeleteButtonClickDetectRepository: DeckDeleteButtonClickDetectRepositoryImpl;
+    private deckNameEditButtonClickDetectRepository: DeckNameEditButtonClickDetectRepositoryImpl;
 
     private constructor(scene: THREE.Scene) {
         this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance(scene);
@@ -28,6 +32,8 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
+        this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
+        this.deckNameEditButtonClickDetectRepository = DeckNameEditButtonClickDetectRepositoryImpl.getInstance();
     }
 
     public static getInstance(scene: THREE.Scene): MyDeckButtonServiceImpl {
@@ -174,6 +180,7 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
          this.myDeckButtonRepository.deleteAll();
      }
 
+    // To-do: 덱 버튼 mesh 객체 생성 서비스 말고 다른 곳에 옮겨야 할 것 같음..
     public saveCurrentClickDeckId(): void {
         const myDeckButtonList = this.myDeckButtonRepository.findButtonDeckIdList();
         const sortedDeckIdList = [...myDeckButtonList].sort((a, b) => a - b);
@@ -185,6 +192,10 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
         const deckButtonId = this.getDeckButtonIdByDeckId(firstDeckId);
         if (deckButtonId !== null) {
             this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(deckButtonId);
+            this.myDeckButtonClickDetectRepository.saveButtonClickState(deckButtonId, true);
+
+            this.deckDeleteButtonClickDetectRepository.saveButtonClickEnabled(firstDeckId, true);
+            this.deckNameEditButtonClickDetectRepository.saveButtonClickEnabled(firstDeckId, true);
         }
     }
 
