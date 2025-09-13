@@ -132,7 +132,7 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
     }
 
     private getCurrentClickDeckId(): number | null {
-        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
     private getCardIdByDeckIdAndButtonId(deckId: number, buttonId: number): number | null {

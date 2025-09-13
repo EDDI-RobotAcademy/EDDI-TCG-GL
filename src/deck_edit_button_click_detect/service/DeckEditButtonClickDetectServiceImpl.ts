@@ -177,18 +177,18 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                 console.log(`[DEBUG] Clicked Deck Edit Button`);
                 console.log(`%c Clicked Deck Edit Button`, 'color: #ffbb00; font-weight: bold;');
 
-                const currentClickedDeckButtonId = this.getCurrentClickedDeckButtonId();
-                if (currentClickedDeckButtonId !== null) {
-                    console.log(`Deck Button Id?: ${currentClickedDeckButtonId}`);
-                    this.restoreAllMyDeckCardPositions(currentClickedDeckButtonId);
-                    this.restoreAllMyDeckNumberOfCardsPositions(currentClickedDeckButtonId);
-                    this.restoreAllMyDeckMarkerPositions(currentClickedDeckButtonId);
+                const currentClickedDeckId = this.getCurrentClickedDeckId();
+                if (currentClickedDeckId !== null) {
+                    console.log(`Deck Id?: ${currentClickedDeckId}`);
+                    this.restoreAllMyDeckCardPositions(currentClickedDeckId);
+                    this.restoreAllMyDeckNumberOfCardsPositions(currentClickedDeckId);
+                    this.restoreAllMyDeckMarkerPositions(currentClickedDeckId);
 
-                    this.setMyDeckCardVisibilityByDeckId(currentClickedDeckButtonId, false);
-                    this.setMyDeckNumberOfCards(currentClickedDeckButtonId, false);
-                    this.setTotalNumberOfSelectedCardsVisibility(currentClickedDeckButtonId, true);
-                    this.setDeckCardCountMarkerVisibilityByDeckId(currentClickedDeckButtonId, false);
-                    this.saveClonedOriginalDeckState(currentClickedDeckButtonId);
+                    this.setMyDeckCardVisibilityByDeckId(currentClickedDeckId, false);
+                    this.setMyDeckNumberOfCards(currentClickedDeckId, false);
+                    this.setTotalNumberOfSelectedCardsVisibility(currentClickedDeckId, true);
+                    this.setDeckCardCountMarkerVisibilityByDeckId(currentClickedDeckId, false);
+                    this.saveClonedOriginalDeckState(currentClickedDeckId);
                 }
 
                 this.setDeckEditButtonVisibility(false);
@@ -249,8 +249,8 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         return this.totalNumberOfSelectedCardsRepository.findNumberByDeckId(deckId);
     }
 
-    private getCurrentClickedDeckButtonId(): number | null {
-        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    private getCurrentClickedDeckId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
     private getCardIdByCardUniqueId(cardUniqueId: number): number | null {

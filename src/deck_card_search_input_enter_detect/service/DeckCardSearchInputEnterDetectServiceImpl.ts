@@ -57,7 +57,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         const searchInputContainer = this.myDeckSearchInputContainerRepository.findMyDeckSearchInputContainer();
         if (searchInputContainer == null) return;
 
-        const deckId = this.getCurrentClickDeckButtonId();
+        const deckId = this.getCurrentClickDeckId();
         if (deckId == null) return;
 
         const inputElement = searchInputContainer.getInputElement();
@@ -100,8 +100,8 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
 
     }
 
-    private getCurrentClickDeckButtonId(): number | null {
-        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    private getCurrentClickDeckId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
     private getCardNameList(deckId: number): string[] {

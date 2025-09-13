@@ -68,7 +68,7 @@ export class DeckCardAddButtonServiceImpl implements DeckCardAddButtonService {
     }
 
     public adjustDeckCardAddButtonPosition(): void {
-        const currentDeckButtonId = this.getCurrentClickDeckButton();
+        const currentDeckButtonId = this.getCurrentClickDeckId();
         if (currentDeckButtonId === null) {
             console.error("No deck button clicked");
             return;
@@ -156,8 +156,8 @@ export class DeckCardAddButtonServiceImpl implements DeckCardAddButtonService {
         return button.getMesh();
     }
 
-    public getCurrentClickDeckButton(): number | null {
-        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    public getCurrentClickDeckId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
     public getAllDeckIdList(): number[] {

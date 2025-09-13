@@ -73,7 +73,7 @@ export class MyDeckButtonEffectHoverDetectServiceImpl implements MyDeckButtonEff
                 this.setDeckDeleteButtonVisibility(shownButtonId, false);
             }
 
-            if (currentHoveredEffectId !== null && currentHoveredEffectId == this.getClickedDeckButtonId()) {
+            if (currentHoveredEffectId !== null && currentHoveredEffectId == this.getClickedDeckId()) {
                 this.setDeckNameEditButtonVisibility(currentHoveredEffectId, true);
                 this.setDeckDeleteButtonVisibility(currentHoveredEffectId, true);
             }
@@ -127,8 +127,8 @@ export class MyDeckButtonEffectHoverDetectServiceImpl implements MyDeckButtonEff
         }
     }
 
-    private getClickedDeckButtonId(): number | undefined {
-        const currentClickedDeckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    private getClickedDeckId(): number | undefined {
+        const currentClickedDeckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
         if (currentClickedDeckId !== null) {
             const buttonId = this.myDeckButtonEffectRepository.findEffectIdByDeckId(currentClickedDeckId);
             if (buttonId !== null) {
