@@ -223,7 +223,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
 
             const buttonId = clickedDeckButton.id;
             const currentClickedDeckId = this.getDeckIdByButtonId(buttonId);
-            console.log(`Clicked Deck Button ID: ${buttonId}, Deck ID: ${currentClickedDeckId}`);
+            console.log(`%c [버튼 클릭 이벤트 실행] 현재 클릭된 덱 버튼의 ID: ${buttonId}, 덱 ID: ${currentClickedDeckId}`, 'color: #ff5733; font-weight: bold;');
             this.saveCurrentClickDeckId(currentClickedDeckId);
 
             if (currentClickedDeckId !== null) {

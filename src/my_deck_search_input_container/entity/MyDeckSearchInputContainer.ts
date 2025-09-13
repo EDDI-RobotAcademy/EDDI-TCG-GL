@@ -30,6 +30,14 @@ export class MyDeckSearchInputContainer {
         return this.container.style.display;
     }
 
+    public setInputDisabled(isDisabled: boolean): void {
+        this.inputElement.disabled = isDisabled;
+    }
+
+    public isInputDisabled(): boolean {
+        return this.inputElement.disabled;
+    }
+
 //     public getVisibility(): CSSStyleDeclaration['display'] {
 //         return this.container.style.display;
 //     }

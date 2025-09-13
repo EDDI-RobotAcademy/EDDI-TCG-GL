@@ -34,6 +34,7 @@ import {MyDeckCardNamePositionRepositoryImpl} from "../../my_deck_card_name_posi
 import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of_cards_position/repository/MyDeckNumberOfCardsPositionRepositoryImpl";
 import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_marker_position/repository/DeckCardCountMarkerPositionRepositoryImpl";
 import {MyDeckNumberOfSelectedCardsPositionRepositoryImpl} from "../../my_deck_number_of_selected_cards_position/repository/MyDeckNumberOfSelectedCardsPositionRepositoryImpl";
+import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
 
 import {MyDeckButtonMapRepositoryImpl} from "../../my_deck_button/repository/MyDeckButtonMapRepositoryImpl";
 import {MyDeckCardMapRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardMapRepositoryImpl";
@@ -68,6 +69,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     private myDeckNumberOfCardsRepository: MyDeckNumberOfCardsRepositoryImpl;
     private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
     private myDeckNumberOfSelectedCardsRepository: MyDeckNumberOfSelectedCardsRepositoryImpl;
+    private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
 
     private deckDeleteButtonPositionRepository: DeckDeleteButtonPositionRepositoryImpl;
     private deckNameEditButtonPositionRepository: DeckNameEditButtonPositionRepositoryImpl;
@@ -109,6 +111,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance(scene);
         this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
         this.myDeckNumberOfSelectedCardsRepository = MyDeckNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
+        this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
 
         this.deckDeleteButtonPositionRepository = DeckDeleteButtonPositionRepositoryImpl.getInstance();
         this.deckNameEditButtonPositionRepository = DeckNameEditButtonPositionRepositoryImpl.getInstance();
@@ -161,6 +164,10 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
             this.setPopupWindowVisibility(false);
             this.setPopupButtonsVisibility(false);
 
+            const searchContainer = this.myDeckSearchInputContainerRepository.findMyDeckSearchInputContainer();
+            if (searchContainer) {
+                searchContainer.setInputDisabled(false);
+            }
 
             switch (currentClickedButtonId) {
                 case 0:
@@ -168,6 +175,13 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
                     break;
                 case 1:
                     console.log(`Deck Delete!`);
+
+                    const searchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
+                    if (searchInputText !== null && searchInputText.length > 0) {
+                        this.myDeckSearchInputContainerRepository.clearUserInput();
+                        this.myDeckSearchInputContainerRepository.deleteUserInput();
+                    }
+
                     const deleteDeckId = this.getCurrentDeleteDeckId();
                     if (deleteDeckId == null) return null;
 

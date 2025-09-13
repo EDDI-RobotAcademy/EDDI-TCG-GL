@@ -64,7 +64,7 @@ export class DeckMakePopupButtonsClickDetectServiceImpl implements DeckMakePopup
 
             const searchContainer = this.myDeckSearchInputContainerRepository.findMyDeckSearchInputContainer();
             if (searchContainer) {
-                searchContainer.setVisibility('block');
+                searchContainer.setInputDisabled(false);
             }
 
             if (clickedDeckMakePopupButton.id === 0) {
@@ -78,6 +78,14 @@ export class DeckMakePopupButtonsClickDetectServiceImpl implements DeckMakePopup
 
             if (clickedDeckMakePopupButton.id === 1) {
                 console.log(`[DEBUG] click create button!`);
+
+                // 덱 생성 버튼을 클릭하면 다른 페이지로 넘어가므로 검색창에 입력되어 있는 텍스트가 지워져야 함
+                const searchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
+                if (searchInputText !== null && searchInputText.length > 0) {
+                    this.myDeckSearchInputContainerRepository.clearUserInput();
+                    this.myDeckSearchInputContainerRepository.deleteUserInput();
+                }
+
                 this.saveUserInput();
                 this.clearUserInput();
                 this.deckMakePopupInputContainerRepository.findUserInput();
