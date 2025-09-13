@@ -174,13 +174,18 @@ export class MyDeckButtonServiceImpl implements MyDeckButtonService {
          this.myDeckButtonRepository.deleteAll();
      }
 
-    public saveCurrentClickDeckButtonId(): void {
+    public saveCurrentClickDeckId(): void {
         const myDeckButtonList = this.myDeckButtonRepository.findButtonDeckIdList();
         const sortedDeckIdList = [...myDeckButtonList].sort((a, b) => a - b);
         const firstDeckId = sortedDeckIdList[0];
         console.log(`%c first Deck Id?${firstDeckId}`, 'color: #FF4500; font-weight: bold;');
 
-        this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(firstDeckId);
+        this.myDeckButtonClickDetectRepository.saveCurrentClickDeckId(firstDeckId);
+
+        const deckButtonId = this.getDeckButtonIdByDeckId(firstDeckId);
+        if (deckButtonId !== null) {
+            this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(deckButtonId);
+        }
     }
 
     public getMyDeckButtonGroups(): THREE.Group {

@@ -8,7 +8,7 @@ export class DeckNameEditButtonClickDetectRepositoryImpl implements DeckNameEdit
     private raycaster = new THREE.Raycaster();
 
     private currentClickedButtonId: number | null = null;
-    private buttonClickEnabledMap: Map<number, boolean> = new Map(); //deck button Id: false or true
+    private buttonClickEnabledMap: Map<number, boolean> = new Map(); //deck Id: false or true
 
     public static getInstance(): DeckNameEditButtonClickDetectRepositoryImpl {
         if (!DeckNameEditButtonClickDetectRepositoryImpl.instance) {
@@ -44,8 +44,8 @@ export class DeckNameEditButtonClickDetectRepositoryImpl implements DeckNameEdit
         return null;
     }
 
-    public saveCurrentClickedButtonId(id: number): void {
-        this.currentClickedButtonId = id;
+    public saveCurrentClickedButtonId(deckId: number): void {
+        this.currentClickedButtonId = deckId;
     }
 
     public findCurrentClickedButtonId(): number | null {
@@ -62,6 +62,16 @@ export class DeckNameEditButtonClickDetectRepositoryImpl implements DeckNameEdit
 
     public isButtonClickEnabled(deckId: number): boolean | undefined {
         return this.buttonClickEnabledMap.get(deckId);
+    }
+
+    public findEnabledButtonIds(): number[] {
+        const enabledIds: number[] = [];
+        for (const [deckId, isEnabled] of this.buttonClickEnabledMap.entries()) {
+            if (isEnabled == true) {
+                enabledIds.push(deckId);
+            }
+        }
+        return enabledIds;
     }
 
 }

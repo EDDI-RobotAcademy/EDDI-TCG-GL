@@ -52,7 +52,7 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
     }
 
     public async onMouseDown(event: MouseEvent): Promise<DeckNameEditButton | null> {
-        const currentClickedDeckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+        const currentClickedDeckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
         if (currentClickedDeckId == null) return null;
         console.log(`%c 현재 클릭한 덱 ID?: ${currentClickedDeckId}`, 'color: #00d5ff; font-weight: bold;');
 

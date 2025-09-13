@@ -13,6 +13,7 @@ import {TransparentBackgroundRepositoryImpl} from "../../transparent_background/
 import {DeleteDeckPopupWindowRepositoryImpl} from "../../delete_deck_popup_window/repository/DeleteDeckPopupWindowRepositoryImpl";
 import {DeleteDeckPopupButtonRepositoryImpl} from "../../delete_deck_popup_button/repository/DeleteDeckPopupButtonRepositoryImpl";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
+import {MyDeckButtonRepositoryImpl} from "../../my_deck_button/repository/MyDeckButtonRepositoryImpl";
 
 export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonClickDetectService {
     private static instance: DeckDeleteButtonClickDetectServiceImpl | null = null;
@@ -23,6 +24,7 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
     private deleteDeckPopupWindowRepository: DeleteDeckPopupWindowRepositoryImpl;
     private deleteDeckPopupButtonRepository: DeleteDeckPopupButtonRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
+    private myDeckButtonRepository: MyDeckButtonRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -32,6 +34,7 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
         this.deleteDeckPopupWindowRepository = DeleteDeckPopupWindowRepositoryImpl.getInstance();
         this.deleteDeckPopupButtonRepository = DeleteDeckPopupButtonRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
+        this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance(scene);
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckDeleteButtonClickDetectServiceImpl {
@@ -70,16 +73,16 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
     }
 
     public async onMouseDown(event: MouseEvent): Promise<DeckDeleteButton | null> {
-        const currentClickedDeckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+        const currentClickedDeckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
         if (currentClickedDeckId == null) return null;
-        console.log(`%c 클릭한 덱 ID?: ${currentClickedDeckId}`, 'color: #00d5ff; font-weight: bold;');
+        console.log(`%c 현재 클릭한 덱 ID?: ${currentClickedDeckId}`, 'color: #00d5ff; font-weight: bold;');
 
         const deleteDeckButtonVisible = this.getDeckDeleteButtonVisibility(currentClickedDeckId);
-        console.log(`%c 버튼 visible 상태?: ${deleteDeckButtonVisible}`, 'color: #00d5ff; font-weight: bold;');
+        console.log(`%c 덱 삭제 버튼 visible 상태?: ${deleteDeckButtonVisible}`, 'color: #00d5ff; font-weight: bold;');
         if (deleteDeckButtonVisible !== true) return null;
 
         const deckDeleteButtonClickEnabled = this.isDeckDeleteButtonClickEnabled(currentClickedDeckId);
-        console.log(`%c 버튼 클릭 가능?: ${deckDeleteButtonClickEnabled}`, 'color: #00d5ff; font-weight: bold;');
+        console.log(`%c 덱 삭제 버튼 클릭 가능?: ${deckDeleteButtonClickEnabled}`, 'color: #00d5ff; font-weight: bold;');
         if (deckDeleteButtonClickEnabled !== true) return null;
 
         if (event.button === 0) {
