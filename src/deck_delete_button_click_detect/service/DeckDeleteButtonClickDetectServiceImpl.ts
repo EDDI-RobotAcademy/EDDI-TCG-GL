@@ -15,6 +15,7 @@ import {DeleteDeckPopupWindowRepositoryImpl} from "../../delete_deck_popup_windo
 import {DeleteDeckPopupButtonRepositoryImpl} from "../../delete_deck_popup_button/repository/DeleteDeckPopupButtonRepositoryImpl";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {MyDeckButtonRepositoryImpl} from "../../my_deck_button/repository/MyDeckButtonRepositoryImpl";
+import {DeckCardSearchCancelButtonClickDetectRepositoryImpl} from "../../deck_card_search_cancel_button_click_detect/repository/DeckCardSearchCancelButtonClickDetectRepositoryImpl";
 
 export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonClickDetectService {
     private static instance: DeckDeleteButtonClickDetectServiceImpl | null = null;
@@ -27,6 +28,7 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private myDeckButtonRepository: MyDeckButtonRepositoryImpl;
     private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
+    private deckCardSearchCancelButtonClickDetectRepository: DeckCardSearchCancelButtonClickDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -38,6 +40,7 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckButtonRepository = MyDeckButtonRepositoryImpl.getInstance(scene);
         this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
+        this.deckCardSearchCancelButtonClickDetectRepository = DeckCardSearchCancelButtonClickDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckDeleteButtonClickDetectServiceImpl {
@@ -64,6 +67,8 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
             if (searchContainer) {
                 searchContainer.setInputDisabled(true);
             }
+
+            this.setSearchCancelButtonClickEnabled(false);
 
             const deckId = this.getDeckIdByDeleteButtonId(buttonId);
             if (deckId == null) return null;
@@ -149,6 +154,10 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
 
     private setDeckDeleteButtonClickEnabled(deckId: number, isEnabled: boolean): void {
         this.deckDeleteButtonClickDetectRepository.saveButtonClickEnabled(deckId, isEnabled);
+    }
+
+    private setSearchCancelButtonClickEnabled(isEnable: boolean): void {
+        this.deckCardSearchCancelButtonClickDetectRepository.setButtonClickEnabled(isEnable);
     }
 
 }
