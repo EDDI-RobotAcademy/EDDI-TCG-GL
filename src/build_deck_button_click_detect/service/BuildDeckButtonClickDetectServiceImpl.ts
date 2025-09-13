@@ -75,15 +75,9 @@ export class BuildDeckButtonClickDetectServiceImpl implements BuildDeckButtonCli
             if (clickedButton) {
                 console.log(`[DEBUG] Clicked Build Deck Button`);
 
-                const searchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
-                if (searchInputText !== null && searchInputText.length > 0) {
-                    this.myDeckSearchInputContainerRepository.clearUserInput();
-                    this.myDeckSearchInputContainerRepository.deleteUserInput();
-                }
-
                 const searchContainer = this.myDeckSearchInputContainerRepository.findMyDeckSearchInputContainer();
                 if (searchContainer) {
-                    searchContainer.setVisibility('none');
+                    searchContainer.setInputDisabled(true);
                 }
 
                 this.setSearchCancelButtonVisibility(false);

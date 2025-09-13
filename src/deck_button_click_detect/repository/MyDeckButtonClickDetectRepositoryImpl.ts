@@ -42,14 +42,14 @@ export class MyDeckButtonClickDetectRepositoryImpl implements MyDeckButtonClickD
 
             const prevClickedDeckButtonId = this.getCurrentClickDeckButtonId();
             if (prevClickedDeckButtonId !== null) {
-                console.log(`%c 이전에 클릭한 덱 버튼의 ID: ${prevClickedDeckButtonId}`, 'color: #ff5733; font-weight: bold;');
+                console.log(`%c [버튼 클릭 이벤트 아직 미실행] 이전에 클릭한 덱 버튼의 ID: ${prevClickedDeckButtonId}`, 'color: #ff5733; font-weight: bold;');
             }
 
             if (clickedDeckButton) {
-                console.log('%c detect clicked deck Button!', 'color: #ff5733; font-weight: bold;')
+                console.log('%c [버튼 클릭 이벤트 아직 미실행] detect clicked deck Button!', 'color: #ff5733; font-weight: bold;')
 
                 const buttonClickState = this.getButtonClickState(clickedDeckButton.id);
-                console.log(`%c 현재 감지된 덱 버튼의 ID: ${clickedDeckButton.id}, 버튼의 클릭 상태: ${buttonClickState}`, 'color: #ff5733; font-weight: bold;');
+                console.log(`%c [버튼 클릭 이벤트 아직 미실행] 현재 감지된 덱 버튼의 ID: ${clickedDeckButton.id}, 버튼의 클릭 상태: ${buttonClickState}`, 'color: #ff5733; font-weight: bold;');
 
                 if (prevClickedDeckButtonId !== null && prevClickedDeckButtonId !== clickedDeckButton.id) {
                     this.saveButtonClickState(prevClickedDeckButtonId, false);

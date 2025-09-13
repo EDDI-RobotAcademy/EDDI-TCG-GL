@@ -9,6 +9,7 @@ import {DeckNameEditButtonClickDetectRepositoryImpl} from "../repository/DeckNam
 import {DeckNameEditButton} from "../../deck_name_edit_button/entity/DeckNameEditButton";
 import {DeckNameEditButtonRepositoryImpl} from "../../deck_name_edit_button/repository/DeckNameEditButtonRepositoryImpl";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
+import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
 
 export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditButtonClickDetectService {
     private static instance: DeckNameEditButtonClickDetectServiceImpl | null = null;
@@ -16,12 +17,14 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
     private deckNameEditButtonClickDetectRepository: DeckNameEditButtonClickDetectRepositoryImpl;
     private deckNameEditButtonRepository: DeckNameEditButtonRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
+    private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.deckNameEditButtonClickDetectRepository = DeckNameEditButtonClickDetectRepositoryImpl.getInstance();
         this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance(scene);
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
+        this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckNameEditButtonClickDetectServiceImpl {
@@ -45,6 +48,11 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
             console.log(`[DEBUG] Clicked Deck Name Edit Button ID: ${buttonId}`);
             this.saveCurrentClickedDeckNameEditButtonId(buttonId);
 
+            const searchContainer = this.myDeckSearchInputContainerRepository.findMyDeckSearchInputContainer();
+            if (searchContainer) {
+                searchContainer.setInputDisabled(true);
+            }
+
             return clickedButton;
 
         }
@@ -54,7 +62,7 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
     public async onMouseDown(event: MouseEvent): Promise<DeckNameEditButton | null> {
         const currentClickedDeckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
         if (currentClickedDeckId == null) return null;
-        console.log(`%c 현재 클릭한 덱 ID?: ${currentClickedDeckId}`, 'color: #00d5ff; font-weight: bold;');
+//         console.log(`%c 현재 클릭한 덱 ID?: ${currentClickedDeckId}`, 'color: #00d5ff; font-weight: bold;');
 
         const deckNameEditButtonVisible = this.getDeckNameEditButtonVisibility(currentClickedDeckId);
         console.log(`%c 덱 이름 편집 버튼 visible 상태?: ${deckNameEditButtonVisible}`, 'color: #00d5ff; font-weight: bold;');
