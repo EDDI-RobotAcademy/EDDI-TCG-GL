@@ -99,8 +99,8 @@ export class DeckEditDoneButtonClickDetectServiceImpl implements DeckEditDoneBut
 
     public async handleClick(clickPoint: { x: number; y: number }): Promise<DeckEditDoneButton | null> {
         const { x, y } = clickPoint;
-        const currentClickedDeckButtonId = this.getCurrentClickDeckButtonId();
-        if (currentClickedDeckButtonId == null) return null;
+        const currentClickedDeckId = this.getCurrentClickDeckId();
+        if (currentClickedDeckId == null) return null;
 
         const button = this.getDeckEditDoneButton();
         if (button == null) return null;
@@ -114,11 +114,11 @@ export class DeckEditDoneButtonClickDetectServiceImpl implements DeckEditDoneBut
             this.saveCurrentButtonClickState(true);
             console.log(`%c Clicked Deck Edit Done Button`, 'color: #ffbb00; font-weight: bold;');
 
-            const selectedTotalCardCount = this.cardCountManager.findTotalSelectedCardCount(currentClickedDeckButtonId);
+            const selectedTotalCardCount = this.cardCountManager.findTotalSelectedCardCount(currentClickedDeckId);
             if (selectedTotalCardCount == 40) {
                 console.log(`%c 덱 편집 완료 버튼 클릭 화면 전환 필요 `, 'color: #087500; font-weight: bold;');
                 // To-do: 편집 완료 버튼 클릭시 map 데이터에 반영
-                this.saveDeckCardCountInfo(currentClickedDeckButtonId);
+                this.saveDeckCardCountInfo(currentClickedDeckId);
 
                 this.setDeckEditButtonVisibility(true);
                 this.setDeckEditDoneButtonVisibility(false);
@@ -126,16 +126,16 @@ export class DeckEditDoneButtonClickDetectServiceImpl implements DeckEditDoneBut
                 this.setNumberOfRemainingCardsVisibility(false);
                 this.setRemainingOutOfTotalSlashVisibility(false);
                 this.setNumberOfTotalOwnedCardsVisibility(false);
-                this.setTotalNumberOfSelectedCardsVisibility(currentClickedDeckButtonId, false);
+                this.setTotalNumberOfSelectedCardsVisibility(currentClickedDeckId, false);
                 this.setChosenOutOfTotalSlashVisibility(false);
                 this.setRequiredNumberOfCardsVisibility(false);
                 this.setCardBlockerVisibility(false);
-                this.setDeckCardAddButtonVisibility(currentClickedDeckButtonId, false);
-                this.setDeckCardDeleteButtonVisibility(currentClickedDeckButtonId, false);
+                this.setDeckCardAddButtonVisibility(currentClickedDeckId, false);
+                this.setDeckCardDeleteButtonVisibility(currentClickedDeckId, false);
 
-                this.setMyDeckCardVisibilityByDeckId(currentClickedDeckButtonId, true);
-                this.setMyDeckNumberOfCards(currentClickedDeckButtonId, true);
-                this.setDeckCardCountMarkerVisibilityByDeckId(currentClickedDeckButtonId, true);
+                this.setMyDeckCardVisibilityByDeckId(currentClickedDeckId, true);
+                this.setMyDeckNumberOfCards(currentClickedDeckId, true);
+                this.setDeckCardCountMarkerVisibilityByDeckId(currentClickedDeckId, true);
 
             } else {
                 // To-do: 미충족 알림 팝업창 제작 필요
@@ -192,8 +192,8 @@ export class DeckEditDoneButtonClickDetectServiceImpl implements DeckEditDoneBut
         }
     }
 
-    private getCurrentClickDeckButtonId(): number | null {
-        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    private getCurrentClickDeckId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
     private saveDeckCardCountInfo(deckId: number): void {

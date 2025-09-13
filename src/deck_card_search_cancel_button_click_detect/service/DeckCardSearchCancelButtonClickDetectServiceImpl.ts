@@ -69,7 +69,7 @@ export class DeckCardSearchCancelButtonClickDetectServiceImpl implements DeckCar
 
     public async handleClick(clickPoint: { x: number; y: number }): Promise<MyDeckCardSearchCancelButton | null> {
         const { x, y } = clickPoint;
-        const currentClickedDeckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+        const currentClickedDeckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
         if (currentClickedDeckId == null) return null;
 
         const button = this.getSearchCancelButton();

@@ -40,7 +40,7 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
     public async onWheelScroll(event: WheelEvent): Promise<void> {
         if (!this.getMyDeckScrollEnabledById(1)) return;
 
-        const currentClickDeckId = this.getCurrentClickDeckButtonId();
+        const currentClickDeckId = this.getCurrentClickDeckId();
         if (currentClickDeckId == null) return;
         console.log(`%c current click deck id?${currentClickDeckId}`, 'color: #0000FF; font-weight: bold;');
 
@@ -104,8 +104,8 @@ export class MyDeckCardScrollServiceImpl implements MyDeckCardScrollService {
         return rowCount;
     }
 
-    public getCurrentClickDeckButtonId(): number | null {
-        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    public getCurrentClickDeckId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
     private getMyDeckScrollEnabledById(areaId: number): boolean {

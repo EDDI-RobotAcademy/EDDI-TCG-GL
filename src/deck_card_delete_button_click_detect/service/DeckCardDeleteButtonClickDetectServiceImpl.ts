@@ -108,10 +108,10 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
 
     async handleButtonClick(clickPoint: { x: number; y: number }): Promise<DeckCardDeleteButton | null> {
         const { x, y } = clickPoint;
-        const currentClickedDeckButtonId = this.getCurrentClickDeckButtonId();
-        if (currentClickedDeckButtonId == null) return null;
+        const currentClickedDeckId = this.getCurrentClickDeckId();
+        if (currentClickedDeckId == null) return null;
 
-        const allButtonList = this.getAllDeckCardDeleteButtonList(currentClickedDeckButtonId);
+        const allButtonList = this.getAllDeckCardDeleteButtonList(currentClickedDeckId);
         if (allButtonList == null) return null;
 
         const clickedButton = this.deckCardDeleteButtonClickDetectRepository.isButtonClicked(
@@ -126,32 +126,32 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
 
             this.saveCurrentClickedButtonId(buttonUniqueId);
 
-            const cardId = this.getCardIdByDeckIdAndButtonId(currentClickedDeckButtonId, buttonUniqueId);
+            const cardId = this.getCardIdByDeckIdAndButtonId(currentClickedDeckId, buttonUniqueId);
             if (cardId == null) return null;
-            this.saveClickedCardCount(currentClickedDeckButtonId, cardId);
+            this.saveClickedCardCount(currentClickedDeckId, cardId);
 
-            this.deleteNumberOfSelectedCards(currentClickedDeckButtonId, cardId);
-            this.deleteNumberOfCards(currentClickedDeckButtonId, cardId);
+            this.deleteNumberOfSelectedCards(currentClickedDeckId, cardId);
+            this.deleteNumberOfCards(currentClickedDeckId, cardId);
             this.setCardBlockerVisibility(cardId, false);
             this.deleteRemainingCards(cardId);
-            this.totalNumberOfSelectedCardsRepository.deleteNumberByDeckId(currentClickedDeckButtonId);
+            this.totalNumberOfSelectedCardsRepository.deleteNumberByDeckId(currentClickedDeckId);
 
-            const selectedCardCount = this.cardCountManager.findSelectedCardCountByDeck(currentClickedDeckButtonId, cardId);
+            const selectedCardCount = this.cardCountManager.findSelectedCardCountByDeck(currentClickedDeckId, cardId);
             if (selectedCardCount == 0) {
-                this.deleteDeckElement(currentClickedDeckButtonId, cardId);
-                this.deleteNumberOfSelectedCardsPosition(currentClickedDeckButtonId, cardId);
-                this.deleteCard(currentClickedDeckButtonId, cardId);
-                this.deleteNumberOfCardsPosition(currentClickedDeckButtonId, cardId);
-                this.deleteDeckCardCountMarker(currentClickedDeckButtonId, cardId);
+                this.deleteDeckElement(currentClickedDeckId, cardId);
+                this.deleteNumberOfSelectedCardsPosition(currentClickedDeckId, cardId);
+                this.deleteCard(currentClickedDeckId, cardId);
+                this.deleteNumberOfCardsPosition(currentClickedDeckId, cardId);
+                this.deleteDeckCardCountMarker(currentClickedDeckId, cardId);
 
-                this.adjustDeckCardDeleteButton(currentClickedDeckButtonId);
-                this.adjustCardBlock(currentClickedDeckButtonId);
-                this.adjustCardName(currentClickedDeckButtonId);
-                this.adjustNumberOfSelectedCards(currentClickedDeckButtonId);
-                this.adjustDeckCardAddButton(currentClickedDeckButtonId);
-                this.adjustDeckCard(currentClickedDeckButtonId);
-                this.adjustNumberOfDeckCard(currentClickedDeckButtonId);
-                this.adjustDeckCardCountMarker(currentClickedDeckButtonId);
+                this.adjustDeckCardDeleteButton(currentClickedDeckId);
+                this.adjustCardBlock(currentClickedDeckId);
+                this.adjustCardName(currentClickedDeckId);
+                this.adjustNumberOfSelectedCards(currentClickedDeckId);
+                this.adjustDeckCardAddButton(currentClickedDeckId);
+                this.adjustDeckCard(currentClickedDeckId);
+                this.adjustNumberOfDeckCard(currentClickedDeckId);
+                this.adjustDeckCardCountMarker(currentClickedDeckId);
             }
             return clickedButton;
         }
@@ -180,8 +180,8 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         return this.deckCardDeleteButtonRepository.findButtonListByDeckId(deckId);
     }
 
-    private getCurrentClickDeckButtonId(): number | null {
-        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    private getCurrentClickDeckId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
     private getCardIdByDeckIdAndButtonId(deckId: number, buttonId: number): number | null {

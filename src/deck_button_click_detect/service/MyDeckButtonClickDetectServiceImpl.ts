@@ -151,12 +151,12 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         return MyDeckButtonClickDetectServiceImpl.instance;
     }
 
-    private setButtonClickEnabled(isEnabled: boolean): void {
-        this.myDeckButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
+    private setAllButtonClickEnabled(isEnabled: boolean): void {
+        this.myDeckButtonClickDetectRepository.setAllButtonClickEnabled(isEnabled);
     }
 
-    private isButtonClickEnabled(): boolean {
-        return this.myDeckButtonClickDetectRepository.isButtonClickEnabled();
+    private isAllButtonClickEnabled(): boolean {
+        return this.myDeckButtonClickDetectRepository.isAllButtonClickEnabled();
     }
 
     async handleLeftClick(clickPoint: { x: number; y: number }): Promise<MyDeckButton | null> {
@@ -179,31 +179,30 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
             this.setSearchCancelButtonVisibility(false);
             this.setSearchCancelButtonClickEnabled(false);
 
-            const previousClickedDeckButtonId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
-            if (previousClickedDeckButtonId !== null) {
-                this.myDeckButtonClickDetectRepository.saveButtonClickState(previousClickedDeckButtonId, false);
+            const previousClickedDeckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
+            if (previousClickedDeckId !== null) {
 
-                this.setButtonVisibility(previousClickedDeckButtonId, true);
-                this.setEffectVisibility(previousClickedDeckButtonId, false);
-                this.setCardVisibilityByDeckId(previousClickedDeckButtonId, false);
-                this.setCardVisibilityByDeckId(previousClickedDeckButtonId, false);
-                this.setBlockVisibilityByDeckId(previousClickedDeckButtonId, false);
-                this.setCardNameVisibilityByDeckId(previousClickedDeckButtonId, false);
-                this.setDeckNameEditButtonVisibility(previousClickedDeckButtonId, false);
-                this.setDeckDeleteButtonVisibility(previousClickedDeckButtonId, false);
-                this.setNumberOfCardsVisibilityByDeckId(previousClickedDeckButtonId, false);
-                this.setNumberOfSelectedCardsVisibilityByDeckId(previousClickedDeckButtonId, false);
-                this.setDeckCardCountMarkerVisibilityByDeckId(previousClickedDeckButtonId, false);
-                this.setTotalNumberOfSelectedCardsVisibility(previousClickedDeckButtonId, false);
+                this.setButtonVisibility(previousClickedDeckId, true);
+                this.setEffectVisibility(previousClickedDeckId, false);
+                this.setCardVisibilityByDeckId(previousClickedDeckId, false);
+                this.setCardVisibilityByDeckId(previousClickedDeckId, false);
+                this.setBlockVisibilityByDeckId(previousClickedDeckId, false);
+                this.setCardNameVisibilityByDeckId(previousClickedDeckId, false);
+                this.setDeckNameEditButtonVisibility(previousClickedDeckId, false);
+                this.setDeckDeleteButtonVisibility(previousClickedDeckId, false);
+                this.setNumberOfCardsVisibilityByDeckId(previousClickedDeckId, false);
+                this.setNumberOfSelectedCardsVisibilityByDeckId(previousClickedDeckId, false);
+                this.setDeckCardCountMarkerVisibilityByDeckId(previousClickedDeckId, false);
+                this.setTotalNumberOfSelectedCardsVisibility(previousClickedDeckId, false);
 
                 // 검색 실행 하고 다른 덱 버튼 클릭 후 다시 검색 실행했던 덱으로 돌아왔을 때, 검색 상태가 유지되지 않고 검색 전 카드 배치로 초기화
-                this.restoreAllMyDeckCardPositions(previousClickedDeckButtonId);
-                this.restoreAllMyDeckNumberOfCardsPositions(previousClickedDeckButtonId);
-                this.restoreAllMyDeckMarkerPositions(previousClickedDeckButtonId);
+                this.restoreAllMyDeckCardPositions(previousClickedDeckId);
+                this.restoreAllMyDeckNumberOfCardsPositions(previousClickedDeckId);
+                this.restoreAllMyDeckMarkerPositions(previousClickedDeckId);
 
                 // To-do: 편집 화면에서 편집 다 못하고 나올 때 원본 데이터로 돌려야 함
                 if (this.getDeckEditButtonClickState() == true) {
-                    this.restoreOriginalDeckState(previousClickedDeckButtonId);
+                    this.restoreOriginalDeckState(previousClickedDeckId);
 
                     // To-do: countManager 도 원본 데이터로 수정 필요
                     this.cardCountManager.restoreRemainingCardCount();
@@ -223,22 +222,19 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
             }
 
             const buttonId = clickedDeckButton.id;
-            const currentClickedDeckButtonId = this.getDeckIdByButtonId(buttonId);
-            console.log(`Clicked Deck Button ID: ${buttonId}, Deck ID: ${currentClickedDeckButtonId}`);
-            this.saveCurrentClickDeckButtonId(currentClickedDeckButtonId);
+            const currentClickedDeckId = this.getDeckIdByButtonId(buttonId);
+            console.log(`Clicked Deck Button ID: ${buttonId}, Deck ID: ${currentClickedDeckId}`);
+            this.saveCurrentClickDeckId(currentClickedDeckId);
 
-
-            if (currentClickedDeckButtonId !== null) {
-                this.myDeckButtonClickDetectRepository.saveButtonClickState(currentClickedDeckButtonId, true);
-
+            if (currentClickedDeckId !== null) {
                 // 덱 버튼 누를 때마다 카드, 블록 원위치
                 const scrollTargets = [
-                    this.getBlockGroup(currentClickedDeckButtonId),
-                    this.getCardNameGroup(currentClickedDeckButtonId),
-                    this.getCardGroup(currentClickedDeckButtonId),
-                    this.getNumberOfCardsGroup(currentClickedDeckButtonId),
-                    this.getNumberOfSelectedCardsGroup(currentClickedDeckButtonId),
-                    this.getDeckCardCountMarkerGroup(currentClickedDeckButtonId),
+                    this.getBlockGroup(currentClickedDeckId),
+                    this.getCardNameGroup(currentClickedDeckId),
+                    this.getCardGroup(currentClickedDeckId),
+                    this.getNumberOfCardsGroup(currentClickedDeckId),
+                    this.getNumberOfSelectedCardsGroup(currentClickedDeckId),
+                    this.getDeckCardCountMarkerGroup(currentClickedDeckId),
                 ];
 
                 if (scrollTargets.every(target => !target)) return null;
@@ -246,19 +242,19 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                     target.position.y = 0;
                 });
 
-                this.setButtonVisibility(currentClickedDeckButtonId, false);
-                this.setEffectVisibility(currentClickedDeckButtonId, true);
-                this.setCardVisibilityByDeckId(currentClickedDeckButtonId, true);
-                this.setBlockVisibilityByDeckId(currentClickedDeckButtonId, true);
-                this.setCardNameVisibilityByDeckId(currentClickedDeckButtonId, true);
-                this.setNumberOfCardsVisibilityByDeckId(currentClickedDeckButtonId, true);
-                this.setNumberOfSelectedCardsVisibilityByDeckId(currentClickedDeckButtonId, true);
-                this.setDeckCardCountMarkerVisibilityByDeckId(currentClickedDeckButtonId, true);
+                this.setButtonVisibility(currentClickedDeckId, false);
+                this.setEffectVisibility(currentClickedDeckId, true);
+                this.setCardVisibilityByDeckId(currentClickedDeckId, true);
+                this.setBlockVisibilityByDeckId(currentClickedDeckId, true);
+                this.setCardNameVisibilityByDeckId(currentClickedDeckId, true);
+                this.setNumberOfCardsVisibilityByDeckId(currentClickedDeckId, true);
+                this.setNumberOfSelectedCardsVisibilityByDeckId(currentClickedDeckId, true);
+                this.setDeckCardCountMarkerVisibilityByDeckId(currentClickedDeckId, true);
 
-                this.setDeckNameEditButtonVisibility(currentClickedDeckButtonId, true);
-                this.setDeckDeleteButtonVisibility(currentClickedDeckButtonId, true);
+                this.setDeckNameEditButtonVisibility(currentClickedDeckId, true);
+                this.setDeckDeleteButtonVisibility(currentClickedDeckId, true);
 
-                console.log(`Deck Button ID ${currentClickedDeckButtonId} is now hidden.`);
+                console.log(`Deck Button ID ${currentClickedDeckId} is now hidden.`);
             }
 
             return clickedDeckButton;
@@ -268,7 +264,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     }
 
     public async onMouseDown(event: MouseEvent): Promise<MyDeckButton | null> {
-        if (!this.isButtonClickEnabled()) return null;
+        if (!this.isAllButtonClickEnabled()) return null;
 
         if (event.button === 0) {
             const clickPoint = { x: event.clientX, y: event.clientY };
@@ -283,24 +279,36 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     }
 
     public async onMouseUp(event: MouseEvent): Promise<MyDeckButton | null> {
-        if (!this.isButtonClickEnabled()) return null;
+        if (!this.isAllButtonClickEnabled()) return null;
+
+        // 다른 덱 버튼을 클릭할 때 이전에 클릭한 덱 버튼의 덱 삭제 버튼, 덱 이름 편집 버튼 클릭 비활성화
+        const clickEnableDeckDeleteButtonDeckIdList = this.deckDeleteButtonClickDetectRepository.findEnabledButtonIds();
+        for (const deleteButtonDeckId of clickEnableDeckDeleteButtonDeckIdList) {
+            this.deckDeleteButtonClickDetectRepository.saveButtonClickEnabled(deleteButtonDeckId, false);
+        }
+
+        const clickEnableDeckNameEditButtonDeckIdList = this.deckNameEditButtonClickDetectRepository.findEnabledButtonIds();
+        for (const buttonDeckId of clickEnableDeckNameEditButtonDeckIdList) {
+            this.deckNameEditButtonClickDetectRepository.saveButtonClickEnabled(buttonDeckId, false);
+        }
 
         if (event.button === 0) {
-            const deckButtonId = this.getCurrentClickDeckButtonId();
-            if (deckButtonId == null) return null;
+            const deckId = this.getCurrentClickDeckId();
+            if (deckId == null) return null;
 
-            this.deckDeleteButtonClickDetectRepository.saveButtonClickEnabled(deckButtonId, true);
-            this.deckNameEditButtonClickDetectRepository.saveButtonClickEnabled(deckButtonId, true);
+            // 덱 버튼 클릭 후 마우스를 뗀 순간 덱 삭제 버튼, 덱 이름 편집 버튼이 클릭 가능하도록 설정
+            this.deckDeleteButtonClickDetectRepository.saveButtonClickEnabled(deckId, true);
+            this.deckNameEditButtonClickDetectRepository.saveButtonClickEnabled(deckId, true);
         }
         return null;
     }
 
-    public saveCurrentClickDeckButtonId(buttonDeckId: number): void {
-        this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(buttonDeckId);
+    public saveCurrentClickDeckId(buttonDeckId: number): void {
+        this.myDeckButtonClickDetectRepository.saveCurrentClickDeckId(buttonDeckId);
     }
 
-    public getCurrentClickDeckButtonId(): number | null {
-        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId() ?? null;
+    public getCurrentClickDeckId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId() ?? null;
     }
 
     public getDeckIdByButtonId(buttonId: number): number {

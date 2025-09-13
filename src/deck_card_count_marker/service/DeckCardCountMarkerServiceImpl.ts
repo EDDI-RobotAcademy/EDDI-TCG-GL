@@ -68,7 +68,7 @@ export class DeckCardCountMarkerServiceImpl implements DeckCardCountMarkerServic
     }
 
     public adjustDeckCardCountMarkerPosition(): void {
-        const currentDeckButtonId = this.getCurrentClickDeckButton();
+        const currentDeckButtonId = this.getCurrentClickDeckId();
         if (currentDeckButtonId === null) {
             console.error("No deck button clicked");
             return;
@@ -154,8 +154,8 @@ export class DeckCardCountMarkerServiceImpl implements DeckCardCountMarkerServic
         return marker.getMesh();
     }
 
-    public getCurrentClickDeckButton(): number | null {
-        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    public getCurrentClickDeckId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
     public getAllDeckIdList(): number[] {

@@ -55,8 +55,8 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
 
     async handleCardClick(clickPoint: { x: number; y: number }): Promise<MyDeckOwnedCards | null> {
         const { x, y } = clickPoint;
-        const currentClickedDeckButtonId = this.getCurrentClickDeckButtonId();
-        if (currentClickedDeckButtonId == null) return null;
+        const currentClickedDeckId = this.getCurrentClickDeckId();
+        if (currentClickedDeckId == null) return null;
 
         const allCards = this.getAllOwnedCardsList();
         const clickedCard = this.myDeckOwnedCardsClickDetectRepository.isMyDeckOwnedCardsClicked(
@@ -74,9 +74,9 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
             console.log(`%c Clicked My Deck Owned Card Unique ID: ${cardUniqueId}, Card ID: ${cardId}`, 'color: #ff0033; font-weight: bold;');
 
             this.saveCurrentClickedCardId(cardId);
-            this.saveClickedCardCount(currentClickedDeckButtonId, cardId);
+            this.saveClickedCardCount(currentClickedDeckId, cardId);
             this.deleteRemainingCards(cardId);
-            this.totalNumberOfSelectedCardsRepository.deleteNumberByDeckId(currentClickedDeckButtonId);
+            this.totalNumberOfSelectedCardsRepository.deleteNumberByDeckId(currentClickedDeckId);
 
             return clickedCard;
         }
@@ -109,8 +109,8 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
         return this.myDeckOwnedCardsRepository.findCardIdByCardUniqueId(cardUniqueId);
     }
 
-    private getCurrentClickDeckButtonId(): number | null {
-        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    private getCurrentClickDeckId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
     private saveClickedCardCount(deckId: number, cardId: number): void {

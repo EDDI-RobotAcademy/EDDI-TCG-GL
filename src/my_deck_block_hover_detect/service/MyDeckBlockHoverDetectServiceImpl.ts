@@ -53,10 +53,10 @@ export class MyDeckBlockHoverDetectServiceImpl implements MyDeckBlockHoverDetect
 
     public async handleHover(hoverPoint: { x: number; y: number }): Promise<MyDeckBlock | null> {
         const { x, y } = hoverPoint;
-        const currentClickedDeckButtonId = this.getCurrentClickDeckButtonId();
-        if (currentClickedDeckButtonId == null) return null;
+        const currentClickedDeckId = this.getCurrentClickDeckId();
+        if (currentClickedDeckId == null) return null;
 
-        const blockList = this.getBlockListByDeckId(currentClickedDeckButtonId);
+        const blockList = this.getBlockListByDeckId(currentClickedDeckId);
         if (blockList !== null) {
             const hoveredBlock = this.myDeckBlockHoverDetectRepository.isBlockHover(
                 { x, y },
@@ -65,20 +65,20 @@ export class MyDeckBlockHoverDetectServiceImpl implements MyDeckBlockHoverDetect
 
             if (hoveredBlock) {
                 const blockUniqueId = hoveredBlock.id;
-                console.log(`[DEBUG] Hovered My Deck Block! (Deck ID: ${currentClickedDeckButtonId}, Block Unique ID: ${blockUniqueId})`);
+                console.log(`[DEBUG] Hovered My Deck Block! (Deck ID: ${currentClickedDeckId}, Block Unique ID: ${blockUniqueId})`);
                 this.saveCurrentHoveredButtonId(blockUniqueId);
-                this.setAllDeckCardDeleteButtonVisibility(currentClickedDeckButtonId, false);
-                this.setAllDeckCardAddButtonVisibility(currentClickedDeckButtonId, false);
-                this.setDeckCardDeleteButtonVisibility(currentClickedDeckButtonId, blockUniqueId, true);
-                this.setDeckCardAddButtonVisibility(currentClickedDeckButtonId, blockUniqueId, true);
+                this.setAllDeckCardDeleteButtonVisibility(currentClickedDeckId, false);
+                this.setAllDeckCardAddButtonVisibility(currentClickedDeckId, false);
+                this.setDeckCardDeleteButtonVisibility(currentClickedDeckId, blockUniqueId, true);
+                this.setDeckCardAddButtonVisibility(currentClickedDeckId, blockUniqueId, true);
 
                 return hoveredBlock;
 
             } else {
                 const blockUniqueId = this.getCurrentHoveredButtonId();
                 if (blockUniqueId !== null) {
-                    this.setDeckCardDeleteButtonVisibility(currentClickedDeckButtonId, blockUniqueId, false);
-                    this.setDeckCardAddButtonVisibility(currentClickedDeckButtonId, blockUniqueId, false);
+                    this.setDeckCardDeleteButtonVisibility(currentClickedDeckId, blockUniqueId, false);
+                    this.setDeckCardAddButtonVisibility(currentClickedDeckId, blockUniqueId, false);
                 }
             }
         }
@@ -102,8 +102,8 @@ export class MyDeckBlockHoverDetectServiceImpl implements MyDeckBlockHoverDetect
         return null;
     }
 
-    private getCurrentClickDeckButtonId(): number | null {
-        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    private getCurrentClickDeckId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
     private getBlockListByDeckId(deckId: number): MyDeckBlock[] | null {

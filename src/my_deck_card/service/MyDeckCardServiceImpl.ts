@@ -68,8 +68,8 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
     }
 
     public adjustMyDeckCardPosition(): void {
-        const currentDeckButtonId = this.getCurrentClickDeckButtonId();
-        if (currentDeckButtonId === null) {
+        const currentDeckId = this.getCurrentClickDeckId();
+        if (currentDeckId === null) {
             console.error("No deck button clicked");
             return;
         }
@@ -196,12 +196,8 @@ export class MyDeckCardServiceImpl implements MyDeckCardService {
         return cardList;
     }
 
-    public getCurrentClickDeckButtonId(): number | null {
-        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
-    }
-
-    public saveCurrentClickDeckButtonId(deckId: number): void {
-        this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(deckId);
+    public getCurrentClickDeckId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
     public saveCardGroup(deckId: number): void {

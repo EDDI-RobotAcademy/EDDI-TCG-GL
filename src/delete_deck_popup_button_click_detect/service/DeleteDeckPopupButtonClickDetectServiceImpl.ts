@@ -229,14 +229,14 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     }
 
     private setInteractionStatesBeforeClick(): void {
-        this.myDeckButtonClickDetectRepository.setButtonClickEnabled(false);
+        this.myDeckButtonClickDetectRepository.setAllButtonClickEnabled(false);
         this.buildDeckButtonClickDetectRepository.setButtonClickEnabled(false);
         this.buildDeckButtonHoverDetectRepository.setButtonHoverEnabled(false);
         this.sideScrollAreaDetectRepository.setMyDeckScrollAreaDetectEnabled(false);
     }
 
     private setInteractionStatesAfterClick(): void {
-        this.myDeckButtonClickDetectRepository.setButtonClickEnabled(true);
+        this.myDeckButtonClickDetectRepository.setAllButtonClickEnabled(true);
         this.buildDeckButtonClickDetectRepository.setButtonClickEnabled(true);
         this.buildDeckButtonHoverDetectRepository.setButtonHoverEnabled(true);
         this.sideScrollAreaDetectRepository.setMyDeckScrollAreaDetectEnabled(true);
@@ -276,7 +276,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     // 삭제할 덱의 ID
     private getCurrentDeleteDeckId(): number | null {
 //         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId() ?? null;
-        const deckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+        const deckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
         if (deckId == null) {
             console.warn(`삭제할 덱의 ID가 존재하지 않습니다.`);
             return null;
@@ -486,7 +486,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
         const firstDeckId = sortedDeckIdList[0];
 
-        this.myDeckButtonClickDetectRepository.saveCurrentClickDeckButtonId(firstDeckId);
+        this.myDeckButtonClickDetectRepository.saveCurrentClickDeckId(firstDeckId);
     }
 
     private initializeDeckCardVisibility(deckIdList: number[], firstDeckId: number): void {

@@ -569,7 +569,7 @@ export class TCGJustTestMyDeckView {
 
     private async reAddTotalNumberOfSelectedCards(): Promise<void> {
         try {
-            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckId();
             if (currentClickedDeckId == null) return;
 
             const totalCardCount = this.cardCountManager.findTotalSelectedCardCount(currentClickedDeckId);
@@ -599,7 +599,7 @@ export class TCGJustTestMyDeckView {
             }
 
             this.myDeckButtonService.initializeDeckButtonVisibility();
-            this.myDeckButtonService.saveCurrentClickDeckButtonId();
+            this.myDeckButtonService.saveCurrentClickDeckId();
             this.myDeckButtonService.applyClippingMaskToDeckButtons();
 
             const deckButtonGroup = this.myDeckButtonService.getMyDeckButtonGroups();
@@ -706,7 +706,7 @@ export class TCGJustTestMyDeckView {
 
     private async reAddMyDeckCard(): Promise<void> {
         try {
-            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckId();
             if (currentClickedDeckId == null) return;
 
             const cardIdList = this.cardCountManager.findSelectedCardIdListByDeck(currentClickedDeckId);
@@ -756,7 +756,7 @@ export class TCGJustTestMyDeckView {
 
     private async reAddMyDeckCardCountMarker(): Promise<void> {
         try {
-            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckId();
             if (currentClickedDeckId == null) return;
 
             const cardIdList = this.cardCountManager.findSelectedCardIdListByDeck(currentClickedDeckId);
@@ -931,7 +931,7 @@ export class TCGJustTestMyDeckView {
 
     private async reAddMyDeckNumberOfCards(): Promise<void> {
         try {
-            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckId();
             if (currentClickedDeckId == null) return;
 
             const cardIdList = this.cardCountManager.findSelectedCardIdListByDeck(currentClickedDeckId);
@@ -986,7 +986,7 @@ export class TCGJustTestMyDeckView {
 
     private async reAddMyDeckNumberOfSelectedCards(): Promise<void> {
         try {
-            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckId();
             if (currentClickedDeckId == null) return;
             console.log(`%c [delete card or add card button click] 현재 클릭한 덱 ID: ${currentClickedDeckId}`, 'color: #FE2EF7; font-weight: bold;');
 
@@ -1041,7 +1041,7 @@ export class TCGJustTestMyDeckView {
 
     private async reAddMyDeckBlock(): Promise<void> {
         try {
-            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckId();
             if (currentClickedDeckId == null) return;
 
             const cardIdList = this.cardCountManager.findSelectedCardIdListByDeck(currentClickedDeckId);
@@ -1091,7 +1091,7 @@ export class TCGJustTestMyDeckView {
 
     private async reAddMyDeckCardName(): Promise<void> {
         try {
-            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckId();
             if (currentClickedDeckId == null) return;
 
             const cardIdList = this.cardCountManager.findSelectedCardIdListByDeck(currentClickedDeckId);
@@ -1163,7 +1163,7 @@ export class TCGJustTestMyDeckView {
 
     private async reAddDeckCardDeleteButton(): Promise<void> {
         try {
-            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckId();
             if (currentClickedDeckId == null) return;
 
             const cardIdList = this.cardCountManager.findSelectedCardIdListByDeck(currentClickedDeckId);
@@ -1212,7 +1212,7 @@ export class TCGJustTestMyDeckView {
 
     private async reAddDeckCardAddButton(): Promise<void> {
         try {
-            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckButtonId();
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckId();
             if (currentClickedDeckId == null) return;
 
             const cardIdList = this.cardCountManager.findSelectedCardIdListByDeck(currentClickedDeckId);

@@ -56,7 +56,7 @@ export class MyDeckBlockScrollServiceImpl implements MyDeckBlockScrollService {
     public async onWheelScroll(event: WheelEvent): Promise<void> {
         if (!this.getMyDeckScrollEnabledById(2)) return;
 
-        const currentClickDeckId = this.getCurrentClickDeckButtonId();
+        const currentClickDeckId = this.getCurrentClickDeckId();
         if (currentClickDeckId == null) return;
         console.log(`%c current click deck id?${currentClickDeckId}`, 'color: #0000FF; font-weight: bold;');
 
@@ -105,8 +105,8 @@ export class MyDeckBlockScrollServiceImpl implements MyDeckBlockScrollService {
         return this.myDeckBlockRepository.findBlockCountByDeckId(deckId);
     }
 
-    public getCurrentClickDeckButtonId(): number | null {
-        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    public getCurrentClickDeckId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
     private getBlockGroup(deckId: number): THREE.Group {

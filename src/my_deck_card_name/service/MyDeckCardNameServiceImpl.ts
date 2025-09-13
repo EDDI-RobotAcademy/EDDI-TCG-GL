@@ -65,8 +65,8 @@ export class MyDeckCardNameServiceImpl implements MyDeckCardNameService {
     }
 
     public adjustMyDeckCardNamePosition(): void {
-        const currentDeckButtonId = this.getCurrentClickDeckButton();
-        if (currentDeckButtonId === null) {
+        const currentDeckId = this.getCurrentClickDeckId();
+        if (currentDeckId === null) {
             console.error("No deck button clicked");
             return;
         }
@@ -132,8 +132,8 @@ export class MyDeckCardNameServiceImpl implements MyDeckCardNameService {
         return this.myDeckCardNamePositionRepository.addMyDeckCardNamePosition(deckId, cardId);
     }
 
-    public getCurrentClickDeckButton(): number | null {
-        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckButtonId();
+    public getCurrentClickDeckId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
     public getAllDeckIdList(): number[] {
