@@ -11,6 +11,10 @@ import {DeckNameEditButtonRepositoryImpl} from "../../deck_name_edit_button/repo
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
 import {DeckCardSearchCancelButtonClickDetectRepositoryImpl} from "../../deck_card_search_cancel_button_click_detect/repository/DeckCardSearchCancelButtonClickDetectRepositoryImpl";
+import {TransparentBackgroundRepositoryImpl} from "../../transparent_background/repository/TransparentBackgroundRepositoryImpl";
+import {DeckNameEditPopupBackgroundRepositoryImpl} from "../../deck_name_edit_pop_up_background/repository/DeckNameEditPopupBackgroundRepositoryImpl";
+import {DeckNameEditPopupButtonsRepositoryImpl} from "../../deck_name_edit_pop_up_buttons/repository/DeckNameEditPopupButtonsRepositoryImpl";
+import {DeckNameEditInputContainerRepositoryImpl} from "../../deck_name_edit_input_container/repository/DeckNameEditInputContainerRepositoryImpl";
 
 export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditButtonClickDetectService {
     private static instance: DeckNameEditButtonClickDetectServiceImpl | null = null;
@@ -20,6 +24,10 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
     private deckCardSearchCancelButtonClickDetectRepository: DeckCardSearchCancelButtonClickDetectRepositoryImpl;
+    private transparentBackgroundRepository: TransparentBackgroundRepositoryImpl;
+    private deckNameEditPopupBackgroundRepository: DeckNameEditPopupBackgroundRepositoryImpl;
+    private deckNameEditPopupButtonsRepository: DeckNameEditPopupButtonsRepositoryImpl;
+    private deckNameEditInputContainerRepository: DeckNameEditInputContainerRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -28,6 +36,10 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
         this.deckCardSearchCancelButtonClickDetectRepository = DeckCardSearchCancelButtonClickDetectRepositoryImpl.getInstance();
+        this.transparentBackgroundRepository = TransparentBackgroundRepositoryImpl.getInstance();
+        this.deckNameEditPopupBackgroundRepository = DeckNameEditPopupBackgroundRepositoryImpl.getInstance();
+        this.deckNameEditPopupButtonsRepository = DeckNameEditPopupButtonsRepositoryImpl.getInstance();
+        this.deckNameEditInputContainerRepository = DeckNameEditInputContainerRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckNameEditButtonClickDetectServiceImpl {
@@ -57,6 +69,11 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
             }
 
             this.setSearchCancelButtonClickEnabled(false);
+
+            this.setTransparentBackgroundVisible(true);
+            this.setDeckNameEditPopupBackgroundVisibility(true);
+            this.setDeckNameEditPopupButtonsVisibility(true);
+            this.setDeckNameEditPopupInputContainerVisibility(`block`);
 
             return clickedButton;
 
@@ -113,6 +130,34 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
 
     private setSearchCancelButtonClickEnabled(isEnable: boolean): void {
         this.deckCardSearchCancelButtonClickDetectRepository.setButtonClickEnabled(isEnable);
+    }
+
+    private setTransparentBackgroundVisible(isVisible: boolean): void {
+        const background = this.transparentBackgroundRepository.findTransparentBackground();
+        if (background) {
+            background.setVisibility(isVisible);
+        }
+    }
+
+    private setDeckNameEditPopupBackgroundVisibility(isVisible: boolean): void {
+        const background = this.deckNameEditPopupBackgroundRepository.findPopupBackground();
+        if (background !== null) {
+            background.setVisibility(isVisible);
+        }
+    }
+
+    private setDeckNameEditPopupButtonsVisibility(isVisible: boolean): void {
+        const buttons = this.deckNameEditPopupButtonsRepository.findAllButtons();
+        for (const button of buttons) {
+            button.setVisibility(isVisible);
+        }
+    }
+
+    private setDeckNameEditPopupInputContainerVisibility(isVisible: 'block' | 'none'): void {
+        const container = this.deckNameEditInputContainerRepository.findDeckNameEditInputContainer();
+        if (container == null) return;
+
+        container.setVisibility(isVisible);
     }
 
 }
