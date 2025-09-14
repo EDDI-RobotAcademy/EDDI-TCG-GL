@@ -61,6 +61,7 @@ import {RequiredNumberOfCardsServiceImpl} from "../../src/required_number_of_car
 import {MyDeckSearchInputContainerServiceImpl} from "../../src/my_deck_search_input_container/service/MyDeckSearchInputContainerServiceImpl";
 import {MyDeckCardSearchCancelButtonServiceImpl} from "../../src/my_deck_card_search_cancel_button/service/MyDeckCardSearchCancelButtonServiceImpl";
 import {MyDeckCardSearchBoxServiceImpl} from "../../src/my_deck_card_search_box/service/MyDeckCardSearchBoxServiceImpl";
+import {DeckNameEditPopupBackgroundServiceImpl} from "../../src/deck_name_edit_pop_up_background/service/DeckNameEditPopupBackgroundServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -144,6 +145,7 @@ export class TCGJustTestMyDeckView {
     private myDeckSearchInputContainerService = MyDeckSearchInputContainerServiceImpl.getInstance();
     private myDeckCardSearchCancelButtonService = MyDeckCardSearchCancelButtonServiceImpl.getInstance();
     private myDeckCardSearchBoxService = MyDeckCardSearchBoxServiceImpl.getInstance();
+    private deckNameEditPopupBackgroundService = DeckNameEditPopupBackgroundServiceImpl.getInstance();
 
     private deckCardDeleteButtonService: DeckCardDeleteButtonServiceImpl;
     private deckCardCountMarkerService: DeckCardCountMarkerServiceImpl;
@@ -398,6 +400,7 @@ export class TCGJustTestMyDeckView {
         this.addDeckMakePopupInputContainer();
         this.addDeleteDeckPopupWindow();
         this.addDeleteDeckPopupButton();
+        this.addDeckNameEditPopupBackground();
 
         this.initialized = true;
         this.isAnimating = true;
@@ -1365,6 +1368,22 @@ export class TCGJustTestMyDeckView {
         }
     }
 
+    private async addDeckNameEditPopupBackground(): Promise<void> {
+        try {
+            await this.deckNameEditPopupBackgroundService.createDeckNameEditPopupBackground();
+
+            const popupBackground = this.deckNameEditPopupBackgroundService.getDeckNameEditPopupBackground();
+            if (popupBackground !== null) {
+                this.scene.add(popupBackground.getMesh());
+
+            } else {
+                console.warn(`Not found Deck Name Edit Popup Background`);
+                }
+        } catch (error) {
+            console.error('Failed to add Deck Name Edit Popup Background:', error);
+        }
+    }
+
     private onWindowResize(): void {
         const newWidth = window.innerWidth;
         const newHeight = window.innerHeight;
@@ -1421,6 +1440,7 @@ export class TCGJustTestMyDeckView {
             this.deleteDeckPopupWindowService.adjustDeckMakePopupBackgroundPosition();
             this.deleteDeckPopupButtonService.adjustDeleteDeckPopupButtonPosition();
             this.deckCardAddButtonService.adjustDeckCardAddButtonPosition();
+            this.deckNameEditPopupBackgroundService.adjustDeckMakePopupBackgroundPosition();
         }
     }
 
