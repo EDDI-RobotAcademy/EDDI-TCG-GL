@@ -64,6 +64,7 @@ import {MyDeckCardSearchCancelButtonServiceImpl} from "../../src/my_deck_card_se
 import {MyDeckCardSearchBoxServiceImpl} from "../../src/my_deck_card_search_box/service/MyDeckCardSearchBoxServiceImpl";
 import {DeckNameEditPopupBackgroundServiceImpl} from "../../src/deck_name_edit_pop_up_background/service/DeckNameEditPopupBackgroundServiceImpl";
 import {DeckNameEditPopupButtonsServiceImpl} from "../../src/deck_name_edit_pop_up_buttons/service/DeckNameEditPopupButtonsServiceImpl";
+import {DeckNameEditInputContainerServiceImpl} from "../../src/deck_name_edit_input_container/service/DeckNameEditInputContainerServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -149,6 +150,7 @@ export class TCGJustTestMyDeckView {
     private myDeckCardSearchBoxService = MyDeckCardSearchBoxServiceImpl.getInstance();
     private deckNameEditPopupBackgroundService = DeckNameEditPopupBackgroundServiceImpl.getInstance();
     private deckNameEditPopupButtonsService = DeckNameEditPopupButtonsServiceImpl.getInstance();
+    private deckNameEditInputContainerService = DeckNameEditInputContainerServiceImpl.getInstance();
 
     private deckCardDeleteButtonService: DeckCardDeleteButtonServiceImpl;
     private deckCardCountMarkerService: DeckCardCountMarkerServiceImpl;
@@ -405,6 +407,7 @@ export class TCGJustTestMyDeckView {
         this.addDeleteDeckPopupButton();
         this.addDeckNameEditPopupBackground();
         this.addDeckNameEditPopupButtons();
+        this.addDeckNameEditInputContainer();
 
         this.initialized = true;
         this.isAnimating = true;
@@ -1405,6 +1408,15 @@ export class TCGJustTestMyDeckView {
         }
     }
 
+    private async addDeckNameEditInputContainer():  Promise<void> {
+        try {
+            await this.deckNameEditInputContainerService.createDeckNameEditInputContainer();
+
+        } catch (error) {
+            console.error('Failed to add Deck Name Edit Input Container:', error);
+        }
+    }
+
     private onWindowResize(): void {
         const newWidth = window.innerWidth;
         const newHeight = window.innerHeight;
@@ -1463,6 +1475,7 @@ export class TCGJustTestMyDeckView {
             this.deckCardAddButtonService.adjustDeckCardAddButtonPosition();
             this.deckNameEditPopupBackgroundService.adjustDeckMakePopupBackgroundPosition();
             this.deckNameEditPopupButtonsService.adjustDeckMakePopupButtonsPosition();
+            this.deckNameEditInputContainerService.adjustDeckNameEditInputContainerPosition();
         }
     }
 
