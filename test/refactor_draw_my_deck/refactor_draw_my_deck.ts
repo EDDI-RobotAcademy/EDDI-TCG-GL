@@ -21,6 +21,7 @@ import {DeleteDeckPopupButtonConfigList} from "../../src/delete_deck_popup_butto
 import {DeckEditButtonConfigList} from "../../src/deck_edit_button/entity/DeckEditButtonConfigList";
 import {DeckEditDoneButtonConfigList} from "../../src/deck_edit_done_button/entity/DeckEditDoneButtonConfigList";
 import {SideScrollAreaConfigList} from "../../src/side_scroll_area/entity/SideScrollAreaConfigList";
+import {DeckNameEditPopupButtonsConfigList} from "../../src/deck_name_edit_pop_up_buttons/entity/DeckNameEditPopupButtonsConfigList";
 
 import {MyDeckButtonServiceImpl} from "../../src/my_deck_button/service/MyDeckButtonServiceImpl";
 import {MyDeckButtonEffectServiceImpl} from "../../src/my_deck_button_effect/service/MyDeckButtonEffectServiceImpl";
@@ -62,6 +63,7 @@ import {MyDeckSearchInputContainerServiceImpl} from "../../src/my_deck_search_in
 import {MyDeckCardSearchCancelButtonServiceImpl} from "../../src/my_deck_card_search_cancel_button/service/MyDeckCardSearchCancelButtonServiceImpl";
 import {MyDeckCardSearchBoxServiceImpl} from "../../src/my_deck_card_search_box/service/MyDeckCardSearchBoxServiceImpl";
 import {DeckNameEditPopupBackgroundServiceImpl} from "../../src/deck_name_edit_pop_up_background/service/DeckNameEditPopupBackgroundServiceImpl";
+import {DeckNameEditPopupButtonsServiceImpl} from "../../src/deck_name_edit_pop_up_buttons/service/DeckNameEditPopupButtonsServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -146,6 +148,7 @@ export class TCGJustTestMyDeckView {
     private myDeckCardSearchCancelButtonService = MyDeckCardSearchCancelButtonServiceImpl.getInstance();
     private myDeckCardSearchBoxService = MyDeckCardSearchBoxServiceImpl.getInstance();
     private deckNameEditPopupBackgroundService = DeckNameEditPopupBackgroundServiceImpl.getInstance();
+    private deckNameEditPopupButtonsService = DeckNameEditPopupButtonsServiceImpl.getInstance();
 
     private deckCardDeleteButtonService: DeckCardDeleteButtonServiceImpl;
     private deckCardCountMarkerService: DeckCardCountMarkerServiceImpl;
@@ -401,6 +404,7 @@ export class TCGJustTestMyDeckView {
         this.addDeleteDeckPopupWindow();
         this.addDeleteDeckPopupButton();
         this.addDeckNameEditPopupBackground();
+        this.addDeckNameEditPopupButtons();
 
         this.initialized = true;
         this.isAnimating = true;
@@ -1384,6 +1388,23 @@ export class TCGJustTestMyDeckView {
         }
     }
 
+    private async addDeckNameEditPopupButtons(): Promise<void> {
+        try {
+            const configList = new DeckNameEditPopupButtonsConfigList();
+            await Promise.all(configList.buttonConfigs.map(async (config) => {
+                const button = await this.deckNameEditPopupButtonsService.createDeckNameEditPopupButtons(config.id,config.position);
+
+                if (button) {
+                    this.scene.add(button);
+                    console.log(`Draw Deck Name Edit Pop-up Button ${config.id}`);
+                }
+            }));
+
+        } catch (error) {
+            console.error('Failed to add Deck Name Edit Popup Buttons:', error);
+        }
+    }
+
     private onWindowResize(): void {
         const newWidth = window.innerWidth;
         const newHeight = window.innerHeight;
@@ -1441,6 +1462,7 @@ export class TCGJustTestMyDeckView {
             this.deleteDeckPopupButtonService.adjustDeleteDeckPopupButtonPosition();
             this.deckCardAddButtonService.adjustDeckCardAddButtonPosition();
             this.deckNameEditPopupBackgroundService.adjustDeckMakePopupBackgroundPosition();
+            this.deckNameEditPopupButtonsService.adjustDeckMakePopupButtonsPosition();
         }
     }
 
