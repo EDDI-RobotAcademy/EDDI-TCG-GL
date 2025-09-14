@@ -76,6 +76,8 @@ export class TextureManager {
     private cardCountNotationTextureList: { [id: number]: THREE.Texture } = {};
     private searchCancelButtonTextureList: { [id: number]: THREE.Texture } = {};
     private searchBoxTextureList: { [id: number]: THREE.Texture } = {};
+    private deckNameEditPopupBackgroundTextureList: { [id: number]: THREE.Texture } = {};
+    private deckNameEditPopupButtonsTextureList: { [id: number]: THREE.Texture } = {};
 
     private constructor(renderer?: THREE.WebGLRenderer) {
         if (renderer instanceof THREE.WebGLRenderer) {
@@ -176,6 +178,8 @@ export class TextureManager {
                 this.loadTextures(imageData.card_count_notation, this.cardCountNotationTextureList),
                 this.loadTextures(imageData.search_cancel_button, this.searchCancelButtonTextureList),
                 this.loadTextures(imageData.search_box, this.searchBoxTextureList),
+                this.loadTextures(imageData.deck_name_edit_pop_up_background, this.deckNameEditPopupBackgroundTextureList),
+                this.loadTextures(imageData.deck_name_edit_pop_up_buttons, this.deckNameEditPopupButtonsTextureList),
             ]);
 
             console.log('All textures preloaded from TextureManager.ts');
@@ -412,6 +416,10 @@ export class TextureManager {
                 return this.searchCancelButtonTextureList[id];
             case 'search_box':
                 return this.searchBoxTextureList[id];
+            case 'deck_name_edit_pop_up_background':
+                return this.deckNameEditPopupBackgroundTextureList[id];
+            case 'deck_name_edit_pop_up_buttons':
+                return this.deckNameEditPopupButtonsTextureList[id];
             default:
                 return undefined;
         }
