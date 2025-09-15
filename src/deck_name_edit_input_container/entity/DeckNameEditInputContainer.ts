@@ -38,4 +38,8 @@ export class DeckNameEditInputContainer {
         return this.inputElement.disabled;
     }
 
+    public setDefaultInputValue(defaultValue: string): void {
+        this.inputElement.value = defaultValue;
+    }
+
 }
