@@ -92,6 +92,12 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
                 console.log(`[DeckNameEditPopupButton] click edit button!`);
 
                 this.setDeckCardSearchCancelButtonVisibility(false);
+
+                const cardSearchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
+                if (cardSearchInputText !== null && cardSearchInputText.length > 0) {
+                    this.myDeckSearchInputContainerRepository.clearUserInput();
+                    this.myDeckSearchInputContainerRepository.deleteUserInput();
+                }
             }
             return clickedDeckNameEditPopupButton;
         }
