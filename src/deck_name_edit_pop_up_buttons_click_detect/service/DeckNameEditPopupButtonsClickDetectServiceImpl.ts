@@ -12,6 +12,9 @@ import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl
 import {TransparentBackgroundRepositoryImpl} from "../../transparent_background/repository/TransparentBackgroundRepositoryImpl";
 import {DeckNameEditPopupBackgroundRepositoryImpl} from "../../deck_name_edit_pop_up_background/repository/DeckNameEditPopupBackgroundRepositoryImpl";
 import {DeckNameEditInputContainerRepositoryImpl} from "../../deck_name_edit_input_container/repository/DeckNameEditInputContainerRepositoryImpl";
+import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
+import {DeckCardSearchCancelButtonClickDetectRepositoryImpl} from "../../deck_card_search_cancel_button_click_detect/repository/DeckCardSearchCancelButtonClickDetectRepositoryImpl";
+import {MyDeckCardSearchCancelButtonRepositoryImpl} from "../../my_deck_card_search_cancel_button/repository/MyDeckCardSearchCancelButtonRepositoryImpl";
 
 export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameEditPopupButtonsClickDetectService {
     private static instance: DeckNameEditPopupButtonsClickDetectServiceImpl | null = null;
@@ -21,6 +24,9 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
     private transparentBackgroundRepository: TransparentBackgroundRepositoryImpl;
     private deckNameEditPopupBackgroundRepository: DeckNameEditPopupBackgroundRepositoryImpl;
     private deckNameEditInputContainerRepository: DeckNameEditInputContainerRepositoryImpl;
+    private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
+    private deckCardSearchCancelButtonClickDetectRepository: DeckCardSearchCancelButtonClickDetectRepositoryImpl;
+    private myDeckCardSearchCancelButtonRepository: MyDeckCardSearchCancelButtonRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -29,6 +35,9 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
         this.transparentBackgroundRepository = TransparentBackgroundRepositoryImpl.getInstance();
         this.deckNameEditPopupBackgroundRepository = DeckNameEditPopupBackgroundRepositoryImpl.getInstance();
         this.deckNameEditInputContainerRepository = DeckNameEditInputContainerRepositoryImpl.getInstance();
+        this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
+        this.deckCardSearchCancelButtonClickDetectRepository = DeckCardSearchCancelButtonClickDetectRepositoryImpl.getInstance();
+        this.myDeckCardSearchCancelButtonRepository = MyDeckCardSearchCancelButtonRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckNameEditPopupButtonsClickDetectServiceImpl {
@@ -70,10 +79,19 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
 
             if (clickedDeckNameEditPopupButton.id === 0) {
                 console.log(`[DeckNameEditPopupButton] click cancel button!`);
+
+                const myDeckCardSearchContainer = this.myDeckSearchInputContainerRepository.findMyDeckSearchInputContainer();
+                if (myDeckCardSearchContainer) {
+                    myDeckCardSearchContainer.setInputDisabled(false);
+                }
+
+                this.setDeckCardSearchCancelButtonClickEnabled(true);
             }
 
             if (clickedDeckNameEditPopupButton.id === 1) {
                 console.log(`[DeckNameEditPopupButton] click edit button!`);
+
+                this.setDeckCardSearchCancelButtonVisibility(false);
             }
             return clickedDeckNameEditPopupButton;
         }
@@ -125,6 +143,14 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
         if (container !== null) {
             container.setVisibility(isVisible);
         }
+    }
+
+    private setDeckCardSearchCancelButtonClickEnabled(isEnable: boolean): void {
+        this.deckCardSearchCancelButtonClickDetectRepository.setButtonClickEnabled(isEnable);
+    }
+
+    private setDeckCardSearchCancelButtonVisibility(isVisible: boolean): void {
+        this.myDeckCardSearchCancelButtonRepository.findButton()?.setVisibility(isVisible);
     }
 
 }
