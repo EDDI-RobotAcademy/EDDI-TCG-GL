@@ -15,6 +15,7 @@ import {TransparentBackgroundRepositoryImpl} from "../../transparent_background/
 import {DeckNameEditPopupBackgroundRepositoryImpl} from "../../deck_name_edit_pop_up_background/repository/DeckNameEditPopupBackgroundRepositoryImpl";
 import {DeckNameEditPopupButtonsRepositoryImpl} from "../../deck_name_edit_pop_up_buttons/repository/DeckNameEditPopupButtonsRepositoryImpl";
 import {DeckNameEditInputContainerRepositoryImpl} from "../../deck_name_edit_input_container/repository/DeckNameEditInputContainerRepositoryImpl";
+import {DeckNameEditPopupButtonsClickDetectRepositoryImpl} from "../../deck_name_edit_pop_up_buttons_click_detect/repository/DeckNameEditPopupButtonsClickDetectRepositoryImpl";
 
 export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditButtonClickDetectService {
     private static instance: DeckNameEditButtonClickDetectServiceImpl | null = null;
@@ -28,6 +29,7 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
     private deckNameEditPopupBackgroundRepository: DeckNameEditPopupBackgroundRepositoryImpl;
     private deckNameEditPopupButtonsRepository: DeckNameEditPopupButtonsRepositoryImpl;
     private deckNameEditInputContainerRepository: DeckNameEditInputContainerRepositoryImpl;
+    private deckNameEditPopupButtonsClickDetectRepository: DeckNameEditPopupButtonsClickDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -40,6 +42,7 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
         this.deckNameEditPopupBackgroundRepository = DeckNameEditPopupBackgroundRepositoryImpl.getInstance();
         this.deckNameEditPopupButtonsRepository = DeckNameEditPopupButtonsRepositoryImpl.getInstance();
         this.deckNameEditInputContainerRepository = DeckNameEditInputContainerRepositoryImpl.getInstance();
+        this.deckNameEditPopupButtonsClickDetectRepository = DeckNameEditPopupButtonsClickDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckNameEditButtonClickDetectServiceImpl {
@@ -99,6 +102,7 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
             const result = await this.handleButtonClick(clickPoint);
             if (result) {
                 this.setDeckNameEditButtonClickEnabled(currentClickedDeckId, false);
+                this.setDeckNameEditPopupButtonsClickEnabled(true);
             }
         }
         return null;
@@ -130,6 +134,10 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
 
     private setSearchCancelButtonClickEnabled(isEnable: boolean): void {
         this.deckCardSearchCancelButtonClickDetectRepository.setButtonClickEnabled(isEnable);
+    }
+
+    private setDeckNameEditPopupButtonsClickEnabled(isEnabled: boolean): void {
+        this.deckNameEditPopupButtonsClickDetectRepository.setButtonClickEnabled(isEnabled);
     }
 
     private setTransparentBackgroundVisible(isVisible: boolean): void {
