@@ -36,26 +36,41 @@ export class DeckNameEditInputChangeDetectServiceImpl implements DeckNameEditInp
         const currentValue = this.deckNameEditInputContainerRepository.findInputValue() || "";
         const prevValue = inputElement.dataset.prevValue || "";
 
-        const isDeleting = currentValue.length < prevValue.length;
+        this.handleInputChange(currentValue, prevValue);
+        this.validateInput(currentValue);
+        this.enforceMaxLength(inputElement, 10);
 
+        // To-do: 확인용이므로 나중에 지워야 함
+        console.log(`입력 글자의 개수: ${inputElement.maxLength}, 타입은: ${inputElement.type}`);
+        inputElement.dataset.prevValue = currentValue;
+    }
+
+    // 변경 유형 판별
+    private handleInputChange(currentValue: string, prevValue: string): void {
         if (currentValue.length === 0) {
             this.handleEmptyInputChange();
-
-        } else if (isDeleting) {
-            const deletedCount = prevValue.length - currentValue.length;
-            if (deletedCount === 1) {
-                this.handleSingleCharacterDelete();
-
-            } else {
-                this.handleMultiCharacterDelete(currentValue);
-            }
-
-        } else {
-            // 새 텍스트가 추가된 경우
-            this.handleTyping(currentValue);
+            return;
         }
 
-        inputElement.dataset.prevValue = currentValue;
+        const isDeleting = currentValue.length < prevValue.length;
+        if (isDeleting) {
+            const deletedCount = prevValue.length - currentValue.length;
+            deletedCount === 1
+                ? this.handleSingleCharacterDelete()
+                : this.handleMultiCharacterDelete(currentValue);
+        } else {
+            this.handleTyping(currentValue);
+        }
+    }
+
+    // 유효성 검사
+    private validateInput(currentValue: string): void {
+        if (this.isOverMaxLength(currentValue)) {
+            console.log(`⚠️ 10글자 초과`);
+        }
+        if (this.hasSpecialCharacter(currentValue)) {
+            console.log(`⚠️ 특수 문자 포함`);
+        }
     }
 
     private handleEmptyInputChange(): void {
@@ -72,6 +87,22 @@ export class DeckNameEditInputChangeDetectServiceImpl implements DeckNameEditInp
 
     private handleTyping(currentValue: string): void {
         console.log("[덱 이름 편집창] 실시간 입력 중:", currentValue);
+    }
+
+    private isOverMaxLength(currentValue: string): boolean {
+        return currentValue.length > 10; // 10글자 초과 시 true 반환
+    }
+
+    private hasSpecialCharacter(currentValue: string): boolean {
+        // 한글, 영어만 허용 → 나머지는 특수문자로 처리
+        const regex = /[^a-zA-Z가-힣\s]/;
+        return regex.test(currentValue); // 특수문자 포함시 true 반환
+    }
+
+    private enforceMaxLength(inputElement: HTMLInputElement, maxLength: number): void {
+        if (inputElement.value.length > maxLength) {
+            inputElement.value = inputElement.value.slice(0, maxLength);
+        }
     }
 
 }
