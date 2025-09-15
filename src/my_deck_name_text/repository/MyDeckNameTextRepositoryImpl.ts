@@ -8,7 +8,7 @@ import {MeshDestroyer} from "../../mesh/destroyer";
 
 export class MyDeckNameTextRepositoryImpl implements MyDeckNameTextRepository {
     private static instance: MyDeckNameTextRepositoryImpl;
-    private deckNameTextMap: Map<number, { deckId: number, textMesh: MyDeckNameText }> = new Map(); // text unique id: {deck id: text mesh}
+    private deckNameTextMap: Map<number, { deckId: number, deckName: string, textMesh: MyDeckNameText }> = new Map(); // text unique id: {deck id: text mesh}
     private deckNameTextGroup: THREE.Group | null = null;
 
     private meshDestroyer: MeshDestroyer;
@@ -50,7 +50,7 @@ export class MyDeckNameTextRepositoryImpl implements MyDeckNameTextRepository {
         nameTextMesh.position.set(namePositionX, namePositionY, 0);
 
         const newNameTextScene = new MyDeckNameText(nameTextMesh, position, nameWidth, nameHeight);
-        this.deckNameTextMap.set(newNameTextScene.id, { deckId, textMesh: newNameTextScene });
+        this.deckNameTextMap.set(newNameTextScene.id, { deckId, deckName, textMesh: newNameTextScene });
 
         return newNameTextScene;
     }

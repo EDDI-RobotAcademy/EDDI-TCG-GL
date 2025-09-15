@@ -37,8 +37,21 @@ export class MyDeckNameTextMapRepositoryImpl implements MyDeckNameTextMapReposit
         return Array.from(this.myDeckNameMap.keys());
     }
 
+    public findMyDeckNameByDeckId(deckId: number): string | undefined {
+        return this.myDeckNameMap.get(deckId);
+    }
+
     public deleteMyDeckNameText(deckId: number): void {
         this.myDeckNameMap.delete(deckId);
     }
+
+    public updateMyDeckName(deckId: number, newDeckName: string): void {
+        if (this.myDeckNameMap.has(deckId)) {
+            this.myDeckNameMap.set(deckId, newDeckName);
+        } else {
+            console.warn(`Deck ID ${deckId}가 존재하지 않습니다.`);
+        }
+    }
+
 
 }
