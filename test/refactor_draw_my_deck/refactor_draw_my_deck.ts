@@ -114,6 +114,8 @@ import {DeckCardSearchInputChangeDetectService} from "../../src/deck_card_search
 import {DeckCardSearchInputChangeDetectServiceImpl} from "../../src/deck_card_search_input_change_detect/service/DeckCardSearchInputChangeDetectServiceImpl";
 import {DeckNameEditPopupButtonsClickDetectService} from "../../src/deck_name_edit_pop_up_buttons_click_detect/service/DeckNameEditPopupButtonsClickDetectService";
 import {DeckNameEditPopupButtonsClickDetectServiceImpl} from "../../src/deck_name_edit_pop_up_buttons_click_detect/service/DeckNameEditPopupButtonsClickDetectServiceImpl";
+import {DeckNameEditInputChangeDetectService} from "../../src/deck_name_edit_input_change_detect/service/DeckNameEditInputChangeDetectService";
+import {DeckNameEditInputChangeDetectServiceImpl} from "../../src/deck_name_edit_input_change_detect/service/DeckNameEditInputChangeDetectServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 import {CardCountManager} from "../../src/my_deck_card_manager/CardCountManager";
@@ -210,6 +212,7 @@ export class TCGJustTestMyDeckView {
     private deckCardSearchCancelButtonClickDetectService: DeckCardSearchCancelButtonClickDetectService;
     private deckCardSearchInputChangeDetectService: DeckCardSearchInputChangeDetectService;
     private deckNameEditPopupButtonsClickDetectService: DeckNameEditPopupButtonsClickDetectService;
+    private deckNameEditInputChangeDetectService: DeckNameEditInputChangeDetectService;
 
     private initialized = false;
     private isAnimating = false;
@@ -286,6 +289,7 @@ export class TCGJustTestMyDeckView {
         this.deckCardSearchCancelButtonClickDetectService = DeckCardSearchCancelButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckCardSearchInputChangeDetectService = DeckCardSearchInputChangeDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckNameEditPopupButtonsClickDetectService = DeckNameEditPopupButtonsClickDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.deckNameEditInputChangeDetectService = DeckNameEditInputChangeDetectServiceImpl.getInstance(this.camera, this.scene);
 
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mouseup', (e) => this.myDeckButtonClickDetectService.onMouseUp(e), false);
@@ -1415,7 +1419,20 @@ export class TCGJustTestMyDeckView {
 
     private async addDeckNameEditInputContainer():  Promise<void> {
         try {
-            await this.deckNameEditInputContainerService.createDeckNameEditInputContainer();
+            const deckNameEditInputContainer = await this.deckNameEditInputContainerService.createDeckNameEditInputContainer();
+            // 생성 완료 후 이벤트 등록
+            if (deckNameEditInputContainer) {
+                const inputContainer = this.deckNameEditInputContainerService.getDeckNameEditInputContainer();
+                if (inputContainer == null) return;
+
+                const inputElement = inputContainer.getInputElement();
+
+
+                inputElement.addEventListener("input", (e) => {
+                    this.deckNameEditInputChangeDetectService.onInput(e);
+                });
+                console.log("Search input event registered!");
+            }
 
         } catch (error) {
             console.error('Failed to add Deck Name Edit Input Container:', error);
