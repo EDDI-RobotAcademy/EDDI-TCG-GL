@@ -61,9 +61,11 @@ export class DeckNameEditInputContainerRepositoryImpl implements DeckNameEditInp
         if (!inputContainer) return null;
 
         const inputElement = inputContainer.getInputElement();
-        return inputElement.value.trim();
+//         return inputElement.value.trim(); // 공백 제거
+        return inputElement.value;
     }
 
+    // To-do: 필요 없을 것 같은 메서드
     public updateUserInput(): void {
         const inputContainer = this.findDeckNameEditInputContainer();
         if (inputContainer) {
@@ -79,6 +81,7 @@ export class DeckNameEditInputContainerRepositoryImpl implements DeckNameEditInp
         }
     }
 
+    // To-do: 필요 없을 것 같은 메서드
     public findUserInput(): string | null {
         console.log(`Current userInput: ${this.userInput}`);
         return this.userInput;
