@@ -30,18 +30,26 @@ export class MyDeckNameTextRepositoryImpl implements MyDeckNameTextRepository {
     public async createMyDeckNameText(deckId: number, deckName: string, position: Vector2d): Promise<MyDeckNameText> {
         // To-do pont 종류, 색상 변경 필요
         const generator = new TextGenerator();
-        const texture = generator.createText(deckName, 9, 'CustomFont', '#FFFFFF');
+        const canvas = generator.createCanvas(deckName, 'Batang', '#FFFFFF', 9, 150);
 
-        if (!texture) {
-            throw new Error('MyDeckButton Name not found.');
+        if (!canvas) {
+            throw new Error('My Deck Name Canvas not found.');
         }
 
-        const canvas = texture.image;
-        const textWidth = canvas.width;
-        const textHeight = canvas.height;
+        const texture = generator.createTextureFromCanvas(canvas);
+        if (!texture) {
+            throw new Error('My Deck Name Texture not found.');
+        }
 
-        const nameWidth = textWidth;
-        const nameHeight = textHeight;
+        const nameTexture = texture.image;
+        const textWidth = nameTexture.width;
+        const textHeight = nameTexture.height;
+
+        console.log(`%c 텍스트 가로 길이: ${textWidth}`, 'color: #ff14b5; font-weight: bold;');
+        console.log(`%c 텍스트 세로 길이: ${textHeight}`, 'color: #ff14b5; font-weight: bold;');
+
+        const nameWidth = (textWidth/1800) * window.innerWidth;
+        const nameHeight = nameWidth * (textHeight / textWidth);
 
         const namePositionX = position.getX() * window.innerWidth;
         const namePositionY = position.getY() * window.innerHeight;
@@ -49,7 +57,7 @@ export class MyDeckNameTextRepositoryImpl implements MyDeckNameTextRepository {
         const nameTextMesh = MeshGenerator.createMesh(texture, nameWidth, nameHeight, position);
         nameTextMesh.position.set(namePositionX, namePositionY, 0);
 
-        const newNameTextScene = new MyDeckNameText(nameTextMesh, position, nameWidth, nameHeight);
+        const newNameTextScene = new MyDeckNameText(nameTextMesh, position, textWidth, textHeight);
         this.deckNameTextMap.set(newNameTextScene.id, { deckId, deckName, textMesh: newNameTextScene });
 
         return newNameTextScene;

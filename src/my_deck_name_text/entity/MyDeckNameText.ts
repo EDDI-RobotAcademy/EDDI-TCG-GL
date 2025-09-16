@@ -13,8 +13,8 @@ export class MyDeckNameText {
         this.id = IdGenerator.generateId("MyDeckNameText");
         this.mesh = mesh;
         this.position = position;
-        this.width = width;
-        this.height = height;
+        this.width = width; // canvas 가로
+        this.height = height; // canvas 높이
         this.mesh.visible = true;
     }
 

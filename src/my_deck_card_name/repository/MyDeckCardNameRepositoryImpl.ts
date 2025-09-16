@@ -43,15 +43,19 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
 
         const cardName = card.카드명;
         const generator = new TextGenerator();
-        const texture = generator.createText(cardName, 9, 'CustomFont', '#FFFFFF');
-
-        if (!texture) {
-            throw new Error('My Deck Card Name not found.');
+        const canvas = generator.createCanvas(cardName, 'Batang', '#FFFFFF', 9, 150);
+        if (!canvas) {
+            throw new Error('Card Name Canvas not found.');
         }
 
-        const canvas = texture.image;
-        const cardNameWidth = canvas.width;
-        const cardNameHeight = canvas.height;
+        const texture = generator.createTextureFromCanvas(canvas);
+        if (!texture) {
+            throw new Error('Card Name Texture not found.');
+        }
+
+        const nameTexture = texture.image;
+        const cardNameWidth = nameTexture.width;
+        const cardNameHeight = nameTexture.height;
 
         const cardNamePositionX = position.getX() * window.innerWidth;
         const cardNamePositionY = position.getY() * window.innerHeight;

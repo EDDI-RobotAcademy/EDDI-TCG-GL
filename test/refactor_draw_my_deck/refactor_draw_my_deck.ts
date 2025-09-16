@@ -377,7 +377,7 @@ export class TCGJustTestMyDeckView {
         await this.textureManager.preloadTextures("image-paths.json");
         console.log("Textures preloaded. Adding background and buttons...");
 //         await TextGenerator.loadFont('../../resource/font/HeirofLightOTFRegular.otf');
-        await TextGenerator.loadFont('../../resource/font/GowunBatang-Regular.ttf');
+        await TextGenerator.loadFont(`Batang`, '../../resource/font/GowunBatang-Regular.ttf');
 
         await this.addBackground();
         await this.addScrollArea();
