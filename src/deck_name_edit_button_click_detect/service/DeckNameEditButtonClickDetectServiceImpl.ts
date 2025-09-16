@@ -4,6 +4,8 @@ import {getCardById} from "../../card/utility";
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
 
+import {DeckNameEditInfoTextType} from "../../deck_name_edit_info_text/entity/DeckNameEditInfoTextType";
+
 import {DeckNameEditButtonClickDetectService} from "./DeckNameEditButtonClickDetectService";
 import {DeckNameEditButtonClickDetectRepositoryImpl} from "../repository/DeckNameEditButtonClickDetectRepositoryImpl";
 import {DeckNameEditButton} from "../../deck_name_edit_button/entity/DeckNameEditButton";
@@ -18,6 +20,7 @@ import {DeckNameEditInputContainerRepositoryImpl} from "../../deck_name_edit_inp
 import {DeckNameEditPopupButtonsClickDetectRepositoryImpl} from "../../deck_name_edit_pop_up_buttons_click_detect/repository/DeckNameEditPopupButtonsClickDetectRepositoryImpl";
 import {DeckNameEditInputChangeDetectRepositoryImpl} from "../../deck_name_edit_input_change_detect/repository/DeckNameEditInputChangeDetectRepositoryImpl";
 import {MyDeckNameTextMapRepositoryImpl} from "../../my_deck_name_text/repository/MyDeckNameTextMapRepositoryImpl";
+import {DeckNameEditInfoTextRepositoryImpl} from "../../deck_name_edit_info_text/repository/DeckNameEditInfoTextRepositoryImpl";
 
 export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditButtonClickDetectService {
     private static instance: DeckNameEditButtonClickDetectServiceImpl | null = null;
@@ -34,6 +37,7 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
     private deckNameEditPopupButtonsClickDetectRepository: DeckNameEditPopupButtonsClickDetectRepositoryImpl;
     private deckNameEditInputChangeDetectRepository: DeckNameEditInputChangeDetectRepositoryImpl;
     private myDeckNameTextMapRepository: MyDeckNameTextMapRepositoryImpl;
+    private deckNameEditInfoTextRepository: DeckNameEditInfoTextRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -49,6 +53,7 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
         this.deckNameEditPopupButtonsClickDetectRepository = DeckNameEditPopupButtonsClickDetectRepositoryImpl.getInstance();
         this.deckNameEditInputChangeDetectRepository = DeckNameEditInputChangeDetectRepositoryImpl.getInstance();
         this.myDeckNameTextMapRepository = MyDeckNameTextMapRepositoryImpl.getInstance();
+        this.deckNameEditInfoTextRepository = DeckNameEditInfoTextRepositoryImpl.getInstance(scene);
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckNameEditButtonClickDetectServiceImpl {
@@ -87,6 +92,7 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
             this.setDeckNameEditPopupButtonsVisibility(true);
             this.setDeckNameEditPopupInputContainerVisibility(`block`);
             this.setDefaultDeckNameInputValue(currentClickedDeckId);
+            this.setInfoTextVisibility(DeckNameEditInfoTextType.DEFAULT, true);
 
             return clickedButton;
 
@@ -200,4 +206,9 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
     private getCurrentClickedDeckId(): number | null {
         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
+
+    private setInfoTextVisibility(type: DeckNameEditInfoTextType, isVisible: boolean): void {
+        this.deckNameEditInfoTextRepository.findInfoTextByType(type)?.setVisibility(isVisible);
+    }
+
 }

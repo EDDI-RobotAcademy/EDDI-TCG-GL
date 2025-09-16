@@ -1,5 +1,7 @@
 import * as THREE from "three";
 
+import {DeckNameEditInfoTextType} from "../../deck_name_edit_info_text/entity/DeckNameEditInfoTextType";
+
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
 
@@ -8,6 +10,7 @@ import {DeckNameEditInputChangeDetectRepositoryImpl} from "../repository/DeckNam
 import {DeckNameEditInputContainerRepositoryImpl} from "../../deck_name_edit_input_container/repository/DeckNameEditInputContainerRepositoryImpl";
 import {MyDeckNameTextRepositoryImpl} from "../../my_deck_name_text/repository/MyDeckNameTextRepositoryImpl";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
+import {DeckNameEditInfoTextRepositoryImpl} from "../../deck_name_edit_info_text/repository/DeckNameEditInfoTextRepositoryImpl";
 
 export class DeckNameEditInputChangeDetectServiceImpl implements DeckNameEditInputChangeDetectService {
     private static instance: DeckNameEditInputChangeDetectServiceImpl | null = null;
@@ -16,6 +19,7 @@ export class DeckNameEditInputChangeDetectServiceImpl implements DeckNameEditInp
     private deckNameEditInputContainerRepository: DeckNameEditInputContainerRepositoryImpl;
     private myDeckNameTextRepository: MyDeckNameTextRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
+    private deckNameEditInfoTextRepository: DeckNameEditInfoTextRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -23,6 +27,7 @@ export class DeckNameEditInputChangeDetectServiceImpl implements DeckNameEditInp
         this.deckNameEditInputContainerRepository = DeckNameEditInputContainerRepositoryImpl.getInstance();
         this.myDeckNameTextRepository = MyDeckNameTextRepositoryImpl.getInstance(scene);
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
+        this.deckNameEditInfoTextRepository = DeckNameEditInfoTextRepositoryImpl.getInstance(scene);
     }
 
     public static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckNameEditInputChangeDetectServiceImpl {
@@ -43,7 +48,11 @@ export class DeckNameEditInputChangeDetectServiceImpl implements DeckNameEditInp
         const prevValue = inputElement.dataset.prevValue || "";
 
         this.handleInputChange(currentValue, prevValue);
-        this.validateInput(currentValue);
+
+        if (currentValue.length > 0) {
+            this.validateInput(currentValue);
+        }
+
         this.enforceMaxLength(inputElement, 10);
 
         // To-do: 확인용이므로 나중에 지워야 함
@@ -71,21 +80,35 @@ export class DeckNameEditInputChangeDetectServiceImpl implements DeckNameEditInp
 
     // 유효성 검사
     private validateInput(currentValue: string): void {
-        const rules: { check: (v: string) => boolean; message: string }[] = [
-            { check: this.isOverMaxLength, message: "⚠️ 10글자 초과" },
-            { check: this.hasSpecialCharacter, message: "⚠️ 특수 문자 포함" },
-            { check: this.isExistingDeckName, message: "⚠️ 이미 존재하는 덱 이름입니다." },
+        const rules: { check: (v: string) => boolean; type: DeckNameEditInfoTextType }[] = [
+            { check: this.isOverMaxLength, type: DeckNameEditInfoTextType.OVERFLOW },
+            { check: this.hasSpecialCharacter, type: DeckNameEditInfoTextType.SPECIAL_CHARACTER },
+            { check: this.isExistingDeckName, type: DeckNameEditInfoTextType.EXIST },
         ];
 
+        // 모든 안내 문구 숨기기
+        Object.values(DeckNameEditInfoTextType).forEach((type) => {
+            this.setInfoTextVisibility(type as DeckNameEditInfoTextType, false);
+        });
+
+        // 조건에 맞는 안내 문구 보이기
         for (const rule of rules) {
             if (rule.check.call(this, currentValue)) {
-                console.log(rule.message);
+                this.setInfoTextVisibility(rule.type, true);
+                return; // 하나만 켜고 종료 (여러 개 동시에 안 보이게 하고 싶다면)
             }
         }
+
+        // 어떤 룰에도 걸리지 않으면 기본 안내 문구를 보여줌
+        this.setInfoTextVisibility(DeckNameEditInfoTextType.ENABLE, true);
     }
 
     private handleEmptyInputChange(): void {
         console.log("[덱 이름 편집창] 입력창 비움 감지(모든 글자 삭제)");
+        Object.values(DeckNameEditInfoTextType).forEach((type) => {
+            this.setInfoTextVisibility(type as DeckNameEditInfoTextType, false);
+        });
+        this.setInfoTextVisibility(DeckNameEditInfoTextType.DEFAULT, true);
     }
 
     private handleSingleCharacterDelete(): void {
@@ -128,6 +151,10 @@ export class DeckNameEditInputChangeDetectServiceImpl implements DeckNameEditInp
         const filteredDeckNameList = deckNameList.filter(name => name !== currentDeckName);
 
         return filteredDeckNameList.includes(currentValue);
+    }
+
+    private setInfoTextVisibility(type: DeckNameEditInfoTextType, isVisible: boolean): void {
+        this.deckNameEditInfoTextRepository.findInfoTextByType(type)?.setVisibility(isVisible);
     }
 
 }
