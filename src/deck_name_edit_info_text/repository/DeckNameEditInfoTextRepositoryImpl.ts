@@ -68,6 +68,15 @@ export class DeckNameEditInfoTextRepositoryImpl implements DeckNameEditInfoTextR
         return this.infoTextMap.get(textUniqueId)?.textMesh ?? null;
     }
 
+    public findInfoTextByType(type: DeckNameEditInfoTextType): DeckNameEditInfoText | null {
+        for (const { typeId: storedTypeId, textMesh } of this.infoTextMap.values()) {
+            if (storedTypeId === type) {
+                return textMesh;
+            }
+        }
+        return null;
+    }
+
     public findAllInfoText(): DeckNameEditInfoText[] {
         return Array.from(this.infoTextMap.values()).map(({ textMesh }) => textMesh);
     }
