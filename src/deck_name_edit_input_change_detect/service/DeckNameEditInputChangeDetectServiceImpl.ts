@@ -6,17 +6,23 @@ import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl
 import {DeckNameEditInputChangeDetectService} from "./DeckNameEditInputChangeDetectService";
 import {DeckNameEditInputChangeDetectRepositoryImpl} from "../repository/DeckNameEditInputChangeDetectRepositoryImpl";
 import {DeckNameEditInputContainerRepositoryImpl} from "../../deck_name_edit_input_container/repository/DeckNameEditInputContainerRepositoryImpl";
+import {MyDeckNameTextRepositoryImpl} from "../../my_deck_name_text/repository/MyDeckNameTextRepositoryImpl";
+import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 
 export class DeckNameEditInputChangeDetectServiceImpl implements DeckNameEditInputChangeDetectService {
     private static instance: DeckNameEditInputChangeDetectServiceImpl | null = null;
     private cameraRepository: CameraRepository;
     private deckNameEditInputChangeDetectRepository: DeckNameEditInputChangeDetectRepositoryImpl;
     private deckNameEditInputContainerRepository: DeckNameEditInputContainerRepositoryImpl;
+    private myDeckNameTextRepository: MyDeckNameTextRepositoryImpl;
+    private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.deckNameEditInputChangeDetectRepository = DeckNameEditInputChangeDetectRepositoryImpl.getInstance();
         this.deckNameEditInputContainerRepository = DeckNameEditInputContainerRepositoryImpl.getInstance();
+        this.myDeckNameTextRepository = MyDeckNameTextRepositoryImpl.getInstance(scene);
+        this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
     }
 
     public static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckNameEditInputChangeDetectServiceImpl {
@@ -65,11 +71,16 @@ export class DeckNameEditInputChangeDetectServiceImpl implements DeckNameEditInp
 
     // 유효성 검사
     private validateInput(currentValue: string): void {
-        if (this.isOverMaxLength(currentValue)) {
-            console.log(`⚠️ 10글자 초과`);
-        }
-        if (this.hasSpecialCharacter(currentValue)) {
-            console.log(`⚠️ 특수 문자 포함`);
+        const rules: { check: (v: string) => boolean; message: string }[] = [
+            { check: this.isOverMaxLength, message: "⚠️ 10글자 초과" },
+            { check: this.hasSpecialCharacter, message: "⚠️ 특수 문자 포함" },
+            { check: this.isExistingDeckName, message: "⚠️ 이미 존재하는 덱 이름입니다." },
+        ];
+
+        for (const rule of rules) {
+            if (rule.check.call(this, currentValue)) {
+                console.log(rule.message);
+            }
         }
     }
 
@@ -95,7 +106,7 @@ export class DeckNameEditInputChangeDetectServiceImpl implements DeckNameEditInp
 
     private hasSpecialCharacter(currentValue: string): boolean {
         // 한글, 영어만 허용 → 나머지는 특수문자로 처리
-        const regex = /[^a-zA-Z가-힣\s]/;
+        const regex = /[^a-zA-Z가-힣ㄱ-ㅎㅏ-ㅣ\s]/;
         return regex.test(currentValue); // 특수문자 포함시 true 반환
     }
 
@@ -103,6 +114,20 @@ export class DeckNameEditInputChangeDetectServiceImpl implements DeckNameEditInp
         if (inputElement.value.length > maxLength) {
             inputElement.value = inputElement.value.slice(0, maxLength);
         }
+    }
+
+    private isExistingDeckName(currentValue: string): boolean {
+        const currentClickedDeckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
+        if (currentClickedDeckId == null) return false;
+
+        const currentDeckName = this.myDeckNameTextRepository.findDeckNameByDeckId(currentClickedDeckId);
+        if (currentDeckName == null) return false;
+
+        const deckNameList = this.myDeckNameTextRepository.findDeckNameList();
+        // 현재 덱 이름을 제외한 리스트
+        const filteredDeckNameList = deckNameList.filter(name => name !== currentDeckName);
+
+        return filteredDeckNameList.includes(currentValue);
     }
 
 }

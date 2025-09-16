@@ -72,6 +72,16 @@ export class MyDeckNameTextRepositoryImpl implements MyDeckNameTextRepository {
         return null;
     }
 
+
+    public findDeckNameByDeckId(deckId: number): string | null {
+        for (const { deckId: storedDeckId, deckName } of this.deckNameTextMap.values()) {
+            if (storedDeckId === deckId) {
+                return deckName;
+            }
+        }
+        return null;
+    }
+
     public findNameTextIdByDeckId(deckId: number): number | null {
         for (const [textId, { deckId: storedDeckId }] of this.deckNameTextMap.entries()) {
             if (storedDeckId === deckId) {
@@ -88,6 +98,10 @@ export class MyDeckNameTextRepositoryImpl implements MyDeckNameTextRepository {
 
     public findTextDeckIdList(): number[] {
         return Array.from(this.deckNameTextMap.values()).map(({ deckId }) => deckId);
+    }
+
+    public findDeckNameList(): string[] {
+        return Array.from(this.deckNameTextMap.values()).map(({ deckName }) => deckName);
     }
 
     public findDeckIdByTextId(textUniqueId: number): number | null {
