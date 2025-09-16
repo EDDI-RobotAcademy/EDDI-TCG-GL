@@ -95,9 +95,9 @@ export class MyDeckCardNameServiceImpl implements MyDeckCardNameService {
                     continue;
                 }
 
-                // 나중에 수정 필요
-                const cardNameWidth = cardName.width;
-                const cardNameHeight = cardName.height;
+                // To-do: 나중에 수정 필요
+                const cardNameWidth = (cardName.width / 1800) * windowWidth;
+                const cardNameHeight = cardNameWidth * (cardName.height / cardName.width);
 
                 const newPositionX = initialPosition.getX() * windowWidth;
                 const newPositionY = initialPosition.getY() * windowHeight;

@@ -54,8 +54,11 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
         }
 
         const nameTexture = texture.image;
-        const cardNameWidth = nameTexture.width;
-        const cardNameHeight = nameTexture.height;
+        const textWidth = nameTexture.width;
+        const textHeight = nameTexture.height;
+
+        const cardNameWidth = (textWidth / 1800) * window.innerWidth;
+        const cardNameHeight = cardNameWidth * (textHeight / textWidth);
 
         const cardNamePositionX = position.getX() * window.innerWidth;
         const cardNamePositionY = position.getY() * window.innerHeight;
@@ -63,7 +66,7 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
         const cardNameMesh = MeshGenerator.createMesh(texture, cardNameWidth, cardNameHeight, position);
         cardNameMesh.position.set(cardNamePositionX, cardNamePositionY, 0);
 
-        const newCardName = new MyDeckCardName(cardNameMesh, position, cardNameWidth, cardNameHeight);
+        const newCardName = new MyDeckCardName(cardNameMesh, position, textWidth, textHeight);
         this.cardNameMap.set(newCardName.id, { cardId, cardNameMesh: newCardName, cardNameText: cardName});
 
         if (!this.deckMap.has(deckId)) {
