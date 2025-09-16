@@ -22,6 +22,7 @@ import {DeckEditButtonConfigList} from "../../src/deck_edit_button/entity/DeckEd
 import {DeckEditDoneButtonConfigList} from "../../src/deck_edit_done_button/entity/DeckEditDoneButtonConfigList";
 import {SideScrollAreaConfigList} from "../../src/side_scroll_area/entity/SideScrollAreaConfigList";
 import {DeckNameEditPopupButtonsConfigList} from "../../src/deck_name_edit_pop_up_buttons/entity/DeckNameEditPopupButtonsConfigList";
+import {DeckNameEditInfoTextConfigList} from "../../src/deck_name_edit_info_text/entity/DeckNameEditInfoTextConfigList";
 
 import {MyDeckButtonServiceImpl} from "../../src/my_deck_button/service/MyDeckButtonServiceImpl";
 import {MyDeckButtonEffectServiceImpl} from "../../src/my_deck_button_effect/service/MyDeckButtonEffectServiceImpl";
@@ -65,6 +66,7 @@ import {MyDeckCardSearchBoxServiceImpl} from "../../src/my_deck_card_search_box/
 import {DeckNameEditPopupBackgroundServiceImpl} from "../../src/deck_name_edit_pop_up_background/service/DeckNameEditPopupBackgroundServiceImpl";
 import {DeckNameEditPopupButtonsServiceImpl} from "../../src/deck_name_edit_pop_up_buttons/service/DeckNameEditPopupButtonsServiceImpl";
 import {DeckNameEditInputContainerServiceImpl} from "../../src/deck_name_edit_input_container/service/DeckNameEditInputContainerServiceImpl";
+import {DeckNameEditInfoTextServiceImpl} from "../../src/deck_name_edit_info_text/service/DeckNameEditInfoTextServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -174,6 +176,7 @@ export class TCGJustTestMyDeckView {
     private deckCardAddButtonService: DeckCardAddButtonServiceImpl;
     private totalNumberOfSelectedCardsService: TotalNumberOfSelectedCardsServiceImpl;
     private requiredNumberOfCarsService: RequiredNumberOfCardsServiceImpl;
+    private deckNameEditInfoTextService: DeckNameEditInfoTextServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
     private cardCountManager = CardCountManager.getInstance();
@@ -265,6 +268,7 @@ export class TCGJustTestMyDeckView {
         this.deckCardAddButtonService = DeckCardAddButtonServiceImpl.getInstance(this.scene);
         this.totalNumberOfSelectedCardsService = TotalNumberOfSelectedCardsServiceImpl.getInstance(this.scene);
         this.requiredNumberOfCarsService = RequiredNumberOfCardsServiceImpl.getInstance(this.scene);
+        this.deckNameEditInfoTextService = DeckNameEditInfoTextServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -378,6 +382,7 @@ export class TCGJustTestMyDeckView {
         console.log("Textures preloaded. Adding background and buttons...");
 //         await TextGenerator.loadFont('../../resource/font/HeirofLightOTFRegular.otf');
         await TextGenerator.loadFont(`Batang`, '../../resource/font/GowunBatang-Regular.ttf');
+        await TextGenerator.loadFont(`KakaoFont`, '../../resource/font/KakaoSmallSans-Light.ttf');
 
         await this.addBackground();
         await this.addScrollArea();
@@ -417,6 +422,7 @@ export class TCGJustTestMyDeckView {
         this.addDeckNameEditPopupBackground();
         this.addDeckNameEditPopupButtons();
         this.addDeckNameEditInputContainer();
+        this.addDeckNameEditInfoText();
 
         this.initialized = true;
         this.isAnimating = true;
@@ -1439,6 +1445,28 @@ export class TCGJustTestMyDeckView {
         }
     }
 
+    private async addDeckNameEditInfoText(): Promise<void> {
+        try {
+            const configList = new DeckNameEditInfoTextConfigList();
+            await Promise.all(configList.infoTextConfigs.map(async (config) =>{
+                const infoText = await this.deckNameEditInfoTextService.createDeckNameEditInfoText(
+                    config.id,
+                    config.color,
+                    config.text,
+                    config.position
+                );
+
+                if (infoText) {
+                    this.scene.add(infoText);
+                    console.log(`Draw Deck Name Edit Info Text ${config.id}`);
+                }
+
+            }));
+        } catch (error) {
+            console.error('Failed to add Deck Name Edit Info Text:', error);
+        }
+    }
+
     private onWindowResize(): void {
         const newWidth = window.innerWidth;
         const newHeight = window.innerHeight;
@@ -1498,6 +1526,7 @@ export class TCGJustTestMyDeckView {
             this.deckNameEditPopupBackgroundService.adjustDeckMakePopupBackgroundPosition();
             this.deckNameEditPopupButtonsService.adjustDeckMakePopupButtonsPosition();
             this.deckNameEditInputContainerService.adjustDeckNameEditInputContainerPosition();
+            this.deckNameEditInfoTextService.adjustDeckNameEditInfoTextPosition();
         }
     }
 
