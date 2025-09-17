@@ -19,25 +19,25 @@ export class DeckNameEditInfoTextConfigList {
         },
         {
             id: DeckNameEditInfoTextType.ENABLE,
-            color: '#368c5b',
+            color: '#5cff67',
             text: '사용 가능한 이름입니다.',
             position: new Vector2d(0, -0.032)
         },
         {
             id: DeckNameEditInfoTextType.EXIST,
-            color: '#e52424',
+            color: '#ff4d4d',
             text: '이미 존재하는 덱 이름입니다.',
             position: new Vector2d(0, -0.032)
         },
         {
             id: DeckNameEditInfoTextType.OVERFLOW,
-            color: '#e52424',
+            color: '#ff4d4d',
             text: '10글자를 초과 할 수 없습니다.',
             position: new Vector2d(0, -0.032)
         },
         {
             id: DeckNameEditInfoTextType.SPECIAL_CHARACTER,
-            color: '#e52424',
+            color: '#ff4d4d',
             text: '특수문자는 사용할 수 없습니다.',
             position: new Vector2d(0, -0.032)
         },
