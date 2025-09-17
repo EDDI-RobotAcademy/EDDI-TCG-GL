@@ -36,23 +36,28 @@ export class MyDeckNameTextServiceImpl implements MyDeckNameTextService {
         const textGroup = new THREE.Group();
         try {
             const existingPosition = this.getMyDeckNameTextPosition(deckId);
-            const existingDeckNameText = this.getMyDeckNameTextByDeckId(deckId);
+            if (existingPosition == null) {
+                const newPosition = this.myDeckNameTextPosition(deckId);
+                console.log(`[DEBUG] Deck ${deckId}: Position X=${newPosition.position.getX()}, Y=${newPosition.position.getY()}`);
+                this.saveMyDeckNameTextPosition(deckId, newPosition);
 
-            if (existingPosition && existingDeckNameText) {
-                const positionX = existingPosition.getX() * window.innerWidth;
-                const positionY = existingPosition.getY() * window.innerHeight;
-                const existingTextMesh = existingDeckNameText.getMesh();
-
-                existingTextMesh.position.set(positionX, positionY, 0);
-                textGroup.add(existingTextMesh);
+                const newDeckNameText = await this.createMyDeckNameText(deckId, deckName, newPosition.position);
+                textGroup.add(newDeckNameText.mesh);
 
             } else {
-                const position = this.myDeckNameTextPosition(deckId);
-                console.log(`[DEBUG] Deck ${deckId}: Position X=${position.position.getX()}, Y=${position.position.getY()}`);
-                this.saveMyDeckNameTextPosition(deckId, position);
+                const existingDeckNameText = this.getMyDeckNameTextByDeckId(deckId);
+                if (existingDeckNameText == null) {
+                    const newDeckNameText = await this.createMyDeckNameText(deckId, deckName, existingPosition.position);
+                    textGroup.add(newDeckNameText.mesh);
 
-                const deckNameText = await this.createMyDeckNameText(deckId, deckName, position.position);
-                textGroup.add(deckNameText.mesh);
+                } else {
+                    const positionX = existingPosition.getX() * window.innerWidth;
+                    const positionY = existingPosition.getY() * window.innerHeight;
+                    const existingTextMesh = existingDeckNameText.getMesh();
+
+                    existingTextMesh.position.set(positionX, positionY, 0);
+                    textGroup.add(existingTextMesh);
+                }
             }
 
         } catch (error) {
@@ -151,8 +156,12 @@ export class MyDeckNameTextServiceImpl implements MyDeckNameTextService {
         this.myDeckNameTextRepository.deleteAll();
     }
 
+    public saveMyDeckTextGroup(): void {
+        this.myDeckNameTextRepository.saveTextGroup();
+    }
+
     public getMyDeckTextGroups(): THREE.Group {
-        return this.myDeckNameTextRepository.findAllTextGroups();
+        return this.myDeckNameTextRepository.findTextGroup();
     }
 
     public resetMyDeckTextGroups(): void {

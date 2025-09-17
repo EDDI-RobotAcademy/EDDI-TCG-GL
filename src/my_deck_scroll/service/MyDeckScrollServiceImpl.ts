@@ -98,7 +98,7 @@ export class MyDeckScrollServiceImpl implements MyDeckScrollService {
     }
 
     private getDeckNameTextGroup(): THREE.Group {
-        return this.myDeckNameTextRepository.findAllTextGroups();
+        return this.myDeckNameTextRepository.findTextGroup();
     }
 
     private getDeckNameEditButtonGroup(): THREE.Group {

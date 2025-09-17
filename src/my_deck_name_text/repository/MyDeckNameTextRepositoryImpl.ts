@@ -151,14 +151,23 @@ export class MyDeckNameTextRepositoryImpl implements MyDeckNameTextRepository {
         this.deckNameTextMap.clear();
     }
 
-    public findAllTextGroups(): THREE.Group {
+    public saveTextGroup(): void {
+        const newTextGroup = new THREE.Group();
+        const textList = this.findAll();
+        if (textList == null) return;
+
+        textList.forEach((text) => {
+            newTextGroup.add(text.getMesh());
+        });
+
+        this.deckNameTextGroup = newTextGroup;
+    }
+
+    public findTextGroup(): THREE.Group {
         if (!this.deckNameTextGroup) {
-            this.deckNameTextGroup = new THREE.Group();
-            for (const { textMesh } of this.deckNameTextMap.values()) {
-                this.deckNameTextGroup.add(textMesh.getMesh());
-            }
+            throw new Error(`My Deck Name Text Group not found`);
         }
-        console.log(`%c[DEBUG] deckNameTextGroup 생성됨 ${this.deckNameTextGroup.children}`, 'color: #00FFBF; font-weight: bold;');
+
         return this.deckNameTextGroup;
     }
 

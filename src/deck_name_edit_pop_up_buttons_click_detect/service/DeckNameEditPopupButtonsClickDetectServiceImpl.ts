@@ -18,6 +18,9 @@ import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_inp
 import {DeckCardSearchCancelButtonClickDetectRepositoryImpl} from "../../deck_card_search_cancel_button_click_detect/repository/DeckCardSearchCancelButtonClickDetectRepositoryImpl";
 import {MyDeckCardSearchCancelButtonRepositoryImpl} from "../../my_deck_card_search_cancel_button/repository/MyDeckCardSearchCancelButtonRepositoryImpl";
 import {DeckNameEditInfoTextRepositoryImpl} from "../../deck_name_edit_info_text/repository/DeckNameEditInfoTextRepositoryImpl";
+import {MyDeckNameTextRepositoryImpl} from "../../my_deck_name_text/repository/MyDeckNameTextRepositoryImpl";
+import {MyDeckNameTextMapRepositoryImpl} from "../../my_deck_name_text/repository/MyDeckNameTextMapRepositoryImpl";
+import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 
 export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameEditPopupButtonsClickDetectService {
     private static instance: DeckNameEditPopupButtonsClickDetectServiceImpl | null = null;
@@ -31,6 +34,9 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
     private deckCardSearchCancelButtonClickDetectRepository: DeckCardSearchCancelButtonClickDetectRepositoryImpl;
     private myDeckCardSearchCancelButtonRepository: MyDeckCardSearchCancelButtonRepositoryImpl;
     private deckNameEditInfoTextRepository: DeckNameEditInfoTextRepositoryImpl;
+    private myDeckNameTextRepository: MyDeckNameTextRepositoryImpl;
+    private myDeckNameTextMapRepository: MyDeckNameTextMapRepositoryImpl;
+    private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -43,6 +49,9 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
         this.deckCardSearchCancelButtonClickDetectRepository = DeckCardSearchCancelButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckCardSearchCancelButtonRepository = MyDeckCardSearchCancelButtonRepositoryImpl.getInstance();
         this.deckNameEditInfoTextRepository = DeckNameEditInfoTextRepositoryImpl.getInstance(scene);
+        this.myDeckNameTextRepository = MyDeckNameTextRepositoryImpl.getInstance(scene);
+        this.myDeckNameTextMapRepository = MyDeckNameTextMapRepositoryImpl.getInstance();
+        this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckNameEditPopupButtonsClickDetectServiceImpl {
@@ -69,6 +78,9 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
             this.camera
         );
 
+        const currentClickedDeckId = this.getCurrentClickedDeckId();
+        if (currentClickedDeckId == null) return null;
+
         if (clickedDeckNameEditPopupButton) {
             console.log(`Clicked Deck Make Pop-up Button ID: ${clickedDeckNameEditPopupButton.id}`);
 
@@ -86,6 +98,7 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
 
                 if (this.getDeckNameEditInfoTextVisibility(DeckNameEditInfoTextType.ENABLE) !== true) return null;
 
+                this.deckNameEdit(currentClickedDeckId);
                 this.setDeckCardSearchCancelButtonVisibility(false);
                 this.clearMyDeckCardSearchInputText();
                 this.hideDeckNameEditPopupElements();
@@ -163,6 +176,10 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
         return this.deckNameEditInfoTextRepository.findInfoTextByType(type)?.getVisibility();
     }
 
+    private getCurrentDeckNameInputText(): string | null {
+        return this.deckNameEditInputContainerRepository.findInputValue();
+    }
+
     private hideDeckNameEditPopupElements(): void {
         this.setTransparentBackgroundVisibility(false);
         this.setDeckNameEditPopupBackgroundVisibility(false);
@@ -172,7 +189,7 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
     }
 
     private clearDeckNameEditPopupInputText(): void {
-        const deckNameInputText = this.deckNameEditInputContainerRepository.findInputValue();
+        const deckNameInputText = this.getCurrentDeckNameInputText();
         if (deckNameInputText !== null && deckNameInputText.length > 0) {
             this.deckNameEditInputContainerRepository.clearUserInput();
             this.deckNameEditInputContainerRepository.deleteUserInput();
@@ -192,6 +209,45 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
             this.myDeckSearchInputContainerRepository.clearUserInput();
             this.myDeckSearchInputContainerRepository.deleteUserInput();
         }
+    }
+
+    private deleteDeckNameTextMesh(deckId: number): void {
+        this.myDeckNameTextRepository.deleteTextByDeckId(deckId);
+    }
+
+    private updateNewDeckName(deckId: number, deckName: string): void {
+        this.myDeckNameTextMapRepository.updateMyDeckName(deckId, deckName);
+    }
+
+    // 새로 입력한 덱 이름이 기존의 이름에서 바뀌었는 지의 여부 체크
+    private isDeckNameUnchanged(deckId: number): boolean {
+        const currentDeckName = this.myDeckNameTextRepository.findDeckNameByDeckId(deckId);
+        const editDeckName = this.getCurrentDeckNameInputText();
+
+        if (currentDeckName == null || editDeckName == null) {
+            return false; // 비교 불가한 경우 "변경 없음"으로 보지 않음
+        }
+
+        console.log(`%c 원래의 이름: ${currentDeckName}, 바뀐 이름: ${editDeckName}`, 'color: #00d5ff; font-weight: bold;');
+        return currentDeckName === editDeckName;
+    }
+
+    private deckNameEdit(deckId: number): void {
+        if (this.isDeckNameUnchanged(deckId)) {
+            // 이름이 그대로일 때 처리
+            return;
+        }
+
+        // 이름이 바뀐 경우 처리
+        const editDeckName = this.getCurrentDeckNameInputText();
+        if (editDeckName == null) return;
+
+        this.deleteDeckNameTextMesh(deckId);
+        this.updateNewDeckName(deckId, editDeckName);
+    }
+
+    private getCurrentClickedDeckId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
 }
