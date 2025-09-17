@@ -1,18 +1,13 @@
 import * as THREE from "three";
 
 import {DeckNameEditInfoTextType} from "../../deck_name_edit_info_text/entity/DeckNameEditInfoTextType";
-
-import {DeckNameEditPopupButtonsClickDetectService} from "./DeckNameEditPopupButtonsClickDetectService";
-import {DeckNameEditPopupButtonsClickDetectRepositoryImpl} from "../repository/DeckNameEditPopupButtonsClickDetectRepositoryImpl";
-
-import {DeckNameEditPopupButtons} from "../../deck_name_edit_pop_up_buttons/entity/DeckNameEditPopupButtons";
-import {DeckNameEditPopupButtonsRepositoryImpl} from "../../deck_name_edit_pop_up_buttons/repository/DeckNameEditPopupButtonsRepositoryImpl";
-
+import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
-
-import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
-
+import {DeckNameEditPopupButtonsClickDetectService} from "./DeckNameEditPopupButtonsClickDetectService";
+import {DeckNameEditPopupButtonsClickDetectRepositoryImpl} from "../repository/DeckNameEditPopupButtonsClickDetectRepositoryImpl";
+import {DeckNameEditPopupButtons} from "../../deck_name_edit_pop_up_buttons/entity/DeckNameEditPopupButtons";
+import {DeckNameEditPopupButtonsRepositoryImpl} from "../../deck_name_edit_pop_up_buttons/repository/DeckNameEditPopupButtonsRepositoryImpl";
 import {TransparentBackgroundRepositoryImpl} from "../../transparent_background/repository/TransparentBackgroundRepositoryImpl";
 import {DeckNameEditPopupBackgroundRepositoryImpl} from "../../deck_name_edit_pop_up_background/repository/DeckNameEditPopupBackgroundRepositoryImpl";
 import {DeckNameEditInputContainerRepositoryImpl} from "../../deck_name_edit_input_container/repository/DeckNameEditInputContainerRepositoryImpl";
@@ -29,6 +24,11 @@ import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/r
 import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of_cards_position/repository/MyDeckNumberOfCardsPositionRepositoryImpl";
 import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
 import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_marker_position/repository/DeckCardCountMarkerPositionRepositoryImpl";
+import {DeckEditButtonClickDetectRepositoryImpl} from "../../deck_edit_button_click_detect/repository/DeckEditButtonClickDetectRepositoryImpl";
+import {DeckDeleteButtonClickDetectRepositoryImpl} from "../../deck_delete_button_click_detect/repository/DeckDeleteButtonClickDetectRepositoryImpl";
+import {DeckNameEditButtonClickDetectRepositoryImpl} from "../../deck_name_edit_button_click_detect/repository/DeckNameEditButtonClickDetectRepositoryImpl";
+import {BuildDeckButtonClickDetectRepositoryImpl} from "../../build_deck_button_click_detect/repository/BuildDeckButtonClickDetectRepositoryImpl";
+import {BuildDeckButtonHoverDetectRepositoryImpl} from "../../build_deck_button_hover_detect/repository/BuildDeckButtonHoverDetectRepositoryImpl";
 
 export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameEditPopupButtonsClickDetectService {
     private static instance: DeckNameEditPopupButtonsClickDetectServiceImpl | null = null;
@@ -52,6 +52,11 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
     private myDeckNumberOfCardsPositionRepository: MyDeckNumberOfCardsPositionRepositoryImpl;
     private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
     private deckCardCountMarkerPositionRepository: DeckCardCountMarkerPositionRepositoryImpl;
+    private deckEditButtonClickDetectRepository: DeckEditButtonClickDetectRepositoryImpl;
+    private deckDeleteButtonClickDetectRepository: DeckDeleteButtonClickDetectRepositoryImpl;
+    private deckNameEditButtonClickDetectRepository: DeckNameEditButtonClickDetectRepositoryImpl;
+    private buildDeckButtonClickDetectRepository: BuildDeckButtonClickDetectRepositoryImpl;
+    private buildDeckButtonHoverDetectRepository: BuildDeckButtonHoverDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.myDeckElementAdjuster = MyDeckElementAdjuster.getInstance();
@@ -74,6 +79,11 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
         this.myDeckNumberOfCardsPositionRepository = MyDeckNumberOfCardsPositionRepositoryImpl.getInstance();
         this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
         this.deckCardCountMarkerPositionRepository = DeckCardCountMarkerPositionRepositoryImpl.getInstance();
+        this.deckEditButtonClickDetectRepository = DeckEditButtonClickDetectRepositoryImpl.getInstance();
+        this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
+        this.deckNameEditButtonClickDetectRepository = DeckNameEditButtonClickDetectRepositoryImpl.getInstance();
+        this.buildDeckButtonClickDetectRepository = BuildDeckButtonClickDetectRepositoryImpl.getInstance();
+        this.buildDeckButtonHoverDetectRepository = BuildDeckButtonHoverDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckNameEditPopupButtonsClickDetectServiceImpl {
@@ -83,7 +93,7 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
         return DeckNameEditPopupButtonsClickDetectServiceImpl.instance;
     }
 
-    private setButtonClickEnabled(isEnabled: boolean): void {
+    private setDeckNameEditPopupButtonClickEnabled(isEnabled: boolean): void {
         this.deckNameEditPopupButtonsClickDetectRepository.setButtonClickEnabled(isEnabled);
     }
 
@@ -162,7 +172,14 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
             const clickPoint = { x: event.clientX, y: event.clientY };
             const buttonClick =  await this.handleLeftClick(clickPoint);
             if (buttonClick) {
-                this.setButtonClickEnabled(false);
+                this.setDeckNameEditPopupButtonClickEnabled(false);
+                this.setAllMyDeckButtonClickEnabled(true);
+                this.setDeckEditButtonClickEnabled(true);
+                this.setAllDeckDeleteButtonClickEnabled(true);
+                this.setAllDeckNameEditButtonClickEnabled(true);
+                this.setBuildDeckButtonClickEnabled(true);
+                this.setBuildDeckButtonHoverEnabled(true);
+
                 return buttonClick;
             }
         }
@@ -361,6 +378,30 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
             this.myDeckElementAdjuster.adjustElementPosition(markerMesh, widthPercent, heightPercent, positionX, positionY);
             marker.setVisibility(true);
         }
+    }
+
+    private setAllMyDeckButtonClickEnabled(isEnabled: boolean): void {
+        this.myDeckButtonClickDetectRepository.setAllButtonClickEnabled(isEnabled);
+    }
+
+    private setDeckEditButtonClickEnabled(isEnabled: boolean): void {
+        this.deckEditButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
+    }
+
+    private setAllDeckDeleteButtonClickEnabled(isEnabled: boolean): void {
+        this.deckDeleteButtonClickDetectRepository.setAllButtonClickEnabled(isEnabled);
+    }
+
+    private setAllDeckNameEditButtonClickEnabled(isEnabled: boolean): void {
+        this.deckNameEditButtonClickDetectRepository.setAllButtonClickEnabled(isEnabled);
+    }
+
+    private setBuildDeckButtonClickEnabled(isEnabled: boolean): void {
+        this.buildDeckButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
+    }
+
+    private setBuildDeckButtonHoverEnabled(isEnabled: boolean): void {
+        this.buildDeckButtonHoverDetectRepository.setButtonHoverEnabled(isEnabled);
     }
 
 }
