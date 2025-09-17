@@ -11,6 +11,8 @@ import {DeckNameEditPopupButtonsRepositoryImpl} from "../../deck_name_edit_pop_u
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
 
+import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
+
 import {TransparentBackgroundRepositoryImpl} from "../../transparent_background/repository/TransparentBackgroundRepositoryImpl";
 import {DeckNameEditPopupBackgroundRepositoryImpl} from "../../deck_name_edit_pop_up_background/repository/DeckNameEditPopupBackgroundRepositoryImpl";
 import {DeckNameEditInputContainerRepositoryImpl} from "../../deck_name_edit_input_container/repository/DeckNameEditInputContainerRepositoryImpl";
@@ -21,9 +23,16 @@ import {DeckNameEditInfoTextRepositoryImpl} from "../../deck_name_edit_info_text
 import {MyDeckNameTextRepositoryImpl} from "../../my_deck_name_text/repository/MyDeckNameTextRepositoryImpl";
 import {MyDeckNameTextMapRepositoryImpl} from "../../my_deck_name_text/repository/MyDeckNameTextMapRepositoryImpl";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
+import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardRepositoryImpl";
+import {MyDeckCardPositionRepositoryImpl} from "../../my_deck_card_position/repository/MyDeckCardPositionRepositoryImpl";
+import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/repository/MyDeckNumberOfCardsRepositoryImpl";
+import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of_cards_position/repository/MyDeckNumberOfCardsPositionRepositoryImpl";
+import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
+import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_marker_position/repository/DeckCardCountMarkerPositionRepositoryImpl";
 
 export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameEditPopupButtonsClickDetectService {
     private static instance: DeckNameEditPopupButtonsClickDetectServiceImpl | null = null;
+    private myDeckElementAdjuster: MyDeckElementAdjuster;
     private cameraRepository: CameraRepository;
     private deckNameEditPopupButtonsClickDetectRepository: DeckNameEditPopupButtonsClickDetectRepositoryImpl;
     private deckNameEditPopupButtonsRepository: DeckNameEditPopupButtonsRepositoryImpl;
@@ -37,8 +46,15 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
     private myDeckNameTextRepository: MyDeckNameTextRepositoryImpl;
     private myDeckNameTextMapRepository: MyDeckNameTextMapRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
+    private myDeckCardRepository: MyDeckCardRepositoryImpl;
+    private myDeckCardPositionRepository: MyDeckCardPositionRepositoryImpl;
+    private myDeckNumberOfCardsRepository: MyDeckNumberOfCardsRepositoryImpl;
+    private myDeckNumberOfCardsPositionRepository: MyDeckNumberOfCardsPositionRepositoryImpl;
+    private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
+    private deckCardCountMarkerPositionRepository: DeckCardCountMarkerPositionRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
+        this.myDeckElementAdjuster = MyDeckElementAdjuster.getInstance();
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.deckNameEditPopupButtonsClickDetectRepository = DeckNameEditPopupButtonsClickDetectRepositoryImpl.getInstance();
         this.deckNameEditPopupButtonsRepository = DeckNameEditPopupButtonsRepositoryImpl.getInstance();
@@ -52,6 +68,12 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
         this.myDeckNameTextRepository = MyDeckNameTextRepositoryImpl.getInstance(scene);
         this.myDeckNameTextMapRepository = MyDeckNameTextMapRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
+        this.myDeckCardRepository = MyDeckCardRepositoryImpl.getInstance(scene);
+        this.myDeckCardPositionRepository = MyDeckCardPositionRepositoryImpl.getInstance();
+        this.myDeckNumberOfCardsRepository = MyDeckNumberOfCardsRepositoryImpl.getInstance(scene);
+        this.myDeckNumberOfCardsPositionRepository = MyDeckNumberOfCardsPositionRepositoryImpl.getInstance();
+        this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
+        this.deckCardCountMarkerPositionRepository = DeckCardCountMarkerPositionRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckNameEditPopupButtonsClickDetectServiceImpl {
@@ -105,6 +127,11 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
                     this.hideDeckNameEditPopupElements();
                     this.clearDeckNameEditPopupInputText();
 
+                    this.restoreAllMyDeckCardPositions(currentClickedDeckId);
+                    this.restoreAllMyDeckNumberOfCardsPositions(currentClickedDeckId);
+                    this.restoreAllMyDeckMarkerPositions(currentClickedDeckId);
+                    this.setMyDeckCardSearchDisabled();
+
                     return clickedDeckNameEditPopupButton;
                 }
 
@@ -115,6 +142,11 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
                 this.clearMyDeckCardSearchInputText();
                 this.hideDeckNameEditPopupElements();
                 this.clearDeckNameEditPopupInputText();
+
+                this.restoreAllMyDeckCardPositions(currentClickedDeckId);
+                this.restoreAllMyDeckNumberOfCardsPositions(currentClickedDeckId);
+                this.restoreAllMyDeckMarkerPositions(currentClickedDeckId);
+                this.setMyDeckCardSearchDisabled();
             }
 
             return clickedDeckNameEditPopupButton;
@@ -260,6 +292,75 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
 
     private getCurrentClickedDeckId(): number | null {
         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
+    }
+
+    private restoreAllMyDeckCardPositions(deckId: number): void {
+        const cardUniqueIdList = this.myDeckCardRepository.findCardUniqueIdListByDeckId(deckId);
+        for (const cardUniqueId of cardUniqueIdList) {
+            const cardId = this.myDeckCardRepository.findCardIdByCardUniqueId(cardUniqueId);
+            if (cardId == null) return;
+
+            const card = this.myDeckCardRepository.findCardByDeckIdAndCardId(deckId, cardId);
+            if (card == null) return;
+            const cardMesh = card.getMesh();
+
+            const cardPosition = this.myDeckCardPositionRepository.findPositionByDeckIdAndCardId(deckId, cardId);
+            if (cardPosition == null) return;
+
+            const widthPercent = 0.096;
+            const heightPercent = (1540 / 952);
+            const positionX = cardPosition.getX();
+            const positionY = cardPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(cardMesh, widthPercent, heightPercent, positionX, positionY);
+            card.setVisibility(true);
+        }
+    }
+
+    private restoreAllMyDeckNumberOfCardsPositions(deckId: number): void {
+        const numberIdList = this.myDeckNumberOfCardsRepository.findNumberIdListByDeckId(deckId);
+        for (const numberId of numberIdList) {
+            const cardId = this.myDeckNumberOfCardsRepository.findCardIdByNumberId(numberId);
+            if (cardId == null) return;
+
+            const numberOfCards = this.myDeckNumberOfCardsRepository.findNumberByDeckIdAndCardId(deckId, cardId);
+            if (numberOfCards == null) return;
+            const numberOfCardsMesh = numberOfCards.getMesh();
+
+            const numberPosition = this.myDeckNumberOfCardsPositionRepository.findPositionByDeckIdAndCardId(deckId, cardId);
+            if (numberPosition == null) return;
+
+            const widthPercent = 0.013;
+            const heightPercent = 1;
+            const positionX = numberPosition.getX();
+            const positionY = numberPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(numberOfCardsMesh, widthPercent, heightPercent, positionX, positionY);
+            numberOfCards.setVisibility(true);
+        }
+    }
+
+    private restoreAllMyDeckMarkerPositions(deckId: number): void {
+        const markerIdList = this.deckCardCountMarkerRepository.findMarkerIdListByDeckId(deckId);
+        for (const markerId of markerIdList) {
+            const cardId = this.deckCardCountMarkerRepository.findCardIdByMarkerId(markerId);
+            if (cardId == null) return;
+
+            const marker = this.deckCardCountMarkerRepository.findMarkerByDeckIdAndCardId(deckId, cardId);
+            if (marker == null) return;
+            const markerMesh = marker.getMesh();
+
+            const markerPosition = this.deckCardCountMarkerPositionRepository.findPositionByDeckIdAndCardId(deckId, cardId);
+            if (markerPosition == null) return;
+
+            const widthPercent = 0.012;
+            const heightPercent = 1;
+            const positionX = markerPosition.getX();
+            const positionY = markerPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(markerMesh, widthPercent, heightPercent, positionX, positionY);
+            marker.setVisibility(true);
+        }
     }
 
 }
