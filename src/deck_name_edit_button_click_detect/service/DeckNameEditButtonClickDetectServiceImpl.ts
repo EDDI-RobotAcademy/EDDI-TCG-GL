@@ -21,6 +21,10 @@ import {DeckNameEditPopupButtonsClickDetectRepositoryImpl} from "../../deck_name
 import {DeckNameEditInputChangeDetectRepositoryImpl} from "../../deck_name_edit_input_change_detect/repository/DeckNameEditInputChangeDetectRepositoryImpl";
 import {MyDeckNameTextMapRepositoryImpl} from "../../my_deck_name_text/repository/MyDeckNameTextMapRepositoryImpl";
 import {DeckNameEditInfoTextRepositoryImpl} from "../../deck_name_edit_info_text/repository/DeckNameEditInfoTextRepositoryImpl";
+import {DeckEditButtonClickDetectRepositoryImpl} from "../../deck_edit_button_click_detect/repository/DeckEditButtonClickDetectRepositoryImpl";
+import {DeckDeleteButtonClickDetectRepositoryImpl} from "../../deck_delete_button_click_detect/repository/DeckDeleteButtonClickDetectRepositoryImpl";
+import {BuildDeckButtonClickDetectRepositoryImpl} from "../../build_deck_button_click_detect/repository/BuildDeckButtonClickDetectRepositoryImpl";
+import {BuildDeckButtonHoverDetectRepositoryImpl} from "../../build_deck_button_hover_detect/repository/BuildDeckButtonHoverDetectRepositoryImpl";
 
 export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditButtonClickDetectService {
     private static instance: DeckNameEditButtonClickDetectServiceImpl | null = null;
@@ -38,6 +42,10 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
     private deckNameEditInputChangeDetectRepository: DeckNameEditInputChangeDetectRepositoryImpl;
     private myDeckNameTextMapRepository: MyDeckNameTextMapRepositoryImpl;
     private deckNameEditInfoTextRepository: DeckNameEditInfoTextRepositoryImpl;
+    private deckEditButtonClickDetectRepository: DeckEditButtonClickDetectRepositoryImpl;
+    private deckDeleteButtonClickDetectRepository: DeckDeleteButtonClickDetectRepositoryImpl;
+    private buildDeckButtonClickDetectRepository: BuildDeckButtonClickDetectRepositoryImpl;
+    private buildDeckButtonHoverDetectRepository: BuildDeckButtonHoverDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -54,6 +62,10 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
         this.deckNameEditInputChangeDetectRepository = DeckNameEditInputChangeDetectRepositoryImpl.getInstance();
         this.myDeckNameTextMapRepository = MyDeckNameTextMapRepositoryImpl.getInstance();
         this.deckNameEditInfoTextRepository = DeckNameEditInfoTextRepositoryImpl.getInstance(scene);
+        this.deckEditButtonClickDetectRepository = DeckEditButtonClickDetectRepositoryImpl.getInstance();
+        this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
+        this.buildDeckButtonClickDetectRepository = BuildDeckButtonClickDetectRepositoryImpl.getInstance();
+        this.buildDeckButtonHoverDetectRepository = BuildDeckButtonHoverDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckNameEditButtonClickDetectServiceImpl {
@@ -120,6 +132,12 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
                 this.setDeckNameEditButtonClickEnabled(currentClickedDeckId, false);
                 this.setDeckNameEditPopupButtonsClickEnabled(true);
                 this.setDeckNameEditInputChangeDetectEnabled(true);
+                this.setDeckEditButtonClickEnabled(false);
+                this.setAllMyDeckButtonClickEnabled(false);
+                this.setAllDeckDeleteButtonClickEnabled(false);
+                this.setAllDeckNameEditButtonClickEnabled(false);
+                this.setBuildDeckButtonClickEnabled(false);
+                this.setBuildDeckButtonHoverEnabled(false);
             }
         }
         return null;
@@ -211,4 +229,27 @@ export class DeckNameEditButtonClickDetectServiceImpl implements DeckNameEditBut
         this.deckNameEditInfoTextRepository.findInfoTextByType(type)?.setVisibility(isVisible);
     }
 
+    private setDeckEditButtonClickEnabled(isEnabled: boolean): void {
+        this.deckEditButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
+    }
+
+    private setAllMyDeckButtonClickEnabled(isEnabled: boolean): void {
+        this.myDeckButtonClickDetectRepository.setAllButtonClickEnabled(isEnabled);
+    }
+
+    private setAllDeckDeleteButtonClickEnabled(isEnabled: boolean): void {
+        this.deckDeleteButtonClickDetectRepository.setAllButtonClickEnabled(isEnabled);
+    }
+
+    private setAllDeckNameEditButtonClickEnabled(isEnabled: boolean): void {
+        this.deckNameEditButtonClickDetectRepository.setAllButtonClickEnabled(isEnabled);
+    }
+
+    private setBuildDeckButtonClickEnabled(isEnabled: boolean): void {
+        this.buildDeckButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
+    }
+
+    private setBuildDeckButtonHoverEnabled(isEnabled: boolean): void {
+        this.buildDeckButtonHoverDetectRepository.setButtonHoverEnabled(isEnabled);
+    }
 }

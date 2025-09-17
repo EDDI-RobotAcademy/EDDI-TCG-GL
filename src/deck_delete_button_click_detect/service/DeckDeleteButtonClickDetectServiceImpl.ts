@@ -86,6 +86,8 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
     }
 
     public async onMouseDown(event: MouseEvent): Promise<DeckDeleteButton | null> {
+        if (!this.isAllDeckDeleteButtonClickEnabled()) return null;
+
         const currentClickedDeckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
         if (currentClickedDeckId == null) return null;
 //         console.log(`%c 현재 클릭한 덱 ID?: ${currentClickedDeckId}`, 'color: #00d5ff; font-weight: bold;');
@@ -158,6 +160,10 @@ export class DeckDeleteButtonClickDetectServiceImpl implements DeckDeleteButtonC
 
     private setSearchCancelButtonClickEnabled(isEnable: boolean): void {
         this.deckCardSearchCancelButtonClickDetectRepository.setButtonClickEnabled(isEnable);
+    }
+
+    private isAllDeckDeleteButtonClickEnabled(): boolean {
+        return this.deckDeleteButtonClickDetectRepository.isAllButtonClickEnabled();
     }
 
 }

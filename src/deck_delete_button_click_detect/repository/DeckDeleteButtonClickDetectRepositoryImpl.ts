@@ -9,6 +9,7 @@ export class DeckDeleteButtonClickDetectRepositoryImpl implements DeckDeleteButt
 
     private currentClickedButtonId: number | null = null;
     private buttonClickEnabledMap: Map<number, boolean> = new Map(); //deck Id: false or true
+    private allButtonClickEnabled: boolean = true;
 
     public static getInstance(): DeckDeleteButtonClickDetectRepositoryImpl {
         if (!DeckDeleteButtonClickDetectRepositoryImpl.instance) {
@@ -72,6 +73,15 @@ export class DeckDeleteButtonClickDetectRepositoryImpl implements DeckDeleteButt
             }
         }
         return enabledIds;
+    }
+
+    // 모든 덱 삭제 버튼 한 번에 제어
+    public setAllButtonClickEnabled(isEnabled: boolean): void {
+        this.allButtonClickEnabled = isEnabled;
+    }
+
+    public isAllButtonClickEnabled(): boolean {
+        return this.allButtonClickEnabled;
     }
 
 }
