@@ -352,7 +352,13 @@ export class TCGJustTestMyDeckView {
         this.renderer.domElement.addEventListener('mousemove', (e) => this.deckEditDoneButtonHoverDetectService.onMouseMove(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckEditDoneButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckCardSearchCancelButtonClickDetectService.onMouseDown(e), false);
-        this.renderer.domElement.addEventListener('mousedown', (e) => this.deckNameEditPopupButtonsClickDetectService.onMouseDown(e), false);
+//         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckNameEditPopupButtonsClickDetectService.onMouseDown(e), false);
+        this.renderer.domElement.addEventListener('mousedown', async (e) => {
+            const buttonEvent = await this.deckNameEditPopupButtonsClickDetectService.onMouseDown(e);
+            if (buttonEvent) {
+                this.reAddMyDeckNameText();
+            }
+        }, false);
     }
 
     public static getInstance(simulationMyDeckContainer: HTMLElement): TCGJustTestMyDeckView {
@@ -1147,6 +1153,7 @@ export class TCGJustTestMyDeckView {
                 await this.myDeckNameTextService.createMyDeckNameTextWithPosition(deckId, deckName);
             }
 
+            this.myDeckNameTextService.saveMyDeckTextGroup();
             this.myDeckNameTextService.applyClippingMaskToDeckNameText();
 
             const textGroup = this.myDeckNameTextService.getMyDeckTextGroups();
@@ -1157,6 +1164,30 @@ export class TCGJustTestMyDeckView {
 
         } catch (error){
              console.error('Failed to add test text:', error);
+        }
+    }
+
+    private async reAddMyDeckNameText(): Promise<void> {
+        try{
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckId();
+            if (currentClickedDeckId == null) return;
+
+            const deckName = this.myDeckNameTextMapRepository.findMyDeckNameByDeckId(currentClickedDeckId);
+            if (deckName == undefined) return;
+
+            await this.myDeckNameTextService.createMyDeckNameTextWithPosition(currentClickedDeckId, deckName);
+
+            this.myDeckNameTextService.saveMyDeckTextGroup();
+            this.myDeckNameTextService.applyClippingMaskToDeckNameText();
+
+            const textGroup = this.myDeckNameTextService.getMyDeckTextGroups();
+            if (!this.scene.children.includes(textGroup)) {
+                this.scene.add(textGroup);
+            }
+            textGroup.position.y = 0;
+
+        } catch (error){
+             console.error('Failed to add My Deck Name text:', error);
         }
     }
 
