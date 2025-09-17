@@ -96,6 +96,18 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
             if (clickedDeckNameEditPopupButton.id === 1) {
                 console.log(`[DeckNameEditPopupButton] click edit button!`);
 
+                // 이름이 바뀌지 않았고 상태가 DEFAULT인 경우
+                if (this.isDeckNameUnchanged(currentClickedDeckId) &&
+                    this.getDeckNameEditInfoTextVisibility(DeckNameEditInfoTextType.DEFAULT)) {
+                    this.deckNameEdit(currentClickedDeckId);
+                    this.setDeckCardSearchCancelButtonVisibility(false);
+                    this.clearMyDeckCardSearchInputText();
+                    this.hideDeckNameEditPopupElements();
+                    this.clearDeckNameEditPopupInputText();
+
+                    return clickedDeckNameEditPopupButton;
+                }
+
                 if (this.getDeckNameEditInfoTextVisibility(DeckNameEditInfoTextType.ENABLE) !== true) return null;
 
                 this.deckNameEdit(currentClickedDeckId);
@@ -220,6 +232,7 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
     }
 
     // 새로 입력한 덱 이름이 기존의 이름에서 바뀌었는 지의 여부 체크
+    // 변경없으면 true 변경이 있다면 false 반환
     private isDeckNameUnchanged(deckId: number): boolean {
         const currentDeckName = this.myDeckNameTextRepository.findDeckNameByDeckId(deckId);
         const editDeckName = this.getCurrentDeckNameInputText();
@@ -234,7 +247,6 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
 
     private deckNameEdit(deckId: number): void {
         if (this.isDeckNameUnchanged(deckId)) {
-            // 이름이 그대로일 때 처리
             return;
         }
 
