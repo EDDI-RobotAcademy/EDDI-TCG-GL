@@ -1,5 +1,7 @@
 import * as THREE from "three";
 
+import {DeckNameEditInfoTextType} from "../../deck_name_edit_info_text/entity/DeckNameEditInfoTextType";
+
 import {DeckNameEditPopupButtonsClickDetectService} from "./DeckNameEditPopupButtonsClickDetectService";
 import {DeckNameEditPopupButtonsClickDetectRepositoryImpl} from "../repository/DeckNameEditPopupButtonsClickDetectRepositoryImpl";
 
@@ -69,40 +71,27 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
 
         if (clickedDeckNameEditPopupButton) {
             console.log(`Clicked Deck Make Pop-up Button ID: ${clickedDeckNameEditPopupButton.id}`);
-            this.setTransparentBackgroundVisibility(false);
-            this.setDeckNameEditPopupBackgroundVisibility(false);
-            this.setDeckNameEditPopupButtonsVisibility(false);
-            this.setDeckNameEditInputContainerVisibility('none');
-            this.setAllInfoTextVisibility(false);
-
-            const deckNameInputText = this.deckNameEditInputContainerRepository.findInputValue();
-            if (deckNameInputText !== null && deckNameInputText.length > 0) {
-                this.deckNameEditInputContainerRepository.clearUserInput();
-                this.deckNameEditInputContainerRepository.deleteUserInput();
-            }
 
             if (clickedDeckNameEditPopupButton.id === 0) {
                 console.log(`[DeckNameEditPopupButton] click cancel button!`);
 
-                const myDeckCardSearchContainer = this.myDeckSearchInputContainerRepository.findMyDeckSearchInputContainer();
-                if (myDeckCardSearchContainer) {
-                    myDeckCardSearchContainer.setInputDisabled(false);
-                }
-
+                this.hideDeckNameEditPopupElements();
+                this.clearDeckNameEditPopupInputText();
+                this.setMyDeckCardSearchDisabled();
                 this.setDeckCardSearchCancelButtonClickEnabled(true);
             }
 
             if (clickedDeckNameEditPopupButton.id === 1) {
                 console.log(`[DeckNameEditPopupButton] click edit button!`);
 
-                this.setDeckCardSearchCancelButtonVisibility(false);
+                if (this.getDeckNameEditInfoTextVisibility(DeckNameEditInfoTextType.ENABLE) !== true) return null;
 
-                const cardSearchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
-                if (cardSearchInputText !== null && cardSearchInputText.length > 0) {
-                    this.myDeckSearchInputContainerRepository.clearUserInput();
-                    this.myDeckSearchInputContainerRepository.deleteUserInput();
-                }
+                this.setDeckCardSearchCancelButtonVisibility(false);
+                this.clearMyDeckCardSearchInputText();
+                this.hideDeckNameEditPopupElements();
+                this.clearDeckNameEditPopupInputText();
             }
+
             return clickedDeckNameEditPopupButton;
         }
 
@@ -167,6 +156,41 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
         const infoTextList = this.deckNameEditInfoTextRepository.findAllInfoText();
         for (const infoText of infoTextList) {
             infoText.setVisibility(isVisible);
+        }
+    }
+
+    private getDeckNameEditInfoTextVisibility(type: DeckNameEditInfoTextType): boolean | undefined {
+        return this.deckNameEditInfoTextRepository.findInfoTextByType(type)?.getVisibility();
+    }
+
+    private hideDeckNameEditPopupElements(): void {
+        this.setTransparentBackgroundVisibility(false);
+        this.setDeckNameEditPopupBackgroundVisibility(false);
+        this.setDeckNameEditPopupButtonsVisibility(false);
+        this.setDeckNameEditInputContainerVisibility('none');
+        this.setAllInfoTextVisibility(false);
+    }
+
+    private clearDeckNameEditPopupInputText(): void {
+        const deckNameInputText = this.deckNameEditInputContainerRepository.findInputValue();
+        if (deckNameInputText !== null && deckNameInputText.length > 0) {
+            this.deckNameEditInputContainerRepository.clearUserInput();
+            this.deckNameEditInputContainerRepository.deleteUserInput();
+        }
+    }
+
+    private setMyDeckCardSearchDisabled(): void {
+        const myDeckCardSearchContainer = this.myDeckSearchInputContainerRepository.findMyDeckSearchInputContainer();
+        if (myDeckCardSearchContainer) {
+            myDeckCardSearchContainer.setInputDisabled(false);
+        }
+    }
+
+    private clearMyDeckCardSearchInputText(): void {
+        const cardSearchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
+        if (cardSearchInputText !== null && cardSearchInputText.length > 0) {
+            this.myDeckSearchInputContainerRepository.clearUserInput();
+            this.myDeckSearchInputContainerRepository.deleteUserInput();
         }
     }
 
