@@ -56,6 +56,15 @@ export class MyDeckRemainingOutOfTotalSlashRepositoryImpl implements MyDeckRemai
         return this.slashMap.get(slashId)?.cardId ?? null;
     }
 
+    public findSlashIdByCardId(cardId: number): number | null {
+        for (const [slashId, { cardId: storedCardId }] of this.slashMap.entries()) {
+            if (storedCardId === cardId) {
+                return slashId;
+            }
+        }
+        return null;
+    }
+
     public findAllSlashList(): MyDeckRemainingOutOfTotalSlash[] {
         return Array.from(this.slashMap.values()).map(({ slashMesh }) => slashMesh);
     }
