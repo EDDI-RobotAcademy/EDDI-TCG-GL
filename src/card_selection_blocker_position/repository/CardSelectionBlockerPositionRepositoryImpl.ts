@@ -64,6 +64,24 @@ export class CardSelectionBlockerPositionRepositoryImpl implements CardSelection
         return Array.from(this.positionMap.keys());
     }
 
+    // 검색용 position
+    public findSearchBlockerPosition(searchResultCount: number): CardSelectionBlockerPosition[] {
+        const positionIdList = this.findPositionIdList();
+
+        // 검색 결과 개수만큼 positionId만 추출
+        const limitedPositionIdList = positionIdList.slice(0, searchResultCount);
+
+        // 각 positionId에 해당하는 CardSelectionBlockerPosition 가져오기
+        const positions: CardSelectionBlockerPosition[] = [];
+        for (const positionId of limitedPositionIdList) {
+            const entry = this.positionMap.get(positionId);
+            if (entry) {
+                positions.push(entry.position);
+            }
+        }
+        return positions;
+    }
+
     public deleteById(positionId: number): void {
         this.positionMap.delete(positionId);
 
