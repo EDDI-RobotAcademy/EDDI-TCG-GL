@@ -17,6 +17,9 @@ import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_m
 import {MyDeckOwnedCardsRepositoryImpl} from "../../my_deck_owned_cards/repository/MyDeckOwnedCardsRepositoryImpl";
 import {MyDeckOwnedCardsPositionRepositoryImpl} from "../../my_deck_owned_cards_position/repository/MyDeckOwnedCardsPositionRepositoryImpl";
 import {DeckEditButtonClickDetectRepositoryImpl} from "../../deck_edit_button_click_detect/repository/DeckEditButtonClickDetectRepositoryImpl";
+import {CardSelectionBlockerRepositoryImpl} from "../../card_selection_blocker/repository/CardSelectionBlockerRepositoryImpl";
+import {CardSelectionBlockerPositionRepositoryImpl} from "../../card_selection_blocker_position/repository/CardSelectionBlockerPositionRepositoryImpl";
+import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -38,6 +41,9 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
     private myDeckOwnedCardsRepository: MyDeckOwnedCardsRepositoryImpl;
     private myDeckOwnedCardsPositionRepository: MyDeckOwnedCardsPositionRepositoryImpl;
     private deckEditButtonClickDetectRepository: DeckEditButtonClickDetectRepositoryImpl;
+    private cardSelectionBlockerRepository: CardSelectionBlockerRepositoryImpl;
+    private cardSelectionBlockerPositionRepository: CardSelectionBlockerPositionRepositoryImpl;
+    private cardCountManager: CardCountManager;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -55,6 +61,9 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         this.myDeckOwnedCardsRepository = MyDeckOwnedCardsRepositoryImpl.getInstance();
         this.myDeckOwnedCardsPositionRepository = MyDeckOwnedCardsPositionRepositoryImpl.getInstance();
         this.deckEditButtonClickDetectRepository = DeckEditButtonClickDetectRepositoryImpl.getInstance();
+        this.cardSelectionBlockerRepository = CardSelectionBlockerRepositoryImpl.getInstance(scene);
+        this.cardSelectionBlockerPositionRepository = CardSelectionBlockerPositionRepositoryImpl.getInstance();
+        this.cardCountManager = CardCountManager.getInstance();
     }
 
     public static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckCardSearchInputEnterDetectServiceImpl {
@@ -93,7 +102,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         const inputText = this.myDeckSearchInputContainerRepository.findInputValue() || "";
 
         if (inputText.length === 0) {
-            this.restoreAllOwnedCardPositions();
+            this.restoreAllElementsPositionInDeckEditMode();
             this.showEmptyInputPopup();
             return;
         }
@@ -102,10 +111,10 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         const matchedCardNames = this.findMatchingCardNames(ownedCardNameList, inputText);
 
         if (matchedCardNames.length > 0) {
-            this.hideSearchUnmatchedOwnedCards(matchedCardNames);
-            this.adjustMatchedOwnedCardPositions(matchedCardNames);
+            this.hideUnmatchedElementsInDeckEditMode(matchedCardNames);
+            this.adjustMatchedElementsInDeckEditMode(matchedCardNames);
         } else {
-            this.restoreAllOwnedCardPositions();
+            this.restoreAllElementsPositionInDeckEditMode();
             this.showNotFoundPopup();
         }
     }
@@ -124,7 +133,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         const matchedCardNames = this.findMatchingCardNames(myDeckCardNameList, inputText);
 
         if (matchedCardNames.length > 0) {
-            this.updateMyDeckAllElementVisibility(deckId, matchedCardNames);
+            this.hideUnmatchedMyDeckAllElements(deckId, matchedCardNames);
             this.adjustMatchedMyDeckAllElementPosition(deckId, matchedCardNames);
             return;
         } else {
@@ -181,19 +190,13 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         );
     }
 
-    private restoreMyDeckAllElement(deckId: number): void {
-        this.restoreAllMyDeckCardPositions(deckId);
-        this.restoreAllMyDeckNumberOfCardsPositions(deckId);
-        this.restoreAllMyDeckMarkerPositions(deckId);
-    }
-
     // 매칭되지 않는 카드, 카드 개수, 마커 mesh 객체들은 화면에서 숨김
     // To-do: scene, renderer 구조로 분리하면 mesh scene 에서 제거 후, 다시 렌더링하는 방식으로 수정 필요
     // 스크롤 문제도 해결될 것임
-    private updateMyDeckAllElementVisibility(deckId: number, names: string[]): void {
-        this.updateMyDeckCardVisibilityBySearch(deckId, names);
-        this.updateMyDeckNumberOfCardsVisibilityBySearch(deckId, names);
-        this.updateMyDeckCountMarkerVisibilityBySearch(deckId, names);
+    private hideUnmatchedMyDeckAllElements(deckId: number, names: string[]): void {
+        this.hideSearchUnmatchedMyDeckCard(deckId, names);
+        this.hideSearchUnmatchedMyDeckNumberOfCards(deckId, names);
+        this.hideSearchUnmatchedMyDeckCountMarker(deckId, names);
     }
 
     // 검색된 카드, 카드 개수, 마커 mesh 객체들의 position 재정렬
@@ -203,12 +206,25 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         this.adjustMatchedMyDeckMarkerPosition(deckId, names);
     }
 
-    private hideSearchUnmatchedOwnedCards(names: string[]): void {
-        const filteredCardIdList = this.findUnmatchedOwnedCardIdList(names);
+    private restoreMyDeckAllElement(deckId: number): void {
+        this.restoreAllMyDeckCardPositions(deckId);
+        this.restoreAllMyDeckNumberOfCardsPositions(deckId);
+        this.restoreAllMyDeckMarkerPositions(deckId);
+    }
 
-        for (const filteredCardId of filteredCardIdList) {
-            this.myDeckOwnedCardsRepository.findCardByCardId(filteredCardId)?.setVisibility(false);
-        }
+    private hideUnmatchedElementsInDeckEditMode(names: string[]): void {
+        this.hideSearchUnmatchedOwnedCards(names);
+        this.hideSearchUnmatchedCardBlockers(names);
+    }
+
+    private adjustMatchedElementsInDeckEditMode(names: string[]): void {
+        this.adjustMatchedOwnedCardPositions(names);
+        this.adjustMatchedCardBlockerPositions(names);
+    }
+
+    private restoreAllElementsPositionInDeckEditMode(): void {
+        this.restoreAllOwnedCardPositions();
+        this.restoreAllCardBlockerPositions();
     }
 
     private findUnmatchedOwnedCardIdList(names: string[]): number[] {
@@ -243,8 +259,24 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         return matchedCardIdList;
     }
 
+    private hideSearchUnmatchedOwnedCards(names: string[]): void {
+        const filteredCardIdList = this.findUnmatchedOwnedCardIdList(names);
+
+        for (const filteredCardId of filteredCardIdList) {
+            this.myDeckOwnedCardsRepository.findCardByCardId(filteredCardId)?.setVisibility(false);
+        }
+    }
+
+    private hideSearchUnmatchedCardBlockers(names: string[]): void {
+        const filteredCardIdList = this.findUnmatchedOwnedCardIdList(names);
+
+        for (const filteredCardId of filteredCardIdList) {
+            this.cardSelectionBlockerRepository.findBlockerByCardId(filteredCardId)?.setVisibility(false);
+        }
+    }
+
     // 검색 후 검색어와 매칭되지 않은 나머지 카드들을 화면에서 숨김
-    private updateMyDeckCardVisibilityBySearch(deckId: number, names: string[]): void {
+    private hideSearchUnmatchedMyDeckCard(deckId: number, names: string[]): void {
         // 현재 덱에 등록된 모든 카드의 uniqueId 가져오기
         const cardUniqueIdList = this.myDeckCardRepository.findCardUniqueIdListByDeckId(deckId);
 
@@ -265,7 +297,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         }
     }
 
-    private updateMyDeckNumberOfCardsVisibilityBySearch(deckId: number, names: string[]): void {
+    private hideSearchUnmatchedMyDeckNumberOfCards(deckId: number, names: string[]): void {
         const numberIdList = this.myDeckNumberOfCardsRepository.findNumberIdListByDeckId(deckId);
 
         for (const numberId of numberIdList) {
@@ -284,7 +316,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         }
     }
 
-    private updateMyDeckCountMarkerVisibilityBySearch(deckId: number, names: string[]): void {
+    private hideSearchUnmatchedMyDeckCountMarker(deckId: number, names: string[]): void {
         const markerIdList = this.deckCardCountMarkerRepository.findMarkerIdListByDeckId(deckId);
 
         for (const markerId of markerIdList) {
@@ -328,6 +360,34 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
             const positionY = cardPosition.getY();
 
             this.myDeckElementAdjuster.adjustElementPosition(cardMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    private adjustMatchedCardBlockerPositions(names: string[]): void {
+        const namesLength = names.length;
+        const positionList = this.cardSelectionBlockerPositionRepository.findSearchBlockerPosition(namesLength);
+        const matchedCardIdList = this.findMatchedOwnedCardIdList(names);
+
+        for (let i = 0; i < names.length; i++) {
+            const name = names[i];
+            const cardPosition = positionList[i]; // 같은 index로 매칭
+
+            if (!cardPosition) return;
+
+            const matchedCardId = matchedCardIdList[i];
+            if (matchedCardId == null) return;
+
+            const blocker = this.cardSelectionBlockerRepository.findBlockerByCardId(matchedCardId);
+            if (blocker == null) return;
+
+            const blockerMesh = blocker.getMesh();
+
+            const widthPercent = 0.096;
+            const heightPercent = (1540 / 952);
+            const positionX = cardPosition.getX();
+            const positionY = cardPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(blockerMesh, widthPercent, heightPercent, positionX, positionY);
         }
     }
 
@@ -429,6 +489,30 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
 
             this.myDeckElementAdjuster.adjustElementPosition(cardMesh, widthPercent, heightPercent, positionX, positionY);
             card.setVisibility(true);
+        }
+    }
+
+    private restoreAllCardBlockerPositions(): void {
+        const cardIdList = this.cardSelectionBlockerRepository.findAllCardIdList();
+        for (const cardId of cardIdList) {
+            const blocker = this.cardSelectionBlockerRepository.findBlockerByCardId(cardId);
+            if (blocker == null) return;
+            const blockerMesh = blocker.getMesh();
+
+            const blockerPosition = this.cardSelectionBlockerPositionRepository.findPositionByCardId(cardId);
+            if (blockerPosition == null) return;
+
+            const widthPercent = 0.096;
+            const heightPercent = (1540 / 952);
+            const positionX = blockerPosition.getX();
+            const positionY = blockerPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(blockerMesh, widthPercent, heightPercent, positionX, positionY);
+
+            const remainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
+            if (remainingCardCount !== null && remainingCardCount == 0) {
+                blocker.setVisibility(true);
+            }
         }
     }
 
