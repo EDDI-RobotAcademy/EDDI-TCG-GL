@@ -20,6 +20,12 @@ import {DeckEditButtonClickDetectRepositoryImpl} from "../../deck_edit_button_cl
 import {CardSelectionBlockerRepositoryImpl} from "../../card_selection_blocker/repository/CardSelectionBlockerRepositoryImpl";
 import {CardSelectionBlockerPositionRepositoryImpl} from "../../card_selection_blocker_position/repository/CardSelectionBlockerPositionRepositoryImpl";
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
+import {MyDeckRemainingCardsRepositoryImpl} from "../../my_deck_remaining_cards/repository/MyDeckRemainingCardsRepositoryImpl";
+import {MyDeckRemainingCardsPositionRepositoryImpl} from "../../my_deck_remaining_cards_position/repository/MyDeckRemainingCardsPositionRepositoryImpl";
+import {MyDeckRemainingOutOfTotalSlashRepositoryImpl} from "../../my_deck_remaining_out_of_total_slash/repository/MyDeckRemainingOutOfTotalSlashRepositoryImpl";
+import {MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl} from "../../my_deck_remaining_out_of_total_slash_position/repository/MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl";
+import {MyDeckTotalOwnedCardsRepositoryImpl} from "../../my_deck_total_owned_cards/repository/MyDeckTotalOwnedCardsRepositoryImpl";
+import {MyDeckTotalOwnedCardsPositionRepositoryImpl} from "../../my_deck_total_owned_cards_position/repository/MyDeckTotalOwnedCardsPositionRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -44,6 +50,12 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
     private cardSelectionBlockerRepository: CardSelectionBlockerRepositoryImpl;
     private cardSelectionBlockerPositionRepository: CardSelectionBlockerPositionRepositoryImpl;
     private cardCountManager: CardCountManager;
+    private myDeckRemainingCardsRepository: MyDeckRemainingCardsRepositoryImpl;
+    private myDeckRemainingCardsPositionRepository: MyDeckRemainingCardsPositionRepositoryImpl;
+    private myDeckRemainingOutOfTotalSlashRepository: MyDeckRemainingOutOfTotalSlashRepositoryImpl;
+    private myDeckRemainingOutOfTotalSlashPositionRepository: MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl;
+    private myDeckTotalOwnedCardsRepository: MyDeckTotalOwnedCardsRepositoryImpl;
+    private myDeckTotalOwnedCardsPositionRepository: MyDeckTotalOwnedCardsPositionRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -64,6 +76,12 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         this.cardSelectionBlockerRepository = CardSelectionBlockerRepositoryImpl.getInstance(scene);
         this.cardSelectionBlockerPositionRepository = CardSelectionBlockerPositionRepositoryImpl.getInstance();
         this.cardCountManager = CardCountManager.getInstance();
+        this.myDeckRemainingCardsRepository = MyDeckRemainingCardsRepositoryImpl.getInstance(scene);
+        this.myDeckRemainingCardsPositionRepository = MyDeckRemainingCardsPositionRepositoryImpl.getInstance();
+        this.myDeckRemainingOutOfTotalSlashRepository = MyDeckRemainingOutOfTotalSlashRepositoryImpl.getInstance();
+        this.myDeckRemainingOutOfTotalSlashPositionRepository = MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl.getInstance();
+        this.myDeckTotalOwnedCardsRepository = MyDeckTotalOwnedCardsRepositoryImpl.getInstance();
+        this.myDeckTotalOwnedCardsPositionRepository = MyDeckTotalOwnedCardsPositionRepositoryImpl.getInstance();
     }
 
     public static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckCardSearchInputEnterDetectServiceImpl {
@@ -215,16 +233,25 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
     private hideUnmatchedElementsInDeckEditMode(names: string[]): void {
         this.hideSearchUnmatchedOwnedCards(names);
         this.hideSearchUnmatchedCardBlockers(names);
+        this.hideSearchUnmatchedNumberOfRemainingCards(names);
+        this.hideSearchUnmatchedSlashes(names);
+        this.hideSearchUnmatchedNumberOfTotalOwnedCards(names);
     }
 
     private adjustMatchedElementsInDeckEditMode(names: string[]): void {
         this.adjustMatchedOwnedCardPositions(names);
         this.adjustMatchedCardBlockerPositions(names);
+        this.adjustMatchedNumberOfRemainingCardsPosition(names);
+        this.adjustMatchedSlashesPosition(names);
+        this.adjustMatchedNumberOfTotalOwnedCardsPosition(names);
     }
 
     private restoreAllElementsPositionInDeckEditMode(): void {
         this.restoreAllOwnedCardPositions();
         this.restoreAllCardBlockerPositions();
+        this.restoreAllNumberOfRemainingCardsPositions();
+        this.restoreAllSlashesPositions();
+        this.restoreAllNumberOfTotalOwnedCardsPositions();
     }
 
     private findUnmatchedOwnedCardIdList(names: string[]): number[] {
@@ -272,6 +299,36 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
 
         for (const filteredCardId of filteredCardIdList) {
             this.cardSelectionBlockerRepository.findBlockerByCardId(filteredCardId)?.setVisibility(false);
+        }
+    }
+
+    private hideSearchUnmatchedNumberOfRemainingCards(names: string[]): void {
+        const filteredCardIdList = this.findUnmatchedOwnedCardIdList(names);
+
+        for (const filteredCardId of filteredCardIdList) {
+            this.myDeckRemainingCardsRepository.findRemainingCardByCardId(filteredCardId)?.setVisibility(false);
+        }
+    }
+
+    private hideSearchUnmatchedSlashes(names: string[]): void {
+        const filteredCardIdList = this.findUnmatchedOwnedCardIdList(names);
+
+        for (const filteredCardId of filteredCardIdList) {
+            const slashId = this.myDeckRemainingOutOfTotalSlashRepository.findSlashIdByCardId(filteredCardId);
+            if (slashId == null) return;
+
+            this.myDeckRemainingOutOfTotalSlashRepository.findSlashById(slashId)?.setVisibility(false);
+        }
+    }
+
+    private hideSearchUnmatchedNumberOfTotalOwnedCards(names: string[]): void {
+        const filteredCardIdList = this.findUnmatchedOwnedCardIdList(names);
+
+        for (const filteredCardId of filteredCardIdList) {
+            const numberId = this.myDeckTotalOwnedCardsRepository.findTotalOwnedCardsIdByCardId(filteredCardId);
+            if (numberId == null) return;
+
+            this.myDeckTotalOwnedCardsRepository.findTotalOwnedCardsById(numberId)?.setVisibility(false);
         }
     }
 
@@ -388,6 +445,92 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
             const positionY = cardPosition.getY();
 
             this.myDeckElementAdjuster.adjustElementPosition(blockerMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    private adjustMatchedNumberOfRemainingCardsPosition(names: string[]): void {
+        const namesLength = names.length;
+        const positionList = this.myDeckRemainingCardsPositionRepository.findSearchRemainingCardsPosition(namesLength);
+        const matchedCardIdList = this.findMatchedOwnedCardIdList(names);
+
+        for (let i = 0; i < names.length; i++) {
+            const name = names[i];
+            const numberPosition = positionList[i]; // 같은 index로 매칭
+
+            if (!numberPosition) return;
+
+            const matchedCardId = matchedCardIdList[i];
+            if (matchedCardId == null) return;
+
+            const numberOfRemainingCards = this.myDeckRemainingCardsRepository.findRemainingCardByCardId(matchedCardId);
+            if (numberOfRemainingCards == null) return;
+
+            const numberOfRemainingCardsMesh = numberOfRemainingCards.getMesh();
+
+            const widthPercent = 0.013;
+            const heightPercent = 1;
+            const positionX = numberPosition.getX();
+            const positionY = numberPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(numberOfRemainingCardsMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    private adjustMatchedSlashesPosition(names: string[]): void {
+        const namesLength = names.length;
+        const positionList = this.myDeckRemainingOutOfTotalSlashPositionRepository.findSearchSlashPosition(namesLength);
+        const matchedCardIdList = this.findMatchedOwnedCardIdList(names);
+
+        for (let i = 0; i < names.length; i++) {
+            const slashPosition = positionList[i]; // 같은 index로 매칭
+            if (!slashPosition) return;
+
+            const matchedCardId = matchedCardIdList[i];
+            if (matchedCardId == null) return;
+
+            const slashId = this.myDeckRemainingOutOfTotalSlashRepository.findSlashIdByCardId(matchedCardId);
+            if (slashId == null) return;
+
+            const slash = this.myDeckRemainingOutOfTotalSlashRepository.findSlashById(slashId);
+            if (slash == null) return;
+
+            const slashMesh = slash.getMesh();
+
+            const widthPercent = 0.013;
+            const heightPercent = 1;
+            const positionX = slashPosition.getX();
+            const positionY = slashPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(slashMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    private adjustMatchedNumberOfTotalOwnedCardsPosition(names: string[]): void {
+        const namesLength = names.length;
+        const positionList = this.myDeckTotalOwnedCardsPositionRepository.findSearchPosition(namesLength);
+        const matchedCardIdList = this.findMatchedOwnedCardIdList(names);
+
+        for (let i = 0; i < names.length; i++) {
+            const numberPosition = positionList[i]; // 같은 index로 매칭
+            if (!numberPosition) return;
+
+            const matchedCardId = matchedCardIdList[i];
+            if (matchedCardId == null) return;
+
+            const numberId = this.myDeckTotalOwnedCardsRepository.findTotalOwnedCardsIdByCardId(matchedCardId);
+            if (numberId == null) return;
+
+            const numberObject = this.myDeckTotalOwnedCardsRepository.findTotalOwnedCardsById(numberId);
+            if (numberObject == null) return;
+
+            const numberMesh = numberObject.getMesh();
+
+            const widthPercent = 0.013;
+            const heightPercent = 1;
+            const positionX = numberPosition.getX();
+            const positionY = numberPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(numberMesh, widthPercent, heightPercent, positionX, positionY);
         }
     }
 
@@ -513,6 +656,66 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
             if (remainingCardCount !== null && remainingCardCount == 0) {
                 blocker.setVisibility(true);
             }
+        }
+    }
+
+    private restoreAllNumberOfRemainingCardsPositions(): void {
+        const cardIdList = this.myDeckRemainingCardsRepository.findAllCardIdList();
+        for (const cardId of cardIdList) {
+            const numberObject = this.myDeckRemainingCardsRepository.findRemainingCardByCardId(cardId);
+            if (numberObject == null) return;
+            const numberMesh = numberObject.getMesh();
+
+            const numberPosition = this.myDeckRemainingCardsPositionRepository.findPositionByCardId(cardId);
+            if (numberPosition == null) return;
+
+            const widthPercent = 0.013;
+            const heightPercent = 1;
+            const positionX = numberPosition.getX();
+            const positionY = numberPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(numberMesh, widthPercent, heightPercent, positionX, positionY);
+            numberObject.setVisibility(true);
+        }
+    }
+
+    private restoreAllSlashesPositions(): void {
+        const slashIdList = this.myDeckRemainingOutOfTotalSlashRepository.findAllSlashIdList();
+        for (const slashId of slashIdList) {
+            const slash = this.myDeckRemainingOutOfTotalSlashRepository.findSlashById(slashId);
+            if (slash == null) return;
+            const slashMesh = slash.getMesh();
+
+            const slashPosition = this.myDeckRemainingOutOfTotalSlashPositionRepository.findPositionByPositionId(slashId);
+            if (slashPosition == null) return;
+
+            const widthPercent = 0.013;
+            const heightPercent = 1;
+            const positionX = slashPosition.getX();
+            const positionY = slashPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(slashMesh, widthPercent, heightPercent, positionX, positionY);
+            slash.setVisibility(true);
+        }
+    }
+
+    private restoreAllNumberOfTotalOwnedCardsPositions(): void {
+        const numberIdList = this.myDeckTotalOwnedCardsRepository.findAllTotalOwnedCardsIdList();
+        for (const numberId of numberIdList) {
+            const numberObject = this.myDeckTotalOwnedCardsRepository.findTotalOwnedCardsById(numberId);
+            if (numberObject == null) return;
+            const numberMesh = numberObject.getMesh();
+
+            const numberPosition = this.myDeckTotalOwnedCardsPositionRepository.findPositionByPositionId(numberId);
+            if (numberPosition == null) return;
+
+            const widthPercent = 0.013;
+            const heightPercent = 1;
+            const positionX = numberPosition.getX();
+            const positionY = numberPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(numberMesh, widthPercent, heightPercent, positionX, positionY);
+            numberObject.setVisibility(true);
         }
     }
 

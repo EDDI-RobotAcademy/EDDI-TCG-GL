@@ -60,6 +60,24 @@ export class MyDeckRemainingCardsPositionRepositoryImpl implements MyDeckRemaini
         return Array.from(this.positionMap.values()).map(({ position }) => position);
     }
 
+    // 검색용 position
+    public findSearchRemainingCardsPosition(searchResultCount: number): MyDeckRemainingCardsPosition[] {
+        const positionIdList = this.findPositionIdList();
+
+        // 검색 결과 개수만큼 positionId만 추출
+        const limitedPositionIdList = positionIdList.slice(0, searchResultCount);
+
+        // 각 positionId에 해당하는 MyDeckRemainingCardsPosition 가져오기
+        const positions: MyDeckRemainingCardsPosition[] = [];
+        for (const positionId of limitedPositionIdList) {
+            const entry = this.positionMap.get(positionId);
+            if (entry) {
+                positions.push(entry.position);
+            }
+        }
+        return positions;
+    }
+
     // To-do(later): 소지한 카드도 삭제하는 기능을 추가한다면 position 재정렬 필요
     public deleteById(positionId: number): boolean {
         return this.positionMap.delete(positionId);

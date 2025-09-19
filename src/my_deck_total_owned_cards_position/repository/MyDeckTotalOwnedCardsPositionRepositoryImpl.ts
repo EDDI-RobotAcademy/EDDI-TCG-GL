@@ -43,6 +43,24 @@ export class MyDeckTotalOwnedCardsPositionRepositoryImpl implements MyDeckTotalO
         return Array.from(this.positionMap.keys());
     }
 
+    // 검색용 position
+    public findSearchPosition(searchResultCount: number): MyDeckTotalOwnedCardsPosition[] {
+        const positionIdList = this.findPositionIdList();
+
+        // 검색 결과 개수만큼 positionId만 추출
+        const limitedPositionIdList = positionIdList.slice(0, searchResultCount);
+
+        // 각 positionId에 해당하는 MyDeckTotalOwnedCardsPosition 가져오기
+        const positions: MyDeckTotalOwnedCardsPosition[] = [];
+        for (const positionId of limitedPositionIdList) {
+            const position = this.positionMap.get(positionId);
+            if (position) {
+                positions.push(position);
+            }
+        }
+        return positions;
+    }
+
     // To-do: 삭제 부분 후에 수정해야 함(재정렬 필요)
     public deleteById(positionId: number): boolean {
         return this.positionMap.delete(positionId);

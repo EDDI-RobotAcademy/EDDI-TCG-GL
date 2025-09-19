@@ -60,6 +60,15 @@ export class MyDeckTotalOwnedCardsRepositoryImpl implements MyDeckTotalOwnedCard
         return this.totalOwnedCardsMap.get(totalOwnedCardsId)?.cardId ?? null;
     }
 
+    public findTotalOwnedCardsIdByCardId(cardId: number): number | null {
+        for (const [totalOwnedCardsId, { cardId: storedCardId }] of this.totalOwnedCardsMap.entries()) {
+            if (storedCardId === cardId) {
+                return totalOwnedCardsId;
+            }
+        }
+        return null;
+    }
+
     public findCardCountByCardId(cardId: number): number | null {
         for (const { cardId: storedCardId, cardCount } of this.totalOwnedCardsMap.values()) {
             if (storedCardId === cardId) {
