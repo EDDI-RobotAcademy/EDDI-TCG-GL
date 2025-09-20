@@ -121,6 +121,7 @@ import {DeckNameEditInputChangeDetectServiceImpl} from "../../src/deck_name_edit
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 import {CardCountManager} from "../../src/my_deck_card_manager/CardCountManager";
+import {DeckCardSearchStateInDeckEditMode} from "../../src/deck_card_search_input_enter_detect/entity/DeckCardSearchStateInDeckEditMode";
 
 export class TCGJustTestMyDeckView {
     private static instance: TCGJustTestMyDeckView | null = null;
@@ -309,7 +310,9 @@ export class TCGJustTestMyDeckView {
             if (buttonEvent) {
                 // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
                 this.reAddMyDeckNumberOfSelectedCards();
-                this.reAddMyDeckRemainingCards();
+                const cardId = this.deckCardDeleteButtonClickDetectService.getCurrentClickedCardId();
+                if (cardId == null) return;
+                this.reAddMyDeckRemainingCards(cardId);
                 this.reAddMyDeckNumberOfCards();
                 this.reAddTotalNumberOfSelectedCards();
             }
@@ -328,7 +331,10 @@ export class TCGJustTestMyDeckView {
                 await this.reAddDeckCardDeleteButton();
                 await this.reAddDeckCardAddButton();
                 await this.reAddMyDeckCard();
-                await this.reAddMyDeckRemainingCards();
+
+                const cardId = this.myDeckOwnedCardsClickDetectService.getCurrentClickedCardId();
+                if (cardId == null) return;
+                await this.reAddMyDeckRemainingCards(cardId);
                 await this.reAddMyDeckNumberOfCards();
                 await this.reAddMyDeckCardCountMarker();
                 await this.reAddTotalNumberOfSelectedCards();
@@ -344,7 +350,9 @@ export class TCGJustTestMyDeckView {
             if (buttonEvent) {
                 // To-do: 객체 scene 에 그리는 코드 후에 분리 필요
                 this.reAddMyDeckNumberOfSelectedCards();
-                this.reAddMyDeckRemainingCards();
+                const cardId = this.deckCardAddButtonClickDetectService.getCurrentClickedCardId();
+                if (cardId == null) return;
+                this.reAddMyDeckRemainingCards(cardId);
                 this.reAddMyDeckNumberOfCards();
                 this.reAddTotalNumberOfSelectedCards();
             }
@@ -870,16 +878,18 @@ export class TCGJustTestMyDeckView {
         }
     }
 
-    private async reAddMyDeckRemainingCards(): Promise<void> {
+    private async reAddMyDeckRemainingCards(cardId: number): Promise<void> {
         try {
-            const allCardIdList = this.myDeckOwnedCardsMapRepository.getCardIdList();
-            for (const cardId of allCardIdList) {
-                const remainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
-                if (remainingCardCount == null) return;
-                await this.myDeckRemainingCardsService.createMyDeckRemainingCardsWithPosition(cardId, remainingCardCount);
-            }
+            const remainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
+            if (remainingCardCount == null) return;
+            await this.myDeckRemainingCardsService.createMyDeckRemainingCardsWithPosition(cardId, remainingCardCount);
 
-            this.myDeckRemainingCardsService.setNumberOfRemainingCards(true);
+            // To-do: 덱 검색 후의 화면일 경우 배치된 카드의 위치에 맞춰서 위치도 변경해야 함
+            const deckEditModeSearchState = this.deckCardSearchInputEnterDetectService.getDeckEditSearchState();
+            if (deckEditModeSearchState == DeckCardSearchStateInDeckEditMode.MATCHED) {
+                this.myDeckRemainingCardsService.adjustDeckEditModeSearchRemainingCardsPosition(cardId);
+            }
+            this.myDeckRemainingCardsService.setNumberOfRemainingCardsByCardId(cardId, true);
             this.myDeckRemainingCardsService.saveRemainingCardGroup();
             this.myDeckRemainingCardsService.applyClippingMaskToRemainingCards();
 

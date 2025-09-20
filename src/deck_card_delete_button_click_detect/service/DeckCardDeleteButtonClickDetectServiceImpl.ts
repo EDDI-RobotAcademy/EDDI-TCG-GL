@@ -106,6 +106,14 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
         return this.deckCardDeleteButtonClickDetectRepository.isButtonClickEnabled();
     }
 
+    private saveCurrentClickedCardId(cardId: number): void {
+        this.deckCardDeleteButtonClickDetectRepository.saveCurrentClickedCardId(cardId);
+    }
+
+    public getCurrentClickedCardId(): number | null {
+        return this.deckCardDeleteButtonClickDetectRepository.getCurrentClickedCardId();
+    }
+
     async handleButtonClick(clickPoint: { x: number; y: number }): Promise<DeckCardDeleteButton | null> {
         const { x, y } = clickPoint;
         const currentClickedDeckId = this.getCurrentClickDeckId();
@@ -129,6 +137,7 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
             const cardId = this.getCardIdByDeckIdAndButtonId(currentClickedDeckId, buttonUniqueId);
             if (cardId == null) return null;
             this.saveClickedCardCount(currentClickedDeckId, cardId);
+            this.saveCurrentClickedCardId(cardId);
 
             this.deleteNumberOfSelectedCards(currentClickedDeckId, cardId);
             this.deleteNumberOfCards(currentClickedDeckId, cardId);

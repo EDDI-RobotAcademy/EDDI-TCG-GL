@@ -45,12 +45,16 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
         return MyDeckOwnedCardsClickDetectServiceImpl.instance;
     }
 
-    private setCardClickEnabled(isEnabled: boolean): void {
-        this.myDeckOwnedCardsClickDetectRepository.setCardClickEnabled(isEnabled);
+    private setAllCardClickEnabled(isEnabled: boolean): void {
+        this.myDeckOwnedCardsClickDetectRepository.setAllCardClickEnabled(isEnabled);
     }
 
-    private isCardClickEnabled(): boolean {
-        return this.myDeckOwnedCardsClickDetectRepository.isCardClickEnabled();
+    private isAllCardClickEnabled(): boolean {
+        return this.myDeckOwnedCardsClickDetectRepository.isAllCardClickEnabled();
+    }
+
+    private isCardClickEnabled(cardId: number): boolean | undefined {
+        return this.myDeckOwnedCardsClickDetectRepository.isButtonClickEnabled(cardId);
     }
 
     async handleCardClick(clickPoint: { x: number; y: number }): Promise<MyDeckOwnedCards | null> {
@@ -71,6 +75,8 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
 
             if (cardId == null) return null;
 
+            if (this.isCardClickEnabled(cardId) !== true) return null;
+
             console.log(`%c Clicked My Deck Owned Card Unique ID: ${cardUniqueId}, Card ID: ${cardId}`, 'color: #ff0033; font-weight: bold;');
 
             this.saveCurrentClickedCardId(cardId);
@@ -84,7 +90,7 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
     }
 
     public async onMouseDown(event: MouseEvent): Promise<MyDeckOwnedCards | null> {
-        if (!this.isCardClickEnabled()) return null;
+        if (!this.isAllCardClickEnabled()) return null;
 
         if (event.button === 0) {
             const clickPoint = { x: event.clientX, y: event.clientY };

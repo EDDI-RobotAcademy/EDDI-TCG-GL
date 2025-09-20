@@ -69,6 +69,14 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
         return this.deckCardAddButtonClickDetectRepository.isButtonClickEnabled();
     }
 
+    private saveCurrentClickedCardId(cardId: number): void {
+        this.deckCardAddButtonClickDetectRepository.saveCurrentClickedCardId(cardId);
+    }
+
+    public getCurrentClickedCardId(): number | null {
+        return this.deckCardAddButtonClickDetectRepository.getCurrentClickedCardId();
+    }
+
     async handleButtonClick(clickPoint: { x: number; y: number }): Promise<DeckCardAddButton | null> {
         const { x, y } = clickPoint;
         const currentClickedDeckId = this.getCurrentClickDeckId();
@@ -92,6 +100,7 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
             const cardId = this.getCardIdByDeckIdAndButtonId(currentClickedDeckId, buttonUniqueId);
             if (cardId == null) return null;
             this.saveClickedCardCount(currentClickedDeckId, cardId);
+            this.saveCurrentClickedCardId(cardId);
 
             this.deleteTotalNumberOfSelectedCards(currentClickedDeckId);
             this.deleteNumberOfRemainingCards(cardId);

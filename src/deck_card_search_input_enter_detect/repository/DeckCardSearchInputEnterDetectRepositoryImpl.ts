@@ -1,9 +1,11 @@
 import {DeckCardSearchInputEnterDetectRepository} from "./DeckCardSearchInputEnterDetectRepository";
+import {DeckCardSearchStateInDeckEditMode} from "../entity/DeckCardSearchStateInDeckEditMode";
 
 export class DeckCardSearchInputEnterDetectRepositoryImpl implements DeckCardSearchInputEnterDetectRepository {
     private static instance: DeckCardSearchInputEnterDetectRepositoryImpl;
     private enterDetectionEnabled: boolean = true;
     private enterPressedState: boolean = false;
+    private deckEditSearchState: DeckCardSearchStateInDeckEditMode = DeckCardSearchStateInDeckEditMode.DEFAULT;
 
     private constructor() {}
 
@@ -33,6 +35,15 @@ export class DeckCardSearchInputEnterDetectRepositoryImpl implements DeckCardSea
 
     public setEnterPressedState(isPressed: boolean): void {
         this.enterPressedState = isPressed;
+    }
+
+    // 덱 편집 모드에서의 카드 검색 상태 Getter/Setter
+    public setDeckEditSearchState(state: DeckCardSearchStateInDeckEditMode): void {
+        this.deckEditSearchState = state;
+    }
+
+    public findDeckEditSearchState(): DeckCardSearchStateInDeckEditMode {
+        return this.deckEditSearchState;
     }
 
 }

@@ -12,6 +12,7 @@ import {MyDeckRemainingCardsPositionRepositoryImpl} from "../../my_deck_remainin
 import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
 import {ClippingMaskManager} from "../../clipping_mask_manager/ClippingMaskManager";
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
+import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
 
 export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsService {
     private static instance: MyDeckRemainingCardsServiceImpl;
@@ -20,6 +21,7 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
     private sideScrollAreaRepository: SideScrollAreaRepositoryImpl;
     private clippingMaskManager: ClippingMaskManager;
     private cardCountManager: CardCountManager;
+    private myDeckElementAdjuster: MyDeckElementAdjuster;
 
     private constructor(scene: THREE.Scene) {
         this.myDeckRemainingCardsRepository = MyDeckRemainingCardsRepositoryImpl.getInstance(scene);
@@ -27,6 +29,7 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
         this.clippingMaskManager = ClippingMaskManager.getInstance();
         this.cardCountManager = CardCountManager.getInstance();
+        this.myDeckElementAdjuster = MyDeckElementAdjuster.getInstance();
     }
 
     public static getInstance(scene: THREE.Scene): MyDeckRemainingCardsServiceImpl {
@@ -203,6 +206,26 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
         this.myDeckRemainingCardsRepository.findAllRemainingCardsList()?.forEach(numberMesh =>
             numberMesh.setVisibility(isVisible)
         );
+    }
+
+    public setNumberOfRemainingCardsByCardId(cardId: number, isVisible: boolean): void {
+        this.myDeckRemainingCardsRepository.findRemainingCardByCardId(cardId)?.setVisibility(isVisible);
+    }
+
+    // To-do: 분리 필요한 기능인 것 같음
+    public adjustDeckEditModeSearchRemainingCardsPosition(cardId: number): void {
+        const numberOfRemainingCardsMesh = this.getRemainingCardsMeshByCardId(cardId);
+        if (numberOfRemainingCardsMesh == null) return;
+
+        const position = this.myDeckRemainingCardsPositionRepository.findSearchModePositionByCardId(cardId);
+        if (position == undefined) return;
+
+        const widthPercent = 0.013;
+        const heightPercent = 1;
+        const positionX = position.getX();
+        const positionY = position.getY();
+
+        this.myDeckElementAdjuster.adjustElementPosition(numberOfRemainingCardsMesh, widthPercent, heightPercent, positionX, positionY);
     }
 
 }
