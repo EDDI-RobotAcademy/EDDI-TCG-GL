@@ -193,6 +193,7 @@ export class DeckCardAddButtonClickDetectServiceImpl implements DeckCardAddButto
     }
 
     private deleteNumberOfRemainingCards(cardId: number): void {
+        this.myDeckRemainingCardsRepository.deleteRemainingCardsMesh(cardId);
         this.myDeckRemainingCardsRepository.deleteRemainingCardsByCardId(cardId);
     }
 
