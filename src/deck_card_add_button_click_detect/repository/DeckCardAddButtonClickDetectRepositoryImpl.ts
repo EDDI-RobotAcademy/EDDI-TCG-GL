@@ -14,6 +14,7 @@ export class DeckCardAddButtonClickDetectRepositoryImpl implements DeckCardAddBu
 
     private currentClickedButtonId: number | null = null;
     private buttonClickEnabled: boolean = false;
+    private currentClickedCardId: number | null = null;
 
     private constructor() {
         this.sideScrollAreaRepository = SideScrollAreaRepositoryImpl.getInstance();
@@ -92,6 +93,14 @@ export class DeckCardAddButtonClickDetectRepositoryImpl implements DeckCardAddBu
 
     public isButtonClickEnabled(): boolean {
         return this.buttonClickEnabled;
+    }
+
+    public saveCurrentClickedCardId(cardId: number): void {
+        this.currentClickedCardId = cardId;
+    }
+
+    public getCurrentClickedCardId(): number | null {
+        return this.currentClickedCardId;
     }
 
 }

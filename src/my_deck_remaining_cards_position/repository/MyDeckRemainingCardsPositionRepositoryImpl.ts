@@ -5,6 +5,7 @@ import {MyDeckRemainingCardsPositionRepository} from "./MyDeckRemainingCardsPosi
 export class MyDeckRemainingCardsPositionRepositoryImpl implements MyDeckRemainingCardsPositionRepository {
     private static instance: MyDeckRemainingCardsPositionRepositoryImpl;
     private positionMap: Map< number, { cardId: number, position: MyDeckRemainingCardsPosition}> = new Map(); // position Unique ID: position
+    private searchModePositionMap: Map<number, MyDeckRemainingCardsPosition> = new Map();
 
     private initialX = - 0.205;
     private incrementX = 0.1275;
@@ -99,4 +100,17 @@ export class MyDeckRemainingCardsPositionRepositoryImpl implements MyDeckRemaini
     public count(): number {
         return this.positionMap.size;
     }
+
+    public saveSearchModePosition(cardId: number, position: MyDeckRemainingCardsPosition): void {
+        this.searchModePositionMap.set(cardId, position);
+    }
+
+    public findSearchModePositionByCardId(cardId: number): MyDeckRemainingCardsPosition | undefined {
+        return this.searchModePositionMap.get(cardId);
+    }
+
+    public deleteSearchModePositionData(): void {
+        this.searchModePositionMap.clear();
+    }
+
 }

@@ -224,9 +224,17 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     }
 
     private setInteractionStatesAfterClick(): void {
-        this.myDeckOwnedCardsClickDetectRepository.setCardClickEnabled(true);
+        this.myDeckOwnedCardsClickDetectRepository.setAllCardClickEnabled(true);
+        this.saveMyDeckOwnedCardsClickEnable();
         this.myDeckBlockHoverDetectRepository.setBlockHoverEnabled(true);
         this.deckEditDoneButtonHoverDetectRepository.setButtonHoverEnabled(true);
+    }
+
+    private saveMyDeckOwnedCardsClickEnable(): void {
+        const allCardIdList = this.myDeckOwnedCardsRepository.findAllCardIdList();
+        for (const cardId of allCardIdList) {
+            this.myDeckOwnedCardsClickDetectRepository.saveCardClickEnabled(cardId, true);
+        }
     }
 
     private getDeckEditButton(): DeckEditButton | null {

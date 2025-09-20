@@ -9,6 +9,7 @@ export class MyDeckOwnedCardsClickDetectRepositoryImpl implements MyDeckOwnedCar
 
     private currentClickedCardId: number | null = null;
     private cardClickEnabled: boolean = false;
+    private cardClickEnabledMap: Map<number, boolean> = new Map(); //deck Id: false or true // 카드별 클릭 가능 여부
 
     public static getInstance(): MyDeckOwnedCardsClickDetectRepositoryImpl {
         if (!MyDeckOwnedCardsClickDetectRepositoryImpl.instance) {
@@ -56,12 +57,20 @@ export class MyDeckOwnedCardsClickDetectRepositoryImpl implements MyDeckOwnedCar
         this.currentClickedCardId = null;
     }
 
-    public setCardClickEnabled(isEnabled: boolean): void {
+    public setAllCardClickEnabled(isEnabled: boolean): void {
         this.cardClickEnabled = isEnabled;
     }
 
-    public isCardClickEnabled(): boolean {
+    public isAllCardClickEnabled(): boolean {
         return this.cardClickEnabled;
+    }
+
+    public saveCardClickEnabled(cardId: number, isEnabled: boolean): void {
+        this.cardClickEnabledMap.set(cardId, isEnabled);
+    }
+
+    public isButtonClickEnabled(cardId: number): boolean | undefined {
+        return this.cardClickEnabledMap.get(cardId);
     }
 
 }
