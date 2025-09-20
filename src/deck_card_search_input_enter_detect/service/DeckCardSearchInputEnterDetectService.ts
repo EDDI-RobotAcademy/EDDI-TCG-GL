@@ -2,5 +2,6 @@ import {DeckCardSearchStateInDeckEditMode} from "../entity/DeckCardSearchStateIn
 
 export interface DeckCardSearchInputEnterDetectService {
     onKeyDown(event: KeyboardEvent): void;
-    getDeckEditSearchState(): DeckCardSearchStateInDeckEditMode
+    getDeckEditSearchState(): DeckCardSearchStateInDeckEditMode;
+    getMatchedOwnedCardIdList(): number[];
 }

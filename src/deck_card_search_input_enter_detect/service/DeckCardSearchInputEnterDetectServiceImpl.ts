@@ -127,11 +127,14 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
             this.saveAllOwnedCardsClickEnabled();
             this.showEmptyInputPopup();
             this.setDeckEditSearchState(DeckCardSearchStateInDeckEditMode.DEFAULT);
+            this.deckCardSearchInputEnterDetectRepository.resetMatchedOwnedCardIdList();
             return;
         }
 
         const ownedCardNameList = this.getMyDeckOwnedCardNameList();
         const matchedCardNames = this.findMatchingCardNames(ownedCardNameList, inputText);
+        const matchedCardIdList = this.findMatchedOwnedCardIdList(matchedCardNames);
+        this.deckCardSearchInputEnterDetectRepository.saveMatchedOwnedCardIdList(matchedCardIdList);
 
         if (matchedCardNames.length > 0) {
             this.hideUnmatchedElementsInDeckEditMode(matchedCardNames);
@@ -144,6 +147,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
             this.saveAllOwnedCardsClickEnabled();
             this.showNotFoundPopup();
             this.setDeckEditSearchState(DeckCardSearchStateInDeckEditMode.UNMATCHED);
+            this.deckCardSearchInputEnterDetectRepository.resetMatchedOwnedCardIdList();
         }
     }
 
@@ -184,6 +188,10 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
 
     public getDeckEditSearchState(): DeckCardSearchStateInDeckEditMode {
         return this.deckCardSearchInputEnterDetectRepository.findDeckEditSearchState();
+    }
+
+    public getMatchedOwnedCardIdList(): number[] {
+        return this.deckCardSearchInputEnterDetectRepository.findMatchedOwnedCardIdList();
     }
 
     private getMyDeckCardNameListByDeckId(deckId: number): string[] {
