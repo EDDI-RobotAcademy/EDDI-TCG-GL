@@ -885,11 +885,20 @@ export class TCGJustTestMyDeckView {
             await this.myDeckRemainingCardsService.createMyDeckRemainingCardsWithPosition(cardId, remainingCardCount);
 
             // To-do: 덱 검색 후의 화면일 경우 배치된 카드의 위치에 맞춰서 위치도 변경해야 함
+            // 덱 편집 모드일 때 검색된 카드만 배치된 경우 아닌 경우 구분 지어야 함 -> 아래는 이에 대한 임시 방편
             const deckEditModeSearchState = this.deckCardSearchInputEnterDetectService.getDeckEditSearchState();
             if (deckEditModeSearchState == DeckCardSearchStateInDeckEditMode.MATCHED) {
                 this.myDeckRemainingCardsService.adjustDeckEditModeSearchRemainingCardsPosition(cardId);
+                const deckEditModeMatchedCardIdList = this.deckCardSearchInputEnterDetectService.getMatchedOwnedCardIdList();
+                if (deckEditModeMatchedCardIdList.includes(cardId)) {
+                    this.myDeckRemainingCardsService.setNumberOfRemainingCardsByCardId(cardId, true);
+                } else {
+                    this.myDeckRemainingCardsService.setNumberOfRemainingCardsByCardId(cardId, false);
+                }
+            } else {
+                this.myDeckRemainingCardsService.setNumberOfRemainingCardsByCardId(cardId, true);
             }
-            this.myDeckRemainingCardsService.setNumberOfRemainingCardsByCardId(cardId, true);
+
             this.myDeckRemainingCardsService.saveRemainingCardGroup();
             this.myDeckRemainingCardsService.applyClippingMaskToRemainingCards();
 
