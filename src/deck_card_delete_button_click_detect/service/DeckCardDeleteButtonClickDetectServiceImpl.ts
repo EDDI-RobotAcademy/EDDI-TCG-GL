@@ -351,11 +351,15 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
     private adjustNumberOfSelectedCards(deckId: number): void {
         const numberIdList = this.myDeckNumberOfSelectedCardsRepository.findNumberIdListByDeckId(deckId);
         for (const numberId of numberIdList) {
-            const numberOfSelectedCards = this.myDeckNumberOfSelectedCardsRepository.findNumberById(numberId);
+            const cardId = this.myDeckNumberOfSelectedCardsRepository.findCardIdByNumberId(numberId);
+            if (cardId == null) return;
+
+            const numberOfSelectedCards = this.myDeckNumberOfSelectedCardsRepository.findNumberByDeckIdAndCardId(deckId, cardId);
             if (numberOfSelectedCards == null) return;
 
             const numberMesh = numberOfSelectedCards.getMesh();
-            const numberPosition = this.myDeckNumberOfSelectedCardsPositionRepository.findPositionByPositionId(numberId);
+
+            const numberPosition = this.myDeckNumberOfSelectedCardsPositionRepository.findPositionByDeckIdAndCardId(deckId, cardId);
             if (numberPosition == null) return;
 
             const widthPercent = 0.015;
@@ -397,15 +401,13 @@ export class DeckCardDeleteButtonClickDetectServiceImpl implements DeckCardDelet
             const namePosition = this.myDeckCardNamePositionRepository.findPositionByPositionId(nameId);
             if (namePosition == null) return;
 
-            const width = cardName.width;
-            const height = cardName.height;
+            const widthPercent = (cardName.width / 1800);
+            const heightPercent = (cardName.height / cardName.width);
 
-            const newPositionX = namePosition.getX() * window.innerWidth;
-            const newPositionY = namePosition.getY() * window.innerHeight;
+            const positionX = namePosition.getX();
+            const positionY = namePosition.getY();
 
-            nameMesh.geometry.dispose();
-            nameMesh.geometry = new THREE.PlaneGeometry(width, height);
-            nameMesh.position.set(newPositionX, newPositionY, 0);
+            this.myDeckElementAdjuster.adjustElementPosition(nameMesh, widthPercent, heightPercent, positionX, positionY);
         }
     }
 
