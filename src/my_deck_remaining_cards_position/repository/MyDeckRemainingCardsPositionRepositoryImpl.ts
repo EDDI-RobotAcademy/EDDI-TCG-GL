@@ -7,6 +7,8 @@ export class MyDeckRemainingCardsPositionRepositoryImpl implements MyDeckRemaini
     private positionMap: Map< number, { cardId: number, position: MyDeckRemainingCardsPosition}> = new Map(); // position Unique ID: position
     private searchModePositionMap: Map<number, MyDeckRemainingCardsPosition> = new Map();
 
+    private originalPositionMap: Map<number, { cardId: number, position: MyDeckRemainingCardsPosition }> = new Map();
+
     private initialX = - 0.205;
     private incrementX = 0.1275;
     private initialY =  - 0.09;
@@ -111,6 +113,77 @@ export class MyDeckRemainingCardsPositionRepositoryImpl implements MyDeckRemaini
 
     public deleteSearchModePositionData(): void {
         this.searchModePositionMap.clear();
+    }
+
+    public saveClonedOriginalPositionState(): void {
+        this.originalPositionMap.clear();
+
+        const positionIdList = this.findPositionIdList();
+        positionIdList.forEach(positionId => {
+            const entry = this.positionMap.get(positionId);
+            if (entry) {
+                const clonedPosition = new MyDeckRemainingCardsPosition(
+                    entry.position.getX(),
+                    entry.position.getY()
+                );
+
+                this.originalPositionMap.set(positionId, {
+                    cardId: entry.cardId,
+                    position: clonedPosition
+                });
+            } else {
+                console.warn(`[WARN] positionId ${positionId} not found in positionMap`);
+            }
+        });
+
+        // To-do: 확인 후에 지우기
+        console.log(
+            `%c[INFO] Original position state cloned`,'color: #2E9AFE; font-weight: bold;'
+        );
+
+        console.log(
+            'originalRemainingCardsPositionMap:',
+            Array.from(this.originalPositionMap.entries()).map(([id, data]) => ({
+                positionId: id,
+                cardId: data.cardId,
+                positionX: data.position.getX(),
+                positionY: data.position.getY(),
+            }))
+        );
+    }
+
+    public restoreOriginalPositionState(): void {
+        this.positionMap.clear();
+
+        const originalPositionIdList = Array.from(this.originalPositionMap.keys());
+
+        originalPositionIdList.forEach(positionId => {
+            const originalPositionInfo = this.originalPositionMap.get(positionId);
+            if (originalPositionInfo) {
+                this.positionMap.set(positionId, {
+                    cardId: originalPositionInfo.cardId,
+                    position: originalPositionInfo.position
+                });
+            }
+        });
+
+        // To-do: 확인 후 없애야 함
+        const positionIdList = this.findPositionIdList();
+        const restoredData = positionIdList.map(positionId => {
+            const data = this.positionMap.get(positionId);
+            return data ? {
+                positionId,
+                cardId: data.cardId,
+                positionX: data.position.getX(),
+                positionY: data.position.getY()
+            } : { positionId, cardId: null, position: null };
+        });
+
+        console.log(
+            `%c[덱 편집 중단 후 다른 덱 버튼을 눌렀을 때] My Deck Remaining Cards restored.`,
+            'color: #2E9AFE; font-weight: bold;'
+        );
+        console.log('복원된 position 데이터:', restoredData);
     }
 
 }

@@ -43,6 +43,7 @@ import {MyDeckCardSearchCancelButtonRepositoryImpl} from "../../my_deck_card_sea
 import {DeckCardSearchCancelButtonClickDetectRepositoryImpl} from "../../deck_card_search_cancel_button_click_detect/repository/DeckCardSearchCancelButtonClickDetectRepositoryImpl";
 import {DeckCardSearchInputEnterDetectRepositoryImpl} from "../../deck_card_search_input_enter_detect/repository/DeckCardSearchInputEnterDetectRepositoryImpl";
 import {DeckNameEditButtonClickDetectRepositoryImpl} from "../../deck_name_edit_button_click_detect/repository/DeckNameEditButtonClickDetectRepositoryImpl";
+import {MyDeckRemainingCardsPositionRepositoryImpl} from "../../my_deck_remaining_cards_position/repository/MyDeckRemainingCardsPositionRepositoryImpl";
 
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
@@ -97,6 +98,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private deckCardSearchCancelButtonClickDetectRepository: DeckCardSearchCancelButtonClickDetectRepositoryImpl;
     private deckCardSearchInputEnterDetectRepository: DeckCardSearchInputEnterDetectRepositoryImpl;
     private deckNameEditButtonClickDetectRepository: DeckNameEditButtonClickDetectRepositoryImpl;
+    private myDeckRemainingCardsPositionRepository: MyDeckRemainingCardsPositionRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cardCountManager = CardCountManager.getInstance();
@@ -142,6 +144,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.deckCardSearchCancelButtonClickDetectRepository = DeckCardSearchCancelButtonClickDetectRepositoryImpl.getInstance();
         this.deckCardSearchInputEnterDetectRepository = DeckCardSearchInputEnterDetectRepositoryImpl.getInstance();
         this.deckNameEditButtonClickDetectRepository = DeckNameEditButtonClickDetectRepositoryImpl.getInstance();
+        this.myDeckRemainingCardsPositionRepository = MyDeckRemainingCardsPositionRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckButtonClickDetectServiceImpl {
@@ -185,7 +188,6 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
                 this.setButtonVisibility(previousClickedDeckId, true);
                 this.setEffectVisibility(previousClickedDeckId, false);
                 this.setCardVisibilityByDeckId(previousClickedDeckId, false);
-                this.setCardVisibilityByDeckId(previousClickedDeckId, false);
                 this.setBlockVisibilityByDeckId(previousClickedDeckId, false);
                 this.setCardNameVisibilityByDeckId(previousClickedDeckId, false);
                 this.setDeckNameEditButtonVisibility(previousClickedDeckId, false);
@@ -202,7 +204,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
 
                 // To-do: 편집 화면에서 편집 다 못하고 나올 때 원본 데이터로 돌려야 함
                 if (this.getDeckEditButtonClickState() == true) {
-                    this.restoreOriginalDeckState(previousClickedDeckId);
+                    this.restoreOriginalDeckState(previousClickedDeckId); // 덱 편집을 못 한 상태에서 덱 버튼을 누르면 계속 만들어짐
 
                     // To-do: countManager 도 원본 데이터로 수정 필요
                     this.cardCountManager.restoreRemainingCardCount();
@@ -498,6 +500,8 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.deckCardCountMarkerRepository.restoreOriginalDeckState(deckId);
         this.deckCardCountMarkerPositionRepository.restoreOriginalPositionState(deckId);
         this.totalNumberOfSelectedCardsRepository.restoreOriginalDeckState(deckId);
+        this.myDeckRemainingCardsRepository.restoreOriginalRemainingCardsState();
+        this.myDeckRemainingCardsPositionRepository.restoreOriginalPositionState();
     }
 
     private restoreAllMyDeckCardPositions(deckId: number): void {

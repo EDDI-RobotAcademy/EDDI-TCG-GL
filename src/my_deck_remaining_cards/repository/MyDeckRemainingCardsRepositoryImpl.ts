@@ -12,6 +12,8 @@ export class MyDeckRemainingCardsRepositoryImpl implements MyDeckRemainingCardsR
     private remainingCardsMap: Map<number, { cardId: number, cardCount: number, remainingCardsMesh: MyDeckRemainingCards }> = new Map();
     private remainingCardsGroup: THREE.Group | null = null;
 
+    private originalRemainingCardsMap: Map<number, { cardId: number, cardCount: number, remainingCardsMesh: MyDeckRemainingCards }> = new Map();
+
     private textureManager: TextureManager;
     private meshDestroyer: MeshDestroyer;
 
@@ -134,12 +136,24 @@ export class MyDeckRemainingCardsRepositoryImpl implements MyDeckRemainingCardsR
 
         this.meshDestroyer.destroyMesh(mesh);
         this.remainingCardsGroup?.remove(mesh);
-        this.remainingCardsMap.delete(remainingCardsId);
     }
 
     public deleteAll(): void {
         this.remainingCardsMap.clear();
         this.resetRemainingCardsGroup();
+    }
+
+    public deleteAllRemainingCardsMesh(): void {
+        const remainingCardsIdList = this.findAllRemainingCardsIdList();
+        remainingCardsIdList.forEach(remainingCardsId => {
+            const remainingCards = this.findRemainingCardsById(remainingCardsId);
+            if (remainingCards == null) return;
+
+            const remainingCardsMesh = remainingCards.getMesh();
+
+            this.meshDestroyer.destroyMesh(remainingCardsMesh);
+            this.remainingCardsGroup?.remove(remainingCardsMesh);
+        });
     }
 
     public saveRemainingCardsGroup(): void {
@@ -163,6 +177,93 @@ export class MyDeckRemainingCardsRepositoryImpl implements MyDeckRemainingCardsR
 
     public resetRemainingCardsGroup(): void {
         this.remainingCardsGroup = null;
+    }
+
+    public saveClonedOriginalRemainingCardsState(): void {
+        this.originalRemainingCardsMap.clear();
+
+        const remainingCardsIdList = this.findAllRemainingCardsIdList();
+        remainingCardsIdList.forEach(remainingCardsId => {
+            const entry = this.remainingCardsMap.get(remainingCardsId);
+
+            if (entry) {
+                const originalMesh = entry.remainingCardsMesh.getMesh();
+                const clonedMesh = originalMesh.clone(true);
+                const clonedPosition = entry.remainingCardsMesh.position.clone ? entry.remainingCardsMesh.position.clone() : entry.remainingCardsMesh.position;
+
+                const clonedWrapper = new MyDeckRemainingCards(clonedMesh, clonedPosition);
+
+                this.originalRemainingCardsMap.set(remainingCardsId, {
+                    cardId: entry.cardId,
+                    cardCount: entry.cardCount,
+                    remainingCardsMesh: clonedWrapper
+                });
+            } else {
+                console.warn(`[WARN] remainingCardsId ${remainingCardsId} not found in remainingCardsMap`);
+            }
+        });
+
+        // To-do: 확인 후 삭제하기
+        console.log(
+            `%c[INFO] Original Remaining Cards state cloned and stored`, 'color: #2E9AFE; font-weight: bold;');
+        console.log(
+            'originalRemainingCardsMap:',
+            Array.from(this.originalRemainingCardsMap.entries()).map(([id, data]) => ({
+                remainingCardsId: id,
+                cardId: data.cardId,
+                cardCount: data.cardCount
+            }))
+        );
+    }
+
+    public restoreOriginalRemainingCardsState(): void {
+        this.deleteAllRemainingCardsMesh(); // 현재의 모든 mesh를 scene에서 제거
+
+        const originalRemainingCardsIdList = Array.from(this.originalRemainingCardsMap.keys());
+
+        // 기존 remainingCardsMap에서 원본에 없는 key 제거
+        const currentRemainingCardsIdList = Array.from(this.remainingCardsMap.keys());
+        currentRemainingCardsIdList.forEach(remainingCardsId => {
+            if (!this.originalRemainingCardsMap.has(remainingCardsId)) {
+                this.remainingCardsMap.delete(remainingCardsId);
+            }
+        });
+
+        // 원본 상태로 복원
+        originalRemainingCardsIdList.forEach(remainingCardsId => {
+            const originalRemainingCardsInfo = this.originalRemainingCardsMap.get(remainingCardsId);
+            if (originalRemainingCardsInfo) {
+                this.remainingCardsMap.set(remainingCardsId, {
+                    cardId: originalRemainingCardsInfo.cardId,
+                    cardCount: originalRemainingCardsInfo.cardCount,
+                    remainingCardsMesh: originalRemainingCardsInfo.remainingCardsMesh
+                });
+
+                // scene에 복원된 mesh 추가
+                const group = this.remainingCardsGroup;
+                if (group) {
+                    originalRemainingCardsInfo.remainingCardsMesh.setVisibility(false);
+                    group.add(originalRemainingCardsInfo.remainingCardsMesh.getMesh());
+                }
+            }
+        });
+
+        // To-do: 확인 후 없애야 함
+        const remainingCardsIdList = this.findAllRemainingCardsIdList();
+        const restoredData = remainingCardsIdList.map(remainingCardsId => {
+            const data = this.remainingCardsMap.get(remainingCardsId);
+            return data ? {
+                remainingCardsId,
+                cardId: data.cardId,
+                cardCount: data.cardCount
+            } : { remainingCardsId, cardId: null, cardCount: null };
+        });
+
+        console.log(
+            `%c[덱 편집 중단 후 다른 덱 버튼을 눌렀을 때] Remaining Cards State restored.`,
+            'color: #2E9AFE; font-weight: bold;'
+        );
+        console.log('복원된 mesh 데이터:', restoredData);
     }
 
 }
