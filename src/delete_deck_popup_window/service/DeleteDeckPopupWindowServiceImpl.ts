@@ -40,7 +40,7 @@ export class DeleteDeckPopupWindowServiceImpl implements DeleteDeckPopupWindowSe
         const popupWindowMesh = popupWindow.getMesh();
 
         const popupWindowWidth = 0.425 * windowWidth;
-        const popupWindowHeight = popupWindowWidth * 0.5;
+        const popupWindowHeight = popupWindowWidth * (440/1000);
 
         const newPositionX = popupWindow.position.getX() * windowWidth;
         const newPositionY = popupWindow.position.getY() * windowHeight;

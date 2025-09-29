@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 import {DeleteDeckPopupButtonClickDetectRepository} from "./DeleteDeckPopupButtonClickDetectRepository";
 import {DeleteDeckPopupButton} from "../../delete_deck_popup_button/entity/DeleteDeckPopupButton";
+import {DeleteDeckPopupButtonType} from "../../delete_deck_popup_button/entity/DeleteDeckPopupButtonType";
 
 export class DeleteDeckPopupButtonClickDetectRepositoryImpl implements DeleteDeckPopupButtonClickDetectRepository {
     private static instance: DeleteDeckPopupButtonClickDetectRepositoryImpl;
@@ -9,6 +10,7 @@ export class DeleteDeckPopupButtonClickDetectRepositoryImpl implements DeleteDec
 
     private currentClickedButtonId: number | null = null;
     private buttonClickEnabled: boolean = false;
+    private currentClickedButtonType: number | null = null;
 
     public static getInstance(): DeleteDeckPopupButtonClickDetectRepositoryImpl {
         if (!DeleteDeckPopupButtonClickDetectRepositoryImpl.instance) {
@@ -61,6 +63,14 @@ export class DeleteDeckPopupButtonClickDetectRepositoryImpl implements DeleteDec
 
     public isButtonClickEnabled(): boolean {
         return this.buttonClickEnabled;
+    }
+
+    public saveCurrentClickedButtonType(type: DeleteDeckPopupButtonType): void {
+        this.currentClickedButtonType = type;
+    }
+
+    public findCurrentClickedButtonType(): number | null {
+        return this.currentClickedButtonType;
     }
 
 }

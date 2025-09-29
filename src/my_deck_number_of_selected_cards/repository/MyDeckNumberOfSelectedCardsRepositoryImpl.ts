@@ -134,9 +134,37 @@ export class MyDeckNumberOfSelectedCardsRepositoryImpl implements MyDeckNumberOf
         return Array.from(this.deckMap.keys());
     }
 
-    public findNumberCountByDeckId(deckId: number): number {
+    public findCardCountByDeckIdAndCardId(deckId: number, cardId: number): number | null {
         const numberIdList = this.deckMap.get(deckId);
-        return numberIdList ? numberIdList.length : 0;
+        if (!numberIdList) {
+            return null;
+        }
+
+        for (const numberId of numberIdList) {
+            const numberEntry = this.numberMap.get(numberId);
+            if (numberEntry && numberEntry.cardId === cardId) {
+                return numberEntry.cardCount;
+            }
+        }
+        return null;
+    }
+
+    public findCardIdListByDeckId(deckId: number): number[] {
+        const numberIdList = this.deckMap.get(deckId);
+        if (!numberIdList) {
+            return [];
+        }
+
+        const cardIdList: number[] = [];
+        for (const numberId of numberIdList) {
+            const numberEntry = this.numberMap.get(numberId);
+            if (numberEntry) {
+                cardIdList.push(numberEntry.cardId);
+            } else {
+                console.warn(`[WARN] numberId ${numberId} not found in numberMap`);
+            }
+        }
+        return cardIdList;
     }
 
     public saveNumberGroupByDeckId(deckId: number): void {

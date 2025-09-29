@@ -39,6 +39,21 @@ export class CardCountManager {
         return this.remainingCardCountMap.get(cardId) ?? null;
     }
 
+    public findRemainingCardIdList(): number[] {
+        return Array.from(this.remainingCardCountMap.keys());
+    }
+
+    public addRemainingCardCount(cardId: number, count: number): void {
+        const currentCount = this.findRemainingCardCountByCardId(cardId);
+        if (currentCount !== null) {
+            this.remainingCardCountMap.set(cardId, currentCount + count);
+        }
+
+        // To-do: 확인용 나중에 없애야 함
+        const newCardCount = this.findRemainingCardCountByCardId(cardId);
+        console.log(`%c 덱 삭제 후 남은 카드(Card ID: ${cardId}) 수량: ${newCardCount}`, 'color: #ff0033; font-weight: bold;');
+    }
+
     public incrementRemainingCardCount(cardId: number): void {
         const currentCount = this.findRemainingCardCountByCardId(cardId);
         if (currentCount !== null) {

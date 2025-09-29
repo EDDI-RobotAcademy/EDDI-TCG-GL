@@ -122,6 +122,7 @@ import {DeckNameEditInputChangeDetectServiceImpl} from "../../src/deck_name_edit
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 import {CardCountManager} from "../../src/my_deck_card_manager/CardCountManager";
 import {DeckCardSearchStateInDeckEditMode} from "../../src/deck_card_search_input_enter_detect/entity/DeckCardSearchStateInDeckEditMode";
+import {DeleteDeckPopupButtonType} from "../../src/delete_deck_popup_button/entity/DeleteDeckPopupButtonType";
 
 export class TCGJustTestMyDeckView {
     private static instance: TCGJustTestMyDeckView | null = null;
@@ -342,7 +343,15 @@ export class TCGJustTestMyDeckView {
         }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckDeleteButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckNameEditButtonClickDetectService.onMouseDown(e), false);
-        this.renderer.domElement.addEventListener('mousedown', (e) => this.deleteDeckPopupButtonClickDetectService.onMouseDown(e), false);
+//         this.renderer.domElement.addEventListener('mousedown', (e) => this.deleteDeckPopupButtonClickDetectService.onMouseDown(e), false);
+        this.renderer.domElement.addEventListener('mousedown', async(e) => {
+            const buttonEvent = await this.deleteDeckPopupButtonClickDetectService.onMouseDown(e);
+            if (buttonEvent) {
+                if (this.deleteDeckPopupButtonClickDetectService.getCurrentClickedButtonType() == DeleteDeckPopupButtonType.DELETE) {
+                    await this.reAddMyDeckRemainingCardsAfterDeleteDeck();
+                }
+            }
+        }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckMakePopupButtonsClickDetectService.onMouseDown(e), false);
 //         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckCardAddButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
@@ -897,6 +906,37 @@ export class TCGJustTestMyDeckView {
                 }
             } else {
                 this.myDeckRemainingCardsService.setNumberOfRemainingCardsByCardId(cardId, true);
+            }
+
+            this.myDeckRemainingCardsService.saveRemainingCardGroup();
+            this.myDeckRemainingCardsService.applyClippingMaskToRemainingCards();
+
+            const remainingCardsGroup = this.myDeckRemainingCardsService.getRemainingCardsGroup();
+            if (!this.scene.children.includes(remainingCardsGroup)) {
+                this.scene.add(remainingCardsGroup);
+            }
+            remainingCardsGroup.position.y = 0;
+
+        } catch (error) {
+            console.error('Failed to add my deck remaining cards:', error);
+        }
+    }
+
+    // To-do: 리팩토링 필용한 부분
+    private async reAddMyDeckRemainingCardsAfterDeleteDeck(): Promise<void> {
+        try {
+            const currentCardIdList = this.myDeckRemainingCardsService.getCardIdList();
+            const allCardIdList = this.cardCountManager.findRemainingCardIdList();
+
+            for (const cardId of allCardIdList) {
+                if (!currentCardIdList.includes(cardId)) {
+                    const remainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
+                    if (remainingCardCount == null) return;
+
+                    console.log(`%c 카드 ID: ${cardId}) 수량: ${remainingCardCount}`, 'color: #ff0033; font-weight: bold;');
+                    await this.myDeckRemainingCardsService.createMyDeckRemainingCardsWithPosition(cardId, remainingCardCount);
+                    this.myDeckRemainingCardsService.setNumberOfRemainingCardsByCardId(cardId, false);
+                }
             }
 
             this.myDeckRemainingCardsService.saveRemainingCardGroup();

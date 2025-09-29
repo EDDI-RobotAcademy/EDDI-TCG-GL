@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {Vector2d} from "../../common/math/Vector2d";
+import {DeleteDeckPopupButtonType} from "./DeleteDeckPopupButtonType";
 
 export interface ButtonConfig {
     id: number;
@@ -9,12 +10,12 @@ export interface ButtonConfig {
 export class DeleteDeckPopupButtonConfigList {
     public buttonConfigs: ButtonConfig[] = [
         {
-            id: 1,
-            position: new Vector2d(-0.08, -0.118)
+            id: DeleteDeckPopupButtonType.CANCEL,
+            position: new Vector2d(-126 / 1920, -115 / 1080)
         },
         {
-            id: 2,
-            position: new Vector2d(0.08, -0.118)
+            id: DeleteDeckPopupButtonType.DELETE,
+            position: new Vector2d(126 / 1920, -115 / 1080)
         },
     ];
 }
