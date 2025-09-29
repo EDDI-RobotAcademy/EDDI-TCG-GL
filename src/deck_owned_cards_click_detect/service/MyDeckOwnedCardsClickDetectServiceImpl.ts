@@ -9,6 +9,7 @@ import {MyDeckTotalOwnedCardsRepositoryImpl} from "../../my_deck_total_owned_car
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {MyDeckRemainingCardsRepositoryImpl} from "../../my_deck_remaining_cards/repository/MyDeckRemainingCardsRepositoryImpl";
 import {TotalNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_total_number_of_selected_cards/repository/TotalNumberOfSelectedCardsRepositoryImpl";
+import {CardSelectionBlockerRepositoryImpl} from "../../card_selection_blocker/repository/CardSelectionBlockerRepositoryImpl";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -25,6 +26,7 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private myDeckRemainingCardsRepository: MyDeckRemainingCardsRepositoryImpl;
     private totalNumberOfSelectedCardsRepository: TotalNumberOfSelectedCardsRepositoryImpl;
+    private cardSelectionBlockerRepository: CardSelectionBlockerRepositoryImpl;
     private cardCountManager: CardCountManager;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
@@ -35,6 +37,7 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckRemainingCardsRepository = MyDeckRemainingCardsRepositoryImpl.getInstance(scene);
         this.totalNumberOfSelectedCardsRepository = TotalNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
+        this.cardSelectionBlockerRepository = CardSelectionBlockerRepositoryImpl.getInstance(scene);
         this.cardCountManager = CardCountManager.getInstance();
     }
 
@@ -72,7 +75,6 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
         if (clickedCard) {
             const cardUniqueId = clickedCard.id;
             const cardId = this.getCardIdByCardUniqueId(cardUniqueId);
-
             if (cardId == null) return null;
 
             if (this.isCardClickEnabled(cardId) !== true) return null;
@@ -82,7 +84,12 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
             this.saveCurrentClickedCardId(cardId);
             this.saveClickedCardCount(currentClickedDeckId, cardId);
             this.deleteRemainingCards(cardId);
-            this.totalNumberOfSelectedCardsRepository.deleteNumberByDeckId(currentClickedDeckId);
+            this.deleteTotalNumberOfSelectedCards(currentClickedDeckId);
+
+            const currentRemainingCardCount = this.getRemainingCardCountByCardId(cardId);
+            if (currentRemainingCardCount == 0) {
+                this.setCardBlockerVisibility(cardId, true);
+            }
 
             return clickedCard;
         }
@@ -158,6 +165,18 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
     private deleteRemainingCards(cardId: number): void {
         this.myDeckRemainingCardsRepository.deleteRemainingCardsMesh(cardId);
         this.myDeckRemainingCardsRepository.deleteRemainingCardsByCardId(cardId);
+    }
+
+    private deleteTotalNumberOfSelectedCards(deckId: number): void {
+        this.totalNumberOfSelectedCardsRepository.deleteNumberByDeckId(deckId);
+    }
+
+    private getRemainingCardCountByCardId(cardId: number): number | null {
+        return this.cardCountManager.findRemainingCardCountByCardId(cardId);
+    }
+
+    private setCardBlockerVisibility(cardId: number, isVisible: boolean): void {
+        this.cardSelectionBlockerRepository.findBlockerByCardId(cardId)?.setVisibility(isVisible);
     }
 
 }

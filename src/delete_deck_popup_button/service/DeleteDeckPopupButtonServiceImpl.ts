@@ -42,8 +42,8 @@ export class DeleteDeckPopupButtonServiceImpl implements DeleteDeckPopupButtonSe
             const buttonMesh = button.getMesh();
             const initialPosition = button.position;
 
-            const buttonWidth = 0.127 * windowWidth;
-            const buttonHeight = buttonWidth * 0.28571;
+            const buttonWidth = (150 / 1920) * windowWidth;
+            const buttonHeight = buttonWidth * (80/360);
 
             const newPositionX = initialPosition.getX() * windowWidth;
             const newPositionY = initialPosition.getY() * windowHeight;

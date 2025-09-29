@@ -1,5 +1,6 @@
 import * as THREE from "three";
 
+import {DeleteDeckPopupButtonType} from "../../delete_deck_popup_button/entity/DeleteDeckPopupButtonType";
 import {DeleteDeckPopupButtonClickDetectService} from "./DeleteDeckPopupButtonClickDetectService";
 import {DeleteDeckPopupButtonClickDetectRepositoryImpl} from '../repository/DeleteDeckPopupButtonClickDetectRepositoryImpl';
 import {DeleteDeckPopupButton} from "../../delete_deck_popup_button/entity/DeleteDeckPopupButton";
@@ -25,6 +26,7 @@ import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/r
 import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
 import {MyDeckNumberOfSelectedCardsRepositoryImpl} from "../../my_deck_number_of_selected_cards/repository/MyDeckNumberOfSelectedCardsRepositoryImpl";
 import {MyDeckCardSearchCancelButtonRepositoryImpl} from "../../my_deck_card_search_cancel_button/repository/MyDeckCardSearchCancelButtonRepositoryImpl";
+import {MyDeckRemainingCardsRepositoryImpl} from "../../my_deck_remaining_cards/repository/MyDeckRemainingCardsRepositoryImpl";
 
 import {DeckDeleteButtonPositionRepositoryImpl} from "../../deck_delete_button_position/repository/DeckDeleteButtonPositionRepositoryImpl";
 import {DeckNameEditButtonPositionRepositoryImpl} from "../../deck_name_edit_button_position/repository/DeckNameEditButtonPositionRepositoryImpl";
@@ -43,6 +45,7 @@ import {MyDeckCardMapRepositoryImpl} from "../../my_deck_card/repository/MyDeckC
 import {MyDeckNameTextMapRepositoryImpl} from "../../my_deck_name_text/repository/MyDeckNameTextMapRepositoryImpl";
 
 import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
+import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -74,6 +77,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     private myDeckNumberOfSelectedCardsRepository: MyDeckNumberOfSelectedCardsRepositoryImpl;
     private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
     private myDeckCardSearchCancelButtonRepository: MyDeckCardSearchCancelButtonRepositoryImpl;
+    private myDeckRemainingCardsRepository: MyDeckRemainingCardsRepositoryImpl;
 
     private deckDeleteButtonPositionRepository: DeckDeleteButtonPositionRepositoryImpl;
     private deckNameEditButtonPositionRepository: DeckNameEditButtonPositionRepositoryImpl;
@@ -91,6 +95,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     private myDeckNameTextMapRepository: MyDeckNameTextMapRepositoryImpl;
 
     private myDeckElementAdjuster: MyDeckElementAdjuster;
+    private cardCountManager: CardCountManager;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.deleteDeckPopupButtonClickDetectRepository = DeleteDeckPopupButtonClickDetectRepositoryImpl.getInstance();
@@ -118,6 +123,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.myDeckNumberOfSelectedCardsRepository = MyDeckNumberOfSelectedCardsRepositoryImpl.getInstance(scene);
         this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
         this.myDeckCardSearchCancelButtonRepository = MyDeckCardSearchCancelButtonRepositoryImpl.getInstance();
+        this.myDeckRemainingCardsRepository = MyDeckRemainingCardsRepositoryImpl.getInstance(scene);
 
         this.deckDeleteButtonPositionRepository = DeckDeleteButtonPositionRepositoryImpl.getInstance();
         this.deckNameEditButtonPositionRepository = DeckNameEditButtonPositionRepositoryImpl.getInstance();
@@ -135,6 +141,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.myDeckNameTextMapRepository = MyDeckNameTextMapRepositoryImpl.getInstance();
 
         this.myDeckElementAdjuster = MyDeckElementAdjuster.getInstance();
+        this.cardCountManager = CardCountManager.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeleteDeckPopupButtonClickDetectServiceImpl {
@@ -152,6 +159,14 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         return this.deleteDeckPopupButtonClickDetectRepository.isButtonClickEnabled();
     }
 
+    private saveCurrentClickedButtonType(type: DeleteDeckPopupButtonType): void {
+        this.deleteDeckPopupButtonClickDetectRepository.saveCurrentClickedButtonType(type);
+    }
+
+    public getCurrentClickedButtonType(): number | null {
+        return this.deleteDeckPopupButtonClickDetectRepository.findCurrentClickedButtonType();
+    }
+
     async handleButtonClick(clickPoint: { x: number; y: number }): Promise<DeleteDeckPopupButton | null> {
         const { x, y } = clickPoint;
         const buttonList = this.getAllButtons();
@@ -164,64 +179,36 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         if (clickedButton) {
             console.log(`[DEBUG] Clicked Popup Button ID: ${clickedButton.id}`);
             this.saveCurrentClickedButtonId(clickedButton.id);
-            const currentClickedButtonId = this.getCurrentClickedButtonId();
+            this.saveCurrentClickedButtonType(clickedButton.type);
 
-            this.setTransparentBackgroundVisibility(false);
-            this.setPopupWindowVisibility(false);
-            this.setPopupButtonsVisibility(false);
+            this.setDeleteDeckPopupRelatedObjectVisibility(false);
+            this.setCardSearchInputDisabled();
 
-            const searchContainer = this.myDeckSearchInputContainerRepository.findMyDeckSearchInputContainer();
-            if (searchContainer) {
-                searchContainer.setInputDisabled(false);
+            if (clickedButton.type == DeleteDeckPopupButtonType.CANCEL) {
+                console.log(`Deck Delete Cancel!`);
+                this.setSearchCancelButtonClickEnabled(true);
             }
 
-            switch (currentClickedButtonId) {
-                case 0:
-                    console.log(`Deck Delete Cancel!`);
-                    this.setSearchCancelButtonClickEnabled(true);
-                    
-                    break;
-                case 1:
-                    console.log(`Deck Delete!`);
+            if (clickedButton.type == DeleteDeckPopupButtonType.DELETE) {
+                console.log(`Deck Delete!`);
 
-                    const searchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
-                    if (searchInputText !== null && searchInputText.length > 0) {
-                        this.myDeckSearchInputContainerRepository.clearUserInput();
-                        this.myDeckSearchInputContainerRepository.deleteUserInput();
-                    }
+                this.clearSearchInputText();
+                this.setSearchCancelButtonVisibility(false);
 
-                    this.setSearchCancelButtonVisibility(false);
+                const deleteDeckId = this.getCurrentDeleteDeckId();
+                if (deleteDeckId == null) return null;
 
-                    const deleteDeckId = this.getCurrentDeleteDeckId();
-                    if (deleteDeckId == null) return null;
+                this.reclaimRemainingCardsFromDeck(deleteDeckId);
+                this.deleteNumberOfReamingCards(deleteDeckId);
+                this.deleteAllDeckRelatedObjects(deleteDeckId);
+                this.adjustDeckButtonRelatedObjectsPosition();
 
-                    this.deleteAllDeckRelatedObjects(deleteDeckId);
-                    this.adjustDeckButton();
-                    this.adjustDeckButtonEffect();
-                    this.adjustDeckNameText();
-                    this.adjustDeckDeleteButton();
-                    this.adjustDeckNameEditButton();
+                this.saveCurrentClickedDeckId();
 
-                    this.setCurrentClickDeckButton();
+                const deckIdList = this.getDeckIdList();
+                const firstDeckId = this.getFirstDeckId(deckIdList);
 
-                    const deckIdList = this.getDeckIdList();
-                    const firstDeckId = this.getFirstDeckId(deckIdList);
-
-                    this.initializeDeckCardVisibility(deckIdList, firstDeckId);
-                    this.initializeDeckButtonVisibility(deckIdList, firstDeckId);
-                    this.initializeDeckButtonEffectVisibility(deckIdList, firstDeckId);
-                    this.initializeBlockVisibility(deckIdList, firstDeckId);
-                    this.initializeCardNameVisibility(deckIdList, firstDeckId);
-                    this.initializeDeckDeleteButtonVisibility(firstDeckId);
-                    this.initializeDeckNameEditButtonVisibility(firstDeckId);
-                    this.initializeNumberOfDeckCardsVisibility(deckIdList, firstDeckId);
-                    this.initializeNumberOfSelectedCardsVisibility(deckIdList, firstDeckId);
-                    this.initializeDeckCardCountMarkerVisibility(deckIdList, firstDeckId);
-
-                    break;
-                default:
-                    console.log(`Unknown button action`);
-                    break;
+                this.initializeDeckRelatedObjectsVisibility(deckIdList, firstDeckId);
             }
 
             return clickedButton;
@@ -278,6 +265,12 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         return this.deleteDeckPopupButtonClickDetectRepository.findCurrentClickedButtonId();
     }
 
+    private setDeleteDeckPopupRelatedObjectVisibility(isVisible: boolean): void {
+        this.setTransparentBackgroundVisibility(isVisible);
+        this.setPopupWindowVisibility(isVisible);
+        this.setPopupButtonsVisibility(isVisible);
+    }
+
     private setTransparentBackgroundVisibility(isVisible: boolean): void {
         const background = this.transparentBackgroundRepository.findTransparentBackground();
         if (background) {
@@ -303,6 +296,21 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
 
     private setSearchCancelButtonClickEnabled(isEnable: boolean): void {
         this.deckCardSearchCancelButtonClickDetectRepository.setButtonClickEnabled(isEnable);
+    }
+
+    private setCardSearchInputDisabled(): void {
+        const searchContainer = this.myDeckSearchInputContainerRepository.findMyDeckSearchInputContainer();
+        if (searchContainer) {
+            searchContainer.setInputDisabled(false);
+        }
+    }
+
+    private clearSearchInputText(): void {
+        const searchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
+        if (searchInputText !== null && searchInputText.length > 0) {
+            this.myDeckSearchInputContainerRepository.clearUserInput();
+            this.myDeckSearchInputContainerRepository.deleteUserInput();
+        }
     }
 
     // 삭제할 덱의 ID
@@ -347,6 +355,27 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.deleteCardMapData(deckId);
         this.deleteDeckButtonMapData(deckId);
         this.deleteTextMapData(deckId);
+    }
+
+    private adjustDeckButtonRelatedObjectsPosition(): void {
+        this.adjustDeckButton();
+        this.adjustDeckButtonEffect();
+        this.adjustDeckNameText();
+        this.adjustDeckDeleteButton();
+        this.adjustDeckNameEditButton();
+    }
+
+    private initializeDeckRelatedObjectsVisibility(deckIdList: number[], firstDeckId: number): void {
+        this.initializeDeckCardVisibility(deckIdList, firstDeckId);
+        this.initializeDeckButtonVisibility(deckIdList, firstDeckId);
+        this.initializeDeckButtonEffectVisibility(deckIdList, firstDeckId);
+        this.initializeBlockVisibility(deckIdList, firstDeckId);
+        this.initializeCardNameVisibility(deckIdList, firstDeckId);
+        this.initializeDeckDeleteButtonVisibility(firstDeckId);
+        this.initializeDeckNameEditButtonVisibility(firstDeckId);
+        this.initializeNumberOfDeckCardsVisibility(deckIdList, firstDeckId);
+        this.initializeNumberOfSelectedCardsVisibility(deckIdList, firstDeckId);
+        this.initializeDeckCardCountMarkerVisibility(deckIdList, firstDeckId);
     }
 
     private deleteDeckDeleteButton(deckId: number): void {
@@ -415,6 +444,26 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.deckCardCountMarkerPositionRepository.deletePositionByDeckId(deckId);
     }
 
+    private deleteNumberOfReamingCards(deckId: number): void {
+        const cardIdList = this.myDeckCardRepository.findCardIdListByDeckId(deckId);
+        for (const cardId of cardIdList) {
+            console.log(`%c Card ID: ${cardId}`, 'color: #ff0033; font-weight: bold;');
+            this.myDeckRemainingCardsRepository.deleteRemainingCardsMesh(cardId);
+            this.myDeckRemainingCardsRepository.deleteRemainingCardsByCardId(cardId);
+        }
+    }
+
+    // 삭제 할 덱의 카드 수량을 남은 카드 수량에 다시 추가해야 함
+    private reclaimRemainingCardsFromDeck(deckId: number): void {
+        const cardIdList = this.myDeckNumberOfSelectedCardsRepository.findCardIdListByDeckId(deckId);
+        for (const cardId of cardIdList) {
+            const cardCount = this.myDeckNumberOfSelectedCardsRepository.findCardCountByDeckIdAndCardId(deckId, cardId);
+            if (cardCount == null) return;
+
+            this.cardCountManager.addRemainingCardCount(cardId, cardCount);
+        }
+    }
+
     private adjustDeckButton(): void {
         const deckIdList = this.myDeckButtonRepository.findButtonDeckIdList();
         for (const deckId of deckIdList) {
@@ -463,14 +512,12 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
             const textPosition = this.myDeckNameTextPositionRepository.findPositionByDeckId(deckId);
             if (textPosition == null) return;
 
-            const width = text.width;
-            const height = text.height;
-            const positionX = textPosition.getX() * window.innerWidth;
-            const positionY = textPosition.getY() * window.innerHeight;
+            const widthPercent = text.width / 1800;
+            const heightPercent = text.height / text.width;
+            const positionX = textPosition.getX();
+            const positionY = textPosition.getY();
 
-            textMesh.geometry.dispose();
-            textMesh.geometry = new THREE.PlaneGeometry(width, height);
-            textMesh.position.set(positionX, positionY, 0);
+            this.myDeckElementAdjuster.adjustElementPosition(textMesh, widthPercent, heightPercent, positionX, positionY);
         }
     }
 
@@ -513,7 +560,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     }
 
     // 덱 삭제 후 남은 덱 중 맨 처음 덱의 버튼이 클릭된 상태로 보여야 함.
-    private setCurrentClickDeckButton(): void {
+    private saveCurrentClickedDeckId(): void {
         const deckIdList = this.myDeckCardMapRepository.findDeckIdList();
         const sortedDeckIdList = [...deckIdList].sort((a, b) => a - b);
         const firstDeckId = sortedDeckIdList[0];

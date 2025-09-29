@@ -32,7 +32,7 @@ export class DeleteDeckPopupWindowRepositoryImpl implements DeleteDeckPopupWindo
         }
 
         const popupWindowWidth = this.POPUP_WINDOW_WIDTH * window.innerWidth;
-        const popupWindowHeight = popupWindowWidth * 0.5;
+        const popupWindowHeight = popupWindowWidth * (440/1000);
         const popupWindowPosition = new Vector2d(0, 0);
 
         const popupWindowMesh = MeshGenerator.createMesh(texture, popupWindowWidth, popupWindowHeight, popupWindowPosition);

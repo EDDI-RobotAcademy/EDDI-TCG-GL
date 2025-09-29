@@ -131,6 +131,7 @@ export class MyDeckCardPositionRepositoryImpl implements MyDeckCardPositionRepos
             });
         }
         this.deckToPositionMap.delete(deckId);
+        this.deckPositionIndexMap.delete(deckId);
     }
 
     public deleteAll(): void {

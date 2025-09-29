@@ -10,7 +10,7 @@ export class DeleteDeckPopupButtonRepositoryImpl implements DeleteDeckPopupButto
     private buttonMap: Map<number, DeleteDeckPopupButton> = new Map();
     private textureManager: TextureManager;
 
-    private readonly BUTTON_WIDTH: number = 0.127
+    private readonly BUTTON_WIDTH: number = 150 / 1920
 
     private constructor(textureManager: TextureManager) {
         this.textureManager = textureManager;
@@ -33,7 +33,7 @@ export class DeleteDeckPopupButtonRepositoryImpl implements DeleteDeckPopupButto
         }
 
         const buttonWidth = this.BUTTON_WIDTH * window.innerWidth;
-        const buttonHeight = buttonWidth * 0.28571;
+        const buttonHeight = buttonWidth * (80/360);
 
         const buttonPositionX = position.getX() * window.innerWidth;
         const buttonPositionY = position.getY() * window.innerHeight;

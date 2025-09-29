@@ -150,6 +150,25 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
         return this.deckMap.get(deckId) || [];
     }
 
+    public findCardIdListByDeckId(deckId: number): number[] {
+        const cardUniqueIdList = this.deckMap.get(deckId);
+        if (!cardUniqueIdList) {
+            return [];
+        }
+
+        const cardIdList: number[] = [];
+        for (const cardUniqueId of cardUniqueIdList) {
+            const entry = this.cardMap.get(cardUniqueId);
+            if (entry) {
+                cardIdList.push(entry.cardId);
+            } else {
+                console.warn(`[WARN] Card with uniqueId ${cardUniqueId} not found in cardMap`);
+            }
+        }
+
+        return cardIdList;
+    }
+
     public findDeckIdList(): number[] {
         return Array.from(this.deckMap.keys());
     }
