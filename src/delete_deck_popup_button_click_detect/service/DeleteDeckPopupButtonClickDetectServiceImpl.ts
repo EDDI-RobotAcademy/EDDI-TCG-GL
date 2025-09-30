@@ -17,6 +17,8 @@ import {DeckEditButtonClickDetectRepositoryImpl} from "../../deck_edit_button_cl
 import {MyDeckOwnedCardsClickDetectRepositoryImpl} from "../../deck_owned_cards_click_detect/repository/MyDeckOwnedCardsClickDetectRepositoryImpl";
 import {MyDeckBlockHoverDetectRepositoryImpl} from "../../my_deck_block_hover_detect/repository/MyDeckBlockHoverDetectRepositoryImpl";
 import {DeckEditDoneButtonHoverDetectRepositoryImpl} from "../../deck_edit_done_button_hover_detect/repository/DeckEditDoneButtonHoverDetectRepositoryImpl";
+import {DeckCardDeleteButtonClickDetectRepositoryImpl} from "../../deck_card_delete_button_click_detect/repository/DeckCardDeleteButtonClickDetectRepositoryImpl";
+import {DeckCardAddButtonClickDetectRepositoryImpl} from "../../deck_card_add_button_click_detect/repository/DeckCardAddButtonClickDetectRepositoryImpl";
 
 import {DeckDeleteButtonRepositoryImpl} from "../../deck_delete_button/repository/DeckDeleteButtonRepositoryImpl";
 import {DeckNameEditButtonRepositoryImpl} from "../../deck_name_edit_button/repository/DeckNameEditButtonRepositoryImpl";
@@ -80,6 +82,8 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     private myDeckOwnedCardsClickDetectRepository: MyDeckOwnedCardsClickDetectRepositoryImpl;
     private myDeckBlockHoverDetectRepository: MyDeckBlockHoverDetectRepositoryImpl;
     private deckEditDoneButtonHoverDetectRepository: DeckEditDoneButtonHoverDetectRepositoryImpl;
+    private deckCardDeleteButtonClickDetectRepository: DeckCardDeleteButtonClickDetectRepositoryImpl;
+    private deckCardAddButtonClickDetectRepository: DeckCardAddButtonClickDetectRepositoryImpl;
 
     private deckDeleteButtonRepository: DeckDeleteButtonRepositoryImpl;
     private deckNameEditButtonRepository: DeckNameEditButtonRepositoryImpl;
@@ -139,6 +143,8 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.myDeckOwnedCardsClickDetectRepository = MyDeckOwnedCardsClickDetectRepositoryImpl.getInstance();
         this.myDeckBlockHoverDetectRepository = MyDeckBlockHoverDetectRepositoryImpl.getInstance();
         this.deckEditDoneButtonHoverDetectRepository = DeckEditDoneButtonHoverDetectRepositoryImpl.getInstance();
+        this.deckCardDeleteButtonClickDetectRepository = DeckCardDeleteButtonClickDetectRepositoryImpl.getInstance();
+        this.deckCardAddButtonClickDetectRepository = DeckCardAddButtonClickDetectRepositoryImpl.getInstance();
 
         this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance(scene);
         this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance(scene);
@@ -253,6 +259,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
                 if (isDeckEditMode == true) {
                     this.hideDeckEditRelatedObjects();
                     this.setInteractionStatesWhenDeckDeletedInEditMode();
+                    this.setDeckEditButtonClickState(false);
                 }
             }
 
@@ -433,6 +440,8 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.myDeckBlockHoverDetectRepository.setBlockHoverEnabled(false);
         this.deckEditButtonClickDetectRepository.setButtonClickEnabled(true);
         this.deckEditDoneButtonHoverDetectRepository.setButtonHoverEnabled(false);
+        this.deckCardDeleteButtonClickDetectRepository.setButtonClickEnabled(false);
+        this.deckCardAddButtonClickDetectRepository.setButtonClickEnabled(false);
     }
 
     private hideDeckEditRelatedObjects(): void {
@@ -450,6 +459,10 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.deckEditDoneButtonRepository.findButtonById(0)?.setVisibility(false);
         this.myDeckChosenOutOfTotalSlashRepository.findSlash()?.setVisibility(false);
         this.requiredNumberOfCardsRepository.findNumber()?.setVisibility(false);
+    }
+
+    private setDeckEditButtonClickState(state: boolean): void {
+        this.deckEditButtonClickDetectRepository.saveCurrentButtonClickState(state);
     }
 
     private deleteTotalNumberOfSelectedCards(deckId: number): void {
