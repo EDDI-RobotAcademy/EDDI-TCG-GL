@@ -14,6 +14,9 @@ import {BuildDeckButtonHoverDetectRepositoryImpl} from "../../build_deck_button_
 import {SideScrollAreaDetectRepositoryImpl} from "../../side_scroll_area_detect/repository/SideScrollAreaDetectRepositoryImpl";
 import {DeckCardSearchCancelButtonClickDetectRepositoryImpl} from "../../deck_card_search_cancel_button_click_detect/repository/DeckCardSearchCancelButtonClickDetectRepositoryImpl";
 import {DeckEditButtonClickDetectRepositoryImpl} from "../../deck_edit_button_click_detect/repository/DeckEditButtonClickDetectRepositoryImpl";
+import {MyDeckOwnedCardsClickDetectRepositoryImpl} from "../../deck_owned_cards_click_detect/repository/MyDeckOwnedCardsClickDetectRepositoryImpl";
+import {MyDeckBlockHoverDetectRepositoryImpl} from "../../my_deck_block_hover_detect/repository/MyDeckBlockHoverDetectRepositoryImpl";
+import {DeckEditDoneButtonHoverDetectRepositoryImpl} from "../../deck_edit_done_button_hover_detect/repository/DeckEditDoneButtonHoverDetectRepositoryImpl";
 
 import {DeckDeleteButtonRepositoryImpl} from "../../deck_delete_button/repository/DeckDeleteButtonRepositoryImpl";
 import {DeckNameEditButtonRepositoryImpl} from "../../deck_name_edit_button/repository/DeckNameEditButtonRepositoryImpl";
@@ -74,6 +77,9 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     private cameraRepository: CameraRepository;
     private deckCardSearchCancelButtonClickDetectRepository: DeckCardSearchCancelButtonClickDetectRepositoryImpl;
     private deckEditButtonClickDetectRepository: DeckEditButtonClickDetectRepositoryImpl;
+    private myDeckOwnedCardsClickDetectRepository: MyDeckOwnedCardsClickDetectRepositoryImpl;
+    private myDeckBlockHoverDetectRepository: MyDeckBlockHoverDetectRepositoryImpl;
+    private deckEditDoneButtonHoverDetectRepository: DeckEditDoneButtonHoverDetectRepositoryImpl;
 
     private deckDeleteButtonRepository: DeckDeleteButtonRepositoryImpl;
     private deckNameEditButtonRepository: DeckNameEditButtonRepositoryImpl;
@@ -130,6 +136,9 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.deckCardSearchCancelButtonClickDetectRepository = DeckCardSearchCancelButtonClickDetectRepositoryImpl.getInstance();
         this.deckEditButtonClickDetectRepository = DeckEditButtonClickDetectRepositoryImpl.getInstance();
+        this.myDeckOwnedCardsClickDetectRepository = MyDeckOwnedCardsClickDetectRepositoryImpl.getInstance();
+        this.myDeckBlockHoverDetectRepository = MyDeckBlockHoverDetectRepositoryImpl.getInstance();
+        this.deckEditDoneButtonHoverDetectRepository = DeckEditDoneButtonHoverDetectRepositoryImpl.getInstance();
 
         this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance(scene);
         this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance(scene);
@@ -239,7 +248,12 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
                 const firstDeckId = this.getFirstDeckId(deckIdList);
 
                 this.initializeDeckRelatedObjectsVisibility(deckIdList, firstDeckId);
-                this.hideDeckEditRelatedObjects();
+
+                const isDeckEditMode = this.getDeckEditButtonClickState();
+                if (isDeckEditMode == true) {
+                    this.hideDeckEditRelatedObjects();
+                    this.setInteractionStatesWhenDeckDeletedInEditMode();
+                }
             }
 
             return clickedButton;
@@ -410,24 +424,32 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.initializeDeckCardCountMarkerVisibility(deckIdList, firstDeckId);
     }
 
-    private hideDeckEditRelatedObjects(): void {
-        const isDeckEditMode = this.deckEditButtonClickDetectRepository.getCurrentButtonClickState();
-        if (isDeckEditMode == true) {
-            this.myDeckOwnedCardsRepository.findAllCards().forEach(card => card.setVisibility(false));
-            this.cardSelectionBlockerRepository.findAllBlockers().forEach(blocker => blocker.setVisibility(false));
-            this.myDeckRemainingOutOfTotalSlashRepository.findAllSlashList().forEach(slash => slash.setVisibility(false));
-            this.myDeckTotalOwnedCardsRepository.findAllTotalOwnedCardsList().forEach(
-                numberObject => numberObject.setVisibility(false)
-            );
-            this.myDeckRemainingCardsRepository.findAllRemainingCardsList().forEach(
-                numberObject => numberObject.setVisibility(false)
-            );
+    private getDeckEditButtonClickState(): boolean | null {
+        return this.deckEditButtonClickDetectRepository.getCurrentButtonClickState();
+    }
 
-            this.deckEditButtonRepository.findButtonById(0)?.setVisibility(true);
-            this.deckEditDoneButtonRepository.findButtonById(0)?.setVisibility(false);
-            this.myDeckChosenOutOfTotalSlashRepository.findSlash()?.setVisibility(false);
-            this.requiredNumberOfCardsRepository.findNumber()?.setVisibility(false);
-        }
+    private setInteractionStatesWhenDeckDeletedInEditMode(): void {
+        this.myDeckOwnedCardsClickDetectRepository.setAllCardClickEnabled(false);
+        this.myDeckBlockHoverDetectRepository.setBlockHoverEnabled(false);
+        this.deckEditButtonClickDetectRepository.setButtonClickEnabled(true);
+        this.deckEditDoneButtonHoverDetectRepository.setButtonHoverEnabled(false);
+    }
+
+    private hideDeckEditRelatedObjects(): void {
+        this.myDeckOwnedCardsRepository.findAllCards().forEach(card => card.setVisibility(false));
+        this.cardSelectionBlockerRepository.findAllBlockers().forEach(blocker => blocker.setVisibility(false));
+        this.myDeckRemainingOutOfTotalSlashRepository.findAllSlashList().forEach(slash => slash.setVisibility(false));
+        this.myDeckTotalOwnedCardsRepository.findAllTotalOwnedCardsList().forEach(
+            numberObject => numberObject.setVisibility(false)
+        );
+        this.myDeckRemainingCardsRepository.findAllRemainingCardsList().forEach(
+            numberObject => numberObject.setVisibility(false)
+        );
+
+        this.deckEditButtonRepository.findButtonById(0)?.setVisibility(true);
+        this.deckEditDoneButtonRepository.findButtonById(0)?.setVisibility(false);
+        this.myDeckChosenOutOfTotalSlashRepository.findSlash()?.setVisibility(false);
+        this.requiredNumberOfCardsRepository.findNumber()?.setVisibility(false);
     }
 
     private deleteTotalNumberOfSelectedCards(deckId: number): void {
