@@ -2,6 +2,7 @@ import {MyDeckButtonClickDetectService} from "./MyDeckButtonClickDetectService";
 
 import {MyDeckButton} from "../../my_deck_button/entity/MyDeckButton";
 import {MyDeckButtonEffect} from "../../my_deck_button_effect/entity/MyDeckButtonEffect";
+import {DeckCardSearchStateInDeckEditMode} from "../../deck_card_search_input_enter_detect/entity/DeckCardSearchStateInDeckEditMode";
 
 import {MyDeckButtonRepositoryImpl} from "../../my_deck_button/repository/MyDeckButtonRepositoryImpl";
 import {MyDeckButtonEffectRepositoryImpl} from "../../my_deck_button_effect/repository/MyDeckButtonEffectRepositoryImpl";
@@ -44,6 +45,10 @@ import {DeckCardSearchCancelButtonClickDetectRepositoryImpl} from "../../deck_ca
 import {DeckCardSearchInputEnterDetectRepositoryImpl} from "../../deck_card_search_input_enter_detect/repository/DeckCardSearchInputEnterDetectRepositoryImpl";
 import {DeckNameEditButtonClickDetectRepositoryImpl} from "../../deck_name_edit_button_click_detect/repository/DeckNameEditButtonClickDetectRepositoryImpl";
 import {MyDeckRemainingCardsPositionRepositoryImpl} from "../../my_deck_remaining_cards_position/repository/MyDeckRemainingCardsPositionRepositoryImpl";
+import {MyDeckOwnedCardsPositionRepositoryImpl} from "../../my_deck_owned_cards_position/repository/MyDeckOwnedCardsPositionRepositoryImpl";
+import {CardSelectionBlockerPositionRepositoryImpl} from "../../card_selection_blocker_position/repository/CardSelectionBlockerPositionRepositoryImpl";
+import {MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl} from "../../my_deck_remaining_out_of_total_slash_position/repository/MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl";
+import {MyDeckTotalOwnedCardsPositionRepositoryImpl} from "../../my_deck_total_owned_cards_position/repository/MyDeckTotalOwnedCardsPositionRepositoryImpl";
 
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
@@ -99,6 +104,10 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private deckCardSearchInputEnterDetectRepository: DeckCardSearchInputEnterDetectRepositoryImpl;
     private deckNameEditButtonClickDetectRepository: DeckNameEditButtonClickDetectRepositoryImpl;
     private myDeckRemainingCardsPositionRepository: MyDeckRemainingCardsPositionRepositoryImpl;
+    private myDeckOwnedCardsPositionRepository: MyDeckOwnedCardsPositionRepositoryImpl;
+    private cardSelectionBlockerPositionRepository: CardSelectionBlockerPositionRepositoryImpl;
+    private myDeckRemainingOutOfTotalSlashPositionRepository: MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl;
+    private myDeckTotalOwnedCardsPositionRepository: MyDeckTotalOwnedCardsPositionRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cardCountManager = CardCountManager.getInstance();
@@ -145,6 +154,10 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.deckCardSearchInputEnterDetectRepository = DeckCardSearchInputEnterDetectRepositoryImpl.getInstance();
         this.deckNameEditButtonClickDetectRepository = DeckNameEditButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckRemainingCardsPositionRepository = MyDeckRemainingCardsPositionRepositoryImpl.getInstance();
+        this.myDeckOwnedCardsPositionRepository = MyDeckOwnedCardsPositionRepositoryImpl.getInstance();
+        this.cardSelectionBlockerPositionRepository = CardSelectionBlockerPositionRepositoryImpl.getInstance();
+        this.myDeckRemainingOutOfTotalSlashPositionRepository = MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl.getInstance();
+        this.myDeckTotalOwnedCardsPositionRepository = MyDeckTotalOwnedCardsPositionRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckButtonClickDetectServiceImpl {
@@ -173,54 +186,11 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         );
 
         if (clickedDeckButton) {
-            const searchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
-            if (searchInputText !== null && searchInputText.length > 0) {
-                this.myDeckSearchInputContainerRepository.clearUserInput();
-                this.myDeckSearchInputContainerRepository.deleteUserInput();
-            }
-
-            this.setSearchCancelButtonVisibility(false);
-            this.setSearchCancelButtonClickEnabled(false);
+            this.resetSearchInputState();
 
             const previousClickedDeckId = this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
             if (previousClickedDeckId !== null) {
-
-                this.setButtonVisibility(previousClickedDeckId, true);
-                this.setEffectVisibility(previousClickedDeckId, false);
-                this.setCardVisibilityByDeckId(previousClickedDeckId, false);
-                this.setBlockVisibilityByDeckId(previousClickedDeckId, false);
-                this.setCardNameVisibilityByDeckId(previousClickedDeckId, false);
-                this.setDeckNameEditButtonVisibility(previousClickedDeckId, false);
-                this.setDeckDeleteButtonVisibility(previousClickedDeckId, false);
-                this.setNumberOfCardsVisibilityByDeckId(previousClickedDeckId, false);
-                this.setNumberOfSelectedCardsVisibilityByDeckId(previousClickedDeckId, false);
-                this.setDeckCardCountMarkerVisibilityByDeckId(previousClickedDeckId, false);
-                this.setTotalNumberOfSelectedCardsVisibility(previousClickedDeckId, false);
-
-                // 검색 실행 하고 다른 덱 버튼 클릭 후 다시 검색 실행했던 덱으로 돌아왔을 때, 검색 상태가 유지되지 않고 검색 전 카드 배치로 초기화
-                this.restoreAllMyDeckCardPositions(previousClickedDeckId);
-                this.restoreAllMyDeckNumberOfCardsPositions(previousClickedDeckId);
-                this.restoreAllMyDeckMarkerPositions(previousClickedDeckId);
-
-                // To-do: 편집 화면에서 편집 다 못하고 나올 때 원본 데이터로 돌려야 함
-                if (this.getDeckEditButtonClickState() == true) {
-                    this.restoreOriginalDeckState(previousClickedDeckId); // 덱 편집을 못 한 상태에서 덱 버튼을 누르면 계속 만들어짐
-
-                    // To-do: countManager 도 원본 데이터로 수정 필요
-                    this.cardCountManager.restoreRemainingCardCount();
-                    this.cardCountManager.restoreSelectedCardCount();
-                    this.cardCountManager.restoreCardCountByGrade();
-
-                    this.setOwnedCardsVisibility(false);
-                    this.setCardSelectionBlockerVisibility(false);
-                    this.setNumberOfTotalOwnedCardsVisibility(false);
-                    this.setNumberOfRemainingCardsVisibility(false);
-                    this.setRemainingOutOfTotalSlashVisibility(false);
-                    this.setDeckEditButtonVisibility(true);
-                    this.setDeckEditDoneButtonVisibility(false);
-                    this.setChosenOutOfTotalSlashVisibility(false);
-                    this.setRequiredNumberOfCardsVisibility(false);
-                }
+                this.handleDeckSwitch(previousClickedDeckId);
             }
 
             const buttonId = clickedDeckButton.id;
@@ -229,34 +199,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
             this.saveCurrentClickDeckId(currentClickedDeckId);
 
             if (currentClickedDeckId !== null) {
-                // 덱 버튼 누를 때마다 카드, 블록 원위치
-                const scrollTargets = [
-                    this.getBlockGroup(currentClickedDeckId),
-                    this.getCardNameGroup(currentClickedDeckId),
-                    this.getCardGroup(currentClickedDeckId),
-                    this.getNumberOfCardsGroup(currentClickedDeckId),
-                    this.getNumberOfSelectedCardsGroup(currentClickedDeckId),
-                    this.getDeckCardCountMarkerGroup(currentClickedDeckId),
-                ];
-
-                if (scrollTargets.every(target => !target)) return null;
-                scrollTargets.forEach(target => {
-                    target.position.y = 0;
-                });
-
-                this.setButtonVisibility(currentClickedDeckId, false);
-                this.setEffectVisibility(currentClickedDeckId, true);
-                this.setCardVisibilityByDeckId(currentClickedDeckId, true);
-                this.setBlockVisibilityByDeckId(currentClickedDeckId, true);
-                this.setCardNameVisibilityByDeckId(currentClickedDeckId, true);
-                this.setNumberOfCardsVisibilityByDeckId(currentClickedDeckId, true);
-                this.setNumberOfSelectedCardsVisibilityByDeckId(currentClickedDeckId, true);
-                this.setDeckCardCountMarkerVisibilityByDeckId(currentClickedDeckId, true);
-
-                this.setDeckNameEditButtonVisibility(currentClickedDeckId, true);
-                this.setDeckDeleteButtonVisibility(currentClickedDeckId, true);
-
-                console.log(`Deck Button ID ${currentClickedDeckId} is now hidden.`);
+                this.activateDeck(currentClickedDeckId);
             }
 
             return clickedDeckButton;
@@ -305,8 +248,124 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         return null;
     }
 
+    // 검색 입력 초기화
+    private resetSearchInputState(): void {
+        const input = this.myDeckSearchInputContainerRepository.findInputValue();
+        if (input && input.length > 0) {
+            this.myDeckSearchInputContainerRepository.clearUserInput();
+            this.myDeckSearchInputContainerRepository.deleteUserInput();
+        }
+        this.setSearchCancelButtonVisibility(false);
+        this.setSearchCancelButtonClickEnabled(false);
+    }
+
+    // 덱에서 다른 덱으로 전환
+    private handleDeckSwitch(deckId: number): void {
+        this.setPreviousDeckObjectVisibleState(deckId);
+        this.restoreDeckLayout(deckId);
+
+        if (this.getDeckEditButtonClickState() == true) {
+            this.handleDeckEditModeExit(deckId);
+
+            if (this.getCurrentDeckEditSearchState() == DeckCardSearchStateInDeckEditMode.MATCHED) {
+                this.restoreDeckEditLayout();
+            }
+        }
+    }
+
+    // 덱 편집 모드 중 다른 덱 클릭
+    private handleDeckEditModeExit(deckId: number): void {
+        this.restoreOriginalDeckState(deckId);
+
+        this.cardCountManager.restoreRemainingCardCount();
+        this.cardCountManager.restoreSelectedCardCount();
+        this.cardCountManager.restoreCardCountByGrade();
+
+        this.hideDeckEditUI();
+    }
+
+    // 새로운 덱 표시
+    private activateDeck(deckId: number): void {
+        this.resetDeckObjectScrollPosition(deckId);
+        this.setCurrentDeckObjectVisibleState(deckId);
+    }
+
+    private resetDeckObjectScrollPosition(deckId: number): void {
+        const scrollTargets = [
+            this.getBlockGroup(deckId),
+            this.getCardNameGroup(deckId),
+            this.getCardGroup(deckId),
+            this.getNumberOfCardsGroup(deckId),
+            this.getNumberOfSelectedCardsGroup(deckId),
+            this.getDeckCardCountMarkerGroup(deckId),
+        ];
+
+        if (scrollTargets.every(target => !target)) return;
+        scrollTargets.forEach(target => {
+            target.position.y = 0;
+        });
+    }
+
+    private setPreviousDeckObjectVisibleState(deckId: number): void {
+        this.setButtonVisibility(deckId, true);
+        this.setEffectVisibility(deckId, false);
+        this.setCardVisibilityByDeckId(deckId, false);
+        this.setBlockVisibilityByDeckId(deckId, false);
+        this.setCardNameVisibilityByDeckId(deckId, false);
+        this.setDeckNameEditButtonVisibility(deckId, false);
+        this.setDeckDeleteButtonVisibility(deckId, false);
+        this.setNumberOfCardsVisibilityByDeckId(deckId, false);
+        this.setNumberOfSelectedCardsVisibilityByDeckId(deckId, false);
+        this.setDeckCardCountMarkerVisibilityByDeckId(deckId, false);
+        this.setTotalNumberOfSelectedCardsVisibility(deckId, false);
+    }
+
+    private setCurrentDeckObjectVisibleState(deckId: number): void {
+        this.setButtonVisibility(deckId, false);
+        this.setEffectVisibility(deckId, true);
+        this.setCardVisibilityByDeckId(deckId, true);
+        this.setBlockVisibilityByDeckId(deckId, true);
+        this.setCardNameVisibilityByDeckId(deckId, true);
+        this.setNumberOfCardsVisibilityByDeckId(deckId, true);
+        this.setNumberOfSelectedCardsVisibilityByDeckId(deckId, true);
+        this.setDeckCardCountMarkerVisibilityByDeckId(deckId, true);
+        this.setDeckNameEditButtonVisibility(deckId, true);
+        this.setDeckDeleteButtonVisibility(deckId, true);
+    }
+
+    private restoreDeckLayout(deckId: number): void {
+        this.restoreAllMyDeckCardPositions(deckId);
+        this.restoreAllMyDeckNumberOfCardsPositions(deckId);
+        this.restoreAllMyDeckMarkerPositions(deckId);
+    }
+
+    private restoreDeckEditLayout(): void {
+        this.restoreAllOwnedCardPositions();
+        this.restoreAllCardBlockerPositions();
+        this.restoreAllNumberOfRemainingCardsPositions();
+        this.restoreAllNumberOfRemainingCardsPositions();
+        this.restoreAllSlashesPositions();
+        this.restoreAllNumberOfTotalOwnedCardsPositions();
+    }
+
+    private hideDeckEditUI(): void {
+        this.setOwnedCardsVisibility(false);
+        this.setCardSelectionBlockerVisibility(false);
+        this.setNumberOfTotalOwnedCardsVisibility(false);
+        this.setNumberOfRemainingCardsVisibility(false);
+        this.setRemainingOutOfTotalSlashVisibility(false);
+        this.setDeckEditButtonVisibility(true);
+        this.setDeckEditDoneButtonVisibility(false);
+        this.setChosenOutOfTotalSlashVisibility(false);
+        this.setRequiredNumberOfCardsVisibility(false);
+    }
+
     public saveCurrentClickDeckId(buttonDeckId: number): void {
         this.myDeckButtonClickDetectRepository.saveCurrentClickDeckId(buttonDeckId);
+    }
+
+    private getCurrentDeckEditSearchState(): DeckCardSearchStateInDeckEditMode {
+        return this.deckCardSearchInputEnterDetectRepository.findDeckEditSearchState();
     }
 
     public getCurrentClickDeckId(): number | null {
@@ -567,6 +626,106 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
             const positionY = markerPosition.getY();
 
             this.myDeckElementAdjuster.adjustElementPosition(markerMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    private restoreAllOwnedCardPositions(): void {
+        const cardIdList = this.myDeckOwnedCardsRepository.findAllCardIdList();
+        for (const cardId of cardIdList) {
+            const card = this.myDeckOwnedCardsRepository.findCardByCardId(cardId);
+            if (card == null) return;
+            const cardMesh = card.getMesh();
+
+            const cardPosition = this.myDeckOwnedCardsPositionRepository.findPositionByCardId(cardId);
+            if (cardPosition == null) return;
+
+            const widthPercent = 0.096;
+            const heightPercent = (1540 / 952);
+            const positionX = cardPosition.getX();
+            const positionY = cardPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(cardMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    private restoreAllCardBlockerPositions(): void {
+        const cardIdList = this.cardSelectionBlockerRepository.findAllCardIdList();
+        for (const cardId of cardIdList) {
+            const blocker = this.cardSelectionBlockerRepository.findBlockerByCardId(cardId);
+            if (blocker == null) return;
+            const blockerMesh = blocker.getMesh();
+
+            const blockerPosition = this.cardSelectionBlockerPositionRepository.findPositionByCardId(cardId);
+            if (blockerPosition == null) return;
+
+            const widthPercent = 0.096;
+            const heightPercent = (1540 / 952);
+            const positionX = blockerPosition.getX();
+            const positionY = blockerPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(blockerMesh, widthPercent, heightPercent, positionX, positionY);
+
+            const remainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
+            if (remainingCardCount !== null && remainingCardCount == 0) {
+                blocker.setVisibility(true);
+            }
+        }
+    }
+
+    private restoreAllNumberOfRemainingCardsPositions(): void {
+        const cardIdList = this.myDeckRemainingCardsRepository.findAllCardIdList();
+        for (const cardId of cardIdList) {
+            const numberObject = this.myDeckRemainingCardsRepository.findRemainingCardByCardId(cardId);
+            if (numberObject == null) return;
+            const numberMesh = numberObject.getMesh();
+
+            const numberPosition = this.myDeckRemainingCardsPositionRepository.findPositionByCardId(cardId);
+            if (numberPosition == null) return;
+
+            const widthPercent = 0.013;
+            const heightPercent = 1;
+            const positionX = numberPosition.getX();
+            const positionY = numberPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(numberMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    private restoreAllSlashesPositions(): void {
+        const slashIdList = this.myDeckRemainingOutOfTotalSlashRepository.findAllSlashIdList();
+        for (const slashId of slashIdList) {
+            const slash = this.myDeckRemainingOutOfTotalSlashRepository.findSlashById(slashId);
+            if (slash == null) return;
+            const slashMesh = slash.getMesh();
+
+            const slashPosition = this.myDeckRemainingOutOfTotalSlashPositionRepository.findPositionByPositionId(slashId);
+            if (slashPosition == null) return;
+
+            const widthPercent = 0.013;
+            const heightPercent = 1;
+            const positionX = slashPosition.getX();
+            const positionY = slashPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(slashMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    private restoreAllNumberOfTotalOwnedCardsPositions(): void {
+        const numberIdList = this.myDeckTotalOwnedCardsRepository.findAllTotalOwnedCardsIdList();
+        for (const numberId of numberIdList) {
+            const numberObject = this.myDeckTotalOwnedCardsRepository.findTotalOwnedCardsById(numberId);
+            if (numberObject == null) return;
+            const numberMesh = numberObject.getMesh();
+
+            const numberPosition = this.myDeckTotalOwnedCardsPositionRepository.findPositionByPositionId(numberId);
+            if (numberPosition == null) return;
+
+            const widthPercent = 0.013;
+            const heightPercent = 1;
+            const positionX = numberPosition.getX();
+            const positionY = numberPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(numberMesh, widthPercent, heightPercent, positionX, positionY);
         }
     }
 
