@@ -19,6 +19,7 @@ import {MyDeckBlockHoverDetectRepositoryImpl} from "../../my_deck_block_hover_de
 import {DeckEditDoneButtonHoverDetectRepositoryImpl} from "../../deck_edit_done_button_hover_detect/repository/DeckEditDoneButtonHoverDetectRepositoryImpl";
 import {DeckCardDeleteButtonClickDetectRepositoryImpl} from "../../deck_card_delete_button_click_detect/repository/DeckCardDeleteButtonClickDetectRepositoryImpl";
 import {DeckCardAddButtonClickDetectRepositoryImpl} from "../../deck_card_add_button_click_detect/repository/DeckCardAddButtonClickDetectRepositoryImpl";
+import {DeckCardSearchInputEnterDetectRepositoryImpl} from "../../deck_card_search_input_enter_detect/repository/DeckCardSearchInputEnterDetectRepositoryImpl";
 
 import {DeckDeleteButtonRepositoryImpl} from "../../deck_delete_button/repository/DeckDeleteButtonRepositoryImpl";
 import {DeckNameEditButtonRepositoryImpl} from "../../deck_name_edit_button/repository/DeckNameEditButtonRepositoryImpl";
@@ -54,6 +55,11 @@ import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of
 import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_marker_position/repository/DeckCardCountMarkerPositionRepositoryImpl";
 import {MyDeckNumberOfSelectedCardsPositionRepositoryImpl} from "../../my_deck_number_of_selected_cards_position/repository/MyDeckNumberOfSelectedCardsPositionRepositoryImpl";
 import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
+import {MyDeckOwnedCardsPositionRepositoryImpl} from "../../my_deck_owned_cards_position/repository/MyDeckOwnedCardsPositionRepositoryImpl";
+import {CardSelectionBlockerPositionRepositoryImpl} from "../../card_selection_blocker_position/repository/CardSelectionBlockerPositionRepositoryImpl";
+import {MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl} from "../../my_deck_remaining_out_of_total_slash_position/repository/MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl";
+import {MyDeckTotalOwnedCardsPositionRepositoryImpl} from "../../my_deck_total_owned_cards_position/repository/MyDeckTotalOwnedCardsPositionRepositoryImpl";
+import {MyDeckRemainingCardsPositionRepositoryImpl} from "../../my_deck_remaining_cards_position/repository/MyDeckRemainingCardsPositionRepositoryImpl";
 
 import {MyDeckButtonMapRepositoryImpl} from "../../my_deck_button/repository/MyDeckButtonMapRepositoryImpl";
 import {MyDeckCardMapRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardMapRepositoryImpl";
@@ -61,6 +67,7 @@ import {MyDeckNameTextMapRepositoryImpl} from "../../my_deck_name_text/repositor
 
 import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
+import {DeckCardSearchStateInDeckEditMode} from "../../deck_card_search_input_enter_detect/entity/DeckCardSearchStateInDeckEditMode";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -84,6 +91,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     private deckEditDoneButtonHoverDetectRepository: DeckEditDoneButtonHoverDetectRepositoryImpl;
     private deckCardDeleteButtonClickDetectRepository: DeckCardDeleteButtonClickDetectRepositoryImpl;
     private deckCardAddButtonClickDetectRepository: DeckCardAddButtonClickDetectRepositoryImpl;
+    private deckCardSearchInputEnterDetectRepository: DeckCardSearchInputEnterDetectRepositoryImpl;
 
     private deckDeleteButtonRepository: DeckDeleteButtonRepositoryImpl;
     private deckNameEditButtonRepository: DeckNameEditButtonRepositoryImpl;
@@ -119,6 +127,11 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
     private myDeckNumberOfCardsPositionRepository: MyDeckNumberOfCardsPositionRepositoryImpl;
     private deckCardCountMarkerPositionRepository: DeckCardCountMarkerPositionRepositoryImpl;
     private myDeckNumberOfSelectedCardsPositionRepository: MyDeckNumberOfSelectedCardsPositionRepositoryImpl;
+    private myDeckOwnedCardsPositionRepository: MyDeckOwnedCardsPositionRepositoryImpl;
+    private cardSelectionBlockerPositionRepository: CardSelectionBlockerPositionRepositoryImpl;
+    private myDeckRemainingOutOfTotalSlashPositionRepository: MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl;
+    private myDeckTotalOwnedCardsPositionRepository: MyDeckTotalOwnedCardsPositionRepositoryImpl;
+    private myDeckRemainingCardsPositionRepository: MyDeckRemainingCardsPositionRepositoryImpl;
 
     private myDeckButtonMapRepository: MyDeckButtonMapRepositoryImpl;
     private myDeckCardMapRepository: MyDeckCardMapRepositoryImpl;
@@ -145,6 +158,7 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.deckEditDoneButtonHoverDetectRepository = DeckEditDoneButtonHoverDetectRepositoryImpl.getInstance();
         this.deckCardDeleteButtonClickDetectRepository = DeckCardDeleteButtonClickDetectRepositoryImpl.getInstance();
         this.deckCardAddButtonClickDetectRepository = DeckCardAddButtonClickDetectRepositoryImpl.getInstance();
+        this.deckCardSearchInputEnterDetectRepository = DeckCardSearchInputEnterDetectRepositoryImpl.getInstance();
 
         this.deckDeleteButtonRepository = DeckDeleteButtonRepositoryImpl.getInstance(scene);
         this.deckNameEditButtonRepository = DeckNameEditButtonRepositoryImpl.getInstance(scene);
@@ -180,6 +194,11 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.myDeckNumberOfCardsPositionRepository = MyDeckNumberOfCardsPositionRepositoryImpl.getInstance();
         this.deckCardCountMarkerPositionRepository = DeckCardCountMarkerPositionRepositoryImpl.getInstance();
         this.myDeckNumberOfSelectedCardsPositionRepository = MyDeckNumberOfSelectedCardsPositionRepositoryImpl.getInstance();
+        this.myDeckOwnedCardsPositionRepository = MyDeckOwnedCardsPositionRepositoryImpl.getInstance();
+        this.cardSelectionBlockerPositionRepository = CardSelectionBlockerPositionRepositoryImpl.getInstance();
+        this.myDeckRemainingOutOfTotalSlashPositionRepository = MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl.getInstance();
+        this.myDeckTotalOwnedCardsPositionRepository = MyDeckTotalOwnedCardsPositionRepositoryImpl.getInstance();
+        this.myDeckRemainingCardsPositionRepository = MyDeckRemainingCardsPositionRepositoryImpl.getInstance();
 
         this.myDeckButtonMapRepository = MyDeckButtonMapRepositoryImpl.getInstance();
         this.myDeckCardMapRepository = MyDeckCardMapRepositoryImpl.getInstance();
@@ -260,6 +279,10 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
                     this.hideDeckEditRelatedObjects();
                     this.setInteractionStatesWhenDeckDeletedInEditMode();
                     this.setDeckEditButtonClickState(false);
+
+                    if (this.getCurrentDeckEditSearchState() == DeckCardSearchStateInDeckEditMode.MATCHED) {
+                        this.restoreDeckEditLayout();
+                    }
                 }
             }
 
@@ -435,6 +458,10 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         return this.deckEditButtonClickDetectRepository.getCurrentButtonClickState();
     }
 
+    private getCurrentDeckEditSearchState(): DeckCardSearchStateInDeckEditMode {
+        return this.deckCardSearchInputEnterDetectRepository.findDeckEditSearchState();
+    }
+
     private setInteractionStatesWhenDeckDeletedInEditMode(): void {
         this.myDeckOwnedCardsClickDetectRepository.setAllCardClickEnabled(false);
         this.myDeckBlockHoverDetectRepository.setBlockHoverEnabled(false);
@@ -459,6 +486,14 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         this.deckEditDoneButtonRepository.findButtonById(0)?.setVisibility(false);
         this.myDeckChosenOutOfTotalSlashRepository.findSlash()?.setVisibility(false);
         this.requiredNumberOfCardsRepository.findNumber()?.setVisibility(false);
+    }
+
+    private restoreDeckEditLayout(): void {
+        this.restoreAllOwnedCardPositions();
+        this.restoreAllCardBlockerPositions();
+        this.restoreAllNumberOfRemainingCardsPositions();
+        this.restoreAllSlashesPositions();
+        this.restoreAllNumberOfTotalOwnedCardsPositions();
     }
 
     private setDeckEditButtonClickState(state: boolean): void {
@@ -771,6 +806,106 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
                 markerList.forEach((marker) => marker.setVisibility(false));
             }
         });
+    }
+
+    private restoreAllOwnedCardPositions(): void {
+        const cardIdList = this.myDeckOwnedCardsRepository.findAllCardIdList();
+        for (const cardId of cardIdList) {
+            const card = this.myDeckOwnedCardsRepository.findCardByCardId(cardId);
+            if (card == null) return;
+            const cardMesh = card.getMesh();
+
+            const cardPosition = this.myDeckOwnedCardsPositionRepository.findPositionByCardId(cardId);
+            if (cardPosition == null) return;
+
+            const widthPercent = 0.096;
+            const heightPercent = (1540 / 952);
+            const positionX = cardPosition.getX();
+            const positionY = cardPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(cardMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    private restoreAllCardBlockerPositions(): void {
+        const cardIdList = this.cardSelectionBlockerRepository.findAllCardIdList();
+        for (const cardId of cardIdList) {
+            const blocker = this.cardSelectionBlockerRepository.findBlockerByCardId(cardId);
+            if (blocker == null) return;
+            const blockerMesh = blocker.getMesh();
+
+            const blockerPosition = this.cardSelectionBlockerPositionRepository.findPositionByCardId(cardId);
+            if (blockerPosition == null) return;
+
+            const widthPercent = 0.096;
+            const heightPercent = (1540 / 952);
+            const positionX = blockerPosition.getX();
+            const positionY = blockerPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(blockerMesh, widthPercent, heightPercent, positionX, positionY);
+
+            const remainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
+            if (remainingCardCount !== null && remainingCardCount == 0) {
+                blocker.setVisibility(true);
+            }
+        }
+    }
+
+    private restoreAllNumberOfRemainingCardsPositions(): void {
+        const cardIdList = this.myDeckRemainingCardsRepository.findAllCardIdList();
+        for (const cardId of cardIdList) {
+            const numberObject = this.myDeckRemainingCardsRepository.findRemainingCardByCardId(cardId);
+            if (numberObject == null) return;
+            const numberMesh = numberObject.getMesh();
+
+            const numberPosition = this.myDeckRemainingCardsPositionRepository.findPositionByCardId(cardId);
+            if (numberPosition == null) return;
+
+            const widthPercent = 0.013;
+            const heightPercent = 1;
+            const positionX = numberPosition.getX();
+            const positionY = numberPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(numberMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    private restoreAllSlashesPositions(): void {
+        const slashIdList = this.myDeckRemainingOutOfTotalSlashRepository.findAllSlashIdList();
+        for (const slashId of slashIdList) {
+            const slash = this.myDeckRemainingOutOfTotalSlashRepository.findSlashById(slashId);
+            if (slash == null) return;
+            const slashMesh = slash.getMesh();
+
+            const slashPosition = this.myDeckRemainingOutOfTotalSlashPositionRepository.findPositionByPositionId(slashId);
+            if (slashPosition == null) return;
+
+            const widthPercent = 0.013;
+            const heightPercent = 1;
+            const positionX = slashPosition.getX();
+            const positionY = slashPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(slashMesh, widthPercent, heightPercent, positionX, positionY);
+        }
+    }
+
+    private restoreAllNumberOfTotalOwnedCardsPositions(): void {
+        const numberIdList = this.myDeckTotalOwnedCardsRepository.findAllTotalOwnedCardsIdList();
+        for (const numberId of numberIdList) {
+            const numberObject = this.myDeckTotalOwnedCardsRepository.findTotalOwnedCardsById(numberId);
+            if (numberObject == null) return;
+            const numberMesh = numberObject.getMesh();
+
+            const numberPosition = this.myDeckTotalOwnedCardsPositionRepository.findPositionByPositionId(numberId);
+            if (numberPosition == null) return;
+
+            const widthPercent = 0.013;
+            const heightPercent = 1;
+            const positionX = numberPosition.getX();
+            const positionY = numberPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(numberMesh, widthPercent, heightPercent, positionX, positionY);
+        }
     }
 
 }

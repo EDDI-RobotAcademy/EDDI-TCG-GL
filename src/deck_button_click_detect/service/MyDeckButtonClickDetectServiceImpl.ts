@@ -343,7 +343,6 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.restoreAllOwnedCardPositions();
         this.restoreAllCardBlockerPositions();
         this.restoreAllNumberOfRemainingCardsPositions();
-        this.restoreAllNumberOfRemainingCardsPositions();
         this.restoreAllSlashesPositions();
         this.restoreAllNumberOfTotalOwnedCardsPositions();
     }
