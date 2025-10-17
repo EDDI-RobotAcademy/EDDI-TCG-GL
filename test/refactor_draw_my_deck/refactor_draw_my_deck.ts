@@ -24,6 +24,7 @@ import {SideScrollAreaConfigList} from "../../src/side_scroll_area/entity/SideSc
 import {DeckNameEditPopupButtonsConfigList} from "../../src/deck_name_edit_pop_up_buttons/entity/DeckNameEditPopupButtonsConfigList";
 import {DeckNameEditInfoTextConfigList} from "../../src/deck_name_edit_info_text/entity/DeckNameEditInfoTextConfigList";
 import {AlertModalContainerConfigList} from "../../src/alert_modal_container/entity/AlertModalContainerConfigList";
+import {AlertModalButtonsConfigList} from "../../src/alert_modal_buttons/entity/AlertModalButtonsConfigList";
 
 import {MyDeckButtonServiceImpl} from "../../src/my_deck_button/service/MyDeckButtonServiceImpl";
 import {MyDeckButtonEffectServiceImpl} from "../../src/my_deck_button_effect/service/MyDeckButtonEffectServiceImpl";
@@ -69,6 +70,7 @@ import {DeckNameEditPopupButtonsServiceImpl} from "../../src/deck_name_edit_pop_
 import {DeckNameEditInputContainerServiceImpl} from "../../src/deck_name_edit_input_container/service/DeckNameEditInputContainerServiceImpl";
 import {DeckNameEditInfoTextServiceImpl} from "../../src/deck_name_edit_info_text/service/DeckNameEditInfoTextServiceImpl";
 import {AlertModalContainerServiceImpl} from "../../src/alert_modal_container/service/AlertModalContainerServiceImpl";
+import {AlertModalButtonsServiceImpl} from "../../src/alert_modal_buttons/service/AlertModalButtonsServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -182,6 +184,7 @@ export class TCGJustTestMyDeckView {
     private requiredNumberOfCarsService: RequiredNumberOfCardsServiceImpl;
     private deckNameEditInfoTextService: DeckNameEditInfoTextServiceImpl;
     private alertModalContainerService: AlertModalContainerServiceImpl;
+    private alertModalButtonsService: AlertModalButtonsServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
     private cardCountManager = CardCountManager.getInstance();
@@ -275,6 +278,7 @@ export class TCGJustTestMyDeckView {
         this.requiredNumberOfCarsService = RequiredNumberOfCardsServiceImpl.getInstance(this.scene);
         this.deckNameEditInfoTextService = DeckNameEditInfoTextServiceImpl.getInstance(this.scene);
         this.alertModalContainerService = AlertModalContainerServiceImpl.getInstance(this.scene);
+        this.alertModalButtonsService = AlertModalButtonsServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -440,17 +444,18 @@ export class TCGJustTestMyDeckView {
         await this.addMyDeckNameText();
         await this.addDeckNameEditButton();
         await this.addDeckDeleteButton();
-        this.addTransparentBackground();
-        this.addDeckMakePopupBackground();
-        this.addDeckMakePopupButtons();
-        this.addDeckMakePopupInputContainer();
-        this.addDeleteDeckPopupWindow();
-        this.addDeleteDeckPopupButton();
-        this.addDeckNameEditPopupBackground();
-        this.addDeckNameEditPopupButtons();
-        this.addDeckNameEditInputContainer();
-        this.addDeckNameEditInfoText();
-        this.addAlertModalContainer();
+        await this.addTransparentBackground();
+        await this.addDeckMakePopupBackground();
+        await this.addDeckMakePopupButtons();
+        await this.addDeckMakePopupInputContainer();
+        await this.addDeleteDeckPopupWindow();
+        await this.addDeleteDeckPopupButton();
+        await this.addDeckNameEditPopupBackground();
+        await this.addDeckNameEditPopupButtons();
+        await this.addDeckNameEditInputContainer();
+        await this.addDeckNameEditInfoText();
+        await this.addAlertModalContainer();
+        await this.addAlertModalButtons();
 
         this.initialized = true;
         this.isAnimating = true;
@@ -1575,7 +1580,24 @@ export class TCGJustTestMyDeckView {
             });
 
         } catch (error) {
-            console.error('Failed to add Delete Deck Popup Button:', error);
+            console.error('Failed to add Alert Modal Container:', error);
+        }
+    }
+
+    private async addAlertModalButtons(): Promise<void> {
+        try {
+            const configList = new AlertModalButtonsConfigList();
+            await Promise.all(configList.buttonConfigs.map(async (config) => {
+                await this.alertModalButtonsService.createAlertModalButtons(config.type, config.position);
+            }));
+
+            const allButtons = this.alertModalButtonsService.getAllAlertModalButtons();
+            allButtons.forEach(button => {
+                this.scene.add(button.getMesh());
+            });
+
+        } catch (error) {
+            console.error('Failed to add Alert Modal Button:', error);
         }
     }
 
@@ -1639,7 +1661,8 @@ export class TCGJustTestMyDeckView {
             this.deckNameEditPopupButtonsService.adjustDeckMakePopupButtonsPosition();
             this.deckNameEditInputContainerService.adjustDeckNameEditInputContainerPosition();
             this.deckNameEditInfoTextService.adjustDeckNameEditInfoTextPosition();
-            this.alertModalContainerService.getAllAlertModalContainers();
+            this.alertModalContainerService.adjustAlertModalContainerPosition();
+            this.alertModalButtonsService.adjustAlertModalButtonsPosition();
         }
     }
 

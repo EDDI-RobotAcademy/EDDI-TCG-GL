@@ -32,7 +32,7 @@ export class AlertModalContainerRepositoryImpl implements AlertModalContainerRep
     public async createContainer(type: AlertModalContainerType, position: Vector2d): Promise<AlertModalContainer> {
         const texture = await this.textureManager.getTexture('alert_modal_container', type);
         if (!texture) {
-            throw new Error(`Alert Modal Texture not found`);
+            throw new Error(`Alert Modal Container Texture not found`);
         }
 
         const containerWidth = this.CONTAINER_WIDTH * window.innerWidth;
