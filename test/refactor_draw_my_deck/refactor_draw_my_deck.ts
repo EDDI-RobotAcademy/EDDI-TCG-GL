@@ -23,6 +23,7 @@ import {DeckEditDoneButtonConfigList} from "../../src/deck_edit_done_button/enti
 import {SideScrollAreaConfigList} from "../../src/side_scroll_area/entity/SideScrollAreaConfigList";
 import {DeckNameEditPopupButtonsConfigList} from "../../src/deck_name_edit_pop_up_buttons/entity/DeckNameEditPopupButtonsConfigList";
 import {DeckNameEditInfoTextConfigList} from "../../src/deck_name_edit_info_text/entity/DeckNameEditInfoTextConfigList";
+import {AlertModalContainerConfigList} from "../../src/alert_modal_container/entity/AlertModalContainerConfigList";
 
 import {MyDeckButtonServiceImpl} from "../../src/my_deck_button/service/MyDeckButtonServiceImpl";
 import {MyDeckButtonEffectServiceImpl} from "../../src/my_deck_button_effect/service/MyDeckButtonEffectServiceImpl";
@@ -67,6 +68,7 @@ import {DeckNameEditPopupBackgroundServiceImpl} from "../../src/deck_name_edit_p
 import {DeckNameEditPopupButtonsServiceImpl} from "../../src/deck_name_edit_pop_up_buttons/service/DeckNameEditPopupButtonsServiceImpl";
 import {DeckNameEditInputContainerServiceImpl} from "../../src/deck_name_edit_input_container/service/DeckNameEditInputContainerServiceImpl";
 import {DeckNameEditInfoTextServiceImpl} from "../../src/deck_name_edit_info_text/service/DeckNameEditInfoTextServiceImpl";
+import {AlertModalContainerServiceImpl} from "../../src/alert_modal_container/service/AlertModalContainerServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -179,6 +181,7 @@ export class TCGJustTestMyDeckView {
     private totalNumberOfSelectedCardsService: TotalNumberOfSelectedCardsServiceImpl;
     private requiredNumberOfCarsService: RequiredNumberOfCardsServiceImpl;
     private deckNameEditInfoTextService: DeckNameEditInfoTextServiceImpl;
+    private alertModalContainerService: AlertModalContainerServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
     private cardCountManager = CardCountManager.getInstance();
@@ -271,6 +274,7 @@ export class TCGJustTestMyDeckView {
         this.totalNumberOfSelectedCardsService = TotalNumberOfSelectedCardsServiceImpl.getInstance(this.scene);
         this.requiredNumberOfCarsService = RequiredNumberOfCardsServiceImpl.getInstance(this.scene);
         this.deckNameEditInfoTextService = DeckNameEditInfoTextServiceImpl.getInstance(this.scene);
+        this.alertModalContainerService = AlertModalContainerServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -446,6 +450,7 @@ export class TCGJustTestMyDeckView {
         this.addDeckNameEditPopupButtons();
         this.addDeckNameEditInputContainer();
         this.addDeckNameEditInfoText();
+        this.addAlertModalContainer();
 
         this.initialized = true;
         this.isAnimating = true;
@@ -1557,6 +1562,23 @@ export class TCGJustTestMyDeckView {
         }
     }
 
+    private async addAlertModalContainer(): Promise<void> {
+        try {
+            const configList = new AlertModalContainerConfigList();
+            await Promise.all(configList.containerConfigs.map(async (config) => {
+                await this.alertModalContainerService.createAlertModalContainer(config.type, config.position);
+            }));
+
+            const allContainer = this.alertModalContainerService.getAllAlertModalContainers();
+            allContainer.forEach(container => {
+                this.scene.add(container.getMesh());
+            });
+
+        } catch (error) {
+            console.error('Failed to add Delete Deck Popup Button:', error);
+        }
+    }
+
     private onWindowResize(): void {
         const newWidth = window.innerWidth;
         const newHeight = window.innerHeight;
@@ -1617,6 +1639,7 @@ export class TCGJustTestMyDeckView {
             this.deckNameEditPopupButtonsService.adjustDeckMakePopupButtonsPosition();
             this.deckNameEditInputContainerService.adjustDeckNameEditInputContainerPosition();
             this.deckNameEditInfoTextService.adjustDeckNameEditInfoTextPosition();
+            this.alertModalContainerService.getAllAlertModalContainers();
         }
     }
 
