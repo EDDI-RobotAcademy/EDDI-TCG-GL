@@ -27,6 +27,12 @@ import {MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl} from "../../my_dec
 import {MyDeckTotalOwnedCardsRepositoryImpl} from "../../my_deck_total_owned_cards/repository/MyDeckTotalOwnedCardsRepositoryImpl";
 import {MyDeckTotalOwnedCardsPositionRepositoryImpl} from "../../my_deck_total_owned_cards_position/repository/MyDeckTotalOwnedCardsPositionRepositoryImpl";
 import {MyDeckOwnedCardsClickDetectRepositoryImpl} from "../../deck_owned_cards_click_detect/repository/MyDeckOwnedCardsClickDetectRepositoryImpl";
+import {AlertModalContainerRepositoryImpl} from "../../alert_modal_container/repository/AlertModalContainerRepositoryImpl";
+import {AlertModalButtonsRepositoryImpl} from "../../alert_modal_buttons/repository/AlertModalButtonsRepositoryImpl";
+import {TransparentBackgroundRepositoryImpl} from "../../transparent_background/repository/TransparentBackgroundRepositoryImpl";
+
+import {AlertModalContainerType} from "../../alert_modal_container/entity/AlertModalContainerType";
+import {AlertModalButtonsType} from "../../alert_modal_buttons/entity/AlertModalButtonsType";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
@@ -58,6 +64,9 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
     private myDeckTotalOwnedCardsRepository: MyDeckTotalOwnedCardsRepositoryImpl;
     private myDeckTotalOwnedCardsPositionRepository: MyDeckTotalOwnedCardsPositionRepositoryImpl;
     private myDeckOwnedCardsClickDetectRepository: MyDeckOwnedCardsClickDetectRepositoryImpl;
+    private alertModalContainerRepository: AlertModalContainerRepositoryImpl;
+    private alertModalButtonsRepository: AlertModalButtonsRepositoryImpl;
+    private transparentBackgroundRepository: TransparentBackgroundRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -85,6 +94,9 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         this.myDeckTotalOwnedCardsRepository = MyDeckTotalOwnedCardsRepositoryImpl.getInstance();
         this.myDeckTotalOwnedCardsPositionRepository = MyDeckTotalOwnedCardsPositionRepositoryImpl.getInstance();
         this.myDeckOwnedCardsClickDetectRepository = MyDeckOwnedCardsClickDetectRepositoryImpl.getInstance();
+        this.alertModalContainerRepository = AlertModalContainerRepositoryImpl.getInstance(scene);
+        this.alertModalButtonsRepository = AlertModalButtonsRepositoryImpl.getInstance(scene);
+        this.transparentBackgroundRepository = TransparentBackgroundRepositoryImpl.getInstance();
     }
 
     public static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckCardSearchInputEnterDetectServiceImpl {
@@ -853,6 +865,31 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
     private showNotFoundPopup(): void {
         console.log("[POPUP] 해당 이름의 카드를 찾을 수 없습니다.");
         // 팝업 표시 로직
+        this.setTransparentBackgroundVisible(true);
+        this.setUnmatchedCardPopupContainerVisibility(true);
+        this.setUnmatchedCardPopupButtonVisibility(true);
+    }
+
+    private setTransparentBackgroundVisible(isVisible: boolean): void {
+        const background = this.transparentBackgroundRepository.findTransparentBackground();
+        if (background) {
+            background.setVisibility(isVisible);
+        }
+    }
+
+    private setUnmatchedCardPopupContainerVisibility(isVisible: boolean): void {
+        const unmatchedCardPopupContainer = this.alertModalContainerRepository.findContainerByType(AlertModalContainerType.UNMATCHED_CARD);
+        if (unmatchedCardPopupContainer !== null) {
+            unmatchedCardPopupContainer.setVisibility(isVisible);
+        }
+    }
+
+    private setUnmatchedCardPopupButtonVisibility(isVisible: boolean): void {
+        const unmatchedCardPopupButton = this.alertModalButtonsRepository.findButtonByType(AlertModalButtonsType.UNMATCHED_CARD);
+
+        if (unmatchedCardPopupButton !== null) {
+            unmatchedCardPopupButton.setVisibility(isVisible);
+        }
     }
 
     private showEmptyInputPopup(): void {
