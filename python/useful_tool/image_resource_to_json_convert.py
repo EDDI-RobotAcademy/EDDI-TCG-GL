@@ -73,6 +73,8 @@ class WillBeReferenceImageLocation(Enum):
     SEARCH_BOX = "resource/search/search_box/"
     DECK_NAME_EDIT_POP_UP_BACKGROUND = "resource/deck_name_edit_pop_up/background/"
     DECK_NAME_EDIT_POP_UP_BUTTONS = "resource/deck_name_edit_pop_up/button/"
+    ALERT_MODAL_CONTAINER = "resource/modal/alert/container/"
+    ALERT_MODAL_BUTTONS = "resource/modal/alert/buttons/"
 
 class RelativeImageLocation(Enum):
     CARD = "../../resource/battle_field_unit/card/"
@@ -140,6 +142,8 @@ class RelativeImageLocation(Enum):
     SEARCH_BOX = "../../resource/search/search_box/"
     DECK_NAME_EDIT_POP_UP_BACKGROUND = "../../resource/deck_name_edit_pop_up/background/"
     DECK_NAME_EDIT_POP_UP_BUTTONS = "../../resource/deck_name_edit_pop_up/button/"
+    ALERT_MODAL_CONTAINER = "../../resource/modal/alert/container/"
+    ALERT_MODAL_BUTTONS = "../../resource/modal/alert/buttons/"
 
 # 디렉토리 경로 설정
 relative_paths = {
@@ -208,6 +212,8 @@ relative_paths = {
     RelativeImageLocation.SEARCH_BOX: RelativeImageLocation.SEARCH_BOX.value,
     RelativeImageLocation.DECK_NAME_EDIT_POP_UP_BACKGROUND: RelativeImageLocation.DECK_NAME_EDIT_POP_UP_BACKGROUND.value,
     RelativeImageLocation.DECK_NAME_EDIT_POP_UP_BUTTONS: RelativeImageLocation.DECK_NAME_EDIT_POP_UP_BUTTONS.value,
+    RelativeImageLocation.ALERT_MODAL_CONTAINER: RelativeImageLocation.ALERT_MODAL_CONTAINER.value,
+    RelativeImageLocation.ALERT_MODAL_BUTTONS: RelativeImageLocation.ALERT_MODAL_BUTTONS.value,
 }
 
 reference_paths = {
@@ -276,6 +282,8 @@ reference_paths = {
     WillBeReferenceImageLocation.SEARCH_BOX: WillBeReferenceImageLocation.SEARCH_BOX.value,
     WillBeReferenceImageLocation.DECK_NAME_EDIT_POP_UP_BACKGROUND: WillBeReferenceImageLocation.DECK_NAME_EDIT_POP_UP_BACKGROUND.value,
     WillBeReferenceImageLocation.DECK_NAME_EDIT_POP_UP_BUTTONS: WillBeReferenceImageLocation.DECK_NAME_EDIT_POP_UP_BUTTONS.value,
+    WillBeReferenceImageLocation.ALERT_MODAL_CONTAINER: WillBeReferenceImageLocation.ALERT_MODAL_CONTAINER.value,
+    WillBeReferenceImageLocation.ALERT_MODAL_BUTTONS: WillBeReferenceImageLocation.ALERT_MODAL_BUTTONS.value,
 }
 
 image_paths = {
@@ -344,6 +352,8 @@ image_paths = {
     "search_box": [],
     "deck_name_edit_pop_up_background": [],
     "deck_name_edit_pop_up_buttons": [],
+    "alert_modal_container": [],
+    "alert_modal_buttons": [],
 }
 
 def is_image_file(file_name):

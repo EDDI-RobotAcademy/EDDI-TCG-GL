@@ -78,6 +78,8 @@ export class TextureManager {
     private searchBoxTextureList: { [id: number]: THREE.Texture } = {};
     private deckNameEditPopupBackgroundTextureList: { [id: number]: THREE.Texture } = {};
     private deckNameEditPopupButtonsTextureList: { [id: number]: THREE.Texture } = {};
+    private alertModalContainerTextureList: { [id: number]: THREE.Texture } = {};
+    private alertModalButtonsTextureList: { [id: number]: THREE.Texture } = {};
 
     private constructor(renderer?: THREE.WebGLRenderer) {
         if (renderer instanceof THREE.WebGLRenderer) {
@@ -180,6 +182,8 @@ export class TextureManager {
                 this.loadTextures(imageData.search_box, this.searchBoxTextureList),
                 this.loadTextures(imageData.deck_name_edit_pop_up_background, this.deckNameEditPopupBackgroundTextureList),
                 this.loadTextures(imageData.deck_name_edit_pop_up_buttons, this.deckNameEditPopupButtonsTextureList),
+                this.loadTextures(imageData.alert_modal_container, this.alertModalContainerTextureList),
+                this.loadTextures(imageData.alert_modal_buttons, this.alertModalButtonsTextureList),
             ]);
 
             console.log('All textures preloaded from TextureManager.ts');
@@ -420,6 +424,10 @@ export class TextureManager {
                 return this.deckNameEditPopupBackgroundTextureList[id];
             case 'deck_name_edit_pop_up_buttons':
                 return this.deckNameEditPopupButtonsTextureList[id];
+            case 'alert_modal_container':
+                return this.alertModalContainerTextureList[id];
+            case 'alert_modal_buttons':
+                return this.alertModalButtonsTextureList[id];
             default:
                 return undefined;
         }
