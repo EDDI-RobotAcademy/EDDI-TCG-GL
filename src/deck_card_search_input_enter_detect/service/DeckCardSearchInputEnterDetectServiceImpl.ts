@@ -921,6 +921,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         }
     }
 
+    // To-do: 일반 모드와 편집 모드 동시에 사용되는 중복 코드 정리 필요함
     private setInteractionStatesAfterPopupButtonShownInNormalMode(currentClickedDeckId: number): void {
         this.setMyDeckAlertModalButtonClickEnabled(true);
         this.setAllMyDeckButtonClickEnabled(false);
