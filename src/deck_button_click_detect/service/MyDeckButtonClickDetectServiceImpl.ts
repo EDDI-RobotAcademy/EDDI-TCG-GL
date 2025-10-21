@@ -215,8 +215,6 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
             const clickPoint = { x: event.clientX, y: event.clientY };
             const result = await this.handleLeftClick(clickPoint);
             if (result) {
-                this.myDeckBlockHoverDetectRepository.setBlockHoverEnabled(false);
-                this.deckEditDoneButtonHoverDetectRepository.setButtonHoverEnabled(false);
                 return result;
             }
         }
