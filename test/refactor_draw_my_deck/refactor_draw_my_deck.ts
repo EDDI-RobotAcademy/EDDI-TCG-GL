@@ -122,6 +122,8 @@ import {DeckNameEditPopupButtonsClickDetectService} from "../../src/deck_name_ed
 import {DeckNameEditPopupButtonsClickDetectServiceImpl} from "../../src/deck_name_edit_pop_up_buttons_click_detect/service/DeckNameEditPopupButtonsClickDetectServiceImpl";
 import {DeckNameEditInputChangeDetectService} from "../../src/deck_name_edit_input_change_detect/service/DeckNameEditInputChangeDetectService";
 import {DeckNameEditInputChangeDetectServiceImpl} from "../../src/deck_name_edit_input_change_detect/service/DeckNameEditInputChangeDetectServiceImpl";
+import {MyDeckAlertModalButtonsClickDetectService} from "../../src/my_deck_alert_modal_buttons_click_detect/service/MyDeckAlertModalButtonsClickDetectService";
+import {MyDeckAlertModalButtonsClickDetectServiceImpl} from "../../src/my_deck_alert_modal_buttons_click_detect/service/MyDeckAlertModalButtonsClickDetectServiceImpl";
 
 import {ClippingMaskManager} from "../../src/clipping_mask_manager/ClippingMaskManager";
 import {CardCountManager} from "../../src/my_deck_card_manager/CardCountManager";
@@ -224,6 +226,7 @@ export class TCGJustTestMyDeckView {
     private deckCardSearchInputChangeDetectService: DeckCardSearchInputChangeDetectService;
     private deckNameEditPopupButtonsClickDetectService: DeckNameEditPopupButtonsClickDetectService;
     private deckNameEditInputChangeDetectService: DeckNameEditInputChangeDetectService;
+    private myDeckAlertModalButtonsClickDetectService: MyDeckAlertModalButtonsClickDetectService;
 
     private initialized = false;
     private isAnimating = false;
@@ -304,6 +307,7 @@ export class TCGJustTestMyDeckView {
         this.deckCardSearchInputChangeDetectService = DeckCardSearchInputChangeDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckNameEditPopupButtonsClickDetectService = DeckNameEditPopupButtonsClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.deckNameEditInputChangeDetectService = DeckNameEditInputChangeDetectServiceImpl.getInstance(this.camera, this.scene);
+        this.myDeckAlertModalButtonsClickDetectService = MyDeckAlertModalButtonsClickDetectServiceImpl.getInstance(this.camera, this.scene);
 
         this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckButtonClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mouseup', (e) => this.myDeckButtonClickDetectService.onMouseUp(e), false);
@@ -384,6 +388,7 @@ export class TCGJustTestMyDeckView {
                 this.reAddMyDeckNameText();
             }
         }, false);
+        this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckAlertModalButtonsClickDetectService.onMouseDown(e), false);
     }
 
     public static getInstance(simulationMyDeckContainer: HTMLElement): TCGJustTestMyDeckView {
