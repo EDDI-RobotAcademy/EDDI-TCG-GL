@@ -10,16 +10,24 @@ import {AlertModalButtonsRepositoryImpl} from "../../alert_modal_buttons/reposit
 import {CameraRepository} from "../../camera/repository/CameraRepository";
 import {CameraRepositoryImpl} from "../../camera/repository/CameraRepositoryImpl";
 
+import {AlertModalContainerType} from "../../alert_modal_container/entity/AlertModalContainerType";
+import {TransparentBackgroundRepositoryImpl} from "../../transparent_background/repository/TransparentBackgroundRepositoryImpl";
+import {AlertModalContainerRepositoryImpl} from "../../alert_modal_container/repository/AlertModalContainerRepositoryImpl";
+
 export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAlertModalButtonsClickDetectService {
     private static instance: MyDeckAlertModalButtonsClickDetectServiceImpl | null = null;
     private cameraRepository: CameraRepository;
     private myDeckAlertModalButtonsClickDetectRepository: MyDeckAlertModalButtonsClickDetectRepositoryImpl;
     private alertModalButtonsRepository: AlertModalButtonsRepositoryImpl;
+    private transparentBackgroundRepository: TransparentBackgroundRepositoryImpl;
+    private alertModalContainerRepository: AlertModalContainerRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
         this.myDeckAlertModalButtonsClickDetectRepository = MyDeckAlertModalButtonsClickDetectRepositoryImpl.getInstance();
         this.alertModalButtonsRepository = AlertModalButtonsRepositoryImpl.getInstance(scene);
+        this.transparentBackgroundRepository = TransparentBackgroundRepositoryImpl.getInstance();
+        this.alertModalContainerRepository = AlertModalContainerRepositoryImpl.getInstance(scene);
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckAlertModalButtonsClickDetectServiceImpl {
@@ -41,6 +49,7 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
         if (clickedAlertModalButton) {
             if (clickedAlertModalButton.type === AlertModalButtonsType.UNMATCHED_CARD) {
                 console.log(`[DEBUG] Click Alert Modal Button Type: UNMATCHED_CARD`);
+                this.hideNotFoundCardPopup();
             }
 
             if (clickedAlertModalButton.type === AlertModalButtonsType.INCOMPLETE_DECK) {
@@ -77,6 +86,34 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
 
     private getAllAlertModalButtons(): AlertModalButtons[] {
         return this.alertModalButtonsRepository.findAllButtons();
+    }
+
+    private hideNotFoundCardPopup(): void {
+        this.setTransparentBackgroundVisible(false);
+        this.setUnmatchedCardPopupContainerVisibility(false);
+        this.setUnmatchedCardPopupButtonVisibility(false);
+    }
+
+    private setTransparentBackgroundVisible(isVisible: boolean): void {
+        const background = this.transparentBackgroundRepository.findTransparentBackground();
+        if (background) {
+            background.setVisibility(isVisible);
+        }
+    }
+
+    private setUnmatchedCardPopupContainerVisibility(isVisible: boolean): void {
+        const unmatchedCardPopupContainer = this.alertModalContainerRepository.findContainerByType(AlertModalContainerType.UNMATCHED_CARD);
+        if (unmatchedCardPopupContainer !== null) {
+            unmatchedCardPopupContainer.setVisibility(isVisible);
+        }
+    }
+
+    private setUnmatchedCardPopupButtonVisibility(isVisible: boolean): void {
+        const unmatchedCardPopupButton = this.alertModalButtonsRepository.findButtonByType(AlertModalButtonsType.UNMATCHED_CARD);
+
+        if (unmatchedCardPopupButton !== null) {
+            unmatchedCardPopupButton.setVisibility(isVisible);
+        }
     }
 
 }

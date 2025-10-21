@@ -38,6 +38,7 @@ import {DeckCardSearchCancelButtonClickDetectRepositoryImpl} from "../../deck_ca
 import {DeckCardDeleteButtonClickDetectRepositoryImpl} from "../../deck_card_delete_button_click_detect/repository/DeckCardDeleteButtonClickDetectRepositoryImpl";
 import {MyDeckBlockHoverDetectRepositoryImpl} from "../../my_deck_block_hover_detect/repository/MyDeckBlockHoverDetectRepositoryImpl";
 import {DeckEditDoneButtonHoverDetectRepositoryImpl} from "../../deck_edit_done_button_hover_detect/repository/DeckEditDoneButtonHoverDetectRepositoryImpl";
+import {MyDeckAlertModalButtonsClickDetectRepositoryImpl} from "../../my_deck_alert_modal_buttons_click_detect/repository/MyDeckAlertModalButtonsClickDetectRepositoryImpl";
 
 import {AlertModalContainerType} from "../../alert_modal_container/entity/AlertModalContainerType";
 import {AlertModalButtonsType} from "../../alert_modal_buttons/entity/AlertModalButtonsType";
@@ -83,6 +84,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
     private deckCardDeleteButtonClickDetectRepository: DeckCardDeleteButtonClickDetectRepositoryImpl;
     private myDeckBlockHoverDetectRepository: MyDeckBlockHoverDetectRepositoryImpl;
     private deckEditDoneButtonHoverDetectRepository: DeckEditDoneButtonHoverDetectRepositoryImpl;
+    private myDeckAlertModalButtonDetectRepository: MyDeckAlertModalButtonsClickDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -121,6 +123,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         this.deckCardDeleteButtonClickDetectRepository = DeckCardDeleteButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckBlockHoverDetectRepository = MyDeckBlockHoverDetectRepositoryImpl.getInstance();
         this.deckEditDoneButtonHoverDetectRepository = DeckEditDoneButtonHoverDetectRepositoryImpl.getInstance();
+        this.myDeckAlertModalButtonDetectRepository = MyDeckAlertModalButtonsClickDetectRepositoryImpl.getInstance();
     }
 
     public static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckCardSearchInputEnterDetectServiceImpl {
@@ -919,6 +922,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
     }
 
     private setInteractionStatesAfterPopupButtonShownInNormalMode(currentClickedDeckId: number): void {
+        this.setMyDeckAlertModalButtonClickEnabled(true);
         this.setAllMyDeckButtonClickEnabled(false);
         this.setAllDeckNameEditButtonClickEnabled(false);
         this.setDeckNameEditButtonClickEnabled(currentClickedDeckId, false);
@@ -931,6 +935,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
     }
 
     private setInteractionStatesAfterPopupButtonShownInDeckEditMode(currentClickedDeckId: number): void {
+        this.setMyDeckAlertModalButtonClickEnabled(true);
         this.setAllMyDeckButtonClickEnabled(false);
         this.setAllDeckNameEditButtonClickEnabled(false);
         this.setDeckNameEditButtonClickEnabled(currentClickedDeckId, false);
@@ -988,6 +993,10 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
 
     private setDeckEditDoneButtonHoverEnabled(isEnabled: boolean): void {
         this.deckEditDoneButtonHoverDetectRepository.setButtonHoverEnabled(isEnabled);
+    }
+
+    private setMyDeckAlertModalButtonClickEnabled(isEnabled: boolean): void {
+        this.myDeckAlertModalButtonDetectRepository.setButtonClickEnabled(isEnabled);
     }
 
     private showEmptyInputPopup(): void {
