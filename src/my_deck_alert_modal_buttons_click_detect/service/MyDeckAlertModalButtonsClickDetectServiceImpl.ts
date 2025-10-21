@@ -21,6 +21,8 @@ import {DeckNameEditButtonClickDetectRepositoryImpl} from "../../deck_name_edit_
 import {BuildDeckButtonHoverDetectRepositoryImpl} from "../../build_deck_button_hover_detect/repository/BuildDeckButtonHoverDetectRepositoryImpl";
 import {BuildDeckButtonClickDetectRepositoryImpl} from "../../build_deck_button_click_detect/repository/BuildDeckButtonClickDetectRepositoryImpl";
 import {DeckDeleteButtonClickDetectRepositoryImpl} from "../../deck_delete_button_click_detect/repository/DeckDeleteButtonClickDetectRepositoryImpl";
+import {MyDeckBlockHoverDetectRepositoryImpl} from "../../my_deck_block_hover_detect/repository/MyDeckBlockHoverDetectRepositoryImpl";
+import {DeckEditDoneButtonHoverDetectRepositoryImpl} from "../../deck_edit_done_button_hover_detect/repository/DeckEditDoneButtonHoverDetectRepositoryImpl";
 
 export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAlertModalButtonsClickDetectService {
     private static instance: MyDeckAlertModalButtonsClickDetectServiceImpl | null = null;
@@ -37,6 +39,8 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
     private buildDeckButtonHoverDetectRepository: BuildDeckButtonHoverDetectRepositoryImpl;
     private buildDeckButtonClickDetectRepository: BuildDeckButtonClickDetectRepositoryImpl;
     private deckDeleteButtonClickDetectRepository: DeckDeleteButtonClickDetectRepositoryImpl;
+    private myDeckBlockHoverDetectRepository: MyDeckBlockHoverDetectRepositoryImpl;
+    private deckEditDoneButtonHoverDetectRepository: DeckEditDoneButtonHoverDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -52,6 +56,8 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
         this.buildDeckButtonHoverDetectRepository = BuildDeckButtonHoverDetectRepositoryImpl.getInstance();
         this.buildDeckButtonClickDetectRepository = BuildDeckButtonClickDetectRepositoryImpl.getInstance();
         this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
+        this.myDeckBlockHoverDetectRepository = MyDeckBlockHoverDetectRepositoryImpl.getInstance();
+        this.deckEditDoneButtonHoverDetectRepository = DeckEditDoneButtonHoverDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckAlertModalButtonsClickDetectServiceImpl {
@@ -75,7 +81,8 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
                 console.log(`[DEBUG] Click Alert Modal Button Type: UNMATCHED_CARD`);
                 this.hideNotFoundCardPopup();
                 if (this.isDeckEditMode() == true) {
-                    //
+                    this.handleNotFoundCardPopupButtonClickInEditMode();
+                    return clickedAlertModalButton;
                 }
 
                 this.handleNotFoundCardPopupButtonClickInNormalMode();
@@ -166,6 +173,20 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
         this.setMyDeckCardSearchInputEnabled(false);
     }
 
+    private handleNotFoundCardPopupButtonClickInEditMode(): void {
+        const currentClickedDeckId = this.getCurrentClickDeckId()!;
+
+        this.setAllMyDeckButtonClickEnabled(true);
+        this.setAllDeckNameEditButtonClickEnabled(true);
+        this.setDeckNameEditButtonClickEnabled(currentClickedDeckId, true);
+        this.setBuildDeckButtonHoverEnabled(true);
+        this.setBuildDeckButtonClickEnabled(true);
+        this.setAllDeckDeleteButtonClickEnabled(true);
+        this.setMyDeckCardSearchInputEnabled(false);
+        this.setMyDeckBlockHoverEnabled(true);
+        this.setDeckEditDoneButtonHoverEnabled(true);
+    }
+
     private setAllMyDeckButtonClickEnabled(isEnabled: boolean): void {
         this.myDeckButtonClickDetectRepository.setAllButtonClickEnabled(isEnabled);
     }
@@ -199,6 +220,14 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
         if (searchContainer) {
             searchContainer.setInputDisabled(isEnabled); // 사용 가능: false, 사용 불가능: true
         }
+    }
+
+    private setMyDeckBlockHoverEnabled(isEnabled: boolean): void {
+        this.myDeckBlockHoverDetectRepository.setBlockHoverEnabled(isEnabled);
+    }
+
+    private setDeckEditDoneButtonHoverEnabled(isEnabled: boolean): void {
+        this.deckEditDoneButtonHoverDetectRepository.setButtonHoverEnabled(isEnabled);
     }
 
 }
