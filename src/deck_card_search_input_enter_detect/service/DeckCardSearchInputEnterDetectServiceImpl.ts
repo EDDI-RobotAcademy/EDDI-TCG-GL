@@ -35,6 +35,9 @@ import {BuildDeckButtonHoverDetectRepositoryImpl} from "../../build_deck_button_
 import {BuildDeckButtonClickDetectRepositoryImpl} from "../../build_deck_button_click_detect/repository/BuildDeckButtonClickDetectRepositoryImpl";
 import {DeckDeleteButtonClickDetectRepositoryImpl} from "../../deck_delete_button_click_detect/repository/DeckDeleteButtonClickDetectRepositoryImpl";
 import {DeckCardSearchCancelButtonClickDetectRepositoryImpl} from "../../deck_card_search_cancel_button_click_detect/repository/DeckCardSearchCancelButtonClickDetectRepositoryImpl";
+import {DeckCardDeleteButtonClickDetectRepositoryImpl} from "../../deck_card_delete_button_click_detect/repository/DeckCardDeleteButtonClickDetectRepositoryImpl";
+import {MyDeckBlockHoverDetectRepositoryImpl} from "../../my_deck_block_hover_detect/repository/MyDeckBlockHoverDetectRepositoryImpl";
+import {DeckEditDoneButtonHoverDetectRepositoryImpl} from "../../deck_edit_done_button_hover_detect/repository/DeckEditDoneButtonHoverDetectRepositoryImpl";
 
 import {AlertModalContainerType} from "../../alert_modal_container/entity/AlertModalContainerType";
 import {AlertModalButtonsType} from "../../alert_modal_buttons/entity/AlertModalButtonsType";
@@ -77,6 +80,9 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
     private buildDeckButtonClickDetectRepository: BuildDeckButtonClickDetectRepositoryImpl;
     private deckDeleteButtonClickDetectRepository: DeckDeleteButtonClickDetectRepositoryImpl;
     private deckCardSearchCancelButtonClickDetectRepository: DeckCardSearchCancelButtonClickDetectRepositoryImpl;
+    private deckCardDeleteButtonClickDetectRepository: DeckCardDeleteButtonClickDetectRepositoryImpl;
+    private myDeckBlockHoverDetectRepository: MyDeckBlockHoverDetectRepositoryImpl;
+    private deckEditDoneButtonHoverDetectRepository: DeckEditDoneButtonHoverDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -112,6 +118,9 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         this.buildDeckButtonClickDetectRepository = BuildDeckButtonClickDetectRepositoryImpl.getInstance();
         this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
         this.deckCardSearchCancelButtonClickDetectRepository = DeckCardSearchCancelButtonClickDetectRepositoryImpl.getInstance();
+        this.deckCardDeleteButtonClickDetectRepository = DeckCardDeleteButtonClickDetectRepositoryImpl.getInstance();
+        this.myDeckBlockHoverDetectRepository = MyDeckBlockHoverDetectRepositoryImpl.getInstance();
+        this.deckEditDoneButtonHoverDetectRepository = DeckEditDoneButtonHoverDetectRepositoryImpl.getInstance();
     }
 
     public static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckCardSearchInputEnterDetectServiceImpl {
@@ -173,6 +182,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
             this.restoreAllElementsPositionInDeckEditMode();
             this.saveAllOwnedCardsClickEnabled();
             this.showNotFoundPopup();
+            this.setInteractionStatesAfterPopupButtonShownInDeckEditMode(deckId);
             this.setDeckEditSearchState(DeckCardSearchStateInDeckEditMode.UNMATCHED);
             this.deckCardSearchInputEnterDetectRepository.resetMatchedOwnedCardIdList();
         }
@@ -198,6 +208,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         } else {
             this.restoreMyDeckAllElement(deckId);
             this.showNotFoundPopup();
+            this.setInteractionStatesAfterPopupButtonShownInNormalMode(deckId);
         }
     }
 
@@ -883,8 +894,6 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         this.setTransparentBackgroundVisible(true);
         this.setUnmatchedCardPopupContainerVisibility(true);
         this.setUnmatchedCardPopupButtonVisibility(true);
-
-        this.setInteractionStatesAfterPopupButtonClick();
     }
 
     private setTransparentBackgroundVisible(isVisible: boolean): void {
@@ -909,9 +918,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         }
     }
 
-    private setInteractionStatesAfterPopupButtonClick(): void {
-        const currentClickedDeckId = this.getCurrentClickDeckId()!;
-
+    private setInteractionStatesAfterPopupButtonShownInNormalMode(currentClickedDeckId: number): void {
         this.setAllMyDeckButtonClickEnabled(false);
         this.setAllDeckNameEditButtonClickEnabled(false);
         this.setDeckNameEditButtonClickEnabled(currentClickedDeckId, false);
@@ -921,6 +928,19 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         this.setAllDeckDeleteButtonClickEnabled(false);
         this.setMyDeckCardSearchInputEnabled(true);
         this.setSearchCancelButtonClickEnabled(false);
+    }
+
+    private setInteractionStatesAfterPopupButtonShownInDeckEditMode(currentClickedDeckId: number): void {
+        this.setAllMyDeckButtonClickEnabled(false);
+        this.setAllDeckNameEditButtonClickEnabled(false);
+        this.setDeckNameEditButtonClickEnabled(currentClickedDeckId, false);
+        this.setBuildDeckButtonHoverEnabled(false);
+        this.setBuildDeckButtonClickEnabled(false);
+        this.setAllDeckDeleteButtonClickEnabled(false);
+        this.setMyDeckCardSearchInputEnabled(true);
+        this.setSearchCancelButtonClickEnabled(false);
+        this.setMyDeckBlockHoverEnabled(false);
+        this.setDeckEditDoneButtonHoverEnabled(false);
     }
 
     private setAllDeckNameEditButtonClickEnabled(isEnabled: boolean): void {
@@ -958,8 +978,16 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         }
     }
 
-    private setSearchCancelButtonClickEnabled(isEnable: boolean): void {
-        this.deckCardSearchCancelButtonClickDetectRepository.setButtonClickEnabled(isEnable);
+    private setSearchCancelButtonClickEnabled(isEnabled: boolean): void {
+        this.deckCardSearchCancelButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
+    }
+
+    private setMyDeckBlockHoverEnabled(isEnabled: boolean): void {
+        this.myDeckBlockHoverDetectRepository.setBlockHoverEnabled(isEnabled);
+    }
+
+    private setDeckEditDoneButtonHoverEnabled(isEnabled: boolean): void {
+        this.deckEditDoneButtonHoverDetectRepository.setButtonHoverEnabled(isEnabled);
     }
 
     private showEmptyInputPopup(): void {
