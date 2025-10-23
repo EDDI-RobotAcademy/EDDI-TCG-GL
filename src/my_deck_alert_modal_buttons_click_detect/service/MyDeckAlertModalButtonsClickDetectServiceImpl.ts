@@ -24,6 +24,9 @@ import {BuildDeckButtonClickDetectRepositoryImpl} from "../../build_deck_button_
 import {DeckDeleteButtonClickDetectRepositoryImpl} from "../../deck_delete_button_click_detect/repository/DeckDeleteButtonClickDetectRepositoryImpl";
 import {MyDeckBlockHoverDetectRepositoryImpl} from "../../my_deck_block_hover_detect/repository/MyDeckBlockHoverDetectRepositoryImpl";
 import {DeckEditDoneButtonHoverDetectRepositoryImpl} from "../../deck_edit_done_button_hover_detect/repository/DeckEditDoneButtonHoverDetectRepositoryImpl";
+import {DeckEditDoneButtonClickDetectRepositoryImpl} from "../../deck_edit_done_button_click_detect/repository/DeckEditDoneButtonClickDetectRepositoryImpl";
+import {DeckCardDeleteButtonClickDetectRepositoryImpl} from "../../deck_card_delete_button_click_detect/repository/DeckCardDeleteButtonClickDetectRepositoryImpl";
+import {DeckCardAddButtonClickDetectRepositoryImpl} from "../../deck_card_add_button_click_detect/repository/DeckCardAddButtonClickDetectRepositoryImpl";
 
 export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAlertModalButtonsClickDetectService {
     private static instance: MyDeckAlertModalButtonsClickDetectServiceImpl | null = null;
@@ -43,6 +46,9 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
     private deckDeleteButtonClickDetectRepository: DeckDeleteButtonClickDetectRepositoryImpl;
     private myDeckBlockHoverDetectRepository: MyDeckBlockHoverDetectRepositoryImpl;
     private deckEditDoneButtonHoverDetectRepository: DeckEditDoneButtonHoverDetectRepositoryImpl;
+    private deckEditDoneButtonClickDetectRepository: DeckEditDoneButtonClickDetectRepositoryImpl;
+    private deckCardDeleteButtonClickDetectRepository: DeckCardDeleteButtonClickDetectRepositoryImpl;
+    private deckCardAddButtonClickDetectRepository: DeckCardAddButtonClickDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -61,6 +67,9 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
         this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckBlockHoverDetectRepository = MyDeckBlockHoverDetectRepositoryImpl.getInstance();
         this.deckEditDoneButtonHoverDetectRepository = DeckEditDoneButtonHoverDetectRepositoryImpl.getInstance();
+        this.deckEditDoneButtonClickDetectRepository = DeckEditDoneButtonClickDetectRepositoryImpl.getInstance();
+        this.deckCardDeleteButtonClickDetectRepository = DeckCardDeleteButtonClickDetectRepositoryImpl.getInstance();
+        this.deckCardAddButtonClickDetectRepository = DeckCardAddButtonClickDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckAlertModalButtonsClickDetectServiceImpl {
@@ -87,6 +96,7 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
 
             if (clickedAlertModalButton.type === AlertModalButtonsType.INCOMPLETE_DECK) {
                 console.log(`[DEBUG] Click Alert Modal Button Type: INCOMPLETE_DECK`);
+                this.handleIncompleteDeckPopupButtonClick();
             }
 
             return clickedAlertModalButton;
@@ -118,6 +128,13 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
         this.setInteractionAfterNotFountCardPopupButtonClick(currentClickedDeckId);
     }
 
+    private handleIncompleteDeckPopupButtonClick(): void {
+        this.hideIncompleteDeckPopup();
+
+        const currentClickedDeckId = this.getCurrentClickDeckId()!;
+        this.setInteractionAfterIncompleteDeckPopupButtonClick(currentClickedDeckId);
+    }
+
     private setButtonClickEnabled(isEnabled: boolean): void {
         this.myDeckAlertModalButtonsClickDetectRepository.setButtonClickEnabled(isEnabled);
     }
@@ -144,26 +161,30 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
         this.setUnmatchedCardPopupButtonVisibility(false);
     }
 
+    private hideIncompleteDeckPopup(): void {
+        this.setTransparentBackgroundVisible(false);
+        this.setIncompleteDeckPopupContainerVisibility(false);
+        this.setIncompleteDeckPopupButtonVisibility(false);
+    }
+
     private setTransparentBackgroundVisible(isVisible: boolean): void {
-        const background = this.transparentBackgroundRepository.findTransparentBackground();
-        if (background) {
-            background.setVisibility(isVisible);
-        }
+        this.transparentBackgroundRepository.findTransparentBackground()?.setVisibility(isVisible);
     }
 
     private setUnmatchedCardPopupContainerVisibility(isVisible: boolean): void {
-        const unmatchedCardPopupContainer = this.alertModalContainerRepository.findContainerByType(AlertModalContainerType.UNMATCHED_CARD);
-        if (unmatchedCardPopupContainer !== null) {
-            unmatchedCardPopupContainer.setVisibility(isVisible);
-        }
+        this.alertModalContainerRepository.findContainerByType(AlertModalContainerType.UNMATCHED_CARD)?.setVisibility(isVisible);
     }
 
     private setUnmatchedCardPopupButtonVisibility(isVisible: boolean): void {
-        const unmatchedCardPopupButton = this.alertModalButtonsRepository.findButtonByType(AlertModalButtonsType.UNMATCHED_CARD);
+        this.alertModalButtonsRepository.findButtonByType(AlertModalButtonsType.UNMATCHED_CARD)?.setVisibility(isVisible);
+    }
 
-        if (unmatchedCardPopupButton !== null) {
-            unmatchedCardPopupButton.setVisibility(isVisible);
-        }
+    private setIncompleteDeckPopupContainerVisibility(isVisible: boolean): void {
+        this.alertModalContainerRepository.findContainerByType(AlertModalContainerType.INCOMPLETE_DECK)?.setVisibility(isVisible);
+    }
+
+    private setIncompleteDeckPopupButtonVisibility(isVisible: boolean): void {
+        this.alertModalButtonsRepository.findButtonByType(AlertModalButtonsType.INCOMPLETE_DECK)?.setVisibility(isVisible);
     }
 
     private hideDeckCardSearchCancelButton(): void {
@@ -192,6 +213,21 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
         } else {
             this.setDeckEditButtonClickEnabled(true);
         }
+    }
+
+    private setInteractionAfterIncompleteDeckPopupButtonClick(currentClickedDeckId: number): void {
+        this.setDeckNameEditButtonClickEnabled(currentClickedDeckId, true);
+        this.setAllDeckNameEditButtonClickEnabled(true);
+        this.setAllMyDeckButtonClickEnabled(true);
+        this.setBuildDeckButtonHoverEnabled(true);
+        this.setBuildDeckButtonClickEnabled(true);
+        this.setDeckEditDoneButtonHoverEnabled(true);
+        this.setAllDeckDeleteButtonClickEnabled(true);
+        this.setDeckEditDoneButtonClickEnabled(true);
+        this.setMyDeckBlockHoverEnabled(true);
+        this.setCardDeleteButtonClickEnabled(false);
+        this.setCardAddButtonClickEnabled(false);
+        this.setMyDeckCardSearchInputEnabled(false);
     }
 
     private setAllMyDeckButtonClickEnabled(isEnabled: boolean): void {
@@ -235,6 +271,18 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
 
     private setDeckEditDoneButtonHoverEnabled(isEnabled: boolean): void {
         this.deckEditDoneButtonHoverDetectRepository.setButtonHoverEnabled(isEnabled);
+    }
+
+    private setDeckEditDoneButtonClickEnabled(isEnabled: boolean): void {
+        this.deckEditDoneButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
+    }
+
+    private setCardDeleteButtonClickEnabled(isEnabled: boolean): void {
+        this.deckCardDeleteButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
+    }
+
+    private setCardAddButtonClickEnabled(isEnabled: boolean): void {
+        this.deckCardAddButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
     }
 
 }
