@@ -251,7 +251,6 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         const input = this.myDeckSearchInputContainerRepository.findInputValue();
         if (input && input.length > 0) {
             this.myDeckSearchInputContainerRepository.clearUserInput();
-            this.myDeckSearchInputContainerRepository.deleteUserInput();
         }
         this.setSearchCancelButtonVisibility(false);
         this.setSearchCancelButtonClickEnabled(false);

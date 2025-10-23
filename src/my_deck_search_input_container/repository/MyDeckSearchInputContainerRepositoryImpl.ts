@@ -6,11 +6,9 @@ import {InputContainerGenerator} from "../../input_container/generator";
 export class MyDeckSearchInputContainerRepositoryImpl implements MyDeckSearchInputContainerRepository {
     private static instance: MyDeckSearchInputContainerRepositoryImpl;
     private inputContainer: MyDeckSearchInputContainer | null;
-    private userInput: string | null;
 
     private constructor() {
         this.inputContainer = null;
-        this.userInput = null;
     }
 
     public static getInstance(): MyDeckSearchInputContainerRepositoryImpl {
@@ -65,28 +63,11 @@ export class MyDeckSearchInputContainerRepositoryImpl implements MyDeckSearchInp
         return inputElement.value.trim();
     }
 
-    public updateUserInput(): void {
-        const inputContainer = this.findMyDeckSearchInputContainer();
-        if (inputContainer) {
-            this.userInput = inputContainer.getInputElement().value;
-        }
-        console.log(`user input: ${this.userInput}`);
-    }
-
     public clearUserInput(): void {
         const inputContainer = this.findMyDeckSearchInputContainer();
         if (inputContainer) {
             inputContainer.getInputElement().value = '';
         }
-    }
-
-    public findUserInput(): string | null {
-        console.log(`Current userInput: ${this.userInput}`);
-        return this.userInput;
-    }
-
-    public deleteUserInput(): void {
-        this.userInput = null;
     }
 
 }

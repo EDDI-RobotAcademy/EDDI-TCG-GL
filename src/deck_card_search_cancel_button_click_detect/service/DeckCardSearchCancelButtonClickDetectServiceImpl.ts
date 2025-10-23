@@ -135,7 +135,6 @@ export class DeckCardSearchCancelButtonClickDetectServiceImpl implements DeckCar
                 const searchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
                 if (searchInputText !== null && searchInputText.length > 0) {
                     this.myDeckSearchInputContainerRepository.clearUserInput();
-                    this.myDeckSearchInputContainerRepository.deleteUserInput();
                 }
 
                 this.deckCardSearchInputEnterDetectRepository.setEnterPressedState(false);

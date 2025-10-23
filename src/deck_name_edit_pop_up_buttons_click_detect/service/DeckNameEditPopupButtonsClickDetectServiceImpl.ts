@@ -268,7 +268,6 @@ export class DeckNameEditPopupButtonsClickDetectServiceImpl implements DeckNameE
         const cardSearchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
         if (cardSearchInputText !== null && cardSearchInputText.length > 0) {
             this.myDeckSearchInputContainerRepository.clearUserInput();
-            this.myDeckSearchInputContainerRepository.deleteUserInput();
         }
     }
 
