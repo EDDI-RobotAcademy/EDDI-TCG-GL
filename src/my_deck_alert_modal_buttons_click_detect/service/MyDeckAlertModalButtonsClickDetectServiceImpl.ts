@@ -14,6 +14,7 @@ import {AlertModalContainerType} from "../../alert_modal_container/entity/AlertM
 import {TransparentBackgroundRepositoryImpl} from "../../transparent_background/repository/TransparentBackgroundRepositoryImpl";
 import {AlertModalContainerRepositoryImpl} from "../../alert_modal_container/repository/AlertModalContainerRepositoryImpl";
 import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
+import {MyDeckCardSearchCancelButtonRepositoryImpl} from "../../my_deck_card_search_cancel_button/repository/MyDeckCardSearchCancelButtonRepositoryImpl";
 
 import {DeckEditButtonClickDetectRepositoryImpl} from "../../deck_edit_button_click_detect/repository/DeckEditButtonClickDetectRepositoryImpl";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
@@ -32,6 +33,7 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
     private transparentBackgroundRepository: TransparentBackgroundRepositoryImpl;
     private alertModalContainerRepository: AlertModalContainerRepositoryImpl;
     private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
+    private myDeckCardSearchCancelButtonRepository: MyDeckCardSearchCancelButtonRepositoryImpl;
 
     private deckEditButtonClickDetectRepository: DeckEditButtonClickDetectRepositoryImpl;
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
@@ -49,6 +51,7 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
         this.transparentBackgroundRepository = TransparentBackgroundRepositoryImpl.getInstance();
         this.alertModalContainerRepository = AlertModalContainerRepositoryImpl.getInstance(scene);
         this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
+        this.myDeckCardSearchCancelButtonRepository = MyDeckCardSearchCancelButtonRepositoryImpl.getInstance();
 
         this.deckEditButtonClickDetectRepository = DeckEditButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
@@ -79,13 +82,7 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
         if (clickedAlertModalButton) {
             if (clickedAlertModalButton.type === AlertModalButtonsType.UNMATCHED_CARD) {
                 console.log(`[DEBUG] Click Alert Modal Button Type: UNMATCHED_CARD`);
-                this.hideNotFoundCardPopup();
-                if (this.isDeckEditMode() == true) {
-                    this.handleNotFoundCardPopupButtonClickInEditMode();
-                    return clickedAlertModalButton;
-                }
-
-                this.handleNotFoundCardPopupButtonClickInNormalMode();
+                this.handleNotFoundCardPopupButtonClick();
             }
 
             if (clickedAlertModalButton.type === AlertModalButtonsType.INCOMPLETE_DECK) {
@@ -110,6 +107,15 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
             return result;
         }
         return null;
+    }
+
+    private handleNotFoundCardPopupButtonClick(): void {
+        this.hideNotFoundCardPopup();
+        this.resetCardSearchInput();
+        this.hideDeckCardSearchCancelButton();
+
+        const currentClickedDeckId = this.getCurrentClickDeckId()!;
+        this.setInteractionAfterNotFountCardPopupButtonClick(currentClickedDeckId);
     }
 
     private setButtonClickEnabled(isEnabled: boolean): void {
@@ -160,22 +166,18 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
         }
     }
 
-    private handleNotFoundCardPopupButtonClickInNormalMode(): void {
-        const currentClickedDeckId = this.getCurrentClickDeckId()!;
-
-        this.setAllMyDeckButtonClickEnabled(true);
-        this.setAllDeckNameEditButtonClickEnabled(true);
-        this.setDeckNameEditButtonClickEnabled(currentClickedDeckId, true);
-        this.setDeckEditButtonClickEnabled(true);
-        this.setBuildDeckButtonHoverEnabled(true);
-        this.setBuildDeckButtonClickEnabled(true);
-        this.setAllDeckDeleteButtonClickEnabled(true);
-        this.setMyDeckCardSearchInputEnabled(false);
+    private hideDeckCardSearchCancelButton(): void {
+        this.myDeckCardSearchCancelButtonRepository.findButton()?.setVisibility(false);
     }
 
-    private handleNotFoundCardPopupButtonClickInEditMode(): void {
-        const currentClickedDeckId = this.getCurrentClickDeckId()!;
+    private resetCardSearchInput(): void {
+        const cardSearchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
+        if (cardSearchInputText !== null && cardSearchInputText.length > 0) {
+            this.myDeckSearchInputContainerRepository.clearUserInput();
+        }
+    }
 
+    private setInteractionAfterNotFountCardPopupButtonClick(currentClickedDeckId: number): void {
         this.setAllMyDeckButtonClickEnabled(true);
         this.setAllDeckNameEditButtonClickEnabled(true);
         this.setDeckNameEditButtonClickEnabled(currentClickedDeckId, true);
@@ -183,8 +185,13 @@ export class MyDeckAlertModalButtonsClickDetectServiceImpl implements MyDeckAler
         this.setBuildDeckButtonClickEnabled(true);
         this.setAllDeckDeleteButtonClickEnabled(true);
         this.setMyDeckCardSearchInputEnabled(false);
-        this.setMyDeckBlockHoverEnabled(true);
-        this.setDeckEditDoneButtonHoverEnabled(true);
+
+        if (this.isDeckEditMode() == true) {
+            this.setMyDeckBlockHoverEnabled(true);
+            this.setDeckEditDoneButtonHoverEnabled(true);
+        } else {
+            this.setDeckEditButtonClickEnabled(true);
+        }
     }
 
     private setAllMyDeckButtonClickEnabled(isEnabled: boolean): void {
