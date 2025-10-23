@@ -91,7 +91,6 @@ export class DeckMakePopupButtonsClickDetectServiceImpl implements DeckMakePopup
                 const searchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
                 if (searchInputText !== null && searchInputText.length > 0) {
                     this.myDeckSearchInputContainerRepository.clearUserInput();
-                    this.myDeckSearchInputContainerRepository.deleteUserInput();
                 }
 
                 this.setSearchCancelButtonVisibility(false);

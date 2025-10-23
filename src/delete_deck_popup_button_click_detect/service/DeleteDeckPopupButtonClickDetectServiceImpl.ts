@@ -384,7 +384,6 @@ export class DeleteDeckPopupButtonClickDetectServiceImpl implements DeleteDeckPo
         const searchInputText = this.myDeckSearchInputContainerRepository.findInputValue();
         if (searchInputText !== null && searchInputText.length > 0) {
             this.myDeckSearchInputContainerRepository.clearUserInput();
-            this.myDeckSearchInputContainerRepository.deleteUserInput();
         }
     }
 
