@@ -71,6 +71,7 @@ import {DeckNameEditInputContainerServiceImpl} from "../../src/deck_name_edit_in
 import {DeckNameEditInfoTextServiceImpl} from "../../src/deck_name_edit_info_text/service/DeckNameEditInfoTextServiceImpl";
 import {AlertModalContainerServiceImpl} from "../../src/alert_modal_container/service/AlertModalContainerServiceImpl";
 import {AlertModalButtonsServiceImpl} from "../../src/alert_modal_buttons/service/AlertModalButtonsServiceImpl";
+import {AlertModalSelectedDeckCardCountServiceImpl} from "../../src/alert_modal_selected_deck_card_count/service/AlertModalSelectedDeckCardCountServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -187,6 +188,7 @@ export class TCGJustTestMyDeckView {
     private deckNameEditInfoTextService: DeckNameEditInfoTextServiceImpl;
     private alertModalContainerService: AlertModalContainerServiceImpl;
     private alertModalButtonsService: AlertModalButtonsServiceImpl;
+    private alertModalSelectedDeckCardCountService: AlertModalSelectedDeckCardCountServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
     private cardCountManager = CardCountManager.getInstance();
@@ -282,6 +284,7 @@ export class TCGJustTestMyDeckView {
         this.deckNameEditInfoTextService = DeckNameEditInfoTextServiceImpl.getInstance(this.scene);
         this.alertModalContainerService = AlertModalContainerServiceImpl.getInstance(this.scene);
         this.alertModalButtonsService = AlertModalButtonsServiceImpl.getInstance(this.scene);
+        this.alertModalSelectedDeckCardCountService = AlertModalSelectedDeckCardCountServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -379,7 +382,16 @@ export class TCGJustTestMyDeckView {
             }
         }, false);
         this.renderer.domElement.addEventListener('mousemove', (e) => this.deckEditDoneButtonHoverDetectService.onMouseMove(e), false);
-        this.renderer.domElement.addEventListener('mousedown', (e) => this.deckEditDoneButtonClickDetectService.onMouseDown(e), false);
+//         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckEditDoneButtonClickDetectService.onMouseDown(e), false);
+        this.renderer.domElement.addEventListener('mousedown', async (e) => {
+            const buttonEvent = await this.deckEditDoneButtonClickDetectService.onMouseDown(e);
+            if (buttonEvent) {
+                // To-do: 나중에 수정 필요
+                if (this.deckEditDoneButtonClickDetectService.getCurrentButtonClickState() == false) {
+                    await this.addAlertModalSelectedDeckCardCount();
+                }
+            }
+        }, false);
         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckCardSearchCancelButtonClickDetectService.onMouseDown(e), false);
 //         this.renderer.domElement.addEventListener('mousedown', (e) => this.deckNameEditPopupButtonsClickDetectService.onMouseDown(e), false);
         this.renderer.domElement.addEventListener('mousedown', async (e) => {
@@ -1606,6 +1618,27 @@ export class TCGJustTestMyDeckView {
         }
     }
 
+    private async addAlertModalSelectedDeckCardCount(): Promise<void> {
+        try {
+            const currentClickedDeckId = this.myDeckButtonClickDetectService.getCurrentClickDeckId();
+            if (currentClickedDeckId == null) return;
+
+            const cardCount = this.cardCountManager.findTotalSelectedCardCount(currentClickedDeckId);
+
+            await this.alertModalSelectedDeckCardCountService.createAlertModalSelectedDeckCardCount(cardCount);
+
+            const cardCountMesh = this.alertModalSelectedDeckCardCountService.getAlertModalSelectedDeckCardCount();
+            if (cardCountMesh) {
+                this.scene.add(cardCountMesh.getMesh());
+            } else {
+                console.warn(`Alert Modal Selected Deck Card Count Not found`);
+            }
+
+        } catch (error) {
+            console.error('Failed to add Alert Modal Selected Deck Card Count:', error);
+        }
+    }
+
     private onWindowResize(): void {
         const newWidth = window.innerWidth;
         const newHeight = window.innerHeight;
@@ -1668,6 +1701,7 @@ export class TCGJustTestMyDeckView {
             this.deckNameEditInfoTextService.adjustDeckNameEditInfoTextPosition();
             this.alertModalContainerService.adjustAlertModalContainerPosition();
             this.alertModalButtonsService.adjustAlertModalButtonsPosition();
+            this.alertModalSelectedDeckCardCountService.adjustAlertModalSelectedDeckCardCount();
         }
     }
 
