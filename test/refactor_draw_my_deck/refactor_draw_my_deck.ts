@@ -400,7 +400,7 @@ export class TCGJustTestMyDeckView {
                 this.reAddMyDeckNameText();
             }
         }, false);
-        this.renderer.domElement.addEventListener('mousedown', (e) => this.myDeckAlertModalButtonsClickDetectService.onMouseDown(e), false);
+        this.renderer.domElement.addEventListener('mousedown', async (e) => await this.myDeckAlertModalButtonsClickDetectService.onMouseDown(e), false);
     }
 
     public static getInstance(simulationMyDeckContainer: HTMLElement): TCGJustTestMyDeckView {

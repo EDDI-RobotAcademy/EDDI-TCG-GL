@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 import {MyDeckAlertModalButtonsClickDetectRepository} from "./MyDeckAlertModalButtonsClickDetectRepository";
 import {AlertModalButtons} from "../../alert_modal_buttons/entity/AlertModalButtons";
+import {AlertModalButtonsType} from "../../alert_modal_buttons/entity/AlertModalButtonsType";
 
 export class MyDeckAlertModalButtonsClickDetectRepositoryImpl implements MyDeckAlertModalButtonsClickDetectRepository {
     private static instance: MyDeckAlertModalButtonsClickDetectRepositoryImpl;
@@ -9,6 +10,7 @@ export class MyDeckAlertModalButtonsClickDetectRepositoryImpl implements MyDeckA
 
     private currentClickedButton: AlertModalButtons | null = null;
     private buttonClickEnabled: boolean = false;
+    private buttonClickEnabledMap: Map<AlertModalButtonsType, boolean> = new Map();
 
     public static getInstance(): MyDeckAlertModalButtonsClickDetectRepositoryImpl {
         if (!MyDeckAlertModalButtonsClickDetectRepositoryImpl.instance) {
@@ -59,12 +61,20 @@ export class MyDeckAlertModalButtonsClickDetectRepositoryImpl implements MyDeckA
         this.currentClickedButton = null;
     }
 
-    public setButtonClickEnabled(isEnabled: boolean): void {
+    public setAllButtonClickEnabled(isEnabled: boolean): void {
         this.buttonClickEnabled = isEnabled;
     }
 
-    public isButtonClickEnabled(): boolean {
+    public isAllButtonClickEnabled(): boolean {
         return this.buttonClickEnabled;
+    }
+
+    public setButtonClickEnabled(type: AlertModalButtonsType, isEnabled: boolean): void {
+        this.buttonClickEnabledMap.set(type, isEnabled);
+    }
+
+    public isButtonClickEnabled(type: AlertModalButtonsType): boolean | undefined {
+        return this.buttonClickEnabledMap.get(type);
     }
 
 }

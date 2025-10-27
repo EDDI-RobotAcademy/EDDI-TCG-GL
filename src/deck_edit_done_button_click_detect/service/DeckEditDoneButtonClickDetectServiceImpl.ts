@@ -382,7 +382,8 @@ export class DeckEditDoneButtonClickDetectServiceImpl implements DeckEditDoneBut
     }
 
     private setIncompleteDeckPopupButtonClickEnabled(isEnabled: boolean): void {
-        this.myDeckAlertModalButtonsClickDetectRepository.setButtonClickEnabled(isEnabled);
+        this.myDeckAlertModalButtonsClickDetectRepository.setAllButtonClickEnabled(isEnabled);
+        this.myDeckAlertModalButtonsClickDetectRepository.setButtonClickEnabled(AlertModalButtonsType.INCOMPLETE_DECK, isEnabled);
     }
 
     private setAllMyDeckButtonClickEnabled(isEnabled: boolean): void {
