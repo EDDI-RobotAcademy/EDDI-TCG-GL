@@ -923,7 +923,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
 
     // To-do: 일반 모드와 편집 모드 동시에 사용되는 중복 코드 정리 필요함
     private setInteractionStatesAfterPopupButtonShownInNormalMode(currentClickedDeckId: number): void {
-        this.setMyDeckAlertModalButtonClickEnabled(true);
+        this.setMyDeckAllAlertModalButtonClickEnabled(true);
         this.setAllMyDeckButtonClickEnabled(false);
         this.setAllDeckNameEditButtonClickEnabled(false);
         this.setDeckNameEditButtonClickEnabled(currentClickedDeckId, false);
@@ -936,7 +936,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
     }
 
     private setInteractionStatesAfterPopupButtonShownInDeckEditMode(currentClickedDeckId: number): void {
-        this.setMyDeckAlertModalButtonClickEnabled(true);
+        this.setMyDeckAllAlertModalButtonClickEnabled(true);
         this.setAllMyDeckButtonClickEnabled(false);
         this.setAllDeckNameEditButtonClickEnabled(false);
         this.setDeckNameEditButtonClickEnabled(currentClickedDeckId, false);
@@ -996,8 +996,9 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         this.deckEditDoneButtonHoverDetectRepository.setButtonHoverEnabled(isEnabled);
     }
 
-    private setMyDeckAlertModalButtonClickEnabled(isEnabled: boolean): void {
-        this.myDeckAlertModalButtonDetectRepository.setButtonClickEnabled(isEnabled);
+    private setMyDeckAllAlertModalButtonClickEnabled(isEnabled: boolean): void {
+        this.myDeckAlertModalButtonDetectRepository.setAllButtonClickEnabled(isEnabled);
+        this.myDeckAlertModalButtonDetectRepository.setButtonClickEnabled(AlertModalButtonsType.UNMATCHED_CARD, isEnabled);
     }
 
     private showEmptyInputPopup(): void {
