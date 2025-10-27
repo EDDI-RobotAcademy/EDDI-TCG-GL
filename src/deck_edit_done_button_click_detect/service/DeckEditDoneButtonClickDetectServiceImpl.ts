@@ -145,15 +145,16 @@ export class DeckEditDoneButtonClickDetectServiceImpl implements DeckEditDoneBut
             this.camera);
 
         if (clickedButton) {
-            this.saveCurrentDoneButtonClickState(true);
             console.log(`%c Clicked Deck Edit Done Button`, 'color: #ffbb00; font-weight: bold;');
 
             const selectedTotalCardCount = this.cardCountManager.findTotalSelectedCardCount(currentClickedDeckId);
             if (selectedTotalCardCount == 40) {
+                this.saveCurrentDoneButtonClickState(true);
                 this.handleDeckEditCompletion(currentClickedDeckId);
             } else {
+                this.saveCurrentDoneButtonClickState(false);
                 this.handleDeckEditIncompletion(selectedTotalCardCount, currentClickedDeckId);
-                return null;
+//                 return null;
             }
             return clickedButton;
         }
