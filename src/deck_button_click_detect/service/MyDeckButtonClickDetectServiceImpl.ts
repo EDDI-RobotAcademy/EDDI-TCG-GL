@@ -49,6 +49,7 @@ import {MyDeckOwnedCardsPositionRepositoryImpl} from "../../my_deck_owned_cards_
 import {CardSelectionBlockerPositionRepositoryImpl} from "../../card_selection_blocker_position/repository/CardSelectionBlockerPositionRepositoryImpl";
 import {MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl} from "../../my_deck_remaining_out_of_total_slash_position/repository/MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl";
 import {MyDeckTotalOwnedCardsPositionRepositoryImpl} from "../../my_deck_total_owned_cards_position/repository/MyDeckTotalOwnedCardsPositionRepositoryImpl";
+import {DeckEditDoneButtonClickDetectRepositoryImpl} from "../../deck_edit_done_button_click_detect/repository/DeckEditDoneButtonClickDetectRepositoryImpl";
 
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
@@ -108,6 +109,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private cardSelectionBlockerPositionRepository: CardSelectionBlockerPositionRepositoryImpl;
     private myDeckRemainingOutOfTotalSlashPositionRepository: MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl;
     private myDeckTotalOwnedCardsPositionRepository: MyDeckTotalOwnedCardsPositionRepositoryImpl;
+    private deckEditDoneButtonClickDetectRepository: DeckEditDoneButtonClickDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cardCountManager = CardCountManager.getInstance();
@@ -158,6 +160,7 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.cardSelectionBlockerPositionRepository = CardSelectionBlockerPositionRepositoryImpl.getInstance();
         this.myDeckRemainingOutOfTotalSlashPositionRepository = MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl.getInstance();
         this.myDeckTotalOwnedCardsPositionRepository = MyDeckTotalOwnedCardsPositionRepositoryImpl.getInstance();
+        this.deckEditDoneButtonClickDetectRepository = DeckEditDoneButtonClickDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckButtonClickDetectServiceImpl {
@@ -279,6 +282,8 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.cardCountManager.restoreCardCountByGrade();
 
         this.hideDeckEditUI();
+        this.setDeckEditDoneButtonClickEnabled(false);
+        this.setDeckEditDoneButtonHoverEnabled(false);
     }
 
     // 새로운 덱 표시
@@ -535,6 +540,14 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
 
     private setSearchCancelButtonClickEnabled(isEnable: boolean): void {
         this.deckCardSearchCancelButtonClickDetectRepository.setButtonClickEnabled(isEnable);
+    }
+
+    private setDeckEditDoneButtonClickEnabled(isEnabled: boolean): void {
+        this.deckEditDoneButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
+    }
+
+    private setDeckEditDoneButtonHoverEnabled(isEnabled: boolean): void {
+        this.deckEditDoneButtonHoverDetectRepository.setButtonHoverEnabled(isEnabled);
     }
 
     private restoreOriginalDeckState(deckId: number): void {
