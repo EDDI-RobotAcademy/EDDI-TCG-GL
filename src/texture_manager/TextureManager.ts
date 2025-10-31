@@ -80,6 +80,12 @@ export class TextureManager {
     private deckNameEditPopupButtonsTextureList: { [id: number]: THREE.Texture } = {};
     private alertModalContainerTextureList: { [id: number]: THREE.Texture } = {};
     private alertModalButtonsTextureList: { [id: number]: THREE.Texture } = {};
+    private filterPanelTextureList: { [id: number]: THREE.Texture } = {};
+    private filterButtonTextureList: { [id: number]: THREE.Texture } = {};
+    private gradeFilterOptionActiveTextureList: { [id: number]: THREE.Texture } = {};
+    private gradeFilterOptionInactiveTextureList: { [id: number]: THREE.Texture } = {};
+    private raceFilterOptionActiveTextureList: { [id: number]: THREE.Texture } = {};
+    private raceFilterOptionInactiveTextureList: { [id: number]: THREE.Texture } = {};
 
     private constructor(renderer?: THREE.WebGLRenderer) {
         if (renderer instanceof THREE.WebGLRenderer) {
@@ -184,6 +190,12 @@ export class TextureManager {
                 this.loadTextures(imageData.deck_name_edit_pop_up_buttons, this.deckNameEditPopupButtonsTextureList),
                 this.loadTextures(imageData.alert_modal_container, this.alertModalContainerTextureList),
                 this.loadTextures(imageData.alert_modal_buttons, this.alertModalButtonsTextureList),
+                this.loadTextures(imageData.filter_panel, this.filterPanelTextureList),
+                this.loadTextures(imageData.filter_button, this.filterButtonTextureList),
+                this.loadTextures(imageData.grade_filter_option_active, this.gradeFilterOptionActiveTextureList),
+                this.loadTextures(imageData.grade_filter_option_inactive, this.gradeFilterOptionInactiveTextureList),
+                this.loadTextures(imageData.race_filter_option_active, this.raceFilterOptionActiveTextureList),
+                this.loadTextures(imageData.race_filter_option_inactive, this.raceFilterOptionInactiveTextureList),
             ]);
 
             console.log('All textures preloaded from TextureManager.ts');
@@ -428,6 +440,18 @@ export class TextureManager {
                 return this.alertModalContainerTextureList[id];
             case 'alert_modal_buttons':
                 return this.alertModalButtonsTextureList[id];
+            case 'filter_panel':
+                return this.filterPanelTextureList[id];
+            case 'filter_button':
+                return this.filterButtonTextureList[id];
+            case 'grade_filter_option_active':
+                return this.gradeFilterOptionActiveTextureList[id];
+            case 'grade_filter_option_inactive':
+                return this.gradeFilterOptionInactiveTextureList[id];
+            case 'race_filter_option_active':
+                return this.raceFilterOptionActiveTextureList[id];
+            case 'race_filter_option_inactive':
+                return this.raceFilterOptionInactiveTextureList[id];
             default:
                 return undefined;
         }

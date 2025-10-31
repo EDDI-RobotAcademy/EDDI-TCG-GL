@@ -72,6 +72,7 @@ import {DeckNameEditInfoTextServiceImpl} from "../../src/deck_name_edit_info_tex
 import {AlertModalContainerServiceImpl} from "../../src/alert_modal_container/service/AlertModalContainerServiceImpl";
 import {AlertModalButtonsServiceImpl} from "../../src/alert_modal_buttons/service/AlertModalButtonsServiceImpl";
 import {AlertModalSelectedDeckCardCountServiceImpl} from "../../src/alert_modal_selected_deck_card_count/service/AlertModalSelectedDeckCardCountServiceImpl";
+import {CardFilterButtonServiceImpl} from "../../src/card_filter_button/service/CardFilterButtonServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -189,6 +190,7 @@ export class TCGJustTestMyDeckView {
     private alertModalContainerService: AlertModalContainerServiceImpl;
     private alertModalButtonsService: AlertModalButtonsServiceImpl;
     private alertModalSelectedDeckCardCountService: AlertModalSelectedDeckCardCountServiceImpl;
+    private cardFilterButtonService: CardFilterButtonServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
     private cardCountManager = CardCountManager.getInstance();
@@ -285,6 +287,7 @@ export class TCGJustTestMyDeckView {
         this.alertModalContainerService = AlertModalContainerServiceImpl.getInstance(this.scene);
         this.alertModalButtonsService = AlertModalButtonsServiceImpl.getInstance(this.scene);
         this.alertModalSelectedDeckCardCountService = AlertModalSelectedDeckCardCountServiceImpl.getInstance(this.scene);
+        this.cardFilterButtonService = CardFilterButtonServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -451,6 +454,7 @@ export class TCGJustTestMyDeckView {
         await this.addMyDeckSearchInputContainer();
         await this.addMyDeckCardSearchBox();
         await this.addMyDeckCardSearchCancelButton();
+        await this.addCardFilterButton();
         await this.addDeckCardDeleteButton();
         await this.addDeckCardAddButton();
         await this.addMyDeckButton();
@@ -540,6 +544,22 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add MyDeckSearchInputContainer:', error);
+        }
+    }
+
+    private async addCardFilterButton(): Promise<void> {
+        try {
+            await this.cardFilterButtonService.createCardFilterButton();
+
+            const button = this.cardFilterButtonService.getCardFilterButton();
+            if (button) {
+                this.scene.add(button.getMesh());
+            } else {
+                console.warn(`Card Filter Button Not found`);
+            }
+
+        } catch (error) {
+            console.error('Failed to add Card Filter Button:', error);
         }
     }
 
@@ -1702,6 +1722,7 @@ export class TCGJustTestMyDeckView {
             this.alertModalContainerService.adjustAlertModalContainerPosition();
             this.alertModalButtonsService.adjustAlertModalButtonsPosition();
             this.alertModalSelectedDeckCardCountService.adjustAlertModalSelectedDeckCardCount();
+            this.cardFilterButtonService.adjustCardFilterButtonPosition();
         }
     }
 
