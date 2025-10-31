@@ -75,6 +75,12 @@ class WillBeReferenceImageLocation(Enum):
     DECK_NAME_EDIT_POP_UP_BUTTONS = "resource/deck_name_edit_pop_up/button/"
     ALERT_MODAL_CONTAINER = "resource/modal/alert/container/"
     ALERT_MODAL_BUTTONS = "resource/modal/alert/buttons/"
+    FILTER_PANEL = "resource/filter/filter_panel/"
+    FILTER_BUTTON = "resource/filter/button/"
+    GRADE_FILTER_OPTION_ACTIVE = "resource/filter/grade_filter_option/active/"
+    GRADE_FILTER_OPTION_INACTIVE = "resource/filter/grade_filter_option/inactive/"
+    RACE_FILTER_OPTION_ACTIVE = "resource/filter/race_filter_option/active/"
+    RACE_FILTER_OPTION_INACTIVE = "resource/filter/race_filter_option/inactive/"
 
 class RelativeImageLocation(Enum):
     CARD = "../../resource/battle_field_unit/card/"
@@ -144,6 +150,12 @@ class RelativeImageLocation(Enum):
     DECK_NAME_EDIT_POP_UP_BUTTONS = "../../resource/deck_name_edit_pop_up/button/"
     ALERT_MODAL_CONTAINER = "../../resource/modal/alert/container/"
     ALERT_MODAL_BUTTONS = "../../resource/modal/alert/buttons/"
+    FILTER_PANEL = "../../resource/filter/filter_panel/"
+    FILTER_BUTTON = "../../resource/filter/button/"
+    GRADE_FILTER_OPTION_ACTIVE = "../../resource/filter/grade_filter_option/active/"
+    GRADE_FILTER_OPTION_INACTIVE = "../../resource/filter/grade_filter_option/inactive/"
+    RACE_FILTER_OPTION_ACTIVE = "../../resource/filter/race_filter_option/active/"
+    RACE_FILTER_OPTION_INACTIVE = "../../resource/filter/race_filter_option/inactive/"
 
 # 디렉토리 경로 설정
 relative_paths = {
@@ -214,6 +226,12 @@ relative_paths = {
     RelativeImageLocation.DECK_NAME_EDIT_POP_UP_BUTTONS: RelativeImageLocation.DECK_NAME_EDIT_POP_UP_BUTTONS.value,
     RelativeImageLocation.ALERT_MODAL_CONTAINER: RelativeImageLocation.ALERT_MODAL_CONTAINER.value,
     RelativeImageLocation.ALERT_MODAL_BUTTONS: RelativeImageLocation.ALERT_MODAL_BUTTONS.value,
+    RelativeImageLocation.FILTER_PANEL: RelativeImageLocation.FILTER_PANEL.value,
+    RelativeImageLocation.FILTER_BUTTON: RelativeImageLocation.FILTER_BUTTON.value,
+    RelativeImageLocation.GRADE_FILTER_OPTION_ACTIVE: RelativeImageLocation.GRADE_FILTER_OPTION_ACTIVE.value,
+    RelativeImageLocation.GRADE_FILTER_OPTION_INACTIVE: RelativeImageLocation.GRADE_FILTER_OPTION_INACTIVE.value,
+    RelativeImageLocation.RACE_FILTER_OPTION_ACTIVE: RelativeImageLocation.RACE_FILTER_OPTION_ACTIVE.value,
+    RelativeImageLocation.RACE_FILTER_OPTION_INACTIVE: RelativeImageLocation.RACE_FILTER_OPTION_INACTIVE.value,
 }
 
 reference_paths = {
@@ -284,6 +302,12 @@ reference_paths = {
     WillBeReferenceImageLocation.DECK_NAME_EDIT_POP_UP_BUTTONS: WillBeReferenceImageLocation.DECK_NAME_EDIT_POP_UP_BUTTONS.value,
     WillBeReferenceImageLocation.ALERT_MODAL_CONTAINER: WillBeReferenceImageLocation.ALERT_MODAL_CONTAINER.value,
     WillBeReferenceImageLocation.ALERT_MODAL_BUTTONS: WillBeReferenceImageLocation.ALERT_MODAL_BUTTONS.value,
+    WillBeReferenceImageLocation.FILTER_PANEL: WillBeReferenceImageLocation.FILTER_PANEL.value,
+    WillBeReferenceImageLocation.FILTER_BUTTON: WillBeReferenceImageLocation.FILTER_BUTTON.value,
+    WillBeReferenceImageLocation.GRADE_FILTER_OPTION_ACTIVE: WillBeReferenceImageLocation.GRADE_FILTER_OPTION_ACTIVE.value,
+    WillBeReferenceImageLocation.GRADE_FILTER_OPTION_INACTIVE: WillBeReferenceImageLocation.GRADE_FILTER_OPTION_INACTIVE.value,
+    WillBeReferenceImageLocation.RACE_FILTER_OPTION_ACTIVE: WillBeReferenceImageLocation.RACE_FILTER_OPTION_ACTIVE.value,
+    WillBeReferenceImageLocation.RACE_FILTER_OPTION_INACTIVE: WillBeReferenceImageLocation.RACE_FILTER_OPTION_INACTIVE.value,
 }
 
 image_paths = {
@@ -354,6 +378,12 @@ image_paths = {
     "deck_name_edit_pop_up_buttons": [],
     "alert_modal_container": [],
     "alert_modal_buttons": [],
+    "filter_panel": [],
+    "filter_button": [],
+    "grade_filter_option_active": [],
+    "grade_filter_option_inactive": [],
+    "race_filter_option_active": [],
+    "race_filter_option_inactive": [],
 }
 
 def is_image_file(file_name):
