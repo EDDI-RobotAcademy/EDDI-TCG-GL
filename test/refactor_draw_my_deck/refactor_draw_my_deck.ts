@@ -25,6 +25,7 @@ import {DeckNameEditPopupButtonsConfigList} from "../../src/deck_name_edit_pop_u
 import {DeckNameEditInfoTextConfigList} from "../../src/deck_name_edit_info_text/entity/DeckNameEditInfoTextConfigList";
 import {AlertModalContainerConfigList} from "../../src/alert_modal_container/entity/AlertModalContainerConfigList";
 import {AlertModalButtonsConfigList} from "../../src/alert_modal_buttons/entity/AlertModalButtonsConfigList";
+import {CardFilterRaceOptionInactiveConfigList} from "../../src/card_filter_race_option_inactive/entity/CardFilterRaceOptionInactiveConfigList";
 
 import {MyDeckButtonServiceImpl} from "../../src/my_deck_button/service/MyDeckButtonServiceImpl";
 import {MyDeckButtonEffectServiceImpl} from "../../src/my_deck_button_effect/service/MyDeckButtonEffectServiceImpl";
@@ -74,6 +75,7 @@ import {AlertModalButtonsServiceImpl} from "../../src/alert_modal_buttons/servic
 import {AlertModalSelectedDeckCardCountServiceImpl} from "../../src/alert_modal_selected_deck_card_count/service/AlertModalSelectedDeckCardCountServiceImpl";
 import {CardFilterButtonServiceImpl} from "../../src/card_filter_button/service/CardFilterButtonServiceImpl";
 import {CardFilterPanelServiceImpl} from "../../src/card_filter_panel/service/CardFilterPanelServiceImpl";
+import {CardFilterRaceOptionInactiveServiceImpl} from "../../src/card_filter_race_option_inactive/service/CardFilterRaceOptionInactiveServiceImpl";
 
 import {MyDeckButtonClickDetectServiceImpl} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectServiceImpl";
 import {MyDeckButtonClickDetectService} from "../../src/deck_button_click_detect/service/MyDeckButtonClickDetectService";
@@ -193,6 +195,7 @@ export class TCGJustTestMyDeckView {
     private alertModalSelectedDeckCardCountService: AlertModalSelectedDeckCardCountServiceImpl;
     private cardFilterButtonService: CardFilterButtonServiceImpl;
     private cardFilterPanelService: CardFilterPanelServiceImpl;
+    private cardFilterRaceOptionInactive: CardFilterRaceOptionInactiveServiceImpl;
 
     private clippingMaskManager = ClippingMaskManager.getInstance();
     private cardCountManager = CardCountManager.getInstance();
@@ -291,6 +294,7 @@ export class TCGJustTestMyDeckView {
         this.alertModalSelectedDeckCardCountService = AlertModalSelectedDeckCardCountServiceImpl.getInstance(this.scene);
         this.cardFilterButtonService = CardFilterButtonServiceImpl.getInstance(this.scene);
         this.cardFilterPanelService = CardFilterPanelServiceImpl.getInstance(this.scene);
+        this.cardFilterRaceOptionInactive = CardFilterRaceOptionInactiveServiceImpl.getInstance(this.scene);
 
         this.myDeckButtonClickDetectService = MyDeckButtonClickDetectServiceImpl.getInstance(this.camera, this.scene);
         this.sideScrollAreaDetectService = SideScrollAreaDetectServiceImpl.getInstance(this.camera, this.scene);
@@ -459,6 +463,7 @@ export class TCGJustTestMyDeckView {
         await this.addMyDeckCardSearchCancelButton();
         await this.addCardFilterButton();
         await this.addCardFilterPanel();
+        await this.addCardFilterRaceOptionInactive();
         await this.addDeckCardDeleteButton();
         await this.addDeckCardAddButton();
         await this.addMyDeckButton();
@@ -580,6 +585,23 @@ export class TCGJustTestMyDeckView {
 
         } catch (error) {
             console.error('Failed to add Card Filter Panel:', error);
+        }
+    }
+
+    private async addCardFilterRaceOptionInactive(): Promise<void> {
+        try {
+            const configList = new CardFilterRaceOptionInactiveConfigList();
+            await Promise.all(configList.raceOptionConfigs.map(async (config) => {
+                await this.cardFilterRaceOptionInactive.createCardFilterRaceOptionInactive(config.type, config.position);
+            }));
+
+            const allOptions = this.cardFilterRaceOptionInactive.getAllCardFilterRaceOptionInactive();
+            allOptions.forEach(option => {
+                this.scene.add(option.getMesh());
+            });
+
+        } catch (error) {
+            console.error('Failed to add Card Filter Race Option Inactive:', error);
         }
     }
 
@@ -1744,6 +1766,7 @@ export class TCGJustTestMyDeckView {
             this.alertModalSelectedDeckCardCountService.adjustAlertModalSelectedDeckCardCount();
             this.cardFilterButtonService.adjustCardFilterButtonPosition();
             this.cardFilterPanelService.adjustCardFilterPanelPosition();
+            this.cardFilterRaceOptionInactive.adjustCardFilterRaceOptionInactivePosition();
         }
     }
 
