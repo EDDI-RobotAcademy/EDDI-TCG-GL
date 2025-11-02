@@ -11,23 +11,23 @@ export class CardFilterGradeOptionInactiveConfigList {
     public gradeOptionConfigs: GradeOptionConfig[] = [
         {
             type: CardGrade.COMMON,
-            position: new Vector2d(0.019, 0.052)
+            position: new Vector2d(0.0179, 0.052)
         },
         {
             type: CardGrade.UNCOMMON,
-            position: new Vector2d(0.019, 0.023)
+            position: new Vector2d(0.0179, 0.023)
         },
         {
             type: CardGrade.HERO,
-            position: new Vector2d(0.019, -0.006)
+            position: new Vector2d(0.0179, -0.006)
         },
         {
             type: CardGrade.LEGEND,
-            position: new Vector2d(0.019, -0.035)
+            position: new Vector2d(0.0179, -0.035)
         },
         {
             type: CardGrade.MYTHICAL,
-            position: new Vector2d(0.019, -0.064)
+            position: new Vector2d(0.0179, -0.064)
         },
 
     ];

@@ -39,7 +39,7 @@ export class CardFilterGradeOptionInactiveServiceImpl implements CardFilterGrade
             const optionMesh = option.getMesh();
             const initialPosition = option.position;
 
-            const optionWidth = 0.13 * windowWidth;
+            const optionWidth = 0.127 * windowWidth;
             const optionHeight = optionWidth * (24/244);
 
             const newPositionX = initialPosition.getX() * windowWidth;
