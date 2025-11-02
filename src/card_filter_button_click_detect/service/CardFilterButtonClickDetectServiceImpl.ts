@@ -11,6 +11,15 @@ import {CardFilterButtonRepositoryImpl} from "../../card_filter_button/repositor
 import {CardFilterPanelRepositoryImpl} from "../../card_filter_panel/repository/CardFilterPanelRepositoryImpl";
 import {CardFilterRaceOptionInactiveRepositoryImpl} from "../../card_filter_race_option_inactive/repository/CardFilterRaceOptionInactiveRepositoryImpl";
 import {CardFilterGradeOptionInactiveRepositoryImpl} from "../../card_filter_grade_option_inactive/repository/CardFilterGradeOptionInactiveRepositoryImpl";
+import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
+
+import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
+import {DeckNameEditButtonClickDetectRepositoryImpl} from "../../deck_name_edit_button_click_detect/repository/DeckNameEditButtonClickDetectRepositoryImpl";
+import {DeckEditButtonClickDetectRepositoryImpl} from "../../deck_edit_button_click_detect/repository/DeckEditButtonClickDetectRepositoryImpl";
+import {BuildDeckButtonHoverDetectRepositoryImpl} from "../../build_deck_button_hover_detect/repository/BuildDeckButtonHoverDetectRepositoryImpl";
+import {BuildDeckButtonClickDetectRepositoryImpl} from "../../build_deck_button_click_detect/repository/BuildDeckButtonClickDetectRepositoryImpl";
+import {DeckDeleteButtonClickDetectRepositoryImpl} from "../../deck_delete_button_click_detect/repository/DeckDeleteButtonClickDetectRepositoryImpl";
+import {MyDeckBlockHoverDetectRepositoryImpl} from "../../my_deck_block_hover_detect/repository/MyDeckBlockHoverDetectRepositoryImpl";
 
 export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonClickDetectService {
     private static instance: CardFilterButtonClickDetectServiceImpl | null = null;
@@ -20,6 +29,14 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
     private cardFilterPanelRepository: CardFilterPanelRepositoryImpl;
     private cardFilterRaceOptionInactiveRepository: CardFilterRaceOptionInactiveRepositoryImpl;
     private cardFilterGradeOptionInactiveRepository: CardFilterGradeOptionInactiveRepositoryImpl;
+    private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
+    private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
+    private deckNameEditButtonClickDetectRepository: DeckNameEditButtonClickDetectRepositoryImpl;
+    private deckEditButtonClickDetectRepository: DeckEditButtonClickDetectRepositoryImpl;
+    private buildDeckButtonHoverDetectRepository: BuildDeckButtonHoverDetectRepositoryImpl;
+    private buildDeckButtonClickDetectRepository: BuildDeckButtonClickDetectRepositoryImpl;
+    private deckDeleteButtonClickDetectRepository: DeckDeleteButtonClickDetectRepositoryImpl;
+    private myDeckBlockHoverDetectRepository: MyDeckBlockHoverDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -28,6 +45,14 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         this.cardFilterPanelRepository = CardFilterPanelRepositoryImpl.getInstance(scene);
         this.cardFilterRaceOptionInactiveRepository = CardFilterRaceOptionInactiveRepositoryImpl.getInstance(scene);
         this.cardFilterGradeOptionInactiveRepository = CardFilterGradeOptionInactiveRepositoryImpl.getInstance(scene);
+        this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
+        this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
+        this.deckNameEditButtonClickDetectRepository = DeckNameEditButtonClickDetectRepositoryImpl.getInstance();
+        this.deckEditButtonClickDetectRepository = DeckEditButtonClickDetectRepositoryImpl.getInstance();
+        this.buildDeckButtonHoverDetectRepository = BuildDeckButtonHoverDetectRepositoryImpl.getInstance();
+        this.buildDeckButtonClickDetectRepository = BuildDeckButtonClickDetectRepositoryImpl.getInstance();
+        this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
+        this.myDeckBlockHoverDetectRepository = MyDeckBlockHoverDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): CardFilterButtonClickDetectServiceImpl {
@@ -39,6 +64,9 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
 
     public async handleButtonClick(clickPoint: { x: number; y: number }): Promise<CardFilterButton | null> {
         const { x, y } = clickPoint;
+        const currentClickedDeckId = this.getCurrentClickDeckId();
+        if (currentClickedDeckId == null) return null;
+
         const button = this.getCardFilterButton();
         if (button !== null) {
             const clickedButton = this.cardFilterButtonClickDetectRepository.isButtonClicked(
@@ -48,7 +76,7 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
 
             if (clickedButton) {
                 console.log(`[DEBUG] Clicked Card Filter Button`);
-                this.showCardFilterPanel();
+                this.handleFilterButtonToggle(currentClickedDeckId);
 
                 return clickedButton;
             }
@@ -67,6 +95,27 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         return null;
     }
 
+    private handleFilterButtonToggle(deckId: number): void {
+        const isClicked = this.getFilterButtonClickState();
+        if (isClicked == false) {
+            this.handleFilterButtonFirstClick(deckId);
+        } else {
+            this.handleFilterButtonClickAgain(deckId);
+        }
+    }
+
+    private handleFilterButtonFirstClick(deckId: number): void {
+        this.showCardFilterPanel();
+        this.setInteractionAfterCardFilterButtonClick(deckId);
+        this.setFilterButtonClickState(true);
+    }
+
+    private handleFilterButtonClickAgain(deckId: number): void {
+        this.hideCardFilterPanel();
+        this.setInteractionAfterCardFilterClickAgain(deckId);
+        this.setFilterButtonClickState(false);
+    }
+
     private setButtonClickEnabled(isEnable: boolean): void {
         this.cardFilterButtonClickDetectRepository.setButtonClickEnabled(isEnable);
     }
@@ -75,14 +124,57 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         return this.cardFilterButtonClickDetectRepository.isButtonClickEnabled();
     }
 
+    private getFilterButtonClickState(): boolean {
+        return this.cardFilterButtonClickDetectRepository.findButtonClickState();
+    }
+
+    private setFilterButtonClickState(isClicked: boolean): void {
+        this.cardFilterButtonClickDetectRepository.setButtonClickState(isClicked);
+    }
+
     private getCardFilterButton(): CardFilterButton | null {
         return this.cardFilterButtonRepository.findButton();
+    }
+
+    private getCurrentClickDeckId(): number | null {
+        return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
     private showCardFilterPanel(): void {
         this.setCardFilterPanelVisibility(true);
         this.setAllCardFilterRaceOptionButtonVisibility(true);
         this.setAllCardFilterGradeOptionButtonVisibility(true);
+    }
+
+    private hideCardFilterPanel(): void {
+        this.setCardFilterPanelVisibility(false);
+        this.setAllCardFilterRaceOptionButtonVisibility(false);
+        this.setAllCardFilterGradeOptionButtonVisibility(false);
+    }
+
+    private setInteractionAfterCardFilterButtonClick(deckId: number): void {
+        this.setAllMyDeckButtonClickEnabled(false);
+        this.setAllDeckNameEditButtonClickEnabled(false);
+        this.setDeckNameEditButtonClickEnabled(deckId, false);
+        this.setDeckEditButtonClickEnabled(false);
+        this.setBuildDeckButtonHoverEnabled(false);
+        this.setBuildDeckButtonClickEnabled(false);
+        this.setAllDeckDeleteButtonClickEnabled(false);
+        this.setMyDeckBlockHoverEnabled(false);
+        this.setMyDeckCardSearchInputEnabled(true);
+    }
+
+    // 필터 버튼을 한 번 클릭한 상태에서 다시 클릭했을 경우
+    private setInteractionAfterCardFilterClickAgain(deckId: number): void {
+        this.setAllMyDeckButtonClickEnabled(true);
+        this.setAllDeckNameEditButtonClickEnabled(true);
+        this.setDeckNameEditButtonClickEnabled(deckId, true);
+        this.setDeckEditButtonClickEnabled(true);
+        this.setBuildDeckButtonHoverEnabled(true);
+        this.setBuildDeckButtonClickEnabled(true);
+        this.setAllDeckDeleteButtonClickEnabled(true);
+        this.setMyDeckBlockHoverEnabled(true);
+        this.setMyDeckCardSearchInputEnabled(false);
     }
 
     private setCardFilterPanelVisibility(isVisible: boolean): void {
@@ -99,6 +191,45 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         this.cardFilterGradeOptionInactiveRepository.findAllGradeOptions().forEach(option =>
             option.setVisibility(isVisible)
         );
+    }
+
+    private setAllMyDeckButtonClickEnabled(isEnabled: boolean): void {
+        this.myDeckButtonClickDetectRepository.setAllButtonClickEnabled(isEnabled);
+    }
+
+    private setAllDeckNameEditButtonClickEnabled(isEnabled: boolean): void {
+        this.deckNameEditButtonClickDetectRepository.setAllButtonClickEnabled(isEnabled);
+    }
+
+    private setDeckNameEditButtonClickEnabled(deckId: number, isEnabled: boolean): void {
+        this.deckNameEditButtonClickDetectRepository.saveButtonClickEnabled(deckId, isEnabled);
+    }
+
+    private setDeckEditButtonClickEnabled(isEnabled: boolean): void {
+        this.deckEditButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
+    }
+
+    private setBuildDeckButtonHoverEnabled(isEnabled: boolean): void {
+        this.buildDeckButtonHoverDetectRepository.setButtonHoverEnabled(isEnabled);
+    }
+
+    private setBuildDeckButtonClickEnabled(isEnabled: boolean): void {
+        this.buildDeckButtonClickDetectRepository.setButtonClickEnabled(isEnabled);
+    }
+
+    private setAllDeckDeleteButtonClickEnabled(isEnabled: boolean): void {
+        this.deckDeleteButtonClickDetectRepository.setAllButtonClickEnabled(isEnabled);
+    }
+
+    private setMyDeckBlockHoverEnabled(isEnabled: boolean): void {
+        this.myDeckBlockHoverDetectRepository.setBlockHoverEnabled(isEnabled);
+    }
+
+    private setMyDeckCardSearchInputEnabled(isEnabled: boolean): void {
+        const searchContainer = this.myDeckSearchInputContainerRepository.findMyDeckSearchInputContainer();
+        if (searchContainer) {
+            searchContainer.setInputDisabled(isEnabled); // 사용 가능: false, 사용 불가능: true
+        }
     }
 
 }

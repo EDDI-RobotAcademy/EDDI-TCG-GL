@@ -8,6 +8,7 @@ export class CardFilterButtonClickDetectRepositoryImpl implements CardFilterButt
     private raycaster = new THREE.Raycaster();
 
     private buttonClickEnabled: boolean = true;
+    private buttonClickState: boolean = false;
 
     public static getInstance(): CardFilterButtonClickDetectRepositoryImpl {
         if (!CardFilterButtonClickDetectRepositoryImpl.instance) {
@@ -43,6 +44,14 @@ export class CardFilterButtonClickDetectRepositoryImpl implements CardFilterButt
 
     public isButtonClickEnabled(): boolean {
         return this.buttonClickEnabled;
+    }
+
+    public setButtonClickState(isClicked: boolean): void {
+        this.buttonClickState = isClicked;
+    }
+
+    public findButtonClickState(): boolean {
+        return this.buttonClickState;
     }
 
 }
