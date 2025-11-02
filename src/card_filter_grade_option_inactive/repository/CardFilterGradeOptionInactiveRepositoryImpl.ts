@@ -14,7 +14,7 @@ export class CardFilterGradeOptionInactiveRepositoryImpl implements CardFilterGr
     private textureManager: TextureManager;
     private meshDestroyer: MeshDestroyer;
 
-    private readonly OPTION_WIDTH: number = 0.13; // 244: 24
+    private readonly OPTION_WIDTH: number = 0.127; // 244: 24
 
     private constructor(textureManager: TextureManager, scene: THREE.Scene) {
         this.textureManager = textureManager;
