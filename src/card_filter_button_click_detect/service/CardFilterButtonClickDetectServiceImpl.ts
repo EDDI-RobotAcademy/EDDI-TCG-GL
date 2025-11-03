@@ -77,8 +77,14 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
             if (clickedButton) {
                 console.log(`[DEBUG] Clicked Card Filter Button`);
                 this.handleFilterButtonToggle(currentClickedDeckId);
+                this.setOutSideFilterButtonClickDetected(false);
 
                 return clickedButton;
+
+            } else {
+                console.log(`[DEBUG] Clicked Outside Filter Button`);
+                this.hideCardFilterPanel();
+                this.setOutSideFilterButtonClickDetected(true);
             }
         }
         return null;
@@ -88,11 +94,18 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         if (!this.isButtonClickEnabled()) return null;
 
         if (event.button === 0) {
-            const hoverPoint = { x: event.clientX, y: event.clientY };
+            const clickPoint = { x: event.clientX, y: event.clientY };
 
-            return await this.handleButtonClick(hoverPoint);
+            return await this.handleButtonClick(clickPoint);
         }
         return null;
+    }
+
+    public async onMouseUp(event: MouseEvent): Promise<void> {
+        if (!this.isButtonClickEnabled()) return;
+
+        // 다른 영역을 클릭한 뒤 마우스를 뗄 때 동작
+        this.handleMouseUpResult();
     }
 
     private handleFilterButtonToggle(deckId: number): void {
@@ -104,6 +117,16 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         }
     }
 
+    private handleMouseUpResult(): void {
+        if (!this.isOutsideFilterButtonClickDetected()) return;
+
+        console.log(`[DEBUG] MouseUp Outside Filter Button`);
+
+        this.setFilterButtonClickState(false);
+        this.setInteractionAfterFilterPanelClosed(this.getCurrentClickDeckId()!);
+        this.setOutSideFilterButtonClickDetected(false);
+    }
+
     private handleFilterButtonFirstClick(deckId: number): void {
         this.showCardFilterPanel();
         this.setInteractionAfterCardFilterButtonClick(deckId);
@@ -112,7 +135,7 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
 
     private handleFilterButtonClickAgain(deckId: number): void {
         this.hideCardFilterPanel();
-        this.setInteractionAfterCardFilterClickAgain(deckId);
+        this.setInteractionAfterFilterPanelClosed(deckId);
         this.setFilterButtonClickState(false);
     }
 
@@ -134,6 +157,14 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
 
     private getCardFilterButton(): CardFilterButton | null {
         return this.cardFilterButtonRepository.findButton();
+    }
+
+    private setOutSideFilterButtonClickDetected(isDetected: boolean): void {
+        this.cardFilterButtonClickDetectRepository.setOutsideButtonClickDetected(isDetected);
+    }
+
+    private isOutsideFilterButtonClickDetected(): boolean {
+        return this.cardFilterButtonClickDetectRepository.isOutsideButtonClickDetected();
     }
 
     private getCurrentClickDeckId(): number | null {
@@ -165,7 +196,8 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
     }
 
     // 필터 버튼을 한 번 클릭한 상태에서 다시 클릭했을 경우
-    private setInteractionAfterCardFilterClickAgain(deckId: number): void {
+    // 필터 버튼 외에 다른 곳을 클릭한 뒤 마우스를 뗄 경우
+    private setInteractionAfterFilterPanelClosed(deckId: number): void {
         this.setAllMyDeckButtonClickEnabled(true);
         this.setAllDeckNameEditButtonClickEnabled(true);
         this.setDeckNameEditButtonClickEnabled(deckId, true);

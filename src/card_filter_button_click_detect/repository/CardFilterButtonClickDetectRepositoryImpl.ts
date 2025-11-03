@@ -9,6 +9,7 @@ export class CardFilterButtonClickDetectRepositoryImpl implements CardFilterButt
 
     private buttonClickEnabled: boolean = true;
     private buttonClickState: boolean = false;
+    private outsideClickDetected: boolean = false; // 버튼 이외의 다른 영역 클릭
 
     public static getInstance(): CardFilterButtonClickDetectRepositoryImpl {
         if (!CardFilterButtonClickDetectRepositoryImpl.instance) {
@@ -52,6 +53,14 @@ export class CardFilterButtonClickDetectRepositoryImpl implements CardFilterButt
 
     public findButtonClickState(): boolean {
         return this.buttonClickState;
+    }
+
+    public setOutsideButtonClickDetected(isDetected: boolean): void {
+        this.outsideClickDetected = isDetected;
+    }
+
+    public isOutsideButtonClickDetected(): boolean {
+        return this.outsideClickDetected;
     }
 
 }
