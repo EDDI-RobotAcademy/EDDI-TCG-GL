@@ -20,6 +20,7 @@ import {BuildDeckButtonHoverDetectRepositoryImpl} from "../../build_deck_button_
 import {BuildDeckButtonClickDetectRepositoryImpl} from "../../build_deck_button_click_detect/repository/BuildDeckButtonClickDetectRepositoryImpl";
 import {DeckDeleteButtonClickDetectRepositoryImpl} from "../../deck_delete_button_click_detect/repository/DeckDeleteButtonClickDetectRepositoryImpl";
 import {MyDeckBlockHoverDetectRepositoryImpl} from "../../my_deck_block_hover_detect/repository/MyDeckBlockHoverDetectRepositoryImpl";
+import {CardFilterPanelHoverDetectRepositoryImpl} from "../../card_filter_panel_hover_detect/repository/CardFilterPanelHoverDetectRepositoryImpl";
 
 export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonClickDetectService {
     private static instance: CardFilterButtonClickDetectServiceImpl | null = null;
@@ -37,6 +38,7 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
     private buildDeckButtonClickDetectRepository: BuildDeckButtonClickDetectRepositoryImpl;
     private deckDeleteButtonClickDetectRepository: DeckDeleteButtonClickDetectRepositoryImpl;
     private myDeckBlockHoverDetectRepository: MyDeckBlockHoverDetectRepositoryImpl;
+    private cardFilterPanelHoverDetectRepository: CardFilterPanelHoverDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -53,6 +55,7 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         this.buildDeckButtonClickDetectRepository = BuildDeckButtonClickDetectRepositoryImpl.getInstance();
         this.deckDeleteButtonClickDetectRepository = DeckDeleteButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckBlockHoverDetectRepository = MyDeckBlockHoverDetectRepositoryImpl.getInstance();
+        this.cardFilterPanelHoverDetectRepository = CardFilterPanelHoverDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): CardFilterButtonClickDetectServiceImpl {
@@ -83,8 +86,10 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
 
             } else {
                 console.log(`[DEBUG] Clicked Outside Filter Button`);
-                this.hideCardFilterPanel();
-                this.setOutSideFilterButtonClickDetected(true);
+                if (this.getCardFilterPanelHoverState() == false) {
+                    this.hideCardFilterPanel();
+                    this.setOutSideFilterButtonClickDetected(true);
+                }
             }
         }
         return null;
@@ -115,10 +120,13 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         } else {
             this.handleFilterButtonClickAgain(deckId);
         }
+
+        this.setCardFilterPanelHoverEnabled(true);
     }
 
     private handleMouseUpResult(): void {
         if (!this.isOutsideFilterButtonClickDetected()) return;
+        if (this.getCardFilterPanelHoverState() == true) return;
 
         console.log(`[DEBUG] MouseUp Outside Filter Button`);
 
@@ -207,6 +215,7 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         this.setAllDeckDeleteButtonClickEnabled(true);
         this.setMyDeckBlockHoverEnabled(true);
         this.setMyDeckCardSearchInputEnabled(false);
+        this.setCardFilterPanelHoverEnabled(false);
     }
 
     private setCardFilterPanelVisibility(isVisible: boolean): void {
@@ -262,6 +271,14 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         if (searchContainer) {
             searchContainer.setInputDisabled(isEnabled); // 사용 가능: false, 사용 불가능: true
         }
+    }
+
+    private setCardFilterPanelHoverEnabled(isEnabled: boolean): void {
+        this.cardFilterPanelHoverDetectRepository.setPanelHoverEnabled(isEnabled);
+    }
+
+    private getCardFilterPanelHoverState(): boolean {
+        return this.cardFilterPanelHoverDetectRepository.findPanelHoverState();
     }
 
 }
