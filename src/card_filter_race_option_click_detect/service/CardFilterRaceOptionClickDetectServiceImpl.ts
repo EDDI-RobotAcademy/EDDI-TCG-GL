@@ -74,6 +74,10 @@ export class CardFilterRaceOptionClickDetectServiceImpl implements CardFilterRac
         return null;
     }
 
+//     private handle(): void {
+//
+//         }
+//
     private setAllOptionClickEnabled(isEnabled: boolean): void {
         this.cardFilterRaceOptionButtonsClickDetectRepository.setAllOptionClickEnabled(isEnabled);
     }
