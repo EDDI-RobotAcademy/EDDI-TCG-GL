@@ -22,6 +22,7 @@ import {DeckDeleteButtonClickDetectRepositoryImpl} from "../../deck_delete_butto
 import {MyDeckBlockHoverDetectRepositoryImpl} from "../../my_deck_block_hover_detect/repository/MyDeckBlockHoverDetectRepositoryImpl";
 import {CardFilterPanelHoverDetectRepositoryImpl} from "../../card_filter_panel_hover_detect/repository/CardFilterPanelHoverDetectRepositoryImpl";
 import {CardFilterRaceOptionClickDetectRepositoryImpl} from "../../card_filter_race_option_click_detect/repository/CardFilterRaceOptionClickDetectRepositoryImpl";
+import {CardFilterGradeOptionClickDetectRepositoryImpl} from "../../card_filter_grade_option_click_detect/repository/CardFilterGradeOptionClickDetectRepositoryImpl";
 
 export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonClickDetectService {
     private static instance: CardFilterButtonClickDetectServiceImpl | null = null;
@@ -41,6 +42,7 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
     private myDeckBlockHoverDetectRepository: MyDeckBlockHoverDetectRepositoryImpl;
     private cardFilterPanelHoverDetectRepository: CardFilterPanelHoverDetectRepositoryImpl;
     private cardFilterRaceOptionClickDetectRepository: CardFilterRaceOptionClickDetectRepositoryImpl;
+    private cardFilterGradeOptionClickDetectRepository: CardFilterGradeOptionClickDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -59,6 +61,7 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         this.myDeckBlockHoverDetectRepository = MyDeckBlockHoverDetectRepositoryImpl.getInstance();
         this.cardFilterPanelHoverDetectRepository = CardFilterPanelHoverDetectRepositoryImpl.getInstance();
         this.cardFilterRaceOptionClickDetectRepository = CardFilterRaceOptionClickDetectRepositoryImpl.getInstance();
+        this.cardFilterGradeOptionClickDetectRepository = CardFilterGradeOptionClickDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): CardFilterButtonClickDetectServiceImpl {
@@ -126,6 +129,7 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
 
         this.setCardFilterPanelHoverEnabled(true);
         this.setAllCardFilterRaceOptionClickEnabled(true);
+        this.setAllCardFilterGradeOptionClickEnabled(true);
     }
 
     private handleMouseUpResult(): void {
@@ -221,6 +225,7 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         this.setMyDeckCardSearchInputEnabled(false);
         this.setCardFilterPanelHoverEnabled(false);
         this.setAllCardFilterRaceOptionClickEnabled(false);
+        this.setAllCardFilterGradeOptionClickEnabled(false);
     }
 
     private setCardFilterPanelVisibility(isVisible: boolean): void {
@@ -288,6 +293,10 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
 
     private setAllCardFilterRaceOptionClickEnabled(isEnabled: boolean): void {
         this.cardFilterRaceOptionClickDetectRepository.setAllOptionClickEnabled(isEnabled);
+    }
+
+    private setAllCardFilterGradeOptionClickEnabled(isEnabled: boolean): void {
+        this.cardFilterGradeOptionClickDetectRepository.setAllOptionClickEnabled(isEnabled);
     }
 
 }
