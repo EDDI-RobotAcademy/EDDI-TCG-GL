@@ -87,7 +87,13 @@ export class CardFilterRaceOptionClickDetectServiceImpl implements CardFilterRac
         } else {
             // 이전에 클릭하지 않았을 때
             this.updateRaceOptionState(optionType, false);
-            this.sortFilteredMyDeckCards(this.getCurrentClickDeckId()!, optionType);
+        }
+
+        const clickedOptionTypes = this.getClickedOptionTypes();
+        if (clickedOptionTypes !== null) {
+            this.sortFilteredMyDeckCards(this.getCurrentClickDeckId()!, clickedOptionTypes);
+        } else {
+            this.showAllMyDeckCards(this.getCurrentClickDeckId()!);
         }
     }
 
@@ -101,7 +107,7 @@ export class CardFilterRaceOptionClickDetectServiceImpl implements CardFilterRac
         this.setCardFilterRaceOptionActiveVisibility(type, !isActive);
     }
 
-    private sortFilteredMyDeckCards(currentClickedDeckId: number, type: CardRace): void {
+    private sortFilteredMyDeckCards(currentClickedDeckId: number, type: CardRace[]): void {
         this.hideUnfilteredMyDeckCards(currentClickedDeckId, type);
         this.adjustFilteredMyDeckCardPositions(currentClickedDeckId, type);
     }
@@ -138,7 +144,11 @@ export class CardFilterRaceOptionClickDetectServiceImpl implements CardFilterRac
         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
-    private filteredMyDeckCardIdList(currentClickedDeckId: number, type: CardRace): number[] {
+    private getClickedOptionTypes(): CardRace[] | null {
+        return this.cardFilterRaceOptionButtonsClickDetectRepository.findClickedOptionTypes();
+    }
+
+    private filteredMyDeckCardIdList(currentClickedDeckId: number, types: CardRace[]): number[] {
         const allCardIdList = this.myDeckCardRepository.findCardIdListByDeckId(currentClickedDeckId);
 
         const filteredCardIdList: number[] = [];
@@ -150,14 +160,14 @@ export class CardFilterRaceOptionClickDetectServiceImpl implements CardFilterRac
 
             const cardRace = Number(card.종족);
 
-            if (cardRace === type) {
+            if (types.includes(cardRace)) {
                 filteredCardIdList.push(cardId);
             }
         }
         return filteredCardIdList;
     }
 
-    private adjustFilteredMyDeckCardPositions(deckId: number, type: CardRace): void {
+    private adjustFilteredMyDeckCardPositions(deckId: number, type: CardRace[]): void {
         const filteredCardIdList = this.filteredMyDeckCardIdList(deckId, type);
         const cardCount = filteredCardIdList.length;
         const positionList = this.myDeckCardPositionRepository.findSearchCardPosition(deckId, cardCount);
@@ -183,7 +193,9 @@ export class CardFilterRaceOptionClickDetectServiceImpl implements CardFilterRac
         }
     }
 
-    private hideUnfilteredMyDeckCards(currentClickedDeckId: number, type: CardRace): void {
+    private hideUnfilteredMyDeckCards(currentClickedDeckId: number, types: CardRace[]): void {
+        console.log("현재 필터링된 종족 타입 목록:", types);
+
         const allCardIdList = this.myDeckCardRepository.findCardIdListByDeckId(currentClickedDeckId);
         for (const cardId of allCardIdList) {
             const card = getCardById(cardId);
@@ -193,9 +205,39 @@ export class CardFilterRaceOptionClickDetectServiceImpl implements CardFilterRac
 
             const cardRace = Number(card.종족);
 
-            if (cardRace !== type) {
+            if (!types.includes(cardRace)) {
                 this.myDeckCardRepository.findCardByDeckIdAndCardId(currentClickedDeckId, cardId)?.setVisibility(false);
             }
+        }
+    }
+
+    private showAllMyDeckCards(currentClickedDeckId: number): void {
+        const allCards = this.myDeckCardRepository.findCardListByDeckId(currentClickedDeckId);
+        if (allCards == null) return;
+
+        allCards.forEach(card => card.setVisibility(true));
+        this.restoreAllMyDeckCardPositions(currentClickedDeckId);
+    }
+
+    private restoreAllMyDeckCardPositions(deckId: number): void {
+        const cardUniqueIdList = this.myDeckCardRepository.findCardUniqueIdListByDeckId(deckId);
+        for (const cardUniqueId of cardUniqueIdList) {
+            const cardId = this.myDeckCardRepository.findCardIdByCardUniqueId(cardUniqueId);
+            if (cardId == null) return;
+
+            const card = this.myDeckCardRepository.findCardByDeckIdAndCardId(deckId, cardId);
+            if (card == null) return;
+            const cardMesh = card.getMesh();
+
+            const cardPosition = this.myDeckCardPositionRepository.findPositionByDeckIdAndCardId(deckId, cardId);
+            if (cardPosition == null) return;
+
+            const widthPercent = 0.096;
+            const heightPercent = (1540 / 952);
+            const positionX = cardPosition.getX();
+            const positionY = cardPosition.getY();
+
+            this.myDeckElementAdjuster.adjustElementPosition(cardMesh, widthPercent, heightPercent, positionX, positionY);
         }
     }
 
