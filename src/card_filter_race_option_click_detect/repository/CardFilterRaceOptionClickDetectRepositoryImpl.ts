@@ -11,6 +11,7 @@ export class CardFilterRaceOptionClickDetectRepositoryImpl implements CardFilter
     private currentClickedOption: CardFilterRaceOptionInactive | null = null;
     private allOptionClickEnabled: boolean = false;
     private optionClickEnabledMap: Map<CardRace, boolean> = new Map();
+    private optionCLickStateMap: Map<CardRace, boolean> = new Map();
 
     public static getInstance(): CardFilterRaceOptionClickDetectRepositoryImpl {
         if (!CardFilterRaceOptionClickDetectRepositoryImpl.instance) {
@@ -75,6 +76,14 @@ export class CardFilterRaceOptionClickDetectRepositoryImpl implements CardFilter
 
     public isOptionClickEnabled(type: CardRace): boolean | undefined {
         return this.optionClickEnabledMap.get(type);
+    }
+
+    public saveOptionClickState(type: CardRace, state: boolean): void {
+        this.optionCLickStateMap.set(type, state);
+    }
+
+    public findOptionClickState(type: CardRace): boolean | undefined {
+        return this.optionCLickStateMap.get(type);
     }
 
 }
