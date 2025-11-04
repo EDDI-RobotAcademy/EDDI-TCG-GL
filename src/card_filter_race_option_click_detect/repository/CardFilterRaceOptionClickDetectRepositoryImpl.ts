@@ -86,4 +86,18 @@ export class CardFilterRaceOptionClickDetectRepositoryImpl implements CardFilter
         return this.optionCLickStateMap.get(type);
     }
 
+    public findClickedOptionTypes(): CardRace[] | null {
+        const activeOptionTypes: CardRace[] = [];
+
+        for (const [type, state] of this.optionCLickStateMap.entries()) {
+            if (state === true) {
+                activeOptionTypes.push(type);
+            }
+        }
+
+        // true인 상태가 하나도 없으면 null 반환
+        return activeOptionTypes.length > 0 ? activeOptionTypes : null;
+//         return activeOptionTypes;
+    }
+
 }
