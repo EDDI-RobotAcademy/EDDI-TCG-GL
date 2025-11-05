@@ -3,6 +3,7 @@ import * as THREE from "three";
 import {CardFilterButtonClickDetectService} from "./CardFilterButtonClickDetectService";
 
 import {CardRace} from "../../card/race";
+import {CardGrade} from "../../card/grade";
 import {CardFilterButton} from "../../card_filter_button/entity/CardFilterButton";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
@@ -14,6 +15,7 @@ import {CardFilterRaceOptionInactiveRepositoryImpl} from "../../card_filter_race
 import {CardFilterGradeOptionInactiveRepositoryImpl} from "../../card_filter_grade_option_inactive/repository/CardFilterGradeOptionInactiveRepositoryImpl";
 import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
 import {CardFilterRaceOptionActiveRepositoryImpl} from "../../card_filter_race_option_active/repository/CardFilterRaceOptionActiveRepositoryImpl";
+import {CardFilterGradeOptionActiveRepositoryImpl} from "../../card_filter_grade_option_active/repository/CardFilterGradeOptionActiveRepositoryImpl";
 
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {DeckNameEditButtonClickDetectRepositoryImpl} from "../../deck_name_edit_button_click_detect/repository/DeckNameEditButtonClickDetectRepositoryImpl";
@@ -36,6 +38,7 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
     private cardFilterGradeOptionInactiveRepository: CardFilterGradeOptionInactiveRepositoryImpl;
     private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
     private cardFilterRaceOptionActiveRepository: CardFilterRaceOptionActiveRepositoryImpl;
+    private cardFilterGradeOptionActiveRepository: CardFilterGradeOptionActiveRepositoryImpl;
 
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private deckNameEditButtonClickDetectRepository: DeckNameEditButtonClickDetectRepositoryImpl;
@@ -57,6 +60,7 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         this.cardFilterGradeOptionInactiveRepository = CardFilterGradeOptionInactiveRepositoryImpl.getInstance(scene);
         this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
         this.cardFilterRaceOptionActiveRepository = CardFilterRaceOptionActiveRepositoryImpl.getInstance(scene);
+        this.cardFilterGradeOptionActiveRepository = CardFilterGradeOptionActiveRepositoryImpl.getInstance(scene);
 
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.deckNameEditButtonClickDetectRepository = DeckNameEditButtonClickDetectRepositoryImpl.getInstance();
@@ -197,6 +201,10 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         return this.cardFilterRaceOptionClickDetectRepository.findClickedOptionTypes();
     }
 
+    private getClickedGradePotionTypes(): CardGrade[] | null {
+        return this.cardFilterGradeOptionClickDetectRepository.findClickedOptionTypes();
+    }
+
     private showCardFilterPanel(): void {
         const currentClickRaceOptionTypeList = this.getClickedRaceOptionTypes();
         if (currentClickRaceOptionTypeList == null) {
@@ -209,15 +217,26 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
             }
         }
 
+        const currentClickGardeOptionTypeList = this.getClickedGradePotionTypes();
+        if (currentClickGardeOptionTypeList == null) {
+            this.setAllCardFilterGradeOptionInactiveButtonVisibility(true);
+        } else {
+            for (const type of currentClickGardeOptionTypeList) {
+                this.setAllCardFilterGradeOptionInactiveButtonVisibility(true);
+                this.setCarFilterGradeOptionInactiveButton(type, false);
+                this.setCarFilterGradeOptionActiveButton(type, true);
+            }
+        }
+
         this.setCardFilterPanelVisibility(true);
-        this.setAllCardFilterGradeOptionButtonVisibility(true);
     }
 
     private hideCardFilterPanel(): void {
         this.setCardFilterPanelVisibility(false);
         this.setAllCardFilterRaceOptionInactiveButtonVisibility(false);
-        this.setAllCardFilterGradeOptionButtonVisibility(false);
+        this.setAllCardFilterGradeOptionInactiveButtonVisibility(false);
         this.setAllCardFilterRaceOptionActiveButtonVisibility(false);
+        this.setAllCardFilterGradeOptionActiveButtonVisibility(false);
     }
 
     private setInteractionAfterCardFilterButtonClick(deckId: number): void {
@@ -261,6 +280,14 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         this.cardFilterRaceOptionActiveRepository.findRaceOptionByType(type)?.setVisibility(isVisible);
     }
 
+    private setCarFilterGradeOptionInactiveButton(type: number, isVisible: boolean): void {
+        this.cardFilterGradeOptionInactiveRepository.findGradeOptionByType(type)?.setVisibility(isVisible);
+    }
+
+    private setCarFilterGradeOptionActiveButton(type: number, isVisible: boolean): void {
+        this.cardFilterGradeOptionActiveRepository.findGradeOptionByType(type)?.setVisibility(isVisible);
+    }
+
     private setAllCardFilterRaceOptionInactiveButtonVisibility(isVisible: boolean): void {
         this.cardFilterRaceOptionInactiveRepository.findAllOptions().forEach(option =>
             option.setVisibility(isVisible)
@@ -273,8 +300,14 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         );
     }
 
-    private setAllCardFilterGradeOptionButtonVisibility(isVisible: boolean): void {
+    private setAllCardFilterGradeOptionInactiveButtonVisibility(isVisible: boolean): void {
         this.cardFilterGradeOptionInactiveRepository.findAllGradeOptions().forEach(option =>
+            option.setVisibility(isVisible)
+        );
+    }
+
+    private setAllCardFilterGradeOptionActiveButtonVisibility(isVisible: boolean): void {
+        this.cardFilterGradeOptionActiveRepository.findAllGradeOptions().forEach(option =>
             option.setVisibility(isVisible)
         );
     }
