@@ -86,4 +86,17 @@ export class CardFilterGradeOptionClickDetectRepositoryImpl implements CardFilte
         return this.optionCLickStateMap.get(type);
     }
 
+    public findClickedOptionTypes(): CardGrade[] | null {
+        const activeOptionTypes: CardGrade[] = [];
+
+        for (const [type, state] of this.optionCLickStateMap.entries()) {
+            if (state === true) {
+                activeOptionTypes.push(type);
+            }
+        }
+
+        // true인 상태가 하나도 없으면 null 반환
+        return activeOptionTypes.length > 0 ? activeOptionTypes : null;
+    }
+
 }
