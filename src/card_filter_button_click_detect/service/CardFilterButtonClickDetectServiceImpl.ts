@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 import {CardFilterButtonClickDetectService} from "./CardFilterButtonClickDetectService";
 
+import {CardRace} from "../../card/race";
 import {CardFilterButton} from "../../card_filter_button/entity/CardFilterButton";
 
 import {CameraRepository} from "../../camera/repository/CameraRepository";
@@ -12,6 +13,7 @@ import {CardFilterPanelRepositoryImpl} from "../../card_filter_panel/repository/
 import {CardFilterRaceOptionInactiveRepositoryImpl} from "../../card_filter_race_option_inactive/repository/CardFilterRaceOptionInactiveRepositoryImpl";
 import {CardFilterGradeOptionInactiveRepositoryImpl} from "../../card_filter_grade_option_inactive/repository/CardFilterGradeOptionInactiveRepositoryImpl";
 import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
+import {CardFilterRaceOptionActiveRepositoryImpl} from "../../card_filter_race_option_active/repository/CardFilterRaceOptionActiveRepositoryImpl";
 
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";
 import {DeckNameEditButtonClickDetectRepositoryImpl} from "../../deck_name_edit_button_click_detect/repository/DeckNameEditButtonClickDetectRepositoryImpl";
@@ -33,6 +35,8 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
     private cardFilterRaceOptionInactiveRepository: CardFilterRaceOptionInactiveRepositoryImpl;
     private cardFilterGradeOptionInactiveRepository: CardFilterGradeOptionInactiveRepositoryImpl;
     private myDeckSearchInputContainerRepository: MyDeckSearchInputContainerRepositoryImpl;
+    private cardFilterRaceOptionActiveRepository: CardFilterRaceOptionActiveRepositoryImpl;
+
     private myDeckButtonClickDetectRepository: MyDeckButtonClickDetectRepositoryImpl;
     private deckNameEditButtonClickDetectRepository: DeckNameEditButtonClickDetectRepositoryImpl;
     private deckEditButtonClickDetectRepository: DeckEditButtonClickDetectRepositoryImpl;
@@ -52,6 +56,8 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         this.cardFilterRaceOptionInactiveRepository = CardFilterRaceOptionInactiveRepositoryImpl.getInstance(scene);
         this.cardFilterGradeOptionInactiveRepository = CardFilterGradeOptionInactiveRepositoryImpl.getInstance(scene);
         this.myDeckSearchInputContainerRepository = MyDeckSearchInputContainerRepositoryImpl.getInstance();
+        this.cardFilterRaceOptionActiveRepository = CardFilterRaceOptionActiveRepositoryImpl.getInstance(scene);
+
         this.myDeckButtonClickDetectRepository = MyDeckButtonClickDetectRepositoryImpl.getInstance();
         this.deckNameEditButtonClickDetectRepository = DeckNameEditButtonClickDetectRepositoryImpl.getInstance();
         this.deckEditButtonClickDetectRepository = DeckEditButtonClickDetectRepositoryImpl.getInstance();
@@ -187,16 +193,31 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
+    private getClickedRaceOptionTypes(): CardRace[] | null {
+        return this.cardFilterRaceOptionClickDetectRepository.findClickedOptionTypes();
+    }
+
     private showCardFilterPanel(): void {
+        const currentClickRaceOptionTypeList = this.getClickedRaceOptionTypes();
+        if (currentClickRaceOptionTypeList == null) {
+            this.setAllCardFilterRaceOptionInactiveButtonVisibility(true);
+        } else {
+            for (const type of currentClickRaceOptionTypeList) {
+                this.setAllCardFilterRaceOptionInactiveButtonVisibility(true);
+                this.setCardFilterRaceOptionInactiveButton(type, false);
+                this.setCardFilterRaceOptionActiveButton(type, true);
+            }
+        }
+
         this.setCardFilterPanelVisibility(true);
-        this.setAllCardFilterRaceOptionButtonVisibility(true);
         this.setAllCardFilterGradeOptionButtonVisibility(true);
     }
 
     private hideCardFilterPanel(): void {
         this.setCardFilterPanelVisibility(false);
-        this.setAllCardFilterRaceOptionButtonVisibility(false);
+        this.setAllCardFilterRaceOptionInactiveButtonVisibility(false);
         this.setAllCardFilterGradeOptionButtonVisibility(false);
+        this.setAllCardFilterRaceOptionActiveButtonVisibility(false);
     }
 
     private setInteractionAfterCardFilterButtonClick(deckId: number): void {
@@ -232,8 +253,22 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         this.cardFilterPanelRepository.findPanel()?.setVisibility(isVisible);
     }
 
-    private setAllCardFilterRaceOptionButtonVisibility(isVisible: boolean): void {
+    private setCardFilterRaceOptionInactiveButton(type: number, isVisible: boolean): void {
+        this.cardFilterRaceOptionInactiveRepository.findRaceOptionByType(type)?.setVisibility(isVisible);
+    }
+
+    private setCardFilterRaceOptionActiveButton(type: number, isVisible: boolean): void {
+        this.cardFilterRaceOptionActiveRepository.findRaceOptionByType(type)?.setVisibility(isVisible);
+    }
+
+    private setAllCardFilterRaceOptionInactiveButtonVisibility(isVisible: boolean): void {
         this.cardFilterRaceOptionInactiveRepository.findAllOptions().forEach(option =>
+            option.setVisibility(isVisible)
+        );
+    }
+
+    private setAllCardFilterRaceOptionActiveButtonVisibility(isVisible: boolean): void {
+        this.cardFilterRaceOptionActiveRepository.findAllOptions().forEach(option =>
             option.setVisibility(isVisible)
         );
     }
