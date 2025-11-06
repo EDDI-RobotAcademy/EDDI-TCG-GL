@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import {CardGrade} from "../../card/grade";
+import {CardRace} from "../../card/race";
 import {getCardById} from "../../card/utility";
 import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
 
@@ -20,6 +21,7 @@ import {MyDeckNumberOfCardsRepositoryImpl} from "../../my_deck_number_of_cards/r
 import {MyDeckNumberOfCardsPositionRepositoryImpl} from "../../my_deck_number_of_cards_position/repository/MyDeckNumberOfCardsPositionRepositoryImpl";
 import {DeckCardCountMarkerRepositoryImpl} from "../../deck_card_count_marker/repository/DeckCardCountMarkerRepositoryImpl";
 import {DeckCardCountMarkerPositionRepositoryImpl} from "../../deck_card_count_marker_position/repository/DeckCardCountMarkerPositionRepositoryImpl";
+import {CardFilterRaceOptionClickDetectRepositoryImpl} from "../../card_filter_race_option_click_detect/repository/CardFilterRaceOptionClickDetectRepositoryImpl";
 
 export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGradeOptionClickDetectService {
     private static instance: CardFilterGradeOptionClickDetectServiceImpl | null = null;
@@ -35,6 +37,7 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
     private myDeckNumberOfCardsPositionRepository: MyDeckNumberOfCardsPositionRepositoryImpl;
     private deckCardCountMarkerRepository: DeckCardCountMarkerRepositoryImpl;
     private deckCardCountMarkerPositionRepository: DeckCardCountMarkerPositionRepositoryImpl;
+    private cardFilterRaceOptionClickDetectRepository: CardFilterRaceOptionClickDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.myDeckElementAdjuster = MyDeckElementAdjuster.getInstance();
@@ -49,6 +52,7 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         this.myDeckNumberOfCardsPositionRepository = MyDeckNumberOfCardsPositionRepositoryImpl.getInstance();
         this.deckCardCountMarkerRepository = DeckCardCountMarkerRepositoryImpl.getInstance(scene);
         this.deckCardCountMarkerPositionRepository = DeckCardCountMarkerPositionRepositoryImpl.getInstance();
+        this.cardFilterRaceOptionClickDetectRepository = CardFilterRaceOptionClickDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): CardFilterGradeOptionClickDetectServiceImpl {
@@ -100,13 +104,17 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         }
 
         const currentClickedDeckId = this.getCurrentClickDeckId()!
-        const clickedOptionTypes = this.getClickedOptionTypes();
+        const clickedGradeOptionTypes = this.getClickedGradeOptionTypes();
+        const clickedRaceOptionTypes = this.getClickedRaceOptionTypes();
 
-        if (clickedOptionTypes !== null) {
-            this.sortFilteredMyDeckElements(currentClickedDeckId, clickedOptionTypes);
+        if (clickedGradeOptionTypes == null && clickedRaceOptionTypes == null) {
+            this.restoreAllDeckElementsAfterFilterClear(currentClickedDeckId);
         } else {
-            // 모든 옵션 선택이 해제되었을 때
-            this.restoreAllMyDeckElements(currentClickedDeckId);
+            this.sortFilteredMyDeckElements(
+                currentClickedDeckId,
+                clickedRaceOptionTypes as CardRace[] | null,
+                clickedGradeOptionTypes as CardGrade[] | null
+            );
         }
     }
 
@@ -120,14 +128,20 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         this.setCardFilterGradeOptionActiveVisibility(type, !isActive);
     }
 
-    private sortFilteredMyDeckElements(currentClickedDeckId: number, type: CardGrade[]): void {
-        this.hideUnfilteredMyDeckElements(currentClickedDeckId, type);
-        this.adjustFilteredMyDeckCardPositions(currentClickedDeckId, type);
-        this.adjustFilteredMyDeckNumberOfCards(currentClickedDeckId, type);
-        this.adjustFilteredMyDeckMarkerPosition(currentClickedDeckId, type);
+    private sortFilteredMyDeckElements(
+        deckId: number,
+        raceType: CardRace[] | null,
+        gradeType: CardGrade[] | null
+    ): void {
+        const filteredCardIdList = this.filteredDeckCardIdList(deckId, raceType, gradeType);
+
+        this.hideUnfilteredDeckElements(deckId, filteredCardIdList);
+        this.adjustFilteredDeckCardPositions(deckId, filteredCardIdList);
+        this.adjustFilteredDeckNumberOfCards(deckId, filteredCardIdList);
+        this.adjustFilteredDeckMarkerPosition(deckId, filteredCardIdList);
     }
 
-    private restoreAllMyDeckElements(currentClickedDeckId: number): void {
+    private restoreAllDeckElementsAfterFilterClear(currentClickedDeckId: number): void {
         this.showAllMyDeckCards(currentClickedDeckId);
         this.showAllMyDeckNumberOfCards(currentClickedDeckId);
         this.showAllMyDeckMarkers(currentClickedDeckId);
@@ -157,8 +171,12 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         return this.myDeckButtonClickDetectRepository.getCurrentClickDeckId();
     }
 
-    private getClickedOptionTypes(): CardGrade[] | null {
+    private getClickedGradeOptionTypes(): CardGrade[] | null {
         return this.cardFilterGradeOptionClickDetectRepository.findClickedOptionTypes();
+    }
+
+    private getClickedRaceOptionTypes(): CardRace[] | null {
+        return this.cardFilterRaceOptionClickDetectRepository.findClickedOptionTypes();
     }
 
     private setCardFilterGradeOptionInactiveVisibility(type: CardGrade, isVisible: boolean): void {
@@ -169,19 +187,37 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         this.cardFilterGradeOptionActiveRepository.findGradeOptionByType(type)?.setVisibility(isVisible);
     }
 
-    private filteredMyDeckCardIdList(currentClickedDeckId: number, types: CardGrade[]): number[] {
-        const allCardIdList = this.myDeckCardRepository.findCardIdListByDeckId(currentClickedDeckId);
-
+    private filteredDeckCardIdList(
+        deckId: number,
+        raceType: CardRace[] | null,
+        gradeType: CardGrade[] | null
+    ): number[] | null {
+        const allCurrentDeckCardIdList = this.myDeckCardRepository.findCardIdListByDeckId(deckId);
         const filteredCardIdList: number[] = [];
-        for (const cardId of allCardIdList) {
+
+        // 둘 다 선택되지 않았으면 필터링 없이 전체 카드 유지 (null로 표시)
+        const hasRaceFilter = raceType && raceType.length > 0;
+        const hasGradeFilter = gradeType && gradeType.length > 0;
+
+        if (!hasRaceFilter && !hasGradeFilter) {
+            return null;
+        }
+
+        for (const cardId of allCurrentDeckCardIdList) {
             const card = getCardById(cardId);
             if (!card) {
                 throw new Error(`Card with ID ${cardId} not found`);
             }
 
+            const cardRace = Number(card.종족);
             const cardGrade = Number(card.등급);
 
-            if (types.includes(cardGrade)) {
+            // 선택된 필터만 조건으로 적용
+            const raceMatches = !hasRaceFilter || raceType!.includes(cardRace);
+            const gradeMatches = !hasGradeFilter || gradeType!.includes(cardGrade);
+
+            // 둘 다 선택된 경우엔 AND 조건으로 필터링
+            if (raceMatches && gradeMatches) {
                 filteredCardIdList.push(cardId);
             }
         }
@@ -189,13 +225,14 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         return filteredCardIdList;
     }
 
-    private adjustFilteredMyDeckCardPositions(deckId: number, type: CardGrade[]): void {
-        const filteredCardIdList = this.filteredMyDeckCardIdList(deckId, type);
-        const cardCount = filteredCardIdList.length;
+    private adjustFilteredDeckCardPositions(deckId: number, cardIdList: number[] | null): void {
+        if (cardIdList == null) return;
+
+        const cardCount = cardIdList.length;
         const positionList = this.myDeckCardPositionRepository.findSearchCardPosition(deckId, cardCount);
 
         for (let i = 0; i < cardCount; i++) {
-            const cardId = filteredCardIdList[i];
+            const cardId = cardIdList[i];
             const cardPosition = positionList[i]; // 같은 index로 매칭
 
             if (!cardPosition) return;
@@ -215,13 +252,14 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         }
     }
 
-    private adjustFilteredMyDeckNumberOfCards(deckId: number, type: CardGrade[]): void {
-        const filteredCardIdList = this.filteredMyDeckCardIdList(deckId, type);
-        const numberCount = filteredCardIdList.length;
+    private adjustFilteredDeckNumberOfCards(deckId: number, cardIdList: number[] | null): void {
+        if (cardIdList == null) return;
+
+        const numberCount = cardIdList.length;
         const positionList = this.myDeckNumberOfCardsPositionRepository.findSearchNumberPosition(deckId, numberCount);
 
         for (let i = 0; i < numberCount; i++) {
-            const cardId = filteredCardIdList[i];
+            const cardId = cardIdList[i];
             const numberPosition = positionList[i]; // 같은 index로 매칭
 
             if (!numberPosition) return;
@@ -241,13 +279,14 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         }
     }
 
-    private adjustFilteredMyDeckMarkerPosition(deckId: number, type: CardGrade[]): void {
-        const filteredCardIdList = this.filteredMyDeckCardIdList(deckId, type);
-        const markerCount = filteredCardIdList.length;
+    private adjustFilteredDeckMarkerPosition(deckId: number, cardIdList: number[] | null): void {
+        if (cardIdList == null) return;
+
+        const markerCount = cardIdList.length;
         const positionList = this.deckCardCountMarkerPositionRepository.findSearchMarkerPosition(deckId, markerCount);
 
         for (let i = 0; i < markerCount; i++) {
-            const cardId = filteredCardIdList[i];
+            const cardId = cardIdList[i];
             const numberPosition = positionList[i]; // 같은 index로 매칭
 
             if (!numberPosition) return;
@@ -267,20 +306,15 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         }
     }
 
-    private hideUnfilteredMyDeckElements(currentClickedDeckId: number, types: CardGrade[]): void {
-        console.log("현재 필터링된 등급 타입 목록:", types);
-
-        const allCardIdList = this.myDeckCardRepository.findCardIdListByDeckId(currentClickedDeckId);
+    private hideUnfilteredDeckElements(deckId: number, filteredCardIdList: number[] | null): void {
+        const allCardIdList = this.myDeckCardRepository.findCardIdListByDeckId(deckId);
         for (const cardId of allCardIdList) {
-            const card = getCardById(cardId);
-            if (!card) return;
+            if (filteredCardIdList == null) return;
 
-            const cardGrade = Number(card.등급);
-
-            if (!types.includes(cardGrade)) {
-                this.myDeckCardRepository.findCardByDeckIdAndCardId(currentClickedDeckId, cardId)?.setVisibility(false);
-                this.myDeckNumberOfCardsRepository.findNumberByDeckIdAndCardId(currentClickedDeckId, cardId)?.setVisibility(false);
-                this.deckCardCountMarkerRepository.findMarkerByDeckIdAndCardId(currentClickedDeckId, cardId)?.setVisibility(false);
+            if (!filteredCardIdList.includes(cardId)) {
+                this.myDeckCardRepository.findCardByDeckIdAndCardId(deckId, cardId)?.setVisibility(false);
+                this.myDeckNumberOfCardsRepository.findNumberByDeckIdAndCardId(deckId, cardId)?.setVisibility(false);
+                this.deckCardCountMarkerRepository.findMarkerByDeckIdAndCardId(deckId, cardId)?.setVisibility(false);
             }
         }
     }
