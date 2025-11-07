@@ -1074,10 +1074,11 @@ export class TCGJustTestMyDeckView {
             // 덱 편집 모드일 때 검색된 카드만 배치된 경우 아닌 경우 구분 지어야 함 -> 아래는 이에 대한 임시 방편
             const deckEditModeSearchState = this.deckCardSearchInputEnterDetectService.getDeckEditSearchState();
             const clickedRaceOptionTypes = this.cardFilterRaceOptionClickDetectService.getClickedRaceOptionTypes();
+            const clickedGradeOptionTypes = this.cardFilterGradeOptionClickDetectService.getClickedGradeOptionTypes();
 
             if (deckEditModeSearchState === DeckCardSearchStateInDeckEditMode.MATCHED) {
                 this.handleDeckEditModeMatched(cardId);
-            } else if (clickedRaceOptionTypes !== null) {
+            } else if (clickedRaceOptionTypes !== null || clickedGradeOptionTypes !== null) {
                 this.handleFilteredState(cardId);
             } else {
                 this.myDeckRemainingCardsService.setNumberOfRemainingCardsByCardId(cardId, true);
@@ -1105,9 +1106,9 @@ export class TCGJustTestMyDeckView {
     private handleFilteredState(cardId: number): void {
         this.myDeckRemainingCardsService.adjustDeckEditModeFilteredRemainingCardsPosition(cardId);
 
-        const clickedGradeOptionTypes = this.cardFilterRaceOptionClickDetectService.getClickedGradeOptionTypes() || [];
+        const clickedGradeOptionTypes = this.cardFilterGradeOptionClickDetectService.getClickedGradeOptionTypes() || [];
         const clickedRaceOptionTypes = this.cardFilterRaceOptionClickDetectService.getClickedRaceOptionTypes() || [];
-        const filteredList = this.cardFilterRaceOptionClickDetectService.getFilteredOwnedCardIdList(
+        const filteredList = this.myDeckOwnedCardsService.getFilteredOwnedCardIdList(
             clickedRaceOptionTypes,
             clickedGradeOptionTypes
         );
