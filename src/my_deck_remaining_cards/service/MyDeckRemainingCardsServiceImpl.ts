@@ -228,4 +228,19 @@ export class MyDeckRemainingCardsServiceImpl implements MyDeckRemainingCardsServ
         this.myDeckElementAdjuster.adjustElementPosition(numberOfRemainingCardsMesh, widthPercent, heightPercent, positionX, positionY);
     }
 
+    public adjustDeckEditModeFilteredRemainingCardsPosition(cardId: number): void {
+        const numberOfRemainingCardsMesh = this.getRemainingCardsMeshByCardId(cardId);
+        if (numberOfRemainingCardsMesh == null) return;
+
+        const position = this.myDeckRemainingCardsPositionRepository.findDeckEditModeFilteredPositionByCardId(cardId);
+        if (position == undefined) return;
+
+        const widthPercent = 0.013;
+        const heightPercent = 1;
+        const positionX = position.getX();
+        const positionY = position.getY();
+
+        this.myDeckElementAdjuster.adjustElementPosition(numberOfRemainingCardsMesh, widthPercent, heightPercent, positionX, positionY);
+    }
+
 }

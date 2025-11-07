@@ -176,7 +176,7 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         return this.cardFilterButtonClickDetectRepository.isButtonClickEnabled();
     }
 
-    private getFilterButtonClickState(): boolean {
+    public getFilterButtonClickState(): boolean {
         return this.cardFilterButtonClickDetectRepository.findButtonClickState();
     }
 
@@ -274,7 +274,10 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
         this.setCardFilterPanelHoverEnabled(false);
         this.setAllCardFilterRaceOptionClickEnabled(false);
         this.setAllCardFilterGradeOptionClickEnabled(false);
-        this.setAllOwnedCardClickEnabled(true);
+
+        if (this.isDeckEditMode() == true) {
+            this.setAllOwnedCardClickEnabled(true);
+        }
     }
 
     private setCardFilterPanelVisibility(isVisible: boolean): void {
@@ -374,6 +377,10 @@ export class CardFilterButtonClickDetectServiceImpl implements CardFilterButtonC
 
     private setAllCardFilterGradeOptionClickEnabled(isEnabled: boolean): void {
         this.cardFilterGradeOptionClickDetectRepository.setAllOptionClickEnabled(isEnabled);
+    }
+
+    private isDeckEditMode(): boolean | null {
+        return this.deckEditButtonClickDetectRepository.getCurrentButtonClickState();
     }
 
 }
