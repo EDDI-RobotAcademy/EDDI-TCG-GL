@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import {CardGrade} from "../../card/grade";
+import {CardRace} from "../../card/race";
 
 import {DeckEditButton} from "../../deck_edit_button/entity/DeckEditButton";
 import {MyDeckOwnedCards} from "../../my_deck_owned_cards/entity/MyDeckOwnedCards";
@@ -50,6 +52,12 @@ import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_inp
 import {MyDeckCardSearchCancelButtonRepositoryImpl} from "../../my_deck_card_search_cancel_button/repository/MyDeckCardSearchCancelButtonRepositoryImpl";
 import {DeckCardSearchCancelButtonClickDetectRepositoryImpl} from "../../deck_card_search_cancel_button_click_detect/repository/DeckCardSearchCancelButtonClickDetectRepositoryImpl";
 import {MyDeckRemainingCardsPositionRepositoryImpl} from "../../my_deck_remaining_cards_position/repository/MyDeckRemainingCardsPositionRepositoryImpl";
+import {CardFilterGradeOptionClickDetectRepositoryImpl} from "../../card_filter_grade_option_click_detect/repository/CardFilterGradeOptionClickDetectRepositoryImpl";
+import {CardFilterRaceOptionClickDetectRepositoryImpl} from "../../card_filter_race_option_click_detect/repository/CardFilterRaceOptionClickDetectRepositoryImpl";
+import {CardFilterGradeOptionInactiveRepositoryImpl} from "../../card_filter_grade_option_inactive/repository/CardFilterGradeOptionInactiveRepositoryImpl";
+import {CardFilterGradeOptionActiveRepositoryImpl} from "../../card_filter_grade_option_active/repository/CardFilterGradeOptionActiveRepositoryImpl";
+import {CardFilterRaceOptionInactiveRepositoryImpl} from "../../card_filter_race_option_inactive/repository/CardFilterRaceOptionInactiveRepositoryImpl";
+import {CardFilterRaceOptionActiveRepositoryImpl} from "../../card_filter_race_option_active/repository/CardFilterRaceOptionActiveRepositoryImpl";
 
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
@@ -95,6 +103,12 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
     private myDeckCardSearchCancelButtonRepository: MyDeckCardSearchCancelButtonRepositoryImpl;
     private deckCardSearchCancelButtonClickDetectRepository: DeckCardSearchCancelButtonClickDetectRepositoryImpl;
     private myDeckRemainingCardsPositionRepository: MyDeckRemainingCardsPositionRepositoryImpl;
+    private cardFilterGradeOptionClickDetectRepository: CardFilterGradeOptionClickDetectRepositoryImpl;
+    private cardFilterRaceOptionClickDetectRepository: CardFilterRaceOptionClickDetectRepositoryImpl;
+    private cardFilterGradeOptionInactiveRepository: CardFilterGradeOptionInactiveRepositoryImpl;
+    private cardFilterGradeOptionActiveRepository: CardFilterGradeOptionActiveRepositoryImpl;
+    private cardFilterRaceOptionInactiveRepository: CardFilterRaceOptionInactiveRepositoryImpl;
+    private cardFilterRaceOptionActiveRepository: CardFilterRaceOptionActiveRepositoryImpl;
     private cardCountManager: CardCountManager;
     private myDeckElementAdjuster: MyDeckElementAdjuster;
 
@@ -138,6 +152,12 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         this.myDeckCardSearchCancelButtonRepository = MyDeckCardSearchCancelButtonRepositoryImpl.getInstance();
         this.deckCardSearchCancelButtonClickDetectRepository = DeckCardSearchCancelButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckRemainingCardsPositionRepository = MyDeckRemainingCardsPositionRepositoryImpl.getInstance();
+        this.cardFilterGradeOptionClickDetectRepository = CardFilterGradeOptionClickDetectRepositoryImpl.getInstance();
+        this.cardFilterRaceOptionClickDetectRepository = CardFilterRaceOptionClickDetectRepositoryImpl.getInstance();
+        this.cardFilterGradeOptionInactiveRepository = CardFilterGradeOptionInactiveRepositoryImpl.getInstance(scene);
+        this.cardFilterGradeOptionActiveRepository = CardFilterGradeOptionActiveRepositoryImpl.getInstance(scene);
+        this.cardFilterRaceOptionInactiveRepository = CardFilterRaceOptionInactiveRepositoryImpl.getInstance(scene);
+        this.cardFilterRaceOptionActiveRepository = CardFilterRaceOptionActiveRepositoryImpl.getInstance(scene);
         this.cardCountManager = CardCountManager.getInstance();
         this.myDeckElementAdjuster = MyDeckElementAdjuster.getInstance();
     }
@@ -178,6 +198,9 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
                 this.saveCurrentButtonClickState(true);
                 console.log(`[DEBUG] Clicked Deck Edit Button`);
                 console.log(`%c Clicked Deck Edit Button`, 'color: #ffbb00; font-weight: bold;');
+
+                this.resetFilterGradeOptionState();
+                this.resetFilterRaceOptionState();
 
                 const currentClickedDeckId = this.getCurrentClickedDeckId();
                 if (currentClickedDeckId !== null) {
@@ -239,6 +262,26 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         }
     }
 
+    private resetFilterGradeOptionState(): void {
+        const clickedGradeOptionTypes = this.getClickedGradeOptionTypes();
+        if (clickedGradeOptionTypes !== null) {
+            for (const gradeOptionType of clickedGradeOptionTypes) {
+                this.cardFilterGradeOptionClickDetectRepository.saveOptionClickState(gradeOptionType, false);
+                this.cardFilterGradeOptionActiveRepository.findGradeOptionByType(gradeOptionType)?.setVisibility(false);
+            }
+        }
+    }
+
+    private resetFilterRaceOptionState(): void {
+        const clickedRaceOptionTypes = this.getClickedRaceOptionTypes();
+        if (clickedRaceOptionTypes !== null) {
+            for (const raceOptionType of clickedRaceOptionTypes) {
+                this.cardFilterRaceOptionClickDetectRepository.saveOptionClickState(raceOptionType, false);
+                this.cardFilterRaceOptionActiveRepository.findRaceOptionByType(raceOptionType)?.setVisibility(false);
+            }
+        }
+    }
+
     private getDeckEditButton(): DeckEditButton | null {
         return this.deckEditButtonRepository.findButtonById(0);
     }
@@ -272,6 +315,14 @@ export class DeckEditButtonClickDetectServiceImpl implements DeckEditButtonClick
         if (button !== null) {
             return button.getVisibility();
         }
+    }
+
+    private getClickedGradeOptionTypes(): CardGrade[] | null {
+        return this.cardFilterGradeOptionClickDetectRepository.findClickedOptionTypes();
+    }
+
+    private getClickedRaceOptionTypes(): CardRace[] | null {
+        return this.cardFilterRaceOptionClickDetectRepository.findClickedOptionTypes();
     }
 
     private setDeckEditButtonVisibility(isVisible: boolean): void {
