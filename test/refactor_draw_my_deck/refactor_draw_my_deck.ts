@@ -1063,6 +1063,7 @@ export class TCGJustTestMyDeckView {
         }
     }
 
+    // To-do: 리팩토링 필요
     private async reAddMyDeckRemainingCards(cardId: number): Promise<void> {
         try {
             const remainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(cardId);
@@ -1072,30 +1073,58 @@ export class TCGJustTestMyDeckView {
             // To-do: 덱 검색 후의 화면일 경우 배치된 카드의 위치에 맞춰서 위치도 변경해야 함
             // 덱 편집 모드일 때 검색된 카드만 배치된 경우 아닌 경우 구분 지어야 함 -> 아래는 이에 대한 임시 방편
             const deckEditModeSearchState = this.deckCardSearchInputEnterDetectService.getDeckEditSearchState();
-            if (deckEditModeSearchState == DeckCardSearchStateInDeckEditMode.MATCHED) {
-                this.myDeckRemainingCardsService.adjustDeckEditModeSearchRemainingCardsPosition(cardId);
-                const deckEditModeMatchedCardIdList = this.deckCardSearchInputEnterDetectService.getMatchedOwnedCardIdList();
-                if (deckEditModeMatchedCardIdList.includes(cardId)) {
-                    this.myDeckRemainingCardsService.setNumberOfRemainingCardsByCardId(cardId, true);
-                } else {
-                    this.myDeckRemainingCardsService.setNumberOfRemainingCardsByCardId(cardId, false);
-                }
+            const clickedRaceOptionTypes = this.cardFilterRaceOptionClickDetectService.getClickedRaceOptionTypes();
+
+            if (deckEditModeSearchState === DeckCardSearchStateInDeckEditMode.MATCHED) {
+                this.handleDeckEditModeMatched(cardId);
+            } else if (clickedRaceOptionTypes !== null) {
+                this.handleFilteredState(cardId);
             } else {
                 this.myDeckRemainingCardsService.setNumberOfRemainingCardsByCardId(cardId, true);
             }
 
             this.myDeckRemainingCardsService.saveRemainingCardGroup();
             this.myDeckRemainingCardsService.applyClippingMaskToRemainingCards();
-
-            const remainingCardsGroup = this.myDeckRemainingCardsService.getRemainingCardsGroup();
-            if (!this.scene.children.includes(remainingCardsGroup)) {
-                this.scene.add(remainingCardsGroup);
-            }
-            remainingCardsGroup.position.y = 0;
+            this.ensureRemainingCardsGroupInScene();
 
         } catch (error) {
             console.error('Failed to add my deck remaining cards:', error);
         }
+    }
+
+    // 덱 편집 모드 - 검색 결과가 매치된 경우 처리
+    private handleDeckEditModeMatched(cardId: number): void {
+        this.myDeckRemainingCardsService.adjustDeckEditModeSearchRemainingCardsPosition(cardId);
+
+        const matchedList = this.deckCardSearchInputEnterDetectService.getMatchedOwnedCardIdList() || [];
+        const isMatched = matchedList.includes(cardId);
+        this.myDeckRemainingCardsService.setNumberOfRemainingCardsByCardId(cardId, isMatched);
+    }
+
+    // 덱 편집모드에서  카드가 필터링된 경우 처리
+    private handleFilteredState(cardId: number): void {
+        this.myDeckRemainingCardsService.adjustDeckEditModeFilteredRemainingCardsPosition(cardId);
+
+        const clickedGradeOptionTypes = this.cardFilterRaceOptionClickDetectService.getClickedGradeOptionTypes() || [];
+        const clickedRaceOptionTypes = this.cardFilterRaceOptionClickDetectService.getClickedRaceOptionTypes() || [];
+        const filteredList = this.cardFilterRaceOptionClickDetectService.getFilteredOwnedCardIdList(
+            clickedRaceOptionTypes,
+            clickedGradeOptionTypes
+        );
+
+        const isIncluded = Array.isArray(filteredList) && filteredList.includes(cardId);
+        this.myDeckRemainingCardsService.setNumberOfRemainingCardsByCardId(cardId, isIncluded);
+    }
+
+    // 남은 카드 수량 객체 그룹 추가 및 초기 위치 설정
+    private ensureRemainingCardsGroupInScene(): void {
+        const remainingCardsGroup = this.myDeckRemainingCardsService.getRemainingCardsGroup();
+        if (!remainingCardsGroup) return;
+
+        if (!this.scene.children.includes(remainingCardsGroup)) {
+            this.scene.add(remainingCardsGroup);
+        }
+        remainingCardsGroup.position.y = 0;
     }
 
     // To-do: 리팩토링 필용한 부분

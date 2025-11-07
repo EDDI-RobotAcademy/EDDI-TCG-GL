@@ -147,13 +147,13 @@ export class MyDeckOwnedCardsClickDetectServiceImpl implements MyDeckOwnedCardsC
 
         // 등급별 제한 검사
         if (currentSelectedCardCountByGrade >= maxSelectableCardCountByGrade) {
-            console.warn(`[DEBUG] Grade limit exceeded (grade: ${grade}, max count: ${maxSelectableCardCountByGrade})`);
+            console.warn(`[WARN] Grade limit exceeded (grade: ${grade}, max count: ${maxSelectableCardCountByGrade})`);
             return;
         }
 
         // 사용자가 소지한 카드 개수 제한 검사
         if (ownedCardCount !== null && currentSelectedCardCount >= ownedCardCount) {
-            console.warn(`[DEBUG] User Owned Card Not Enough: ${cardId} (Owned Card Count: ${ownedCardCount})`);
+            console.warn(`[WARN] User Owned Card Not Enough: ${cardId} (Owned Card Count: ${ownedCardCount})`);
             return;
         }
 

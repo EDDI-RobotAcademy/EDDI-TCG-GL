@@ -6,6 +6,7 @@ export class MyDeckRemainingCardsPositionRepositoryImpl implements MyDeckRemaini
     private static instance: MyDeckRemainingCardsPositionRepositoryImpl;
     private positionMap: Map< number, { cardId: number, position: MyDeckRemainingCardsPosition}> = new Map(); // position Unique ID: position
     private searchModePositionMap: Map<number, MyDeckRemainingCardsPosition> = new Map();
+    private deckEditModeFilteredPositionMap: Map<number, MyDeckRemainingCardsPosition> = new Map();
 
     private originalPositionMap: Map<number, { cardId: number, position: MyDeckRemainingCardsPosition }> = new Map();
 
@@ -113,6 +114,18 @@ export class MyDeckRemainingCardsPositionRepositoryImpl implements MyDeckRemaini
 
     public deleteSearchModePositionData(): void {
         this.searchModePositionMap.clear();
+    }
+
+    public saveDeckEditModeFilteredPosition(cardId: number, position: MyDeckRemainingCardsPosition): void {
+        this.deckEditModeFilteredPositionMap.set(cardId, position);
+    }
+
+    public findDeckEditModeFilteredPositionByCardId(cardId: number): MyDeckRemainingCardsPosition | undefined {
+        return this.deckEditModeFilteredPositionMap.get(cardId);
+    }
+
+    public deleteDeckEditModeFilteredPositionData(): void {
+        this.deckEditModeFilteredPositionMap.clear();
     }
 
     public saveClonedOriginalPositionState(): void {

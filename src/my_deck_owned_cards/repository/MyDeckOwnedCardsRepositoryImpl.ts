@@ -5,6 +5,8 @@ import {TextureManager} from "../../texture_manager/TextureManager";
 import {MeshGenerator} from "../../mesh/generator";
 import {Vector2d} from "../../common/math/Vector2d";
 import {getCardById} from "../../card/utility";
+import {CardRace} from "../../card/race";
+import {CardGrade} from "../../card/grade";
 
 export class MyDeckOwnedCardsRepositoryImpl implements MyDeckOwnedCardsRepository {
     private static instance: MyDeckOwnedCardsRepositoryImpl;
@@ -89,6 +91,61 @@ export class MyDeckOwnedCardsRepositoryImpl implements MyDeckOwnedCardsRepositor
         } else {
             return null;
         }
+    }
+
+    public filteredOwnedCardIdList(
+        raceType: CardRace[] | null,
+        gradeType: CardGrade[] | null
+    ): number[] | null {
+        const allCardIdList = this.findAllCardIdList();
+        const filteredCardIdList: number[] = [];
+
+        const hasRaceFilter = raceType && raceType.length > 0;
+        const hasGradeFilter = gradeType && gradeType.length > 0;
+
+        if (!hasRaceFilter && !hasGradeFilter) {
+            return null;
+        }
+
+        for (const cardId of allCardIdList) {
+            const card = getCardById(cardId);
+            if (!card) {
+                throw new Error(`Card with ID ${cardId} not found`);
+            }
+
+            const cardRace = Number(card.종족);
+            const cardGrade = Number(card.등급);
+
+            // 선택된 필터만 조건으로 적용
+            const raceMatches = !hasRaceFilter || raceType!.includes(cardRace);
+            const gradeMatches = !hasGradeFilter || gradeType!.includes(cardGrade);
+
+            // 둘 다 선택된 경우엔 AND 조건으로 필터링
+            if (raceMatches && gradeMatches) {
+                filteredCardIdList.push(cardId);
+            }
+        }
+
+        return filteredCardIdList;
+    }
+
+    public unfilteredOwnedCardIdList(
+        raceType: CardRace[] | null,
+        gradeType: CardGrade[] | null
+    ): number[] {
+        const unfilteredCardIdList: number[] = [];
+        const filteredCardIdList = this.filteredOwnedCardIdList(raceType, gradeType);
+        const allCardIdList = this.findAllCardIdList();
+
+        if (filteredCardIdList == null) return allCardIdList;
+
+        for (const cardId of allCardIdList) {
+            if (!filteredCardIdList.includes(cardId)) {
+                unfilteredCardIdList.push(cardId);
+            }
+        }
+
+        return unfilteredCardIdList;
     }
 
     public saveCardGroup(): void {
