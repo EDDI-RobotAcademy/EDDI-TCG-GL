@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import {Vector2d} from "../../common/math/Vector2d";
+import {CardRace} from "../../card/race";
+import {CardGrade} from "../../card/grade";
 
 import {MyDeckOwnedCardsService} from "./MyDeckOwnedCardsService";
 
@@ -164,6 +166,13 @@ export class MyDeckOwnedCardsServiceImpl implements MyDeckOwnedCardsService {
                 }
             });
         }
+    }
+
+    public getFilteredOwnedCardIdList(
+        raceType: CardRace[] | null,
+        gradeType: CardGrade[] | null
+    ): number[] | null {
+        return this.myDeckOwnedCardsRepository.filteredOwnedCardIdList(raceType, gradeType);
     }
 
 }
