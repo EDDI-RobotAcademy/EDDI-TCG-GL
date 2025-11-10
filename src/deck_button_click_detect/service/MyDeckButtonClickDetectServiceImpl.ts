@@ -1,3 +1,6 @@
+import {CardGrade} from "../../card/grade";
+import {CardRace} from "../../card/race";
+
 import {MyDeckButtonClickDetectService} from "./MyDeckButtonClickDetectService";
 
 import {MyDeckButton} from "../../my_deck_button/entity/MyDeckButton";
@@ -50,6 +53,10 @@ import {CardSelectionBlockerPositionRepositoryImpl} from "../../card_selection_b
 import {MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl} from "../../my_deck_remaining_out_of_total_slash_position/repository/MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl";
 import {MyDeckTotalOwnedCardsPositionRepositoryImpl} from "../../my_deck_total_owned_cards_position/repository/MyDeckTotalOwnedCardsPositionRepositoryImpl";
 import {DeckEditDoneButtonClickDetectRepositoryImpl} from "../../deck_edit_done_button_click_detect/repository/DeckEditDoneButtonClickDetectRepositoryImpl";
+import {CardFilterGradeOptionActiveRepositoryImpl} from "../../card_filter_grade_option_active/repository/CardFilterGradeOptionActiveRepositoryImpl";
+import {CardFilterRaceOptionActiveRepositoryImpl} from "../../card_filter_race_option_active/repository/CardFilterRaceOptionActiveRepositoryImpl";
+import {CardFilterGradeOptionClickDetectRepositoryImpl} from "../../card_filter_grade_option_click_detect/repository/CardFilterGradeOptionClickDetectRepositoryImpl";
+import {CardFilterRaceOptionClickDetectRepositoryImpl} from "../../card_filter_race_option_click_detect/repository/CardFilterRaceOptionClickDetectRepositoryImpl";
 
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
 import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
@@ -110,6 +117,10 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private myDeckRemainingOutOfTotalSlashPositionRepository: MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl;
     private myDeckTotalOwnedCardsPositionRepository: MyDeckTotalOwnedCardsPositionRepositoryImpl;
     private deckEditDoneButtonClickDetectRepository: DeckEditDoneButtonClickDetectRepositoryImpl;
+    private cardFilterGradeOptionActiveRepository: CardFilterGradeOptionActiveRepositoryImpl;
+    private cardFilterRaceOptionActiveRepository: CardFilterRaceOptionActiveRepositoryImpl;
+    private cardFilterGradeOptionClickDetectRepository: CardFilterGradeOptionClickDetectRepositoryImpl;
+    private cardFilterRaceOptionClickDetectRepository: CardFilterRaceOptionClickDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cardCountManager = CardCountManager.getInstance();
@@ -161,6 +172,10 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         this.myDeckRemainingOutOfTotalSlashPositionRepository = MyDeckRemainingOutOfTotalSlashPositionRepositoryImpl.getInstance();
         this.myDeckTotalOwnedCardsPositionRepository = MyDeckTotalOwnedCardsPositionRepositoryImpl.getInstance();
         this.deckEditDoneButtonClickDetectRepository = DeckEditDoneButtonClickDetectRepositoryImpl.getInstance();
+        this.cardFilterGradeOptionActiveRepository = CardFilterGradeOptionActiveRepositoryImpl.getInstance(scene);
+        this.cardFilterRaceOptionActiveRepository = CardFilterRaceOptionActiveRepositoryImpl.getInstance(scene);
+        this.cardFilterGradeOptionClickDetectRepository = CardFilterGradeOptionClickDetectRepositoryImpl.getInstance();
+        this.cardFilterRaceOptionClickDetectRepository = CardFilterRaceOptionClickDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): MyDeckButtonClickDetectServiceImpl {
@@ -263,6 +278,9 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
     private handleDeckSwitch(deckId: number): void {
         this.setPreviousDeckObjectVisibleState(deckId);
         this.restoreDeckLayout(deckId);
+
+        this.resetFilterGradeOptionState();
+        this.resetFilterRaceOptionState();
 
         if (this.getDeckEditButtonClickState() == true) {
             this.handleDeckEditModeExit(deckId);
@@ -409,6 +427,14 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
         return this.myDeckButtonEffectRepository.findById(buttonId);
     }
 
+    private getClickedGradeOptionTypes(): CardGrade[] | null {
+        return this.cardFilterGradeOptionClickDetectRepository.findClickedOptionTypes();
+    }
+
+    private getClickedRaceOptionTypes(): CardRace[] | null {
+        return this.cardFilterRaceOptionClickDetectRepository.findClickedOptionTypes();
+    }
+
     private setCardVisibilityByDeckId(deckId: number, isVisible: boolean): void {
         this.myDeckCardRepository.findCardListByDeckId(deckId)?.forEach(card =>
             card.setVisibility(isVisible)
@@ -548,6 +574,26 @@ export class MyDeckButtonClickDetectServiceImpl implements MyDeckButtonClickDete
 
     private setDeckEditDoneButtonHoverEnabled(isEnabled: boolean): void {
         this.deckEditDoneButtonHoverDetectRepository.setButtonHoverEnabled(isEnabled);
+    }
+
+    private resetFilterGradeOptionState(): void {
+        const clickedGradeOptionTypes = this.getClickedGradeOptionTypes();
+        if (clickedGradeOptionTypes !== null) {
+            for (const gradeOptionType of clickedGradeOptionTypes) {
+                this.cardFilterGradeOptionClickDetectRepository.saveOptionClickState(gradeOptionType, false);
+                this.cardFilterGradeOptionActiveRepository.findGradeOptionByType(gradeOptionType)?.setVisibility(false);
+            }
+        }
+    }
+
+    private resetFilterRaceOptionState(): void {
+        const clickedRaceOptionTypes = this.getClickedRaceOptionTypes();
+        if (clickedRaceOptionTypes !== null) {
+            for (const raceOptionType of clickedRaceOptionTypes) {
+                this.cardFilterRaceOptionClickDetectRepository.saveOptionClickState(raceOptionType, false);
+                this.cardFilterRaceOptionActiveRepository.findRaceOptionByType(raceOptionType)?.setVisibility(false);
+            }
+        }
     }
 
     private restoreOriginalDeckState(deckId: number): void {
