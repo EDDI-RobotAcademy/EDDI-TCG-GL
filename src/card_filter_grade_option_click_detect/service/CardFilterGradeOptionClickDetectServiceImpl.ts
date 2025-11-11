@@ -3,6 +3,8 @@ import * as THREE from "three";
 import {CardGrade} from "../../card/grade";
 import {CardRace} from "../../card/race";
 import {getCardById} from "../../card/utility";
+import {DeckCardSearchStateInDeckEditMode} from "../../deck_card_search_input_enter_detect/entity/DeckCardSearchStateInDeckEditMode";
+import {DeckCardSearchState} from "../../deck_card_search_input_enter_detect/entity/DeckCardSearchState";
 
 import {MyDeckElementAdjuster} from "../../my_deck_element_adjuster/MyDeckElementAdjuster";
 import {CardCountManager} from "../../my_deck_card_manager/CardCountManager";
@@ -27,6 +29,7 @@ import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_det
 import {CardFilterRaceOptionClickDetectRepositoryImpl} from "../../card_filter_race_option_click_detect/repository/CardFilterRaceOptionClickDetectRepositoryImpl";
 import {DeckEditButtonClickDetectRepositoryImpl} from "../../deck_edit_button_click_detect/repository/DeckEditButtonClickDetectRepositoryImpl";
 import {MyDeckOwnedCardsClickDetectRepositoryImpl} from "../../deck_owned_cards_click_detect/repository/MyDeckOwnedCardsClickDetectRepositoryImpl";
+import {DeckCardSearchInputEnterDetectRepositoryImpl} from "../../deck_card_search_input_enter_detect/repository/DeckCardSearchInputEnterDetectRepositoryImpl";
 
 import {MyDeckOwnedCardsRepositoryImpl} from "../../my_deck_owned_cards/repository/MyDeckOwnedCardsRepositoryImpl";
 import {MyDeckOwnedCardsPositionRepositoryImpl} from "../../my_deck_owned_cards_position/repository/MyDeckOwnedCardsPositionRepositoryImpl";
@@ -68,6 +71,7 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
     private cardFilterRaceOptionClickDetectRepository: CardFilterRaceOptionClickDetectRepositoryImpl;
     private deckEditButtonClickDetectRepository: DeckEditButtonClickDetectRepositoryImpl;
     private myDeckOwnedCardsClickDetectRepository: MyDeckOwnedCardsClickDetectRepositoryImpl;
+    private deckCardSearchInputEnterDetectRepository: DeckCardSearchInputEnterDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.myDeckElementAdjuster = MyDeckElementAdjuster.getInstance();
@@ -97,6 +101,7 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         this.cardFilterRaceOptionClickDetectRepository = CardFilterRaceOptionClickDetectRepositoryImpl.getInstance();
         this.deckEditButtonClickDetectRepository = DeckEditButtonClickDetectRepositoryImpl.getInstance();
         this.myDeckOwnedCardsClickDetectRepository = MyDeckOwnedCardsClickDetectRepositoryImpl.getInstance();
+        this.deckCardSearchInputEnterDetectRepository = DeckCardSearchInputEnterDetectRepositoryImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): CardFilterGradeOptionClickDetectServiceImpl {
@@ -118,10 +123,16 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         if (clickedOption) {
             const currentClickedOptionType = clickedOption.type;
             console.log(`[DEBUG] Click Card Filter Grade Option Type: ${currentClickedOptionType}`);
+            this.toggleGradeOptionState(currentClickedOptionType);
+
+            const currentClickedDeckId = this.getCurrentClickDeckId()!;
+            const clickedGradeOptionTypes = this.getClickedGradeOptionTypes();
+            const clickedRaceOptionTypes = this.getClickedRaceOptionTypes();
+
             if (this.isDeckEditMode() == true) {
-                this.handleFilterGradeOptionToggleInDeckEditMode(currentClickedOptionType);
+                this.handleFilterGradeOptionToggleInDeckEditMode(clickedGradeOptionTypes, clickedRaceOptionTypes);
             } else {
-                this.handleFilterGradeOptionToggle(currentClickedOptionType);
+                this.handleFilterGradeOptionToggle(currentClickedDeckId, clickedGradeOptionTypes, clickedRaceOptionTypes);
             }
 
             return clickedOption;
@@ -141,75 +152,97 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         return null;
     }
 
-    private handleFilterGradeOptionToggle(optionType: CardGrade): void {
-        const prevClickedOptionState = this.getCardFilterGradeOptionClickState(optionType);
-        if (prevClickedOptionState == true) {
-            // 이전에 클릭했을 때
-            this.updateGradeOptionState(optionType, true);
-        } else {
-            // 이전에 클릭하지 않았을 때
-            this.updateGradeOptionState(optionType, false);
-        }
+    private handleFilterGradeOptionToggle(
+        deckId: number,
+        gradeOptionTypes: CardGrade[] | null,
+        raceOptionTypes: CardRace[] | null
+    ): void {
+        const currentDeckCardSearchState = this.getDeckCardSearchStateInNormalMode();
+        if (currentDeckCardSearchState == DeckCardSearchState.MATCHED) {
+            const searchMatchedCardIdList = this.getSearchMatchedDeckCardIdList();
+            if (searchMatchedCardIdList == null) return;
 
-        const currentClickedDeckId = this.getCurrentClickDeckId()!
-        const clickedGradeOptionTypes = this.getClickedGradeOptionTypes();
-        const clickedRaceOptionTypes = this.getClickedRaceOptionTypes();
+            if (gradeOptionTypes == null && raceOptionTypes == null) {
+                this.applySearchResultToDeckElements(deckId, searchMatchedCardIdList);
+            } else {
+                this.applyOptionFilterResultToDeckElements(
+                    deckId,
+                    searchMatchedCardIdList,
+                    raceOptionTypes as CardRace[] | null,
+                    gradeOptionTypes as CardGrade[] | null
+                );
+            }
 
-        if (clickedGradeOptionTypes == null && clickedRaceOptionTypes == null) {
-            this.restoreAllDeckElementsAfterFilterClear(currentClickedDeckId);
         } else {
-            this.sortFilteredMyDeckElements(
-                currentClickedDeckId,
-                clickedRaceOptionTypes as CardRace[] | null,
-                clickedGradeOptionTypes as CardGrade[] | null
-            );
+            const cardIdList = this.getMyDeckCardIdListByDeckId(deckId);
+            if (gradeOptionTypes == null && raceOptionTypes == null) {
+                this.restoreAllDeckElementsAfterFilterClear(deckId);
+            } else {
+                this.applyOptionFilterResultToDeckElements(
+                    deckId,
+                    cardIdList,
+                    raceOptionTypes as CardRace[] | null,
+                    gradeOptionTypes as CardGrade[] | null
+                );
+            }
         }
     }
 
-    private handleFilterGradeOptionToggleInDeckEditMode(optionType: CardGrade): void {
-        const prevClickedOptionState = this.getCardFilterGradeOptionClickState(optionType);
-        if (prevClickedOptionState == true) {
-            // 이전에 클릭했을 때
-            this.updateGradeOptionState(optionType, true);
-        } else {
-            // 이전에 클릭하지 않았을 때
-            this.updateGradeOptionState(optionType, false);
-        }
-
-        const clickedGradeOptionTypes = this.getClickedGradeOptionTypes();
-        const clickedRaceOptionTypes = this.getClickedRaceOptionTypes();
-
-        if (clickedGradeOptionTypes == null && clickedRaceOptionTypes == null) {
+    private handleFilterGradeOptionToggleInDeckEditMode(
+        gradeOptionTypes: CardGrade[] | null,
+        raceOptionTypes: CardRace[] | null
+    ): void {
+        if (gradeOptionTypes == null && raceOptionTypes == null) {
             this.restoreAllDeckEditElementsAfterFilterClear();
         } else {
             this.sortFilteredDeckEditElements(
-                clickedRaceOptionTypes as CardRace[] | null,
-                clickedGradeOptionTypes as CardGrade[] | null
+                raceOptionTypes as CardRace[] | null,
+                gradeOptionTypes as CardGrade[] | null
             );
         }
     }
 
-    private updateGradeOptionState(type: CardGrade, isActive: boolean): void {
-        this.saveCardFilterGradeOptionClickState(type, !isActive);
-        this.updateGradeOptionVisibility(type, isActive);
+    private toggleGradeOptionState(optionType: CardGrade) {
+        const prevClickedOptionState = this.getCardFilterGradeOptionClickState(optionType);
+        if (prevClickedOptionState == true) {
+            // 이미 옵션을 클릭한 상태일 때
+            this.setGradeOptionState(optionType, true);
+        } else {
+            // 옵션 버튼을 처음 클릭할 때
+            this.setGradeOptionState(optionType, false);
+        }
     }
 
-    private updateGradeOptionVisibility(type: CardGrade, isActive: boolean): void {
+    private setGradeOptionState(type: CardGrade, isActive: boolean): void {
+        this.saveCardFilterGradeOptionClickState(type, !isActive);
+        this.setGradeOptionVisibility(type, isActive);
+    }
+
+    private setGradeOptionVisibility(type: CardGrade, isActive: boolean): void {
         this.setCardFilterGradeOptionInactiveVisibility(type, isActive);
         this.setCardFilterGradeOptionActiveVisibility(type, !isActive);
     }
 
-    private sortFilteredMyDeckElements(
+    private applyOptionFilterResultToDeckElements(
         deckId: number,
+        cardIdList: number[], // 덱의 모든 카드 id 리스트 or 검색된 상태에서의 카드 id 리스트
         raceType: CardRace[] | null,
         gradeType: CardGrade[] | null
     ): void {
-        const filteredCardIdList = this.getFilteredDeckCardIdList(deckId, raceType, gradeType);
+        const filteredCardIdList = this.getFilteredDeckCardIdList(cardIdList, raceType, gradeType);
 
         this.hideUnfilteredDeckElements(deckId, filteredCardIdList);
         this.adjustFilteredDeckCardPositions(deckId, filteredCardIdList);
         this.adjustFilteredDeckNumberOfCards(deckId, filteredCardIdList);
         this.adjustFilteredDeckMarkerPosition(deckId, filteredCardIdList);
+    }
+
+    // 검색 결과만 반영한 덱 요소 정렬(검색 매칭 상태 + 옵션 미선택)
+    private applySearchResultToDeckElements(deckId: number, cardIdList: number[]): void {
+        this.hideUnfilteredDeckElements(deckId, cardIdList);
+        this.adjustFilteredDeckCardPositions(deckId, cardIdList);
+        this.adjustFilteredDeckNumberOfCards(deckId, cardIdList);
+        this.adjustFilteredDeckMarkerPosition(deckId, cardIdList);
     }
 
     private sortFilteredDeckEditElements(
@@ -271,6 +304,22 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         return this.cardFilterRaceOptionClickDetectRepository.findClickedOptionTypes();
     }
 
+    private getDeckCardSearchStateInNormalMode(): DeckCardSearchState {
+        return this.deckCardSearchInputEnterDetectRepository.findDeckCardSearchState();
+    }
+
+    private getDeckCardSearchStateInDeckEditMode(): DeckCardSearchStateInDeckEditMode {
+        return this.deckCardSearchInputEnterDetectRepository.findDeckEditSearchState();
+    }
+
+    private getMyDeckCardIdListByDeckId(deckId: number): number[] {
+        return this.myDeckCardRepository.findCardIdListByDeckId(deckId);
+    }
+
+    private getSearchMatchedDeckCardIdList(): number[] | null {
+        return this.deckCardSearchInputEnterDetectRepository.findMatchedDeckCardIdList();
+    }
+
     private setCardFilterGradeOptionInactiveVisibility(type: CardGrade, isVisible: boolean): void {
         this.cardFilterGradeOptionInactiveRepository.findGradeOptionByType(type)?.setVisibility(isVisible);
     }
@@ -280,11 +329,11 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
     }
 
     private getFilteredDeckCardIdList(
-        deckId: number,
+        cardIdList: number[],
         raceType: CardRace[] | null,
         gradeType: CardGrade[] | null
     ): number[] | null {
-        return this.myDeckCardRepository.filteredDeckCardIdList(deckId, raceType, gradeType);
+        return this.myDeckCardRepository.filteredDeckCardIdList(cardIdList, raceType, gradeType);
     }
 
     private getFilteredOwnedCardIdList(

@@ -1,12 +1,15 @@
 import {DeckCardSearchInputEnterDetectRepository} from "./DeckCardSearchInputEnterDetectRepository";
 import {DeckCardSearchStateInDeckEditMode} from "../entity/DeckCardSearchStateInDeckEditMode";
+import {DeckCardSearchState} from "../entity/DeckCardSearchState";
 
 export class DeckCardSearchInputEnterDetectRepositoryImpl implements DeckCardSearchInputEnterDetectRepository {
     private static instance: DeckCardSearchInputEnterDetectRepositoryImpl;
     private enterDetectionEnabled: boolean = true;
     private enterPressedState: boolean = false;
     private deckEditSearchState: DeckCardSearchStateInDeckEditMode = DeckCardSearchStateInDeckEditMode.DEFAULT;
+    private deckCardSearchState: DeckCardSearchState = DeckCardSearchState.DEFAULT;
     private matchedOwnedCardIdList: number[] = [];
+    private matchedDeckCardIdList: number[] | null = null;
 
     private constructor() {}
 
@@ -47,6 +50,14 @@ export class DeckCardSearchInputEnterDetectRepositoryImpl implements DeckCardSea
         return this.deckEditSearchState;
     }
 
+    public setDeckCardSearchState(state: DeckCardSearchState): void {
+        this.deckCardSearchState = state;
+    }
+
+    public findDeckCardSearchState(): DeckCardSearchState {
+        return this.deckCardSearchState;
+    }
+
     public saveMatchedOwnedCardIdList(idList: number[]): void {
         this.matchedOwnedCardIdList = idList;
     }
@@ -58,4 +69,17 @@ export class DeckCardSearchInputEnterDetectRepositoryImpl implements DeckCardSea
     public resetMatchedOwnedCardIdList(): void {
         this.matchedOwnedCardIdList = [];
     }
+
+    public saveMatchedDeckCardIdList(idList: number[]): void {
+        this.matchedDeckCardIdList = idList;
+    }
+
+    public findMatchedDeckCardIdList(): number[] | null {
+        return this.matchedDeckCardIdList;
+    }
+
+    public resetMatchedDeckCardIdList(): void {
+        this.matchedDeckCardIdList = null;
+    }
+
 }
