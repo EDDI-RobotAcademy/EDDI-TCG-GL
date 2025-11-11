@@ -94,10 +94,10 @@ export class MyDeckOwnedCardsRepositoryImpl implements MyDeckOwnedCardsRepositor
     }
 
     public filteredOwnedCardIdList(
+        cardIdList: number[],
         raceType: CardRace[] | null,
         gradeType: CardGrade[] | null
     ): number[] | null {
-        const allCardIdList = this.findAllCardIdList();
         const filteredCardIdList: number[] = [];
 
         const hasRaceFilter = raceType && raceType.length > 0;
@@ -107,7 +107,7 @@ export class MyDeckOwnedCardsRepositoryImpl implements MyDeckOwnedCardsRepositor
             return null;
         }
 
-        for (const cardId of allCardIdList) {
+        for (const cardId of cardIdList) {
             const card = getCardById(cardId);
             if (!card) {
                 throw new Error(`Card with ID ${cardId} not found`);
@@ -130,11 +130,12 @@ export class MyDeckOwnedCardsRepositoryImpl implements MyDeckOwnedCardsRepositor
     }
 
     public unfilteredOwnedCardIdList(
+        cardIdList: number[],
         raceType: CardRace[] | null,
         gradeType: CardGrade[] | null
     ): number[] {
         const unfilteredCardIdList: number[] = [];
-        const filteredCardIdList = this.filteredOwnedCardIdList(raceType, gradeType);
+        const filteredCardIdList = this.filteredOwnedCardIdList(cardIdList, raceType, gradeType);
         const allCardIdList = this.findAllCardIdList();
 
         if (filteredCardIdList == null) return allCardIdList;
