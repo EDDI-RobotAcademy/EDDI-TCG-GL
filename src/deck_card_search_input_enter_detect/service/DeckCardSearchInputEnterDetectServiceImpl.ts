@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 import {getCardById} from "../../card/utility";
 import {DeckCardSearchStateInDeckEditMode} from "../entity/DeckCardSearchStateInDeckEditMode";
+import {DeckCardSearchState} from "../entity/DeckCardSearchState";
 import {DeckCardSearchInputEnterDetectService} from "./DeckCardSearchInputEnterDetectService";
 import {DeckCardSearchInputEnterDetectRepositoryImpl} from "../repository/DeckCardSearchInputEnterDetectRepositoryImpl";
 import {MyDeckSearchInputContainerRepositoryImpl} from "../../my_deck_search_input_container/repository/MyDeckSearchInputContainerRepositoryImpl";
@@ -198,20 +199,26 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         if (inputText.length === 0) {
             this.restoreMyDeckAllElement(deckId);
             this.showEmptyInputPopup();
+            this.setDeckCardSearchState(DeckCardSearchState.DEFAULT);
             return;
         }
 
         const myDeckCardNameList = this.getMyDeckCardNameListByDeckId(deckId);
         const matchedCardNames = this.findMatchingCardNames(myDeckCardNameList, inputText);
+        const matchedCardIdList = this.findMatchedDeckCardIdList(deckId, matchedCardNames);
+        this.deckCardSearchInputEnterDetectRepository.saveMatchedDeckCardIdList(matchedCardIdList);
 
         if (matchedCardNames.length > 0) {
             this.hideUnmatchedMyDeckAllElements(deckId, matchedCardNames);
             this.adjustMatchedMyDeckAllElementPosition(deckId, matchedCardNames);
+            this.setDeckCardSearchState(DeckCardSearchState.MATCHED);
             return;
         } else {
             this.restoreMyDeckAllElement(deckId);
             this.showNotFoundPopup();
             this.setInteractionStatesAfterPopupButtonShownInNormalMode(deckId);
+            this.deckCardSearchInputEnterDetectRepository.resetMatchedDeckCardIdList();
+            this.setDeckCardSearchState(DeckCardSearchState.UNMATCHED);
         }
     }
 
@@ -229,6 +236,10 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
 
     public getDeckEditSearchState(): DeckCardSearchStateInDeckEditMode {
         return this.deckCardSearchInputEnterDetectRepository.findDeckEditSearchState();
+    }
+
+    private setDeckCardSearchState(state: DeckCardSearchState) {
+        this.deckCardSearchInputEnterDetectRepository.setDeckCardSearchState(state);
     }
 
     public getMatchedOwnedCardIdList(): number[] {
@@ -342,6 +353,21 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
 
         // names 배열에 포함된 카드명에 해당하는 cardId만 필터링
         const nameSet = new Set(names.map(name => name.toLowerCase()));
+        const matchedCardIdList = cardIdList.filter(cardId => {
+            const card = getCardById(cardId);
+            if (!card) {
+                throw new Error(`Card with ID ${cardId} not found`);
+            }
+            return nameSet.has(card.카드명.toLowerCase());
+        });
+
+        return matchedCardIdList;
+    }
+
+    private findMatchedDeckCardIdList(deckId: number, cardNames: string[]): number[] {
+        const cardIdList = this.myDeckCardRepository.findCardIdListByDeckId(deckId);
+
+        const nameSet = new Set(cardNames.map(name => name.toLowerCase()));
         const matchedCardIdList = cardIdList.filter(cardId => {
             const card = getCardById(cardId);
             if (!card) {

@@ -181,11 +181,10 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
     }
 
     public filteredDeckCardIdList(
-        deckId: number,
+        currentDeckCardIdList: number[],
         raceType: CardRace[] | null,
         gradeType: CardGrade[] | null
     ): number[] | null {
-        const allCurrentDeckCardIdList = this.findCardIdListByDeckId(deckId);
         const filteredCardIdList: number[] = [];
 
         // 둘 다 선택되지 않았으면 필터링 없이 전체 카드 유지 (null로 표시)
@@ -196,7 +195,7 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
             return null;
         }
 
-        for (const cardId of allCurrentDeckCardIdList) {
+        for (const cardId of currentDeckCardIdList) {
             const card = getCardById(cardId);
             if (!card) {
                 throw new Error(`Card with ID ${cardId} not found`);
