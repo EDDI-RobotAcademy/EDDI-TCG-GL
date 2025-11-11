@@ -169,10 +169,15 @@ export class MyDeckOwnedCardsServiceImpl implements MyDeckOwnedCardsService {
     }
 
     public getFilteredOwnedCardIdList(
+        cardIdList: number[],
         raceType: CardRace[] | null,
         gradeType: CardGrade[] | null
     ): number[] | null {
-        return this.myDeckOwnedCardsRepository.filteredOwnedCardIdList(raceType, gradeType);
+        return this.myDeckOwnedCardsRepository.filteredOwnedCardIdList(cardIdList, raceType, gradeType);
+    }
+
+    public getAllCardIdList(): number[] {
+        return this.myDeckOwnedCardsRepository.findAllCardIdList();
     }
 
 }

@@ -192,14 +192,34 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         gradeOptionTypes: CardGrade[] | null,
         raceOptionTypes: CardRace[] | null
     ): void {
-        if (gradeOptionTypes == null && raceOptionTypes == null) {
-            this.restoreAllDeckEditElementsAfterFilterClear();
+        const currentOwnedCardSearchState = this.getDeckCardSearchStateInDeckEditMode();
+        if (currentOwnedCardSearchState == DeckCardSearchStateInDeckEditMode.MATCHED) {
+            const searchMatchedCardIdList = this.getSearchMatchedOwnedCardIdList();
+            const searchUnmatchedOwnedCardIdList = this.getSearchUnmatchedOwnedCardIdList();
+
+            if (gradeOptionTypes == null && raceOptionTypes == null) {
+                this.applySearchResultToDeckEditElements(searchMatchedCardIdList, searchUnmatchedOwnedCardIdList);
+            } else {
+                this.applyOptionFilterResultToDeckEditElements(
+                    searchMatchedCardIdList,
+                    raceOptionTypes as CardRace[] | null,
+                    gradeOptionTypes as CardGrade[] | null
+                );
+            }
+
         } else {
-            this.sortFilteredDeckEditElements(
-                raceOptionTypes as CardRace[] | null,
-                gradeOptionTypes as CardGrade[] | null
-            );
+            if (gradeOptionTypes == null && raceOptionTypes == null) {
+                this.restoreAllDeckEditElementsAfterFilterClear();
+            } else {
+                const cardIdList = this.getAllOwnedCardIdList();
+                this.applyOptionFilterResultToDeckEditElements(
+                    cardIdList,
+                    raceOptionTypes as CardRace[] | null,
+                    gradeOptionTypes as CardGrade[] | null
+                );
+            }
         }
+
     }
 
     private toggleGradeOptionState(optionType: CardGrade) {
@@ -245,13 +265,14 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         this.adjustFilteredDeckMarkerPosition(deckId, cardIdList);
     }
 
-    private sortFilteredDeckEditElements(
+    private applyOptionFilterResultToDeckEditElements(
+        cardIdList: number[],
         raceType: CardRace[] | null,
         gradeType: CardGrade[] | null
     ): void {
-        const filteredCardIdList = this.getFilteredOwnedCardIdList(raceType, gradeType);
-        const unfilteredCardIdList = this.getUnfilteredOwnedCardIdList(raceType, gradeType);
-//
+        const filteredCardIdList = this.getFilteredOwnedCardIdList(cardIdList, raceType, gradeType);
+        const unfilteredCardIdList = this.getUnfilteredOwnedCardIdList(cardIdList, raceType, gradeType);
+
         this.hideUnfilteredDeckEditElements(filteredCardIdList);
         this.adjustFilteredOwnedCardPositions(filteredCardIdList);
         this.adjustUnfilteredOwnedCardPositions(filteredCardIdList, unfilteredCardIdList);
@@ -260,6 +281,23 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         this.adjustFilteredSlashesPosition(filteredCardIdList);
         this.adjustFilteredNumberOfTotalOwnedCardsPosition(filteredCardIdList);
         this.saveSearchUnmatchedOwnedCardsClickEnable(filteredCardIdList);
+        this.setCardBlockerVisibility(filteredCardIdList);
+
+    }
+
+    private applySearchResultToDeckEditElements(
+        searchMatchedCardIdList: number[],
+        searchUnmatchedOwnedCardIdList: number[]
+    ): void {
+        this.hideUnfilteredDeckEditElements(searchMatchedCardIdList);
+        this.adjustFilteredOwnedCardPositions(searchMatchedCardIdList);
+        this.adjustUnfilteredOwnedCardPositions(searchMatchedCardIdList, searchUnmatchedOwnedCardIdList);
+        this.adjustFilteredCardBlockerPositions(searchMatchedCardIdList);
+        this.adjustFilteredNumberOfRemainingCardsPosition(searchMatchedCardIdList);
+        this.adjustFilteredSlashesPosition(searchMatchedCardIdList);
+        this.adjustFilteredNumberOfTotalOwnedCardsPosition(searchMatchedCardIdList);
+        this.saveSearchUnmatchedOwnedCardsClickEnable(searchMatchedCardIdList);
+        this.setCardBlockerVisibility(searchMatchedCardIdList);
     }
 
     private restoreAllDeckElementsAfterFilterClear(currentClickedDeckId: number): void {
@@ -320,6 +358,27 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         return this.deckCardSearchInputEnterDetectRepository.findMatchedDeckCardIdList();
     }
 
+    private getSearchMatchedOwnedCardIdList(): number[] {
+        return this.deckCardSearchInputEnterDetectRepository.findMatchedOwnedCardIdList();
+    }
+
+    private getAllOwnedCardIdList(): number[] {
+        return this.myDeckOwnedCardsRepository.findAllCardIdList();
+    }
+
+    private getSearchUnmatchedOwnedCardIdList(): number[] {
+        const allOwnedCardIdList = this.getAllOwnedCardIdList();
+        const searchMatchedCardIdList = this.getSearchMatchedOwnedCardIdList();
+        const unmatchedCardIdList: number[] = [];
+
+        for (const cardId of allOwnedCardIdList) {
+            if (!searchMatchedCardIdList.includes(cardId)) {
+                unmatchedCardIdList.push(cardId);
+            }
+        }
+        return unmatchedCardIdList;
+    }
+
     private setCardFilterGradeOptionInactiveVisibility(type: CardGrade, isVisible: boolean): void {
         this.cardFilterGradeOptionInactiveRepository.findGradeOptionByType(type)?.setVisibility(isVisible);
     }
@@ -337,17 +396,19 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
     }
 
     private getFilteredOwnedCardIdList(
+        cardIdList: number[],
         raceType: CardRace[] | null,
         gradeType: CardGrade[] | null
     ): number[] | null {
-        return this.myDeckOwnedCardsRepository.filteredOwnedCardIdList(raceType, gradeType);
+        return this.myDeckOwnedCardsRepository.filteredOwnedCardIdList(cardIdList, raceType, gradeType);
     }
 
     private getUnfilteredOwnedCardIdList(
+        cardIdList: number[],
         raceType: CardRace[] | null,
         gradeType: CardGrade[] | null
     ): number[] {
-        return this.myDeckOwnedCardsRepository.unfilteredOwnedCardIdList(raceType, gradeType);
+        return this.myDeckOwnedCardsRepository.unfilteredOwnedCardIdList(cardIdList, raceType, gradeType);
     }
 
     private adjustFilteredDeckCardPositions(deckId: number, cardIdList: number[] | null): void {
@@ -857,6 +918,21 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
                 this.myDeckOwnedCardsClickDetectRepository.saveCardClickEnabled(cardId, false);
             } else {
                 this.myDeckOwnedCardsClickDetectRepository.saveCardClickEnabled(cardId, true);
+            }
+        }
+    }
+
+    // To-do: 이 메서드 사용한 부분들 나중에 수정 필요
+    private setCardBlockerVisibility(filteredOwnedCardIdList: number[] | null): void {
+        if (filteredOwnedCardIdList == null) return;
+
+        for (const ownedCardId of filteredOwnedCardIdList) {
+            const blocker = this.cardSelectionBlockerRepository.findBlockerByCardId(ownedCardId);
+            if (blocker == null) return;
+
+            const remainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(ownedCardId);
+            if (remainingCardCount !== null && remainingCardCount == 0) {
+                blocker.setVisibility(true);
             }
         }
     }

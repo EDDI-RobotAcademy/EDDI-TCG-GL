@@ -1108,7 +1108,9 @@ export class TCGJustTestMyDeckView {
 
         const clickedGradeOptionTypes = this.cardFilterGradeOptionClickDetectService.getClickedGradeOptionTypes() || [];
         const clickedRaceOptionTypes = this.cardFilterRaceOptionClickDetectService.getClickedRaceOptionTypes() || [];
+        const allCardIdList = this.myDeckOwnedCardsService.getAllCardIdList();
         const filteredList = this.myDeckOwnedCardsService.getFilteredOwnedCardIdList(
+            allCardIdList,
             clickedRaceOptionTypes,
             clickedGradeOptionTypes
         );
