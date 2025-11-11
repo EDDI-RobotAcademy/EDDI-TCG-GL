@@ -280,6 +280,7 @@ export class CardFilterRaceOptionClickDetectServiceImpl implements CardFilterRac
         this.adjustFilteredSlashesPosition(filteredCardIdList);
         this.adjustFilteredNumberOfTotalOwnedCardsPosition(filteredCardIdList);
         this.saveSearchUnmatchedOwnedCardsClickEnable(filteredCardIdList);
+        this.setCardBlockerVisibility(filteredCardIdList);
     }
 
     private applySearchResultToDeckEditElements(
@@ -294,6 +295,7 @@ export class CardFilterRaceOptionClickDetectServiceImpl implements CardFilterRac
         this.adjustFilteredSlashesPosition(searchMatchedCardIdList);
         this.adjustFilteredNumberOfTotalOwnedCardsPosition(searchMatchedCardIdList);
         this.saveSearchUnmatchedOwnedCardsClickEnable(searchMatchedCardIdList);
+        this.setCardBlockerVisibility(searchMatchedCardIdList);
     }
 
     // 모든 옵션 선택이 해제된 경우 덱 카드와 카드 개수 객체의 위치 및 visible 상태 초기화
@@ -917,6 +919,21 @@ export class CardFilterRaceOptionClickDetectServiceImpl implements CardFilterRac
                 this.myDeckOwnedCardsClickDetectRepository.saveCardClickEnabled(cardId, false);
             } else {
                 this.myDeckOwnedCardsClickDetectRepository.saveCardClickEnabled(cardId, true);
+            }
+        }
+    }
+
+    // To-do: 이 메서드 사용한 부분들 나중에 수정 필요
+    private setCardBlockerVisibility(filteredOwnedCardIdList: number[] | null): void {
+        if (filteredOwnedCardIdList == null) return;
+
+        for (const ownedCardId of filteredOwnedCardIdList) {
+            const blocker = this.cardSelectionBlockerRepository.findBlockerByCardId(ownedCardId);
+            if (blocker == null) return;
+
+            const remainingCardCount = this.cardCountManager.findRemainingCardCountByCardId(ownedCardId);
+            if (remainingCardCount !== null && remainingCardCount == 0) {
+                blocker.setVisibility(true);
             }
         }
     }
