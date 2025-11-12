@@ -115,6 +115,19 @@ export class MyDeckCardNameRepositoryImpl implements MyDeckCardNameRepository {
         }
     }
 
+    public findCardNameTextListByDeckId(deckId: number): string[] {
+        const nameIdList = this.findCardNameIdListByDeckId(deckId);
+        const cardNames: string[] = [];
+
+        for (const nameId of nameIdList) {
+            const cardName = this.findCardNameTextByCardNameId(nameId);
+            if (cardName) {
+                cardNames.push(cardName);
+            }
+        }
+        return cardNames;
+    }
+
     public findCardIdByDeckIdAndCardNameText(deckId: number, cardNameText: string): number | null {
         const cardNameIdList = this.deckMap.get(deckId);
         if (!cardNameIdList) {

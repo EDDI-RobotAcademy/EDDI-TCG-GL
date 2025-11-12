@@ -105,11 +105,12 @@ export class MyDeckCardPositionRepositoryImpl implements MyDeckCardPositionRepos
         this.deckPositionIndexMap.set(deckId, updatedPositionIdList.length);
     }
 
-    // 검색용 position
+    // To-do: 메서드명 변경 필요
+    // 검색 or 필터링용 position 가져오는 메서드
     public findSearchCardPosition(deckId: number, searchResultCount: number): MyDeckCardPosition[] {
         const positionIdList = this.deckToPositionMap.get(deckId) || [];
 
-        // 검색 결과 개수만큼 positionId만 추출
+        // 검색 or 필터링 결과 개수만큼 positionId만 추출
         const limitedPositionIdList = positionIdList.slice(0, searchResultCount);
 
         // 각 positionId에 해당하는 MyDeckCardPosition 가져오기

@@ -93,6 +93,56 @@ export class MyDeckOwnedCardsRepositoryImpl implements MyDeckOwnedCardsRepositor
         }
     }
 
+    public findSearchMatchedOwnedCardIdList(cardNames: string[]): number[] {
+        const cardIdList = this.findAllCardIdList();
+
+        // names 배열에 포함된 카드명에 해당하는 cardId만 필터링
+        const nameSet = new Set(cardNames.map(name => name.toLowerCase()));
+        const matchedCardIdList = cardIdList.filter(cardId => {
+            const card = getCardById(cardId);
+            if (!card) {
+                throw new Error(`Card with ID ${cardId} not found`);
+            }
+            return nameSet.has(card.카드명.toLowerCase());
+        });
+
+        return matchedCardIdList;
+    }
+
+    public findUnmatchedOwnedCardIdList(names: string[]): number[] {
+        const cardIdList = this.findAllCardIdList();
+
+        // names 배열에 포함된 카드명에 해당하는 cardId는 제외
+        const nameSet = new Set(names.map(name => name.toLowerCase()));
+        const unmatchedCardIdList = cardIdList.filter(cardId => {
+            const card = getCardById(cardId);
+            if (!card) {
+                throw new Error(`Card with ID ${cardId} not found`);
+            }
+            return !nameSet.has(card.카드명.toLowerCase());
+        });
+
+        return unmatchedCardIdList;
+    }
+
+    public findOwnedCardNameList(): string[] {
+        const cardIdList = this.findAllCardIdList();
+        const cardNames: string[] = [];
+
+        for (const cardId of cardIdList) {
+            const card = getCardById(cardId);
+            if (!card) {
+                throw new Error(`Card with ID ${cardId} not found`);
+            }
+
+            const cardName = card.카드명;
+            if (cardName) {
+                cardNames.push(cardName);
+            }
+        }
+        return cardNames;
+    }
+
     public filteredOwnedCardIdList(
         cardIdList: number[],
         raceType: CardRace[] | null,

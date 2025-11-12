@@ -137,12 +137,15 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
     public onKeyDown(event: KeyboardEvent): void {
         if (!this.isEnterKey(event)) return;
 
+        const deckId = this.getCurrentClickDeckId()!;
+        const inputText = this.myDeckSearchInputContainerRepository.findInputValue() || "";
+
         if (this.isDeckEditMode() == true) {
-            this.handleDeckEditModeSearch();
+            this.handleDeckEditModeSearch(deckId, inputText);
             return;
         }
 
-        this.handleNormalModeSearch();
+        this.handleNormalModeSearch(deckId, inputText);
     }
 
     private isEnterKey(event: KeyboardEvent): boolean {
@@ -158,68 +161,102 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         return isEnter;
     }
 
-    private handleDeckEditModeSearch(): void {
-        const deckId = this.getCurrentClickDeckId()!;
-        const inputText = this.myDeckSearchInputContainerRepository.findInputValue() || "";
-
-        if (inputText.length === 0) {
-            this.restoreAllElementsPositionInDeckEditMode();
-            this.saveAllOwnedCardsClickEnabled();
-            this.showEmptyInputPopup();
-            this.setDeckEditSearchState(DeckCardSearchStateInDeckEditMode.DEFAULT);
-            this.deckCardSearchInputEnterDetectRepository.resetMatchedOwnedCardIdList();
+    private handleDeckEditModeSearch(deckId: number, inputText: string): void {
+        if (this.hasSearchInput(inputText)) {
+            this.handleEmptySearchInputInDeckEditMode();
             return;
         }
 
-        const ownedCardNameList = this.getMyDeckOwnedCardNameList();
-        const matchedCardNames = this.findMatchingCardNames(ownedCardNameList, inputText);
-        const matchedCardIdList = this.findMatchedOwnedCardIdList(matchedCardNames);
-        this.deckCardSearchInputEnterDetectRepository.saveMatchedOwnedCardIdList(matchedCardIdList);
+        const matchedCardIdList = this.searchMatchedOwnedCardIdList(inputText);
+        const unmatchedCardIdList = this.searchUnmatchedOwnedCardIdList(inputText);
 
-        if (matchedCardNames.length > 0) {
-            this.hideUnmatchedElementsInDeckEditMode(matchedCardNames);
-            this.adjustMatchedElementsInDeckEditMode(matchedCardNames);
-            this.adjustUnmatchedOwnedCardPositions(matchedCardNames);
-            this.saveSearchUnmatchedOwnedCardsClickEnable(matchedCardNames);
-            this.setDeckEditSearchState(DeckCardSearchStateInDeckEditMode.MATCHED);
+        if (matchedCardIdList.length > 0) {
+            this.handleSearchMatchedInDeckEditMode(matchedCardIdList, unmatchedCardIdList);
         } else {
-            this.restoreAllElementsPositionInDeckEditMode();
-            this.saveAllOwnedCardsClickEnabled();
-            this.showNotFoundPopup();
-            this.setInteractionStatesAfterPopupButtonShownInDeckEditMode(deckId);
-            this.setDeckEditSearchState(DeckCardSearchStateInDeckEditMode.UNMATCHED);
-            this.deckCardSearchInputEnterDetectRepository.resetMatchedOwnedCardIdList();
+            this.handleUnmatchedSearchInDeckEditMode(deckId);
         }
     }
 
-    private handleNormalModeSearch(): void {
-        const deckId = this.getCurrentClickDeckId()!;
-        const inputText = this.myDeckSearchInputContainerRepository.findInputValue() || "";
-
-        if (inputText.length === 0) {
-            this.restoreMyDeckAllElement(deckId);
-            this.showEmptyInputPopup();
-            this.setDeckCardSearchState(DeckCardSearchState.DEFAULT);
+    private handleNormalModeSearch(deckId: number, inputText: string): void {
+        if (this.hasSearchInput(inputText)) {
+            this.handleEmptySearchInputInNormalMode(deckId);
             return;
         }
 
+        const matchedCardIdList = this.searchMatchedDeckCardIdList(deckId, inputText);
+
+        if (matchedCardIdList.length > 0) {
+            this.handleSearchMatchedInNormalMode(deckId, matchedCardIdList);
+        } else {
+            this.handleUnmatchedSearchInNormalMode(deckId);
+        }
+    }
+
+    private hasSearchInput(inputText: string): boolean {
+        return inputText.trim().length === 0;
+    }
+
+    private handleEmptySearchInputInNormalMode(deckId: number): void {
+        this.restoreMyDeckAllElement(deckId);
+        this.showEmptyInputPopup();
+        this.resetMatchedDeckCardIdList();
+        this.setDeckCardSearchState(DeckCardSearchState.DEFAULT);
+    }
+
+    private handleEmptySearchInputInDeckEditMode(): void {
+        this.restoreAllElementsPositionInDeckEditMode();
+        this.saveAllOwnedCardsClickEnabled();
+        this.setDeckEditSearchState(DeckCardSearchStateInDeckEditMode.DEFAULT);
+        this.deckCardSearchInputEnterDetectRepository.resetMatchedOwnedCardIdList();
+        this.showEmptyInputPopup();
+    }
+
+    private handleSearchMatchedInNormalMode(deckId: number, matchedCardIdList: number[]): void {
+        this.applySearchResultToDeckElements(deckId, matchedCardIdList);
+        this.deckCardSearchInputEnterDetectRepository.saveMatchedDeckCardIdList(matchedCardIdList);
+        this.setDeckCardSearchState(DeckCardSearchState.MATCHED);
+    }
+
+    private handleSearchMatchedInDeckEditMode(matchedCardIdList: number[], unmatchedCardIdList: number[]): void {
+        this.applySearchResultToDeckEditElements(matchedCardIdList, unmatchedCardIdList);
+        this.saveSearchUnmatchedOwnedCardsClickEnable(unmatchedCardIdList);
+        this.deckCardSearchInputEnterDetectRepository.saveMatchedOwnedCardIdList(matchedCardIdList);
+        this.setDeckEditSearchState(DeckCardSearchStateInDeckEditMode.MATCHED);
+    }
+
+    private handleUnmatchedSearchInNormalMode(deckId: number): void {
+        this.restoreMyDeckAllElement(deckId);
+        this.showNotFoundPopup();
+        this.resetMatchedDeckCardIdList();
+        this.setDeckCardSearchState(DeckCardSearchState.UNMATCHED);
+        this.setInteractionStatesAfterPopupButtonShownInNormalMode(deckId);
+    }
+
+    private handleUnmatchedSearchInDeckEditMode(deckId: number): void {
+        this.restoreAllElementsPositionInDeckEditMode();
+        this.saveAllOwnedCardsClickEnabled();
+        this.showNotFoundPopup();
+        this.setInteractionStatesAfterPopupButtonShownInDeckEditMode(deckId);
+        this.setDeckEditSearchState(DeckCardSearchStateInDeckEditMode.UNMATCHED);
+        this.deckCardSearchInputEnterDetectRepository.resetMatchedOwnedCardIdList();
+    }
+
+    private searchMatchedDeckCardIdList(deckId: number, inputText: string): number[] {
         const myDeckCardNameList = this.getMyDeckCardNameListByDeckId(deckId);
         const matchedCardNames = this.findMatchingCardNames(myDeckCardNameList, inputText);
-        const matchedCardIdList = this.findMatchedDeckCardIdList(deckId, matchedCardNames);
-        this.deckCardSearchInputEnterDetectRepository.saveMatchedDeckCardIdList(matchedCardIdList);
+        return this.getSearchMatchedDeckCardIdList(deckId, matchedCardNames);
+    }
 
-        if (matchedCardNames.length > 0) {
-            this.hideUnmatchedMyDeckAllElements(deckId, matchedCardNames);
-            this.adjustMatchedMyDeckAllElementPosition(deckId, matchedCardNames);
-            this.setDeckCardSearchState(DeckCardSearchState.MATCHED);
-            return;
-        } else {
-            this.restoreMyDeckAllElement(deckId);
-            this.showNotFoundPopup();
-            this.setInteractionStatesAfterPopupButtonShownInNormalMode(deckId);
-            this.deckCardSearchInputEnterDetectRepository.resetMatchedDeckCardIdList();
-            this.setDeckCardSearchState(DeckCardSearchState.UNMATCHED);
-        }
+    private searchMatchedOwnedCardIdList(inputText: string): number[] {
+        const ownedCardNameList = this.getOwnedCardNameList();
+        const matchedCardNames = this.findMatchingCardNames(ownedCardNameList, inputText);
+        return this.getSearchMatchedOwnedCardIdList(matchedCardNames);
+    }
+
+    private searchUnmatchedOwnedCardIdList(inputText: string): number[] {
+        const ownedCardNameList = this.getOwnedCardNameList();
+        const matchedCardNames = this.findMatchingCardNames(ownedCardNameList, inputText);
+        return this.getSearchUnmatchedOwnedCardIdList(matchedCardNames);
     }
 
     private isDeckEditMode(): boolean | null {
@@ -242,42 +279,26 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         this.deckCardSearchInputEnterDetectRepository.setDeckCardSearchState(state);
     }
 
+    private resetMatchedDeckCardIdList(): void {
+        this.deckCardSearchInputEnterDetectRepository.resetMatchedDeckCardIdList();
+    }
+
+    // 저장된 매칭된 카드 아이디 리스트
+    // To-do: 이름 변경 필요
     public getMatchedOwnedCardIdList(): number[] {
         return this.deckCardSearchInputEnterDetectRepository.findMatchedOwnedCardIdList();
     }
 
     private getMyDeckCardNameListByDeckId(deckId: number): string[] {
-        const nameIdList = this.myDeckCardNameRepository.findCardNameIdListByDeckId(deckId);
-        const cardNames: string[] = [];
-
-        for (const nameId of nameIdList) {
-            const cardName = this.myDeckCardNameRepository.findCardNameTextByCardNameId(nameId);
-            if (cardName) {
-                cardNames.push(cardName);
-            }
-        }
-        return cardNames;
+        return this.myDeckCardNameRepository.findCardNameTextListByDeckId(deckId);
     }
 
-    private getMyDeckOwnedCardNameList(): string[] {
-        const cardIdList = this.myDeckOwnedCardsRepository.findAllCardIdList();
-        const cardNames: string[] = [];
-
-        for (const cardId of cardIdList) {
-            const card = getCardById(cardId);
-            if (!card) {
-                throw new Error(`Card with ID ${cardId} not found`);
-            }
-
-            const cardName = card.카드명;
-            if (cardName) {
-                cardNames.push(cardName);
-            }
-        }
-        return cardNames;
+    private getOwnedCardNameList(): string[] {
+        return this.myDeckOwnedCardsRepository.findOwnedCardNameList();
     }
 
     // 특정 한 글자만 포함해도 매칭, 공백 무시 가능
+    // To-do: 해당 메서드를 어떤 클래스에서 책임져야 하는 지 정해야 함
     private findMatchingCardNames(cardNameList: string[], inputText: string): string[] {
         const normalizedInput = inputText.replace(/\s+/g, '').toLowerCase();
 
@@ -286,42 +307,27 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         );
     }
 
-    // 매칭되지 않는 카드, 카드 개수, 마커 mesh 객체들은 화면에서 숨김
-    // To-do: scene, renderer 구조로 분리하면 mesh scene 에서 제거 후, 다시 렌더링하는 방식으로 수정 필요
-    // 스크롤 문제도 해결될 것임
-    private hideUnmatchedMyDeckAllElements(deckId: number, names: string[]): void {
-        this.hideSearchUnmatchedMyDeckCard(deckId, names);
-        this.hideSearchUnmatchedMyDeckNumberOfCards(deckId, names);
-        this.hideSearchUnmatchedMyDeckCountMarker(deckId, names);
+    private applySearchResultToDeckElements(deckId: number, matchedCardIdList: number[]): void {
+        this.hideSearchUnmatchedDeckCardElements(deckId, matchedCardIdList);
+        this.adjustMatchedMyDeckCardPosition(deckId, matchedCardIdList);
+        this.adjustMatchedMyDeckNumberOfCardsPosition(deckId, matchedCardIdList);
+        this.adjustMatchedMyDeckMarkerPosition(deckId, matchedCardIdList);
     }
 
-    // 검색된 카드, 카드 개수, 마커 mesh 객체들의 position 재정렬
-    private adjustMatchedMyDeckAllElementPosition(deckId: number, names: string[]): void {
-        this.adjustMatchedMyDeckCardPositions(deckId, names);
-        this.adjustMatchedMyDeckNumberOfCardsPosition(deckId, names);
-        this.adjustMatchedMyDeckMarkerPosition(deckId, names);
+    private applySearchResultToDeckEditElements(matchedCardIdList: number[], unmatchedCardIdList: number[]): void {
+        this.hideSearchUnmatchedDeckEditElements(matchedCardIdList);
+        this.adjustMatchedOwnedCardPositions(matchedCardIdList);
+        this.adjustMatchedCardBlockerPositions(matchedCardIdList);
+        this.adjustMatchedSlashesPosition(matchedCardIdList);
+        this.adjustMatchedNumberOfRemainingCardsPosition(matchedCardIdList);
+        this.adjustMatchedNumberOfTotalOwnedCardsPosition(matchedCardIdList);
+        this.adjustUnmatchedOwnedCardPositions(unmatchedCardIdList);
     }
 
     private restoreMyDeckAllElement(deckId: number): void {
         this.restoreAllMyDeckCardPositions(deckId);
         this.restoreAllMyDeckNumberOfCardsPositions(deckId);
         this.restoreAllMyDeckMarkerPositions(deckId);
-    }
-
-    private hideUnmatchedElementsInDeckEditMode(names: string[]): void {
-        this.hideSearchUnmatchedOwnedCards(names);
-        this.hideSearchUnmatchedCardBlockers(names);
-        this.hideSearchUnmatchedNumberOfRemainingCards(names);
-        this.hideSearchUnmatchedSlashes(names);
-        this.hideSearchUnmatchedNumberOfTotalOwnedCards(names);
-    }
-
-    private adjustMatchedElementsInDeckEditMode(names: string[]): void {
-        this.adjustMatchedOwnedCardPositions(names);
-        this.adjustMatchedCardBlockerPositions(names);
-        this.adjustMatchedNumberOfRemainingCardsPosition(names);
-        this.adjustMatchedSlashesPosition(names);
-        this.adjustMatchedNumberOfTotalOwnedCardsPosition(names);
     }
 
     private restoreAllElementsPositionInDeckEditMode(): void {
@@ -332,55 +338,19 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         this.restoreAllNumberOfTotalOwnedCardsPositions();
     }
 
-    private findUnmatchedOwnedCardIdList(names: string[]): number[] {
-        const cardIdList = this.myDeckOwnedCardsRepository.findAllCardIdList();
-
-        // names 배열에 포함된 카드명에 해당하는 cardId는 제외
-        const nameSet = new Set(names.map(name => name.toLowerCase()));
-        const unmatchedCardIdList = cardIdList.filter(cardId => {
-            const card = getCardById(cardId);
-            if (!card) {
-                throw new Error(`Card with ID ${cardId} not found`);
-            }
-            return !nameSet.has(card.카드명.toLowerCase());
-        });
-
-        return unmatchedCardIdList;
+    private getSearchUnmatchedOwnedCardIdList(cardNames: string[]): number[] {
+        return this.myDeckOwnedCardsRepository.findUnmatchedOwnedCardIdList(cardNames);
     }
 
-    private findMatchedOwnedCardIdList(names: string[]): number[] {
-        const cardIdList = this.myDeckOwnedCardsRepository.findAllCardIdList();
-
-        // names 배열에 포함된 카드명에 해당하는 cardId만 필터링
-        const nameSet = new Set(names.map(name => name.toLowerCase()));
-        const matchedCardIdList = cardIdList.filter(cardId => {
-            const card = getCardById(cardId);
-            if (!card) {
-                throw new Error(`Card with ID ${cardId} not found`);
-            }
-            return nameSet.has(card.카드명.toLowerCase());
-        });
-
-        return matchedCardIdList;
+    private getSearchMatchedOwnedCardIdList(cardNames: string[]): number[] {
+        return this.myDeckOwnedCardsRepository.findSearchMatchedOwnedCardIdList(cardNames);
     }
 
-    private findMatchedDeckCardIdList(deckId: number, cardNames: string[]): number[] {
-        const cardIdList = this.myDeckCardRepository.findCardIdListByDeckId(deckId);
-
-        const nameSet = new Set(cardNames.map(name => name.toLowerCase()));
-        const matchedCardIdList = cardIdList.filter(cardId => {
-            const card = getCardById(cardId);
-            if (!card) {
-                throw new Error(`Card with ID ${cardId} not found`);
-            }
-            return nameSet.has(card.카드명.toLowerCase());
-        });
-
-        return matchedCardIdList;
+    private getSearchMatchedDeckCardIdList(deckId: number, cardNames: string[]): number[] {
+        return this.myDeckCardRepository.findSearchMatchedDeckCardIdList(deckId, cardNames);
     }
 
-    private saveSearchUnmatchedOwnedCardsClickEnable(names: string[]): void {
-        const unmatchedCardIdList = this.findUnmatchedOwnedCardIdList(names);
+    private saveSearchUnmatchedOwnedCardsClickEnable(unmatchedCardIdList: number[]): void {
         for (const cardId of unmatchedCardIdList) {
             this.myDeckOwnedCardsClickDetectRepository.saveCardClickEnabled(cardId, false);
         }
@@ -393,127 +363,50 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         }
     }
 
-    private hideSearchUnmatchedOwnedCards(names: string[]): void {
-        const filteredCardIdList = this.findUnmatchedOwnedCardIdList(names);
+    // 검색 후 검색어와 매칭되지 않는 카드, 카드 개수, 마커 mesh 객체들은 화면에서 숨김
+    // To-do: scene, renderer 구조로 분리하면 mesh scene 에서 제거 후, 다시 렌더링하는 방식으로 수정 필요
+    // 스크롤 문제도 해결될 것임
+    private hideSearchUnmatchedDeckCardElements(deckId: number, matchedCardIdList: number[]): void {
+        const currentDeckCardIdList = this.myDeckCardRepository.findCardIdListByDeckId(deckId);
 
-        for (const filteredCardId of filteredCardIdList) {
-            this.myDeckOwnedCardsRepository.findCardByCardId(filteredCardId)?.setVisibility(false);
-        }
-    }
+        for (const cardId of currentDeckCardIdList) {
+            if (matchedCardIdList == null) return;
 
-    private hideSearchUnmatchedCardBlockers(names: string[]): void {
-        const filteredCardIdList = this.findUnmatchedOwnedCardIdList(names);
-
-        for (const filteredCardId of filteredCardIdList) {
-            this.cardSelectionBlockerRepository.findBlockerByCardId(filteredCardId)?.setVisibility(false);
-        }
-    }
-
-    private hideSearchUnmatchedNumberOfRemainingCards(names: string[]): void {
-        const filteredCardIdList = this.findUnmatchedOwnedCardIdList(names);
-
-        for (const filteredCardId of filteredCardIdList) {
-            this.myDeckRemainingCardsRepository.findRemainingCardByCardId(filteredCardId)?.setVisibility(false);
-        }
-    }
-
-    private hideSearchUnmatchedSlashes(names: string[]): void {
-        const filteredCardIdList = this.findUnmatchedOwnedCardIdList(names);
-
-        for (const filteredCardId of filteredCardIdList) {
-            const slashId = this.myDeckRemainingOutOfTotalSlashRepository.findSlashIdByCardId(filteredCardId);
-            if (slashId == null) return;
-
-            this.myDeckRemainingOutOfTotalSlashRepository.findSlashById(slashId)?.setVisibility(false);
-        }
-    }
-
-    private hideSearchUnmatchedNumberOfTotalOwnedCards(names: string[]): void {
-        const filteredCardIdList = this.findUnmatchedOwnedCardIdList(names);
-
-        for (const filteredCardId of filteredCardIdList) {
-            const numberId = this.myDeckTotalOwnedCardsRepository.findTotalOwnedCardsIdByCardId(filteredCardId);
-            if (numberId == null) return;
-
-            this.myDeckTotalOwnedCardsRepository.findTotalOwnedCardsById(numberId)?.setVisibility(false);
-        }
-    }
-
-    // 검색 후 검색어와 매칭되지 않은 나머지 카드들을 화면에서 숨김
-    private hideSearchUnmatchedMyDeckCard(deckId: number, names: string[]): void {
-        // 현재 덱에 등록된 모든 카드의 uniqueId 가져오기
-        const cardUniqueIdList = this.myDeckCardRepository.findCardUniqueIdListByDeckId(deckId);
-
-        for (const cardUniqueId of cardUniqueIdList) {
-            const cardId = this.myDeckCardRepository.findCardIdByCardUniqueId(cardUniqueId);
-            if (cardId == null) return;
-
-            // name 리스트 중에서 cardId와 일치하는 게 있는지 확인
-            const isMatched = names.some(name => {
-                const searchCardId = this.myDeckCardNameRepository.findCardIdByDeckIdAndCardNameText(deckId, name);
-                return searchCardId === cardId;
-            });
-
-            if (!isMatched) {
-                const card = this.myDeckCardRepository.findCardByDeckIdAndCardId(deckId, cardId);
-                if (card) card.setVisibility(false);
+            if (!matchedCardIdList.includes(cardId)) {
+                this.myDeckCardRepository.findCardByDeckIdAndCardId(deckId, cardId)?.setVisibility(false);
+                this.myDeckNumberOfCardsRepository.findNumberByDeckIdAndCardId(deckId, cardId)?.setVisibility(false);
+                this.deckCardCountMarkerRepository.findMarkerByDeckIdAndCardId(deckId, cardId)?.setVisibility(false);
             }
         }
     }
 
-    private hideSearchUnmatchedMyDeckNumberOfCards(deckId: number, names: string[]): void {
-        const numberIdList = this.myDeckNumberOfCardsRepository.findNumberIdListByDeckId(deckId);
+    private hideSearchUnmatchedDeckEditElements(matchedCardIdList: number[]): void {
+        const cardIdList = this.myDeckOwnedCardsRepository.findAllCardIdList();
 
-        for (const numberId of numberIdList) {
-            const cardId = this.myDeckNumberOfCardsRepository.findCardIdByNumberId(numberId);
-            if (cardId == null) return;
+        for (const cardId of cardIdList) {
+            if (matchedCardIdList == null) return;
 
-            const isMatched = names.some(name => {
-                const searchCardId = this.myDeckCardNameRepository.findCardIdByDeckIdAndCardNameText(deckId, name);
-                return searchCardId === cardId;
-            });
-
-            if (!isMatched) {
-                const number = this.myDeckNumberOfCardsRepository.findNumberByDeckIdAndCardId(deckId, cardId);
-                if (number) number.setVisibility(false);
+            if (!matchedCardIdList.includes(cardId)) {
+                this.myDeckOwnedCardsRepository.findCardByCardId(cardId)?.setVisibility(false);
+                this.cardSelectionBlockerRepository.findBlockerByCardId(cardId)?.setVisibility(false);
+                this.myDeckRemainingCardsRepository.findRemainingCardByCardId(cardId)?.setVisibility(false);
+                this.myDeckRemainingOutOfTotalSlashRepository.findSlashByCardId(cardId)?.setVisibility(false);
+                this.myDeckTotalOwnedCardsRepository.findTotalOwnedCardsByCardId(cardId)?.setVisibility(false);
             }
         }
     }
 
-    private hideSearchUnmatchedMyDeckCountMarker(deckId: number, names: string[]): void {
-        const markerIdList = this.deckCardCountMarkerRepository.findMarkerIdListByDeckId(deckId);
+    private adjustMatchedOwnedCardPositions(matchedCardIdList: number[]): void {
+        const matchedCardCount = matchedCardIdList.length;
+        const positionList = this.myDeckOwnedCardsPositionRepository.findSearchCardPosition(matchedCardCount);
 
-        for (const markerId of markerIdList) {
-            const cardId = this.deckCardCountMarkerRepository.findCardIdByMarkerId(markerId);
-            if (cardId == null) return;
-
-            const isMatched = names.some(name => {
-                const searchCardId = this.myDeckCardNameRepository.findCardIdByDeckIdAndCardNameText(deckId, name);
-                return searchCardId === cardId;
-            });
-
-            if (!isMatched) {
-                const marker = this.deckCardCountMarkerRepository.findMarkerByDeckIdAndCardId(deckId, cardId);
-                if (marker) marker.setVisibility(false);
-            }
-        }
-    }
-
-    private adjustMatchedOwnedCardPositions(names: string[]): void {
-        const namesLength = names.length;
-        const positionList = this.myDeckOwnedCardsPositionRepository.findSearchCardPosition(namesLength);
-        const matchedOwnedCardIdList = this.findMatchedOwnedCardIdList(names);
-
-        for (let i = 0; i < names.length; i++) {
-            const name = names[i];
+        for (let i = 0; i < matchedCardCount; i++) {
+            const cardId = matchedCardIdList[i];
             const cardPosition = positionList[i]; // 같은 index로 매칭
 
             if (!cardPosition) return;
 
-            const matchedOwnedCardId = matchedOwnedCardIdList[i];
-            if (matchedOwnedCardId == null) return;
-
-            const card = this.myDeckOwnedCardsRepository.findCardByCardId(matchedOwnedCardId);
+            const card = this.myDeckOwnedCardsRepository.findCardByCardId(cardId);
             if (card == null) return;
 
             const cardMesh = card.getMesh();
@@ -527,13 +420,12 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         }
     }
 
-    private adjustUnmatchedOwnedCardPositions(names: string[]): void {
-        const namesLength = (names.length + 1);
-        const positionList = this.myDeckOwnedCardsPositionRepository.findSearchCardPosition(namesLength);
+    private adjustUnmatchedOwnedCardPositions(unmatchedCardIdList: number[]): void {
+        const unmatchedCardCount = (unmatchedCardIdList.length + 1);
+        const positionList = this.myDeckOwnedCardsPositionRepository.findSearchCardPosition(unmatchedCardCount);
         const lastPosition = positionList[positionList.length - 1];
-        const unmatchedOwnedCardIdList = this.findUnmatchedOwnedCardIdList(names);
 
-        for (const cardId of unmatchedOwnedCardIdList) {
+        for (const cardId of unmatchedCardIdList) {
             const card = this.myDeckOwnedCardsRepository.findCardByCardId(cardId);
             if (card == null) return;
 
@@ -548,21 +440,17 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         }
     }
 
-    private adjustMatchedCardBlockerPositions(names: string[]): void {
-        const namesLength = names.length;
-        const positionList = this.cardSelectionBlockerPositionRepository.findSearchBlockerPosition(namesLength);
-        const matchedCardIdList = this.findMatchedOwnedCardIdList(names);
+    private adjustMatchedCardBlockerPositions(matchedCardIdList: number[]): void {
+        const matchedBlockerCount = matchedCardIdList.length;
+        const positionList = this.cardSelectionBlockerPositionRepository.findSearchBlockerPosition(matchedBlockerCount);
 
-        for (let i = 0; i < names.length; i++) {
-            const name = names[i];
+        for (let i = 0; i < matchedBlockerCount; i++) {
+            const cardId = matchedCardIdList[i];
             const cardPosition = positionList[i]; // 같은 index로 매칭
 
             if (!cardPosition) return;
 
-            const matchedCardId = matchedCardIdList[i];
-            if (matchedCardId == null) return;
-
-            const blocker = this.cardSelectionBlockerRepository.findBlockerByCardId(matchedCardId);
+            const blocker = this.cardSelectionBlockerRepository.findBlockerByCardId(cardId);
             if (blocker == null) return;
 
             const blockerMesh = blocker.getMesh();
@@ -576,21 +464,17 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         }
     }
 
-    private adjustMatchedNumberOfRemainingCardsPosition(names: string[]): void {
-        const namesLength = names.length;
-        const positionList = this.myDeckRemainingCardsPositionRepository.findSearchRemainingCardsPosition(namesLength);
-        const matchedCardIdList = this.findMatchedOwnedCardIdList(names);
+    private adjustMatchedNumberOfRemainingCardsPosition(matchedCardIdList: number[]): void {
+        const matchedNumberCount = matchedCardIdList.length;
+        const positionList = this.myDeckRemainingCardsPositionRepository.findSearchRemainingCardsPosition(matchedNumberCount);
 
-        for (let i = 0; i < names.length; i++) {
-            const name = names[i];
+        for (let i = 0; i < matchedNumberCount; i++) {
+            const cardId = matchedCardIdList[i];
             const numberPosition = positionList[i]; // 같은 index로 매칭
 
             if (!numberPosition) return;
 
-            const matchedCardId = matchedCardIdList[i];
-            if (matchedCardId == null) return;
-
-            const numberOfRemainingCards = this.myDeckRemainingCardsRepository.findRemainingCardByCardId(matchedCardId);
+            const numberOfRemainingCards = this.myDeckRemainingCardsRepository.findRemainingCardByCardId(cardId);
             if (numberOfRemainingCards == null) return;
 
             const numberOfRemainingCardsMesh = numberOfRemainingCards.getMesh();
@@ -601,26 +485,21 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
             const positionY = numberPosition.getY();
 
             this.myDeckElementAdjuster.adjustElementPosition(numberOfRemainingCardsMesh, widthPercent, heightPercent, positionX, positionY);
-            this.myDeckRemainingCardsPositionRepository.saveSearchModePosition(matchedCardId, numberPosition);
+            this.myDeckRemainingCardsPositionRepository.saveSearchModePosition(cardId, numberPosition);
         }
     }
 
-    private adjustMatchedSlashesPosition(names: string[]): void {
-        const namesLength = names.length;
-        const positionList = this.myDeckRemainingOutOfTotalSlashPositionRepository.findSearchSlashPosition(namesLength);
-        const matchedCardIdList = this.findMatchedOwnedCardIdList(names);
+    private adjustMatchedSlashesPosition(matchedCardIdList: number[]): void {
+        const matchedSlashCount = matchedCardIdList.length;
+        const positionList = this.myDeckRemainingOutOfTotalSlashPositionRepository.findSearchSlashPosition(matchedSlashCount);
 
-        for (let i = 0; i < names.length; i++) {
+        for (let i = 0; i < matchedSlashCount; i++) {
+            const cardId = matchedCardIdList[i];
             const slashPosition = positionList[i]; // 같은 index로 매칭
+
             if (!slashPosition) return;
 
-            const matchedCardId = matchedCardIdList[i];
-            if (matchedCardId == null) return;
-
-            const slashId = this.myDeckRemainingOutOfTotalSlashRepository.findSlashIdByCardId(matchedCardId);
-            if (slashId == null) return;
-
-            const slash = this.myDeckRemainingOutOfTotalSlashRepository.findSlashById(slashId);
+            const slash = this.myDeckRemainingOutOfTotalSlashRepository.findSlashByCardId(cardId);
             if (slash == null) return;
 
             const slashMesh = slash.getMesh();
@@ -634,22 +513,17 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         }
     }
 
-    private adjustMatchedNumberOfTotalOwnedCardsPosition(names: string[]): void {
-        const namesLength = names.length;
-        const positionList = this.myDeckTotalOwnedCardsPositionRepository.findSearchPosition(namesLength);
-        const matchedCardIdList = this.findMatchedOwnedCardIdList(names);
+    private adjustMatchedNumberOfTotalOwnedCardsPosition(matchedCardIdList: number[]): void {
+        const matchedNumberCount = matchedCardIdList.length;
+        const positionList = this.myDeckTotalOwnedCardsPositionRepository.findSearchPosition(matchedNumberCount);
 
-        for (let i = 0; i < names.length; i++) {
+        for (let i = 0; i < matchedNumberCount; i++) {
+            const cardId = matchedCardIdList[i];
             const numberPosition = positionList[i]; // 같은 index로 매칭
+
             if (!numberPosition) return;
 
-            const matchedCardId = matchedCardIdList[i];
-            if (matchedCardId == null) return;
-
-            const numberId = this.myDeckTotalOwnedCardsRepository.findTotalOwnedCardsIdByCardId(matchedCardId);
-            if (numberId == null) return;
-
-            const numberObject = this.myDeckTotalOwnedCardsRepository.findTotalOwnedCardsById(numberId);
+            const numberObject = this.myDeckTotalOwnedCardsRepository.findTotalOwnedCardsByCardId(cardId);
             if (numberObject == null) return;
 
             const numberMesh = numberObject.getMesh();
@@ -663,18 +537,15 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         }
     }
 
-    private adjustMatchedMyDeckCardPositions(deckId: number, names: string[]): void {
-        const namesLength = names.length;
-        const positionList = this.myDeckCardPositionRepository.findSearchCardPosition(deckId, namesLength);
+    private adjustMatchedMyDeckCardPosition(deckId: number, matchedCardIdList: number[]): void {
+        const matchedCardCount = matchedCardIdList.length;
+        const positionList = this.myDeckCardPositionRepository.findSearchCardPosition(deckId, matchedCardCount);
 
-        for (let i = 0; i < names.length; i++) {
-            const name = names[i];
+        for (let i = 0; i < matchedCardCount; i++) {
+            const cardId = matchedCardIdList[i];
             const cardPosition = positionList[i]; // 같은 index로 매칭
 
             if (!cardPosition) return;
-
-            const cardId = this.myDeckCardNameRepository.findCardIdByDeckIdAndCardNameText(deckId, name);
-            if (cardId == null) return;
 
             const card = this.myDeckCardRepository.findCardByDeckIdAndCardId(deckId, cardId);
             if (card == null) return;
@@ -690,18 +561,15 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         }
     }
 
-    private adjustMatchedMyDeckNumberOfCardsPosition(deckId: number, names: string[]): void {
-        const namesLength = names.length;
-        const positionList = this.myDeckNumberOfCardsPositionRepository.findSearchNumberPosition(deckId, namesLength);
+    private adjustMatchedMyDeckNumberOfCardsPosition(deckId: number, matchedCardIdList: number[]): void {
+        const matchedCardCount = matchedCardIdList.length;
+        const positionList = this.myDeckNumberOfCardsPositionRepository.findSearchNumberPosition(deckId, matchedCardCount);
 
-        for (let i = 0; i < names.length; i++) {
-            const name = names[i];
+        for (let i = 0; i < matchedCardCount; i++) {
+            const cardId = matchedCardIdList[i];
             const numberPosition = positionList[i]; // 같은 index로 매칭
 
             if (!numberPosition) return;
-
-            const cardId = this.myDeckCardNameRepository.findCardIdByDeckIdAndCardNameText(deckId, name);
-            if (cardId == null) return;
 
             const numberOfCards = this.myDeckNumberOfCardsRepository.findNumberByDeckIdAndCardId(deckId, cardId);
             if (numberOfCards == null) return;
@@ -717,18 +585,15 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         }
     }
 
-    private adjustMatchedMyDeckMarkerPosition(deckId: number, names: string[]): void {
-        const namesLength = names.length;
-        const positionList = this.deckCardCountMarkerPositionRepository.findSearchMarkerPosition(deckId, namesLength);
+    private adjustMatchedMyDeckMarkerPosition(deckId: number, matchedCardIdList: number[]): void {
+        const matchedCardCount = matchedCardIdList.length;
+        const positionList = this.deckCardCountMarkerPositionRepository.findSearchMarkerPosition(deckId, matchedCardCount);
 
-        for (let i = 0; i < names.length; i++) {
-            const name = names[i];
+        for (let i = 0; i < matchedCardCount; i++) {
+            const cardId = matchedCardIdList[i];
             const numberPosition = positionList[i]; // 같은 index로 매칭
 
             if (!numberPosition) return;
-
-            const cardId = this.myDeckCardNameRepository.findCardIdByDeckIdAndCardNameText(deckId, name);
-            if (cardId == null) return;
 
             const marker = this.deckCardCountMarkerRepository.findMarkerByDeckIdAndCardId(deckId, cardId);
             if (marker == null) return;
