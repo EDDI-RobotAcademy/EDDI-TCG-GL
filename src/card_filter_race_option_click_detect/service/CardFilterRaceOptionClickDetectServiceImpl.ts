@@ -157,15 +157,17 @@ export class CardFilterRaceOptionClickDetectServiceImpl implements CardFilterRac
     ): void {
         const currentDeckCardSearchState = this.getDeckCardSearchStateInNormalMode();
         if (currentDeckCardSearchState == DeckCardSearchState.MATCHED) {
+            this.cardFilterRaceOptionButtonsClickDetectRepository.resetFilteredCardIdList();
             const cardIdList = this.getSearchMatchedDeckCardIdList();
             if (cardIdList == null) return;
 
             if (gradeOptionTypes == null && raceOptionTypes == null) {
                 this.applySearchResultToDeckElements(deckId, cardIdList);
             } else {
+                const filteredCardIdList = this.getFilteredDeckCardIdList(cardIdList, raceOptionTypes, gradeOptionTypes);
                 this.applyOptionFilterResultToDeckElements(
                     deckId,
-                    cardIdList,
+                    filteredCardIdList,
                     raceOptionTypes as CardRace[] | null,
                     gradeOptionTypes as CardGrade[] | null
                 );
@@ -175,10 +177,16 @@ export class CardFilterRaceOptionClickDetectServiceImpl implements CardFilterRac
             const cardIdList = this.getMyDeckCardIdListByDeckId(deckId);
             if (gradeOptionTypes == null && raceOptionTypes == null) {
                 this.restoreAllDeckElementsAfterFilterClear(deckId);
+                this.cardFilterRaceOptionButtonsClickDetectRepository.resetFilteredCardIdList();
             } else {
+                const filteredCardIdList = this.getFilteredDeckCardIdList(cardIdList, raceOptionTypes, gradeOptionTypes);
+                if (filteredCardIdList !== null) {
+                    this.cardFilterRaceOptionButtonsClickDetectRepository.saveFilteredCardIdList(filteredCardIdList);
+                }
+
                 this.applyOptionFilterResultToDeckElements(
                     deckId,
-                    cardIdList,
+                    filteredCardIdList,
                     raceOptionTypes as CardRace[] | null,
                     gradeOptionTypes as CardGrade[] | null
                 );
@@ -193,6 +201,7 @@ export class CardFilterRaceOptionClickDetectServiceImpl implements CardFilterRac
         const currentOwnedCardSearchState = this.getDeckCardSearchStateInDeckEditMode();
         if (currentOwnedCardSearchState == DeckCardSearchStateInDeckEditMode.MATCHED) {
             const searchMatchedCardIdList = this.getSearchMatchedOwnedCardIdList();
+            if (searchMatchedCardIdList == null) return;
 
             if (raceOptionTypes == null && gradeOptionTypes == null) {
                 const searchUnmatchedOwnedCardIdList = this.getSearchUnmatchedOwnedCardIdList();
@@ -244,12 +253,10 @@ export class CardFilterRaceOptionClickDetectServiceImpl implements CardFilterRac
     // 옵션 선택을 반영한 덱 요소 정렬
     private applyOptionFilterResultToDeckElements(
         deckId: number,
-        cardIdList: number[], // 덱의 모든 카드 id 리스트 or 검색된 상태에서의 카드 id 리스트
+        filteredCardIdList: number[] | null,
         raceType: CardRace[] | null,
         gradeType: CardGrade[] | null
     ): void {
-        const filteredCardIdList = this.getFilteredDeckCardIdList(cardIdList, raceType, gradeType);
-
         this.hideUnfilteredDeckElements(deckId, filteredCardIdList);
         this.adjustFilteredDeckCardPositions(deckId, filteredCardIdList);
         this.adjustFilteredDeckNumberOfCards(deckId, filteredCardIdList);
@@ -373,7 +380,7 @@ export class CardFilterRaceOptionClickDetectServiceImpl implements CardFilterRac
         return this.deckCardSearchInputEnterDetectRepository.findMatchedDeckCardIdList();
     }
 
-    private getSearchMatchedOwnedCardIdList(): number[] {
+    private getSearchMatchedOwnedCardIdList(): number[] | null {
         return this.deckCardSearchInputEnterDetectRepository.findMatchedOwnedCardIdList();
     }
 
@@ -387,7 +394,7 @@ export class CardFilterRaceOptionClickDetectServiceImpl implements CardFilterRac
         const unmatchedCardIdList: number[] = [];
 
         for (const cardId of allOwnedCardIdList) {
-            if (!searchMatchedCardIdList.includes(cardId)) {
+            if (searchMatchedCardIdList !== null && !searchMatchedCardIdList.includes(cardId)) {
                 unmatchedCardIdList.push(cardId);
             }
         }

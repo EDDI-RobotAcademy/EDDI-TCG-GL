@@ -180,11 +180,9 @@ export class MyDeckCardRepositoryImpl implements MyDeckCardRepository {
         return cardUniqueIdList ? cardUniqueIdList.length : 0;
     }
 
-    public findSearchMatchedDeckCardIdList(deckId: number, cardNames: string[]): number[] {
-        const currentDeckCardIdList = this.findCardIdListByDeckId(deckId);
-
+    public findSearchMatchedDeckCardIdList(cardIdList: number[], cardNames: string[]): number[] {
         const nameSet = new Set(cardNames.map(name => name.toLowerCase()));
-        const matchedCardIdList = currentDeckCardIdList.filter(cardId => {
+        const matchedCardIdList = cardIdList.filter(cardId => {
             const card = getCardById(cardId);
             if (!card) {
                 throw new Error(`Card with ID ${cardId} not found`);

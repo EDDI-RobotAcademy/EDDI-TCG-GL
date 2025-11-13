@@ -12,6 +12,7 @@ export class CardFilterRaceOptionClickDetectRepositoryImpl implements CardFilter
     private allOptionClickEnabled: boolean = false;
     private optionClickEnabledMap: Map<CardRace, boolean> = new Map();
     private optionCLickStateMap: Map<CardRace, boolean> = new Map();
+    private currentFilteredCardIdList: number[] | null = null;
 
     public static getInstance(): CardFilterRaceOptionClickDetectRepositoryImpl {
         if (!CardFilterRaceOptionClickDetectRepositoryImpl.instance) {
@@ -98,6 +99,27 @@ export class CardFilterRaceOptionClickDetectRepositoryImpl implements CardFilter
         // true인 상태가 하나도 없으면 null 반환
         return activeOptionTypes.length > 0 ? activeOptionTypes : null;
 //         return activeOptionTypes;
+    }
+
+    public resetAllOptionClickStates(): void {
+        this.optionCLickStateMap.clear();
+//
+//         this.optionCLickStateMap.forEach((_, type) => {
+//             this.optionCLickStateMap.set(type, false);
+//         });
+    }
+
+    // To-do: 관리를 어느 부분해서 해야 할 지 고민해야 함. 수정 필요
+    public saveFilteredCardIdList(cardIdList: number[]): void {
+        this.currentFilteredCardIdList = cardIdList;
+    }
+
+    public findFilteredCardIdList(): number[] | null {
+        return this.currentFilteredCardIdList;
+    }
+
+    public resetFilteredCardIdList(): void {
+        this.currentFilteredCardIdList = null;
     }
 
 }
