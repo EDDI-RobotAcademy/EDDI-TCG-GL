@@ -8,7 +8,7 @@ export class DeckCardSearchInputEnterDetectRepositoryImpl implements DeckCardSea
     private enterPressedState: boolean = false;
     private deckEditSearchState: DeckCardSearchStateInDeckEditMode = DeckCardSearchStateInDeckEditMode.DEFAULT;
     private deckCardSearchState: DeckCardSearchState = DeckCardSearchState.DEFAULT;
-    private matchedOwnedCardIdList: number[] = [];
+    private matchedOwnedCardIdList: number[] | null = null;
     private matchedDeckCardIdList: number[] | null = null;
 
     private constructor() {}
@@ -62,12 +62,12 @@ export class DeckCardSearchInputEnterDetectRepositoryImpl implements DeckCardSea
         this.matchedOwnedCardIdList = idList;
     }
 
-    public findMatchedOwnedCardIdList(): number[] {
+    public findMatchedOwnedCardIdList(): number[] | null {
         return this.matchedOwnedCardIdList;
     }
 
     public resetMatchedOwnedCardIdList(): void {
-        this.matchedOwnedCardIdList = [];
+        this.matchedOwnedCardIdList = null;
     }
 
     public saveMatchedDeckCardIdList(idList: number[]): void {

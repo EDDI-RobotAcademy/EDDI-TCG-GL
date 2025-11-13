@@ -40,6 +40,8 @@ import {DeckCardDeleteButtonClickDetectRepositoryImpl} from "../../deck_card_del
 import {MyDeckBlockHoverDetectRepositoryImpl} from "../../my_deck_block_hover_detect/repository/MyDeckBlockHoverDetectRepositoryImpl";
 import {DeckEditDoneButtonHoverDetectRepositoryImpl} from "../../deck_edit_done_button_hover_detect/repository/DeckEditDoneButtonHoverDetectRepositoryImpl";
 import {MyDeckAlertModalButtonsClickDetectRepositoryImpl} from "../../my_deck_alert_modal_buttons_click_detect/repository/MyDeckAlertModalButtonsClickDetectRepositoryImpl";
+import {CardFilterRaceOptionClickDetectRepositoryImpl} from "../../card_filter_race_option_click_detect/repository/CardFilterRaceOptionClickDetectRepositoryImpl";
+import {CardFilterGradeOptionClickDetectRepositoryImpl} from "../../card_filter_grade_option_click_detect/repository/CardFilterGradeOptionClickDetectRepositoryImpl";
 
 import {AlertModalContainerType} from "../../alert_modal_container/entity/AlertModalContainerType";
 import {AlertModalButtonsType} from "../../alert_modal_buttons/entity/AlertModalButtonsType";
@@ -86,6 +88,8 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
     private myDeckBlockHoverDetectRepository: MyDeckBlockHoverDetectRepositoryImpl;
     private deckEditDoneButtonHoverDetectRepository: DeckEditDoneButtonHoverDetectRepositoryImpl;
     private myDeckAlertModalButtonDetectRepository: MyDeckAlertModalButtonsClickDetectRepositoryImpl;
+    private cardFilterRaceOptionClickDetectRepository: CardFilterRaceOptionClickDetectRepositoryImpl;
+    private cardFilterGradeOptionClickDetectRepository: CardFilterGradeOptionClickDetectRepositoryImpl;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance();
@@ -125,6 +129,8 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         this.myDeckBlockHoverDetectRepository = MyDeckBlockHoverDetectRepositoryImpl.getInstance();
         this.deckEditDoneButtonHoverDetectRepository = DeckEditDoneButtonHoverDetectRepositoryImpl.getInstance();
         this.myDeckAlertModalButtonDetectRepository = MyDeckAlertModalButtonsClickDetectRepositoryImpl.getInstance();
+        this.cardFilterRaceOptionClickDetectRepository = CardFilterRaceOptionClickDetectRepositoryImpl.getInstance();
+        this.cardFilterGradeOptionClickDetectRepository = CardFilterGradeOptionClickDetectRepositoryImpl.getInstance();
     }
 
     public static getInstance(camera: THREE.Camera, scene: THREE.Scene): DeckCardSearchInputEnterDetectServiceImpl {
@@ -201,6 +207,10 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         this.showEmptyInputPopup();
         this.resetMatchedDeckCardIdList();
         this.setDeckCardSearchState(DeckCardSearchState.DEFAULT);
+
+        // To-do: 옵션 클릭 상태 초기화 필요
+        this.resetRaceOptionClickStates();
+        this.resetGradeOptionClickStates();
     }
 
     private handleEmptySearchInputInDeckEditMode(): void {
@@ -244,7 +254,14 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
     private searchMatchedDeckCardIdList(deckId: number, inputText: string): number[] {
         const myDeckCardNameList = this.getMyDeckCardNameListByDeckId(deckId);
         const matchedCardNames = this.findMatchingCardNames(myDeckCardNameList, inputText);
-        return this.getSearchMatchedDeckCardIdList(deckId, matchedCardNames);
+        const optionFilteredCardIdList = this.getOptionFilteredCardIdList();
+        const deckCardIdList = this.getCurrentDeckCardIdList(deckId);
+
+        if (optionFilteredCardIdList == null) {
+            return this.getSearchMatchedDeckCardIdList(deckCardIdList, matchedCardNames);
+        } else {
+            return this.getSearchMatchedDeckCardIdList(optionFilteredCardIdList, matchedCardNames);
+        }
     }
 
     private searchMatchedOwnedCardIdList(inputText: string): number[] {
@@ -285,7 +302,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
 
     // 저장된 매칭된 카드 아이디 리스트
     // To-do: 이름 변경 필요
-    public getMatchedOwnedCardIdList(): number[] {
+    public getMatchedOwnedCardIdList(): number[] | null {
         return this.deckCardSearchInputEnterDetectRepository.findMatchedOwnedCardIdList();
     }
 
@@ -295,6 +312,14 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
 
     private getOwnedCardNameList(): string[] {
         return this.myDeckOwnedCardsRepository.findOwnedCardNameList();
+    }
+
+    private getOptionFilteredCardIdList(): number[] | null {
+        return this.cardFilterRaceOptionClickDetectRepository.findFilteredCardIdList();
+    }
+
+    private getCurrentDeckCardIdList(deckId: number): number[] {
+        return this.myDeckCardRepository.findCardIdListByDeckId(deckId);
     }
 
     // 특정 한 글자만 포함해도 매칭, 공백 무시 가능
@@ -346,8 +371,8 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         return this.myDeckOwnedCardsRepository.findSearchMatchedOwnedCardIdList(cardNames);
     }
 
-    private getSearchMatchedDeckCardIdList(deckId: number, cardNames: string[]): number[] {
-        return this.myDeckCardRepository.findSearchMatchedDeckCardIdList(deckId, cardNames);
+    private getSearchMatchedDeckCardIdList(cardIdList: number[], cardNames: string[]): number[] {
+        return this.myDeckCardRepository.findSearchMatchedDeckCardIdList(cardIdList, cardNames);
     }
 
     private saveSearchUnmatchedOwnedCardsClickEnable(unmatchedCardIdList: number[]): void {
@@ -890,6 +915,14 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
     private setMyDeckAllAlertModalButtonClickEnabled(isEnabled: boolean): void {
         this.myDeckAlertModalButtonDetectRepository.setAllButtonClickEnabled(isEnabled);
         this.myDeckAlertModalButtonDetectRepository.setButtonClickEnabled(AlertModalButtonsType.UNMATCHED_CARD, isEnabled);
+    }
+
+    private resetRaceOptionClickStates(): void {
+        this.cardFilterRaceOptionClickDetectRepository.resetAllOptionClickStates();
+    }
+
+    private resetGradeOptionClickStates(): void {
+        this.cardFilterGradeOptionClickDetectRepository.resetAllOptionClickStates();
     }
 
     private showEmptyInputPopup(): void {

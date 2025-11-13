@@ -99,4 +99,12 @@ export class CardFilterGradeOptionClickDetectRepositoryImpl implements CardFilte
         return activeOptionTypes.length > 0 ? activeOptionTypes : null;
     }
 
+    public resetAllOptionClickStates(): void {
+        this.optionCLickStateMap.clear();
+//
+//         this.optionCLickStateMap.forEach((_, type) => {
+//             this.optionCLickStateMap.set(type, false);
+//         });
+    }
+
 }

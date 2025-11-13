@@ -197,6 +197,8 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
             const searchMatchedCardIdList = this.getSearchMatchedOwnedCardIdList();
             const searchUnmatchedOwnedCardIdList = this.getSearchUnmatchedOwnedCardIdList();
 
+            if (searchMatchedCardIdList == null) return;
+
             if (gradeOptionTypes == null && raceOptionTypes == null) {
                 this.applySearchResultToDeckEditElements(searchMatchedCardIdList, searchUnmatchedOwnedCardIdList);
             } else {
@@ -358,7 +360,7 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         return this.deckCardSearchInputEnterDetectRepository.findMatchedDeckCardIdList();
     }
 
-    private getSearchMatchedOwnedCardIdList(): number[] {
+    private getSearchMatchedOwnedCardIdList(): number[] | null {
         return this.deckCardSearchInputEnterDetectRepository.findMatchedOwnedCardIdList();
     }
 
@@ -372,7 +374,7 @@ export class CardFilterGradeOptionClickDetectServiceImpl implements CardFilterGr
         const unmatchedCardIdList: number[] = [];
 
         for (const cardId of allOwnedCardIdList) {
-            if (!searchMatchedCardIdList.includes(cardId)) {
+            if (searchMatchedCardIdList !== null && !searchMatchedCardIdList.includes(cardId)) {
                 unmatchedCardIdList.push(cardId);
             }
         }
