@@ -12,7 +12,8 @@ export class CardFilterRaceOptionClickDetectRepositoryImpl implements CardFilter
     private allOptionClickEnabled: boolean = false;
     private optionClickEnabledMap: Map<CardRace, boolean> = new Map();
     private optionCLickStateMap: Map<CardRace, boolean> = new Map();
-    private currentFilteredCardIdList: number[] | null = null;
+    private currentFilteredDeckCardIdList: number[] | null = null;
+    private currentFilteredOwnedCardIdList: number[] | null = null;
 
     public static getInstance(): CardFilterRaceOptionClickDetectRepositoryImpl {
         if (!CardFilterRaceOptionClickDetectRepositoryImpl.instance) {
@@ -110,16 +111,28 @@ export class CardFilterRaceOptionClickDetectRepositoryImpl implements CardFilter
     }
 
     // To-do: 관리를 어느 부분해서 해야 할 지 고민해야 함. 수정 필요
-    public saveFilteredCardIdList(cardIdList: number[]): void {
-        this.currentFilteredCardIdList = cardIdList;
+    public saveFilteredDeckCardIdList(cardIdList: number[]): void {
+        this.currentFilteredDeckCardIdList = cardIdList;
     }
 
-    public findFilteredCardIdList(): number[] | null {
-        return this.currentFilteredCardIdList;
+    public findFilteredDeckCardIdList(): number[] | null {
+        return this.currentFilteredDeckCardIdList;
     }
 
-    public resetFilteredCardIdList(): void {
-        this.currentFilteredCardIdList = null;
+    public resetFilteredDeckCardIdList(): void {
+        this.currentFilteredDeckCardIdList = null;
+    }
+
+    public saveFilteredOwnedCardIdList(cardIdList: number[]): void {
+        this.currentFilteredOwnedCardIdList = cardIdList;
+    }
+
+    public findFilteredOwnedCardIdList(): number[] | null {
+        return this.currentFilteredOwnedCardIdList;
+    }
+
+    public resetFilteredOwnedCardIdList(): void {
+        this.currentFilteredOwnedCardIdList = null;
     }
 
 }

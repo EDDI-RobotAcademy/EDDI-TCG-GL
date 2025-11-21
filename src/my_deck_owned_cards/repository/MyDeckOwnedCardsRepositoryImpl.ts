@@ -93,10 +93,7 @@ export class MyDeckOwnedCardsRepositoryImpl implements MyDeckOwnedCardsRepositor
         }
     }
 
-    public findSearchMatchedOwnedCardIdList(cardNames: string[]): number[] {
-        const cardIdList = this.findAllCardIdList();
-
-        // names 배열에 포함된 카드명에 해당하는 cardId만 필터링
+    public findSearchMatchedOwnedCardIdList(cardIdList: number[], cardNames: string[]): number[] {
         const nameSet = new Set(cardNames.map(name => name.toLowerCase()));
         const matchedCardIdList = cardIdList.filter(cardId => {
             const card = getCardById(cardId);
@@ -109,18 +106,12 @@ export class MyDeckOwnedCardsRepositoryImpl implements MyDeckOwnedCardsRepositor
         return matchedCardIdList;
     }
 
-    public findUnmatchedOwnedCardIdList(names: string[]): number[] {
+    public findUnmatchedOwnedCardIdList(filteredCardIdList: number[], names: string[]): number[] {
         const cardIdList = this.findAllCardIdList();
 
-        // names 배열에 포함된 카드명에 해당하는 cardId는 제외
-        const nameSet = new Set(names.map(name => name.toLowerCase()));
-        const unmatchedCardIdList = cardIdList.filter(cardId => {
-            const card = getCardById(cardId);
-            if (!card) {
-                throw new Error(`Card with ID ${cardId} not found`);
-            }
-            return !nameSet.has(card.카드명.toLowerCase());
-        });
+        const matchedCardIdList = this.findSearchMatchedOwnedCardIdList(filteredCardIdList, names);
+        const matchedSet = new Set(matchedCardIdList);
+        const unmatchedCardIdList = cardIdList.filter(cardId => !matchedSet.has(cardId));
 
         return unmatchedCardIdList;
     }
