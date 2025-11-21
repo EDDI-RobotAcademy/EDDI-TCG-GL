@@ -254,7 +254,7 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
     private searchMatchedDeckCardIdList(deckId: number, inputText: string): number[] {
         const myDeckCardNameList = this.getMyDeckCardNameListByDeckId(deckId);
         const matchedCardNames = this.findMatchingCardNames(myDeckCardNameList, inputText);
-        const optionFilteredCardIdList = this.getOptionFilteredCardIdList();
+        const optionFilteredCardIdList = this.getOptionFilteredDeckCardIdList();
         const deckCardIdList = this.getCurrentDeckCardIdList(deckId);
 
         if (optionFilteredCardIdList == null) {
@@ -267,13 +267,27 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
     private searchMatchedOwnedCardIdList(inputText: string): number[] {
         const ownedCardNameList = this.getOwnedCardNameList();
         const matchedCardNames = this.findMatchingCardNames(ownedCardNameList, inputText);
-        return this.getSearchMatchedOwnedCardIdList(matchedCardNames);
+        const optionFilteredCardIdList = this.getOptionFilteredOwnedCardIdList();
+        const allOwnedCardIdList = this.getAllOwnedCardIdList();
+
+        if (optionFilteredCardIdList == null) {
+            return this.getSearchMatchedOwnedCardIdList(allOwnedCardIdList, matchedCardNames);
+        } else {
+            return this.getSearchMatchedOwnedCardIdList(optionFilteredCardIdList, matchedCardNames);
+        }
     }
 
     private searchUnmatchedOwnedCardIdList(inputText: string): number[] {
         const ownedCardNameList = this.getOwnedCardNameList();
         const matchedCardNames = this.findMatchingCardNames(ownedCardNameList, inputText);
-        return this.getSearchUnmatchedOwnedCardIdList(matchedCardNames);
+        const optionFilteredCardIdList = this.getOptionFilteredOwnedCardIdList();
+        const allOwnedCardIdList = this.getAllOwnedCardIdList();
+
+        if (optionFilteredCardIdList == null) {
+            return this.getSearchUnmatchedOwnedCardIdList(allOwnedCardIdList, matchedCardNames);
+        } else {
+            return this.getSearchUnmatchedOwnedCardIdList(optionFilteredCardIdList, matchedCardNames);
+        }
     }
 
     private isDeckEditMode(): boolean | null {
@@ -314,12 +328,20 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         return this.myDeckOwnedCardsRepository.findOwnedCardNameList();
     }
 
-    private getOptionFilteredCardIdList(): number[] | null {
-        return this.cardFilterRaceOptionClickDetectRepository.findFilteredCardIdList();
+    private getOptionFilteredDeckCardIdList(): number[] | null {
+        return this.cardFilterRaceOptionClickDetectRepository.findFilteredDeckCardIdList();
+    }
+
+    private getOptionFilteredOwnedCardIdList(): number[] | null {
+        return this.cardFilterRaceOptionClickDetectRepository.findFilteredOwnedCardIdList();
     }
 
     private getCurrentDeckCardIdList(deckId: number): number[] {
         return this.myDeckCardRepository.findCardIdListByDeckId(deckId);
+    }
+
+    private getAllOwnedCardIdList(): number[] {
+        return this.myDeckOwnedCardsRepository.findAllCardIdList();
     }
 
     // 특정 한 글자만 포함해도 매칭, 공백 무시 가능
@@ -363,12 +385,12 @@ export class DeckCardSearchInputEnterDetectServiceImpl implements DeckCardSearch
         this.restoreAllNumberOfTotalOwnedCardsPositions();
     }
 
-    private getSearchUnmatchedOwnedCardIdList(cardNames: string[]): number[] {
-        return this.myDeckOwnedCardsRepository.findUnmatchedOwnedCardIdList(cardNames);
+    private getSearchUnmatchedOwnedCardIdList(cardIdList: number[], cardNames: string[]): number[] {
+        return this.myDeckOwnedCardsRepository.findUnmatchedOwnedCardIdList(cardIdList, cardNames);
     }
 
-    private getSearchMatchedOwnedCardIdList(cardNames: string[]): number[] {
-        return this.myDeckOwnedCardsRepository.findSearchMatchedOwnedCardIdList(cardNames);
+    private getSearchMatchedOwnedCardIdList(cardIdList: number[], cardNames: string[]): number[] {
+        return this.myDeckOwnedCardsRepository.findSearchMatchedOwnedCardIdList(cardIdList, cardNames);
     }
 
     private getSearchMatchedDeckCardIdList(cardIdList: number[], cardNames: string[]): number[] {
