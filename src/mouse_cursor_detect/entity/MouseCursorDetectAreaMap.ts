@@ -22,14 +22,17 @@ export class MouseCursorDetectAreaMap {
             [MouseCursorDetectArea.OPPONENT_LOSTZONE]: { x1: 10, y1: 10, x2: 10, y2: 10 },
             [MouseCursorDetectArea.OPPONENT_CONSTRUCTION]: { x1: 10, y1: 10, x2: 10, y2: 10 },
 
-            [MouseCursorDetectArea.FIELD_ENERGY]: { x1: 10, y1: 10, x2: 10, y2: 10 },
+            [MouseCursorDetectArea.FIELD_ENERGY]: { x1: 0.90097402597, y1: 0.82454251883, x2: 0.97564935064, y2: 0.97524219591 },
             [MouseCursorDetectArea.ENVIRONMENT]: { x1: 10, y1: 10, x2: 10, y2: 10 },
             [MouseCursorDetectArea.SETTINGS]: { x1: 10, y1: 10, x2: 10, y2: 10 },
             [MouseCursorDetectArea.TURN_END]: { x1: 10, y1: 10, x2: 10, y2: 10 },
 
             [MouseCursorDetectArea.OPPONENT_MASETER]: { x1: 0.4605885, y1: 0.0476804, x2: 0.5410156, y2: 0.1920103 },
             [MouseCursorDetectArea.YOUR_HAND_PREV_BUTTON]: { x1: 0.265625, y1: 0.880154639, x2: 0.30859375, y2: 0.954896907 },
-            [MouseCursorDetectArea.YOUR_HAND_NEXT_BUTTON]: { x1: 0.69140625, y1: 0.880154639, x2: 0.734375, y2: 0.954896907 }
+            [MouseCursorDetectArea.YOUR_HAND_NEXT_BUTTON]: { x1: 0.69140625, y1: 0.880154639, x2: 0.734375, y2: 0.954896907 },
+
+            [MouseCursorDetectArea.FIELD_ENERGY_PREV]: { x1: 0.88203463203, y1: 0.62863293864, x2: 0.9053030303, y2: 0.68030139935 },
+            [MouseCursorDetectArea.FIELD_ENERGY_NEXT]: { x1: 0.97348484848, y1: 0.62863293864, x2: 1.0, y2: 0.68030139935 },
         };
     }
 
