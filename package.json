@@ -59,6 +59,7 @@
     "simple-canvas-texture": "webpack serve --config ./test/simple_canvas_texture/config/webpack.dev.js",
     "draw-your-hand-page": "webpack serve --config ./test/draw_your_hand_page/config/webpack.dev.js",
     "draw-guide-message": "webpack serve --config ./test/draw_guide_message/config/webpack.dev.js",
-    "draw-field-energy": "webpack serve --config ./test/draw_field_energy/config/webpack.dev.js"
+    "draw-field-energy": "webpack serve --config ./test/draw_field_energy/config/webpack.dev.js",
+    "draw-entity-frame-renderer": "webpack serve --config ./test/entity_frame_renderer/config/webpack.dev.js"
   }
 }
