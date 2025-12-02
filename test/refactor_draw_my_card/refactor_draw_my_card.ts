@@ -96,7 +96,7 @@ export class TCGJustTestMyCardView {
     private readonly windowSceneService = WindowSceneServiceImpl.getInstance(this.windowSceneRepository);
 
     private readonly cameraRepository = CameraRepositoryImpl.getInstance();
-    private readonly cameraService = CameraServiceImpl.getInstance(this.cameraRepository);
+    private readonly cameraService = CameraServiceImpl.getInstance();
 
     private initialized = false;
     private isAnimating = false;
