@@ -16,8 +16,9 @@ export class CameraServiceImpl implements CameraService {
         this.cameraRepository = cameraRepository;
     }
 
-    public static getInstance(cameraRepository: CameraRepository): CameraServiceImpl {
+    public static getInstance(): CameraServiceImpl {
         if (!CameraServiceImpl.instance) {
+            const cameraRepository = CameraRepositoryImpl.getInstance();
             CameraServiceImpl.instance = new CameraServiceImpl(cameraRepository);
         }
         return CameraServiceImpl.instance;
