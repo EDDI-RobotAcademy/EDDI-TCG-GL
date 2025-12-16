@@ -51,7 +51,7 @@ export class MyDeckView {
         const camera = this.cameraManager.createAndSetActiveCamera(aspectRatio, viewSize);
 
         // Scene 생성
-        const scene = this.sceneManager.createScene('battle-field');
+        const scene = this.sceneManager.createScene('my-deck');
         const renderer = this.rendererManager.getRenderer();
         renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 
