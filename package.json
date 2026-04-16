@@ -63,6 +63,7 @@
     "draw-entity-frame-renderer": "webpack serve --config ./test/draw_entity_frame_renderer/config/webpack.dev.js",
     "draw-simple-efr": "webpack serve --config ./test/draw_simple_efr/config/webpack.dev.js",
     "draw-efr-my-deck": "webpack serve --config ./test/draw_efr_my_deck/config/webpack.dev.js",
-    "draw-your-field-efr": "webpack serve --config ./test/draw_your_field_efr/config/webpack.dev.js"
+    "draw-your-field-efr": "webpack serve --config ./test/draw_your_field_efr/config/webpack.dev.js",
+    "draw-your-field-with-hand-efr": "webpack serve --config ./test/draw_your_field_with_hand_efr/config/webpack.dev.js"
   }
 }
