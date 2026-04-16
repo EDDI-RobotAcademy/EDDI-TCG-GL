@@ -1,5 +1,3 @@
-import * as THREE from "three";
-
 import { CameraManager } from "../../src/core/camera/CameraManager";
 import { RendererManager } from "../../src/core/renderer/RendererManager";
 import { SceneManager } from "../../src/core/scene/SceneManager";
@@ -13,7 +11,6 @@ import {
     computeYourFieldAreaBounds,
 } from "../../src/your_field_area/frame/YourFieldAreaFrame";
 import { YourFieldAreaRendererV2 } from "../../src/your_field_area/renderer/YourFieldAreaRendererV2";
-
 import {
     createDefaultPlacedCardPlacementFrame,
     computePlacedCardPosition,
@@ -37,8 +34,6 @@ const rootElement = document.getElementById('app');
 if (!rootElement) {
     throw new Error("Cannot find element with id 'app'.");
 }
-
-type CardLocation = 'hand' | 'placed';
 
 function resolveHandCards(cardIds: number[]): HandCard[] {
     const hand: HandCard[] = [];
@@ -94,11 +89,36 @@ async function main(container: HTMLElement): Promise<void> {
     const handGroup = await handRenderer.build(hand, handCardFrame, handLayoutFrame);
     scene.add(handGroup);
 
-    const cardLocation = new Map<number, CardLocation>();
     const entries = handRenderer.getEntries(handGroup);
-    for (const entry of entries) {
-        cardLocation.set(entry.card.cardId, 'hand');
-    }
+
+    // handOrder / placedOrder are the source of truth for where each card lives and in what
+    // slot. Cards are moved between the two arrays on drop; reflowAll() then re-positions
+    // every card based on its current index in its array — the equivalent of legacy
+    // BattleFieldCardAlignHandler.alignHandCard() + MouseDropServiceImpl.alignYourField().
+    const handOrder: number[] = entries.map((e) => e.card.cardId);
+    const placedOrder: number[] = [];
+
+    const getEntryByCardId = (cardId: number) =>
+        entries.find((e) => e.card.cardId === cardId);
+
+    const reflowAll = (): void => {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+
+        handOrder.forEach((cardId, index) => {
+            const entry = getEntryByCardId(cardId);
+            if (!entry) return;
+            const { x, y } = computeHandCardCenter(handLayoutFrame, index, w, h);
+            entry.group.position.set(x, y, 0);
+        });
+
+        placedOrder.forEach((cardId, index) => {
+            const entry = getEntryByCardId(cardId);
+            if (!entry) return;
+            const { x, y } = computePlacedCardPosition(placementFrame, index, w, h);
+            entry.group.position.set(x, y, 0);
+        });
+    };
 
     const animationLoop = new AnimationLoop(rendererManager, sceneManager, cameraManager);
     animationLoop.start();
@@ -125,34 +145,19 @@ async function main(container: HTMLElement): Promise<void> {
                     worldX >= bounds.minX && worldX <= bounds.maxX &&
                     worldY >= bounds.minY && worldY <= bounds.maxY;
 
-                if (inside) {
-                    const { x, y } = computePlacedCardPosition(
-                        placementFrame,
-                        window.innerWidth,
-                        window.innerHeight,
-                    );
-                    group.position.set(x, y, 0);
-                    cardLocation.set(entityId, 'placed');
-                } else {
-                    snapBackToHand(entityId, group);
+                // Only hand→field transitions change ownership. Dropping an already-placed
+                // card (inside or outside) just snaps it back to its placed slot.
+                const handIndex = handOrder.indexOf(entityId);
+                if (inside && handIndex >= 0) {
+                    handOrder.splice(handIndex, 1);
+                    placedOrder.push(entityId);
                 }
+
+                reflowAll();
             },
         },
     );
     bridge.attach();
-
-    function snapBackToHand(entityId: number, group: THREE.Group): void {
-        const entry = entries.find((e) => e.card.cardId === entityId);
-        if (!entry) return;
-        const { x, y } = computeHandCardCenter(
-            handLayoutFrame,
-            entry.cardIndex,
-            window.innerWidth,
-            window.innerHeight,
-        );
-        group.position.set(x, y, 0);
-        cardLocation.set(entityId, 'hand');
-    }
 
     window.addEventListener('resize', () => {
         const width = window.innerWidth;
@@ -163,20 +168,12 @@ async function main(container: HTMLElement): Promise<void> {
         backgroundRenderer.resize(backgroundFrame, backgroundGroup, width, height);
         yourFieldAreaRenderer.resize(yourFieldAreaFrame, yourFieldAreaGroup, width, height);
 
-        // Rescale every hand card (uniform scale reacts to new cardWidth/cardHeight).
         const cardRenderer = handRenderer.getCardRenderer();
         for (const entry of entries) {
             cardRenderer.resize(handCardFrame, entry.group);
-
-            const location = cardLocation.get(entry.card.cardId);
-            if (location === 'placed') {
-                const { x, y } = computePlacedCardPosition(placementFrame, width, height);
-                entry.group.position.set(x, y, 0);
-            } else {
-                const { x, y } = computeHandCardCenter(handLayoutFrame, entry.cardIndex, width, height);
-                entry.group.position.set(x, y, 0);
-            }
         }
+
+        reflowAll();
     });
 }
 

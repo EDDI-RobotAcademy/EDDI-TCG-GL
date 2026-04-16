@@ -1,5 +1,3 @@
-import * as THREE from "three";
-
 import { CameraManager } from "../../src/core/camera/CameraManager";
 import { RendererManager } from "../../src/core/renderer/RendererManager";
 import { SceneManager } from "../../src/core/scene/SceneManager";
@@ -43,8 +41,6 @@ const rootElement = document.getElementById('app');
 if (!rootElement) {
     throw new Error("Cannot find element with id 'app'.");
 }
-
-type CardLocation = 'hand' | 'placed';
 
 function resolveHandCards(cardIds: number[]): HandCard[] {
     const hand: HandCard[] = [];
@@ -102,16 +98,37 @@ async function main(container: HTMLElement): Promise<void> {
     const handGroup = await handRenderer.build(hand, handCardFrame, handLayoutFrame);
     scene.add(handGroup);
 
-    const cardLocation = new Map<number, CardLocation>();
     const entries = handRenderer.getEntries(handGroup);
-    for (const entry of entries) {
-        cardLocation.set(entry.card.cardId, 'hand');
-    }
+
+    const handOrder: number[] = entries.map((e) => e.card.cardId);
+    const placedOrder: number[] = [];
+
+    const getEntryByCardId = (cardId: number) =>
+        entries.find((e) => e.card.cardId === cardId);
+
+    const reflowAll = (): void => {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+
+        handOrder.forEach((cardId, index) => {
+            const entry = getEntryByCardId(cardId);
+            if (!entry) return;
+            const { x, y } = computeHandCardCenter(handLayoutFrame, index, w, h);
+            entry.group.position.set(x, y, 0);
+        });
+
+        placedOrder.forEach((cardId, index) => {
+            const entry = getEntryByCardId(cardId);
+            if (!entry) return;
+            const { x, y } = computePlacedCardPosition(placementFrame, index, w, h);
+            entry.group.position.set(x, y, 0);
+        });
+    };
 
     const animationLoop = new AnimationLoop(rendererManager, sceneManager, cameraManager);
     animationLoop.start();
 
-    // Pilot C — click / drag / drop
+    // Pilot C — click / drag / drop with multi-slot field + hand reflow
     const bridge = new HandInteractionBridge(
         rendererManager.getDomElement(),
         camera,
@@ -134,36 +151,19 @@ async function main(container: HTMLElement): Promise<void> {
                     worldX >= bounds.minX && worldX <= bounds.maxX &&
                     worldY >= bounds.minY && worldY <= bounds.maxY;
 
-                if (inside) {
-                    const { x, y } = computePlacedCardPosition(
-                        placementFrame,
-                        window.innerWidth,
-                        window.innerHeight,
-                    );
-                    group.position.set(x, y, 0);
-                    cardLocation.set(entityId, 'placed');
-                } else {
-                    snapBackToHand(entityId, group);
+                const handIndex = handOrder.indexOf(entityId);
+                if (inside && handIndex >= 0) {
+                    handOrder.splice(handIndex, 1);
+                    placedOrder.push(entityId);
                 }
+
+                reflowAll();
             },
         },
     );
     bridge.attach();
 
-    function snapBackToHand(entityId: number, group: THREE.Group): void {
-        const entry = entries.find((e) => e.card.cardId === entityId);
-        if (!entry) return;
-        const { x, y } = computeHandCardCenter(
-            handLayoutFrame,
-            entry.cardIndex,
-            window.innerWidth,
-            window.innerHeight,
-        );
-        group.position.set(x, y, 0);
-        cardLocation.set(entityId, 'hand');
-    }
-
-    // Pilot D-1 — field-energy HUD overlays (new to this pilot)
+    // Pilot D-1 — field-energy HUD overlays (new)
     const energyFrame = createDefaultFieldEnergyHudFrame();
     const energyRenderer = new FieldEnergyHudRendererV2(7);
     const energyElement = await energyRenderer.build(energyFrame);
@@ -185,23 +185,14 @@ async function main(container: HTMLElement): Promise<void> {
 
         cameraManager.updateAspect(width, height);
         rendererManager.resize(width, height);
-
         backgroundRenderer.resize(backgroundFrame, backgroundGroup, width, height);
         yourFieldAreaRenderer.resize(yourFieldAreaFrame, yourFieldAreaGroup, width, height);
 
         const cardRenderer = handRenderer.getCardRenderer();
         for (const entry of entries) {
             cardRenderer.resize(handCardFrame, entry.group);
-
-            const location = cardLocation.get(entry.card.cardId);
-            if (location === 'placed') {
-                const { x, y } = computePlacedCardPosition(placementFrame, width, height);
-                entry.group.position.set(x, y, 0);
-            } else {
-                const { x, y } = computeHandCardCenter(handLayoutFrame, entry.cardIndex, width, height);
-                entry.group.position.set(x, y, 0);
-            }
         }
+        reflowAll();
 
         energyRenderer.update(energyFrame, energyElement, width, height);
         raceRenderer.update(raceFrame, raceElement, width, height);
