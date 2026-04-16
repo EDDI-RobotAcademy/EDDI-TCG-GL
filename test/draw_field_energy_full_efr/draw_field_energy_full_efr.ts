@@ -35,6 +35,8 @@ import { HandInteractionBridge } from "../../src/battle_field_hand/interaction/H
 import { createDefaultHandPageButtonsFrame } from "../../src/battle_field_hand_page/frame/HandPageButtonsFrame";
 import { HandPageButtonsRendererV2 } from "../../src/battle_field_hand_page/renderer/HandPageButtonsRendererV2";
 
+import * as THREE from "three";
+
 import { getCardById } from "../../src/card/utility";
 import { CardJob } from "../../src/card/job";
 import { CardKind } from "../../src/card/kind";
@@ -108,10 +110,12 @@ async function main(container: HTMLElement): Promise<void> {
     const opponentFieldAreaGroup = await opponentFieldAreaRenderer.build(opponentFieldAreaFrame);
     scene.add(opponentFieldAreaGroup);
 
-    // Pilot B — hand row (6장으로 확장해 5장 이상 시 레이아웃·페이지 버튼 의미 검증)
+    // Pilot B — hand row (6장으로 확장해 페이지네이션 검증)
     const placementFrame = createDefaultPlacedCardPlacementFrame();
 
     const handMapRepo = BattleFieldHandMapRepositoryImpl.getInstance();
+    handMapRepo.addBattleFieldHand(31);
+    handMapRepo.addBattleFieldHand(32);
     const handCardIds = handMapRepo.getBattleFieldHandList();
     const hand = resolveCards(handCardIds, 'hand');
 
@@ -125,25 +129,41 @@ async function main(container: HTMLElement): Promise<void> {
 
     const handOrder: number[] = entries.map((e) => e.card.cardId);
     const placedOrder: number[] = [];
+    const MAX_PER_PAGE = 4;
+    let currentPage = 1;
 
     const getEntryByCardId = (cardId: number) => entries.find((e) => e.card.cardId === cardId);
+    const getMaxPage = () => Math.max(1, Math.ceil(handOrder.length / MAX_PER_PAGE));
 
     const reflowHandAndPlaced = (): void => {
         const w = window.innerWidth;
         const h = window.innerHeight;
+        const pageStart = (currentPage - 1) * MAX_PER_PAGE;
+        const pageEnd = pageStart + MAX_PER_PAGE;
+
         handOrder.forEach((cardId, index) => {
             const entry = getEntryByCardId(cardId);
             if (!entry) return;
-            const { x, y } = computeHandCardCenter(handLayoutFrame, index, w, h);
-            entry.group.position.set(x, y, 0);
+            if (index >= pageStart && index < pageEnd) {
+                const pageLocalIndex = index - pageStart;
+                const { x, y } = computeHandCardCenter(handLayoutFrame, pageLocalIndex, w, h);
+                entry.group.position.set(x, y, 0);
+                entry.group.visible = true;
+            } else {
+                entry.group.visible = false;
+            }
         });
+
         placedOrder.forEach((cardId, index) => {
             const entry = getEntryByCardId(cardId);
             if (!entry) return;
             const { x, y } = computePlacedCardPosition(placementFrame, index, w, h);
             entry.group.position.set(x, y, 0);
+            entry.group.visible = true;
         });
     };
+
+    reflowHandAndPlaced();
 
     // Pilot E new — opponent field units (reuses HandCardRendererV2 via OpponentFieldRendererV2)
     const opponentCardIds = OpponentFieldMapRepositoryImpl.getInstance().getOpponentFieldList();
@@ -153,7 +173,7 @@ async function main(container: HTMLElement): Promise<void> {
     const opponentGroup = await opponentRenderer.build(opponentCards, handCardFrame, opponentLayoutFrame);
     scene.add(opponentGroup);
 
-    // Pilot E new — hand page prev/next buttons (decorative, no click handling)
+    // Pilot E — hand page prev/next buttons with click handling
     const handPageButtonsFrame = createDefaultHandPageButtonsFrame();
     const handPageButtonsRenderer = new HandPageButtonsRendererV2();
     const handPageButtonsGroup = await handPageButtonsRenderer.build(handPageButtonsFrame);
@@ -161,6 +181,28 @@ async function main(container: HTMLElement): Promise<void> {
 
     const animationLoop = new AnimationLoop(rendererManager, sceneManager, cameraManager);
     animationLoop.start();
+
+    // Page button click detection — separate raycaster against button meshes
+    const pageRaycaster = new THREE.Raycaster();
+    rendererManager.getDomElement().addEventListener('mousedown', (e: MouseEvent) => {
+        if (e.button !== 0) return;
+        const ndc = new THREE.Vector2(
+            (e.clientX / window.innerWidth) * 2 - 1,
+            -(e.clientY / window.innerHeight) * 2 + 1,
+        );
+        pageRaycaster.setFromCamera(ndc, camera);
+        const hits = pageRaycaster.intersectObjects(handPageButtonsGroup.children, false);
+        if (hits.length === 0) return;
+
+        const buttonType = hits[0].object.userData.buttonType;
+        if (buttonType === 'prev' && currentPage > 1) {
+            currentPage--;
+            reflowHandAndPlaced();
+        } else if (buttonType === 'next' && currentPage < getMaxPage()) {
+            currentPage++;
+            reflowHandAndPlaced();
+        }
+    });
 
     // Pilot C — click / drag / drop (only hand cards have userData.entityId; opponent stripped)
     const bridge = new HandInteractionBridge(
