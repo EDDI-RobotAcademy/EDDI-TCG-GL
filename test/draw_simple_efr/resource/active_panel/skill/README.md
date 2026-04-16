@@ -1,0 +1,1 @@
+# Place Skill Resource Info of Active Panel at here
