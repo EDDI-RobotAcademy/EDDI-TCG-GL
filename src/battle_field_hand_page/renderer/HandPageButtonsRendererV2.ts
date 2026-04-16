@@ -26,11 +26,11 @@ export class HandPageButtonsRendererV2 implements FrameRenderer<HandPageButtonsF
         const group = new THREE.Group();
         const entries: ButtonEntry[] = [];
 
-        const prevEntry = await this.buildButton(frame.prev, frame.renderOrder);
+        const prevEntry = await this.buildButton(frame.prev, frame.renderOrder, 'prev');
         group.add(prevEntry.mesh);
         entries.push(prevEntry);
 
-        const nextEntry = await this.buildButton(frame.next, frame.renderOrder);
+        const nextEntry = await this.buildButton(frame.next, frame.renderOrder, 'next');
         group.add(nextEntry.mesh);
         entries.push(nextEntry);
 
@@ -62,7 +62,7 @@ export class HandPageButtonsRendererV2 implements FrameRenderer<HandPageButtonsF
         group.clear();
     }
 
-    private async buildButton(spec: HandPageButtonSpec, renderOrder: number): Promise<ButtonEntry> {
+    private async buildButton(spec: HandPageButtonSpec, renderOrder: number, buttonType: string): Promise<ButtonEntry> {
         const texture = await this.loadTexture(spec.imageSrc);
         const w = window.innerWidth;
         const h = window.innerHeight;
@@ -78,6 +78,7 @@ export class HandPageButtonsRendererV2 implements FrameRenderer<HandPageButtonsF
         const geometry = new THREE.PlaneGeometry(baseWidth, baseHeight);
         const mesh = new THREE.Mesh(geometry, material);
         mesh.renderOrder = renderOrder;
+        mesh.userData.buttonType = buttonType;
 
         return { spec, mesh, baseWidth, baseHeight };
     }
