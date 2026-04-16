@@ -66,6 +66,7 @@
     "draw-your-field-efr": "webpack serve --config ./test/draw_your_field_efr/config/webpack.dev.js",
     "draw-your-field-with-hand-efr": "webpack serve --config ./test/draw_your_field_with_hand_efr/config/webpack.dev.js",
     "draw-your-field-interactive-efr": "webpack serve --config ./test/draw_your_field_interactive_efr/config/webpack.dev.js",
-    "draw-field-energy-hud-efr": "webpack serve --config ./test/draw_field_energy_hud_efr/config/webpack.dev.js"
+    "draw-field-energy-hud-efr": "webpack serve --config ./test/draw_field_energy_hud_efr/config/webpack.dev.js",
+    "draw-field-energy-full-efr": "webpack serve --config ./test/draw_field_energy_full_efr/config/webpack.dev.js"
   }
 }
