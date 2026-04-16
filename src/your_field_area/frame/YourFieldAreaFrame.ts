@@ -23,3 +23,28 @@ export function createDefaultYourFieldAreaFrame(): YourFieldAreaFrame {
         renderOrder: 1,
     };
 }
+
+export interface YourFieldAreaBounds {
+    readonly minX: number;
+    readonly maxX: number;
+    readonly minY: number;
+    readonly maxY: number;
+}
+
+// World-space axis-aligned bounds of the field area. Used for drop-hit tests.
+export function computeYourFieldAreaBounds(
+    frame: YourFieldAreaFrame,
+    viewportWidth: number,
+    viewportHeight: number,
+): YourFieldAreaBounds {
+    const centerX = frame.xPercent * viewportWidth;
+    const centerY = frame.yPercent * viewportHeight;
+    const halfWidth = (frame.widthPercent * viewportWidth) / 2;
+    const halfHeight = (frame.heightPercent * viewportHeight) / 2;
+    return {
+        minX: centerX - halfWidth,
+        maxX: centerX + halfWidth,
+        minY: centerY - halfHeight,
+        maxY: centerY + halfHeight,
+    };
+}

@@ -7,6 +7,7 @@ import { HandCard } from "../entity/HandCard";
 import { HandCardFrame, HandCardSlot } from "../frame/HandCardFrame";
 
 interface HandCardUserData {
+    entityId: number;
     baseCardWidth: number;
     baseCardHeight: number;
 }
@@ -63,7 +64,11 @@ export class HandCardRendererV2 {
             group.add(this.createEnergyTextMesh(entity.energyCount, energyPos, textScale));
         }
 
-        const userData: HandCardUserData = { baseCardWidth: cardWidth, baseCardHeight: cardHeight };
+        const userData: HandCardUserData = {
+            entityId: entity.cardId,
+            baseCardWidth: cardWidth,
+            baseCardHeight: cardHeight,
+        };
         group.userData = userData;
         return group;
     }

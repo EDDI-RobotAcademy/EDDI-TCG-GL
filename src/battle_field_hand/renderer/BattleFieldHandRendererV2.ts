@@ -8,7 +8,7 @@ import {
 } from "../frame/BattleFieldHandLayoutFrame";
 import { HandCardRendererV2 } from "./HandCardRendererV2";
 
-interface HandEntry {
+export interface HandEntry {
     card: HandCard;
     cardIndex: number;
     group: THREE.Group;
@@ -71,5 +71,13 @@ export class BattleFieldHandRendererV2 {
             this.cardRenderer.dispose(entry.group);
         }
         handGroup.clear();
+    }
+
+    public getEntries(handGroup: THREE.Group): readonly HandEntry[] {
+        return (handGroup.userData as HandUserData).entries;
+    }
+
+    public getCardRenderer(): HandCardRendererV2 {
+        return this.cardRenderer;
     }
 }
