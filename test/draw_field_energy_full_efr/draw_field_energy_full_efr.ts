@@ -253,6 +253,7 @@ async function main(container: HTMLElement): Promise<void> {
 
     // Tracks which attack/skill is active so single-target execution uses the correct damage.
     let pendingAttackDamage: number = 0;
+    let pendingAttackType: string = 'general';
 
     // Pilot E — hand page prev/next buttons with click handling
     const handPageButtonsFrame = createDefaultHandPageButtonsFrame();
@@ -410,6 +411,7 @@ async function main(container: HTMLElement): Promise<void> {
                         // Single-target — enter attack mode, red neon on opponents + master
                         interactionState = 'attackMode';
                         pendingAttackDamage = damage;
+                        pendingAttackType = btnType;
                         for (const entry of opponentEntries) {
                             if (entry.group.visible) {
                                 enemyNeonEffect.attach(entry.cardIndex, entry.group);
@@ -440,7 +442,7 @@ async function main(container: HTMLElement): Promise<void> {
                 clearAllSelection();
 
                 if (attackerEntry) {
-                    await attackAnimation.playMasterAttack(attackerEntry.group, masterGroup);
+                    await attackAnimation.playAttack(attackerEntry.group, masterGroup, pendingAttackType);
                 }
 
                 const prevHp = opponentMasterHp;
@@ -483,7 +485,7 @@ async function main(container: HTMLElement): Promise<void> {
 
                 // Play attack animation before applying damage
                 if (attackerEntry) {
-                    await attackAnimation.playUnitAttack(attackerEntry.group, targetEntry.group);
+                    await attackAnimation.playAttack(attackerEntry.group, targetEntry.group, pendingAttackType);
                 }
 
                 const targetIdx = targetEntry.cardIndex;
