@@ -115,11 +115,14 @@ export class HandInteractionBridge {
     }
 }
 
+// Walk up from a raycaster-hit mesh to find the nearest ancestor Group with userData.entityId.
+// Requires the Group to be visible — THREE.js 0.164.x does NOT check `visible` in its
+// Raycaster internally, so invisible (paginated-out) cards would otherwise be picked up.
 function findAncestorEntityGroup(object: THREE.Object3D): { entityId: number; group: THREE.Group } | null {
     let current: THREE.Object3D | null = object;
     while (current) {
         const entityId = (current.userData as { entityId?: unknown } | undefined)?.entityId;
-        if (typeof entityId === 'number' && current instanceof THREE.Group) {
+        if (typeof entityId === 'number' && current instanceof THREE.Group && current.visible) {
             return { entityId, group: current };
         }
         current = current.parent;
