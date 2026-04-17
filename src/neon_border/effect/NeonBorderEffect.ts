@@ -9,15 +9,24 @@ const VERTEX_SHADER = `
     }
 `;
 
-const FRAGMENT_SHADER = `
+// Single-mesh border glow: computes distance from nearest edge in UV space,
+// produces soft glow at edges with natural corner blending. No seams, no overlap.
+const BORDER_FRAGMENT_SHADER = `
     uniform vec3 baseColor;
     uniform vec3 glowColor;
     uniform float time;
+    uniform float borderX;
+    uniform float borderY;
     varying vec2 vUv;
     void main() {
-        float glowFactor = sin(time * 5.0) * 0.5 + 0.5;
-        vec3 finalColor = mix(baseColor, glowColor, glowFactor);
-        gl_FragColor = vec4(finalColor, 1.0);
+        float dx = min(vUv.x, 1.0 - vUv.x);
+        float dy = min(vUv.y, 1.0 - vUv.y);
+        float ex = 1.0 - smoothstep(0.0, borderX, dx);
+        float ey = 1.0 - smoothstep(0.0, borderY, dy);
+        float glow = max(ex, ey);
+        float pulse = sin(time * 5.0) * 0.3 + 0.7;
+        vec3 finalColor = mix(baseColor, glowColor, pulse);
+        gl_FragColor = vec4(finalColor, glow * pulse * 0.85);
     }
 `;
 
@@ -31,8 +40,6 @@ interface BorderEntry {
     group: THREE.Group;
 }
 
-// Supports both single-select (ally: detachAll → attach) and multi-select (enemy: attach N
-// cards, detachAll when done). Call updateAnimation() each frame for the glow oscillation.
 export class NeonBorderEffect {
     private readonly frame: NeonBorderFrame;
     private readonly activeBorders: Map<number, BorderEntry> = new Map();
@@ -48,32 +55,44 @@ export class NeonBorderEffect {
         const cardWidth = userData.baseCardWidth ?? 100;
         const cardHeight = userData.baseCardHeight ?? 160;
 
-        const hw = cardWidth / 2;
-        const hh = cardHeight / 2;
         const t = this.frame.lineThickness;
         const z = this.frame.zOffset;
 
-        const meshes: THREE.Mesh[] = [];
-        const materials: THREE.ShaderMaterial[] = [];
+        // Single plane covering the entire card + glow margin
+        const margin = t;
+        const planeW = cardWidth + margin * 2;
+        const planeH = cardHeight + margin * 2;
 
-        const addLine = (width: number, height: number, x: number, y: number): void => {
-            const mat = this.createMaterial();
-            const geo = new THREE.PlaneGeometry(width, height);
-            const mesh = new THREE.Mesh(geo, mat);
-            mesh.position.set(x, y, z);
-            mesh.renderOrder = 1;
-            mesh.userData.__neonBorderLine = true;
-            group.add(mesh);
-            meshes.push(mesh);
-            materials.push(mat);
-        };
+        // Border width in UV space (normalized)
+        const borderX = (t / 2) / planeW;
+        const borderY = (t / 2) / planeH;
 
-        addLine(cardWidth, t, 0, -hh);
-        addLine(cardWidth, t, 0, hh);
-        addLine(t, cardHeight, -hw, 0);
-        addLine(t, cardHeight, hw, 0);
+        const mat = new THREE.ShaderMaterial({
+            uniforms: {
+                baseColor: { value: new THREE.Color(this.frame.baseColor) },
+                glowColor: { value: new THREE.Color(this.frame.glowColor) },
+                time: { value: 0.0 },
+                borderX: { value: borderX },
+                borderY: { value: borderY },
+            },
+            vertexShader: VERTEX_SHADER,
+            fragmentShader: BORDER_FRAGMENT_SHADER,
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+        });
 
-        this.activeBorders.set(entityId, { border: { meshes, materials }, group });
+        const geo = new THREE.PlaneGeometry(planeW, planeH);
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(0, 0, z);
+        mesh.renderOrder = 1;
+        mesh.userData.__neonBorderLine = true;
+        group.add(mesh);
+
+        this.activeBorders.set(entityId, {
+            border: { meshes: [mesh], materials: [mat] },
+            group,
+        });
     }
 
     public detach(entityId: number): void {
@@ -109,19 +128,5 @@ export class NeonBorderEffect {
 
     public getActiveEntityIds(): number[] {
         return [...this.activeBorders.keys()];
-    }
-
-    private createMaterial(): THREE.ShaderMaterial {
-        return new THREE.ShaderMaterial({
-            uniforms: {
-                baseColor: { value: new THREE.Color(this.frame.baseColor) },
-                glowColor: { value: new THREE.Color(this.frame.glowColor) },
-                time: { value: 0.0 },
-            },
-            vertexShader: VERTEX_SHADER,
-            fragmentShader: FRAGMENT_SHADER,
-            transparent: true,
-            depthWrite: false,
-        });
     }
 }
