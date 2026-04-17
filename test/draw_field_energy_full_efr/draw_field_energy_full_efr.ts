@@ -18,7 +18,7 @@ import {
 
 import { createDefaultOpponentFieldAreaFrame } from "../../src/opponent_field_area/frame/OpponentFieldAreaFrame";
 import { OpponentFieldAreaRendererV2 } from "../../src/opponent_field_area/renderer/OpponentFieldAreaRendererV2";
-import { createDefaultOpponentFieldLayoutFrame } from "../../src/opponent_field/frame/OpponentFieldLayoutFrame";
+import { createDefaultOpponentFieldLayoutFrame, computeOpponentFieldCardCenter } from "../../src/opponent_field/frame/OpponentFieldLayoutFrame";
 import { OpponentFieldRendererV2 } from "../../src/opponent_field/renderer/OpponentFieldRendererV2";
 import { OpponentFieldMapRepositoryImpl } from "../../src/opponent_field_map/repository/OpponentFieldMapRepositoryImpl";
 
@@ -47,6 +47,12 @@ import { createDefaultFieldEnergyRaceHudFrame } from "../../src/common/field_ene
 import { FieldEnergyRaceHudRendererV2 } from "../../src/common/field_energy/renderer/FieldEnergyRaceHudRendererV2";
 import { createDefaultFieldEnergyCountHudFrame } from "../../src/common/field_energy/frame/FieldEnergyCountHudFrame";
 import { FieldEnergyCountHudRendererV2 } from "../../src/common/field_energy/renderer/FieldEnergyCountHudRendererV2";
+
+import { createAllyNeonBorderFrame, createEnemyNeonBorderFrame } from "../../src/neon_border/frame/NeonBorderFrame";
+import { NeonBorderEffect } from "../../src/neon_border/effect/NeonBorderEffect";
+
+import { createDefaultActivePanelFrame, ActivePanelButtonSpec } from "../../src/active_panel_area/frame/ActivePanelFrame";
+import { ActivePanelRendererV2 } from "../../src/active_panel_area/renderer/ActivePanelRendererV2";
 
 import { createDefaultGuideMessageHudFrame } from "../../src/common/guide_message/frame/GuideMessageHudFrame";
 import { GuideMessageHudRendererV2 } from "../../src/common/guide_message/renderer/GuideMessageHudRendererV2";
@@ -173,25 +179,90 @@ async function main(container: HTMLElement): Promise<void> {
     const opponentGroup = await opponentRenderer.build(opponentCards, handCardFrame, opponentLayoutFrame);
     scene.add(opponentGroup);
 
+    // Opponent HP state + alive order for reflow on death
+    const opponentHpState = new Map<number, number>();
+    const opponentAliveOrder: number[] = [];
+    for (let i = 0; i < opponentCards.length; i++) {
+        const oc = opponentCards[i];
+        const card = getCardById(oc.cardId);
+        const hp = card?.체력 ?? 0;
+        opponentHpState.set(i, typeof hp === 'number' ? hp : 0);
+        opponentAliveOrder.push(i);
+    }
+
+    const opponentEntries = (opponentGroup.userData as { entries: { card: HandCard; cardIndex: number; group: THREE.Group }[] }).entries;
+
+    const reflowOpponentField = (): void => {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        for (const entry of opponentEntries) {
+            const aliveIdx = opponentAliveOrder.indexOf(entry.cardIndex);
+            if (aliveIdx >= 0) {
+                const { x, y } = computeOpponentFieldCardCenter(opponentLayoutFrame, aliveIdx, w, h);
+                entry.group.position.set(x, y, 0);
+                entry.group.visible = true;
+            } else {
+                entry.group.visible = false;
+            }
+        }
+    };
+
     // Pilot E — hand page prev/next buttons with click handling
     const handPageButtonsFrame = createDefaultHandPageButtonsFrame();
     const handPageButtonsRenderer = new HandPageButtonsRendererV2();
     const handPageButtonsGroup = await handPageButtonsRenderer.build(handPageButtonsFrame);
     scene.add(handPageButtonsGroup);
 
+    // NeonBorder effects — ally (blue, single-select) + enemy (red, multi-select)
+    const neonBorderFrame = createAllyNeonBorderFrame();
+    const neonEffect = new NeonBorderEffect(neonBorderFrame);
+    const enemyNeonEffect = new NeonBorderEffect(createEnemyNeonBorderFrame());
+
+    // Active panel state
+    const activePanelFrame = createDefaultActivePanelFrame();
+    const activePanelRenderer = new ActivePanelRendererV2();
+    let activePanelGroup: THREE.Group | null = null;
+    type InteractionState = 'idle' | 'cardSelected' | 'panelVisible' | 'attackMode';
+    let interactionState: InteractionState = 'idle';
+
+    function clearActivePanel(): void {
+        if (activePanelGroup) {
+            activePanelRenderer.dispose(activePanelGroup);
+            activePanelGroup = null;
+        }
+        enemyNeonEffect.detachAll();
+        if (interactionState === 'panelVisible' || interactionState === 'attackMode') {
+            interactionState = neonEffect.hasActive() ? 'cardSelected' : 'idle';
+        }
+    }
+
+    function clearAllSelection(): void {
+        clearActivePanel();
+        neonEffect.detachAll();
+        interactionState = 'idle';
+    }
+
     const animationLoop = new AnimationLoop(rendererManager, sceneManager, cameraManager);
+    animationLoop.setCustomUpdate(() => {
+        neonEffect.updateAnimation();
+        enemyNeonEffect.updateAnimation();
+    });
     animationLoop.start();
 
-    // Page button click detection — separate raycaster against button meshes
-    const pageRaycaster = new THREE.Raycaster();
-    rendererManager.getDomElement().addEventListener('mousedown', (e: MouseEvent) => {
-        if (e.button !== 0) return;
-        const ndc = new THREE.Vector2(
+    // Shared raycaster
+    const sharedRaycaster = new THREE.Raycaster();
+    function ndcFromEvent(e: MouseEvent): THREE.Vector2 {
+        return new THREE.Vector2(
             (e.clientX / window.innerWidth) * 2 - 1,
             -(e.clientY / window.innerHeight) * 2 + 1,
         );
-        pageRaycaster.setFromCamera(ndc, camera);
-        const hits = pageRaycaster.intersectObjects(handPageButtonsGroup.children, false);
+    }
+
+    // Page button click
+    rendererManager.getDomElement().addEventListener('mousedown', (e: MouseEvent) => {
+        if (e.button !== 0) return;
+        sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
+        const hits = sharedRaycaster.intersectObjects(handPageButtonsGroup.children, false);
         if (hits.length === 0) return;
 
         const buttonType = hits[0].object.userData.buttonType;
@@ -204,15 +275,143 @@ async function main(container: HTMLElement): Promise<void> {
         }
     });
 
-    // Pilot C — click / drag / drop (only hand cards have userData.entityId; opponent stripped)
+    // Active panel button click + opponent card click (attack targeting).
+    // stopImmediatePropagation prevents HandInteractionBridge from stealing the same click.
+    rendererManager.getDomElement().addEventListener('mousedown', (e: MouseEvent) => {
+        if (e.button !== 0) return;
+        sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
+
+        // Check active panel button click first
+        if (activePanelGroup && interactionState === 'panelVisible') {
+            const panelHits = sharedRaycaster.intersectObjects(activePanelGroup.children, false);
+            if (panelHits.length > 0) {
+                e.stopImmediatePropagation();
+                const btnType = panelHits[0].object.userData.buttonType;
+                if (btnType === 'general') {
+                    interactionState = 'attackMode';
+                    for (const entry of opponentEntries) {
+                        if (entry.group.visible) {
+                            enemyNeonEffect.attach(entry.cardIndex, entry.group);
+                        }
+                    }
+                } else if (btnType === 'details') {
+                    console.log('Details clicked — not implemented in pilot');
+                    clearActivePanel();
+                }
+                return;
+            }
+        }
+
+        // Check opponent card click while in attack mode — apply damage, kill only if HP <= 0
+        if (interactionState === 'attackMode') {
+            const oppHits = sharedRaycaster.intersectObjects(opponentGroup.children, true);
+            if (oppHits.length > 0) {
+                e.stopImmediatePropagation();
+                let targetGroup: THREE.Object3D | null = oppHits[0].object;
+                while (targetGroup && targetGroup.parent !== opponentGroup) {
+                    targetGroup = targetGroup.parent;
+                }
+                if (targetGroup && targetGroup instanceof THREE.Group) {
+                    const targetEntry = opponentEntries.find((oe) => oe.group === targetGroup);
+                    if (targetEntry) {
+                        // Resolve attacker's attack power
+                        const attackerId = neonEffect.getActiveEntityIds()[0];
+                        let attackPower = 0;
+                        if (attackerId != null) {
+                            const attackerCard = getCardById(attackerId);
+                            if (attackerCard) {
+                                attackPower = attackerCard.공격력 ?? 0;
+                            }
+                        }
+
+                        // Apply damage to opponent HP (keyed by cardIndex for uniqueness)
+                        const targetIdx = targetEntry.cardIndex;
+                        const currentHp = opponentHpState.get(targetIdx) ?? 0;
+                        const newHp = currentHp - attackPower;
+                        opponentHpState.set(targetIdx, newHp);
+
+                        console.log(`General attack: attacker=${attackerId} (ATK=${attackPower}) → opponent idx=${targetIdx} cardId=${targetEntry.card.cardId} (HP: ${currentHp} → ${newHp})`);
+
+                        if (newHp <= 0) {
+                            // Remove from alive list and reflow remaining opponents
+                            const aliveIdx = opponentAliveOrder.indexOf(targetIdx);
+                            if (aliveIdx >= 0) {
+                                opponentAliveOrder.splice(aliveIdx, 1);
+                            }
+                            reflowOpponentField();
+                            console.log(`Opponent idx=${targetIdx} defeated! Remaining: ${opponentAliveOrder.length}`);
+                        } else {
+                            // Visual damage feedback — brief red flash
+                            targetEntry.group.traverse((child) => {
+                                if (child instanceof THREE.Mesh && child.material && !child.userData.__neonBorderLine) {
+                                    const mat = child.material as THREE.MeshBasicMaterial;
+                                    const origColor = mat.color.clone();
+                                    mat.color.set(0xff4444);
+                                    setTimeout(() => { mat.color.copy(origColor); }, 200);
+                                }
+                            });
+                            console.log(`Opponent idx=${targetIdx} survived with HP=${newHp}`);
+                        }
+                    }
+                }
+                clearAllSelection();
+                return;
+            }
+        }
+    });
+
+    // Right-click: toggle active panel if a placed card is selected
+    rendererManager.getDomElement().addEventListener('contextmenu', (e: Event) => {
+        e.preventDefault();
+    });
+    rendererManager.getDomElement().addEventListener('mousedown', async (e: MouseEvent) => {
+        if (e.button !== 2) return;
+        e.preventDefault();
+
+        if (interactionState === 'panelVisible' || interactionState === 'attackMode') {
+            clearActivePanel();
+            return;
+        }
+
+        if (interactionState !== 'cardSelected') return;
+
+        const selectedId = neonEffect.getActiveEntityIds()[0];
+        if (selectedId == null) return;
+        const isPlaced = placedOrder.includes(selectedId);
+        if (!isPlaced) return;
+
+        // Panel spawns at mouse right-click world position (legacy: activePanelAreaRepository.create(clickPoint.x, clickPoint.y, cardId))
+        const clickNdc = ndcFromEvent(e);
+        sharedRaycaster.setFromCamera(clickNdc, camera);
+        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+        const clickWorld = new THREE.Vector3();
+        if (!sharedRaycaster.ray.intersectPlane(plane, clickWorld)) return;
+
+        const clickPos = { x: clickWorld.x, y: clickWorld.y };
+
+        const buttonSpecs: ActivePanelButtonSpec[] = [
+            activePanelFrame.generalButton,
+            activePanelFrame.detailsButton,
+        ];
+
+        activePanelGroup = await activePanelRenderer.build(activePanelFrame, clickPos, buttonSpecs);
+        scene.add(activePanelGroup);
+        interactionState = 'panelVisible';
+    });
+
+    // Pilot C — click / drag / drop
     const bridge = new HandInteractionBridge(
         rendererManager.getDomElement(),
         camera,
         scene,
         {
-            onPickup: (_entityId, group) => {
+            onPickup: (entityId, group) => {
+                clearActivePanel();
                 group.renderOrder = 100;
                 group.position.z = 1;
+                neonEffect.detachAll();
+                neonEffect.attach(entityId, group);
+                interactionState = 'cardSelected';
             },
             onDrop: (entityId, group, worldX, worldY) => {
                 group.renderOrder = 0;
@@ -227,11 +426,18 @@ async function main(container: HTMLElement): Promise<void> {
                     worldX >= bounds.minX && worldX <= bounds.maxX &&
                     worldY >= bounds.minY && worldY <= bounds.maxY;
 
-                const handIndex = handOrder.indexOf(entityId);
-                if (inside && handIndex >= 0) {
-                    handOrder.splice(handIndex, 1);
+                const wasInHand = handOrder.indexOf(entityId) >= 0;
+
+                if (wasInHand && inside) {
+                    handOrder.splice(handOrder.indexOf(entityId), 1);
                     placedOrder.push(entityId);
+                    neonEffect.detachAll();
+                    interactionState = 'idle';
+                } else if (wasInHand && !inside) {
+                    neonEffect.detachAll();
+                    interactionState = 'idle';
                 }
+
                 reflowHandAndPlaced();
             },
         },
@@ -288,7 +494,11 @@ async function main(container: HTMLElement): Promise<void> {
         }
         reflowHandAndPlaced();
 
-        opponentRenderer.resize(handCardFrame, opponentLayoutFrame, opponentGroup, width, height);
+        // Rescale opponent cards, then reflow alive ones (dead ones stay hidden)
+        for (const entry of opponentEntries) {
+            handRenderer.getCardRenderer().resize(handCardFrame, entry.group);
+        }
+        reflowOpponentField();
         handPageButtonsRenderer.resize(handPageButtonsFrame, handPageButtonsGroup, width, height);
 
         energyRenderer.update(energyFrame, energyElement, width, height);
