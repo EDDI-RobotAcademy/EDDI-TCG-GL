@@ -2,6 +2,8 @@ import { CameraManager } from "../../src/core/camera/CameraManager";
 import { RendererManager } from "../../src/core/renderer/RendererManager";
 import { SceneManager } from "../../src/core/scene/SceneManager";
 import { AnimationLoop } from "../../src/core/animation/AnimationLoop";
+import { AudioController } from "../../src/audio/AudioController";
+import battleFieldMusic from '@resource/music/battle_field/battle-field.mp3';
 
 import { createBattleFieldBackgroundFrame } from "../../src/background/frame/BackgroundFrame";
 import { BackgroundRendererV2 } from "../../src/background/renderer/BackgroundRendererV2";
@@ -40,6 +42,7 @@ import * as THREE from "three";
 import { getCardById } from "../../src/card/utility";
 import { CardJob } from "../../src/card/job";
 import { CardKind } from "../../src/card/kind";
+import { getSkillType, SkillType } from "../../src/card/SkillType";
 
 import { createDefaultFieldEnergyHudFrame } from "../../src/common/field_energy/frame/FieldEnergyHudFrame";
 import { FieldEnergyHudRendererV2 } from "../../src/common/field_energy/renderer/FieldEnergyHudRendererV2";
@@ -97,7 +100,22 @@ async function main(container: HTMLElement): Promise<void> {
     const viewSize = window.innerHeight;
     const camera = cameraManager.createAndSetActiveCamera(aspectRatio, viewSize);
 
+    // Background music — plays on first user interaction (browser autoplay policy)
+    const audioController = AudioController.getInstance();
+    audioController.setMusic(battleFieldMusic);
+    window.addEventListener('click', () => { audioController.playMusic(); }, { once: true });
+
     const scene = sceneManager.createScene('draw-field-energy-full-efr');
+
+    // Load skill image paths per card from image-paths.json (card-specific skill buttons)
+    let skillImagePaths: Record<string, string[]> = {};
+    try {
+        const resp = await fetch('image-paths.json');
+        const imageData = await resp.json();
+        skillImagePaths = imageData.active_panel_skill || {};
+    } catch (err) {
+        console.warn('Failed to load image-paths.json for skill buttons:', err);
+    }
 
     // Pilot A — background + your field area
     const backgroundFrame = createBattleFieldBackgroundFrame();
@@ -120,6 +138,7 @@ async function main(container: HTMLElement): Promise<void> {
     const placementFrame = createDefaultPlacedCardPlacementFrame();
 
     const handMapRepo = BattleFieldHandMapRepositoryImpl.getInstance();
+    handMapRepo.addBattleFieldHand(27);
     handMapRepo.addBattleFieldHand(31);
     handMapRepo.addBattleFieldHand(32);
     const handCardIds = handMapRepo.getBattleFieldHandList();
@@ -207,6 +226,9 @@ async function main(container: HTMLElement): Promise<void> {
         }
     };
 
+    // Tracks which attack/skill is active so single-target execution uses the correct damage.
+    let pendingAttackDamage: number = 0;
+
     // Pilot E — hand page prev/next buttons with click handling
     const handPageButtonsFrame = createDefaultHandPageButtonsFrame();
     const handPageButtonsRenderer = new HandPageButtonsRendererV2();
@@ -287,12 +309,73 @@ async function main(container: HTMLElement): Promise<void> {
             if (panelHits.length > 0) {
                 e.stopImmediatePropagation();
                 const btnType = panelHits[0].object.userData.buttonType;
-                if (btnType === 'general') {
-                    interactionState = 'attackMode';
-                    for (const entry of opponentEntries) {
-                        if (entry.group.visible) {
-                            enemyNeonEffect.attach(entry.cardIndex, entry.group);
+                if (btnType === 'general' || btnType.startsWith('skill')) {
+                    const attackerId = neonEffect.getActiveEntityIds()[0];
+                    const attackerCard = attackerId != null ? getCardById(attackerId) : null;
+
+                    // Determine skill type for skill buttons
+                    let skillType = SkillType.Single;
+                    let damage = attackerCard?.공격력 ?? 0;
+
+                    // Card data uses SPACE keys in the actual JS data (not underscores):
+                    //   "스킬 1" = skill type number, "스킬1 데미지" = skill1 damage, etc.
+                    // Card interface uses underscores (스킬_1, 스킬1_데미지) but those don't match.
+                    const cardAny = attackerCard as any;
+                    if (btnType === 'skill1' && attackerCard) {
+                        skillType = getSkillType(cardAny['스킬 1']);
+                        damage = cardAny['스킬1 데미지'] ?? 0;
+                    } else if (btnType === 'skill2' && attackerCard) {
+                        skillType = getSkillType(cardAny['스킬 2']);
+                        damage = cardAny['스킬2 데미지'] ?? 0;
+                    }
+
+                    if (skillType === SkillType.EveryUnitField || skillType === SkillType.EveryField) {
+                        // AoE — immediate damage to ALL alive opponents, no targeting phase
+                        console.log(`${btnType} (AoE, damage=${damage}) → hitting all opponents`);
+
+                        for (const idx of [...opponentAliveOrder]) {
+                            const entry = opponentEntries.find((oe) => oe.cardIndex === idx);
+                            if (!entry) continue;
+
+                            const currentHp = opponentHpState.get(idx) ?? 0;
+                            const newHp = currentHp - damage;
+                            opponentHpState.set(idx, newHp);
+
+                            // Red flash on all hit targets
+                            entry.group.traverse((child) => {
+                                if (child instanceof THREE.Mesh && child.material && !child.userData.__neonBorderLine) {
+                                    const mat = child.material as THREE.MeshBasicMaterial;
+                                    const origColor = mat.color.clone();
+                                    mat.color.set(0xff4444);
+                                    setTimeout(() => { mat.color.copy(origColor); }, 200);
+                                }
+                            });
+
+                            if (newHp <= 0) {
+                                const capturedIdx = idx;
+                                setTimeout(() => {
+                                    const aliveIdx = opponentAliveOrder.indexOf(capturedIdx);
+                                    if (aliveIdx >= 0) {
+                                        opponentAliveOrder.splice(aliveIdx, 1);
+                                    }
+                                    reflowOpponentField();
+                                }, 300);
+                            }
+
+                            console.log(`  opponent idx=${idx} HP: ${currentHp} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
                         }
+
+                        clearAllSelection();
+                    } else {
+                        // Single-target — enter attack mode, red neon on opponents
+                        interactionState = 'attackMode';
+                        pendingAttackDamage = damage;
+                        for (const entry of opponentEntries) {
+                            if (entry.group.visible) {
+                                enemyNeonEffect.attach(entry.cardIndex, entry.group);
+                            }
+                        }
+                        console.log(`${btnType} (Single, damage=${damage}) — choose opponent target`);
                     }
                 } else if (btnType === 'details') {
                     console.log('Details clicked — not implemented in pilot');
@@ -302,58 +385,59 @@ async function main(container: HTMLElement): Promise<void> {
             }
         }
 
-        // Check opponent card click while in attack mode — apply damage, kill only if HP <= 0
+        // Check opponent card click while in attack mode — apply damage, kill only if HP <= 0.
+        // Must iterate ALL hits and skip invisible groups (THREE.js 0.164 raycaster doesn't
+        // filter by visible — dead cards at old positions still get hit).
         if (interactionState === 'attackMode') {
             const oppHits = sharedRaycaster.intersectObjects(opponentGroup.children, true);
-            if (oppHits.length > 0) {
+            let targetEntry: typeof opponentEntries[number] | null = null;
+
+            for (const hit of oppHits) {
+                let walkGroup: THREE.Object3D | null = hit.object;
+                while (walkGroup && walkGroup.parent !== opponentGroup) {
+                    walkGroup = walkGroup.parent;
+                }
+                if (walkGroup && walkGroup instanceof THREE.Group && walkGroup.visible) {
+                    const found = opponentEntries.find((oe) => oe.group === walkGroup);
+                    if (found) { targetEntry = found; break; }
+                }
+            }
+
+            if (targetEntry) {
                 e.stopImmediatePropagation();
-                let targetGroup: THREE.Object3D | null = oppHits[0].object;
-                while (targetGroup && targetGroup.parent !== opponentGroup) {
-                    targetGroup = targetGroup.parent;
-                }
-                if (targetGroup && targetGroup instanceof THREE.Group) {
-                    const targetEntry = opponentEntries.find((oe) => oe.group === targetGroup);
-                    if (targetEntry) {
-                        // Resolve attacker's attack power
-                        const attackerId = neonEffect.getActiveEntityIds()[0];
-                        let attackPower = 0;
-                        if (attackerId != null) {
-                            const attackerCard = getCardById(attackerId);
-                            if (attackerCard) {
-                                attackPower = attackerCard.공격력 ?? 0;
-                            }
-                        }
+                const attackPower = pendingAttackDamage;
+                const attackerId = neonEffect.getActiveEntityIds()[0];
 
-                        // Apply damage to opponent HP (keyed by cardIndex for uniqueness)
-                        const targetIdx = targetEntry.cardIndex;
-                        const currentHp = opponentHpState.get(targetIdx) ?? 0;
-                        const newHp = currentHp - attackPower;
-                        opponentHpState.set(targetIdx, newHp);
+                const targetIdx = targetEntry.cardIndex;
+                const currentHp = opponentHpState.get(targetIdx) ?? 0;
+                const newHp = currentHp - attackPower;
+                opponentHpState.set(targetIdx, newHp);
 
-                        console.log(`General attack: attacker=${attackerId} (ATK=${attackPower}) → opponent idx=${targetIdx} cardId=${targetEntry.card.cardId} (HP: ${currentHp} → ${newHp})`);
+                console.log(`Single-target attack: attacker=${attackerId} (ATK=${attackPower}) → opponent idx=${targetIdx} cardId=${targetEntry.card.cardId} (HP: ${currentHp} → ${newHp})`);
 
-                        if (newHp <= 0) {
-                            // Remove from alive list and reflow remaining opponents
-                            const aliveIdx = opponentAliveOrder.indexOf(targetIdx);
-                            if (aliveIdx >= 0) {
-                                opponentAliveOrder.splice(aliveIdx, 1);
-                            }
-                            reflowOpponentField();
-                            console.log(`Opponent idx=${targetIdx} defeated! Remaining: ${opponentAliveOrder.length}`);
-                        } else {
-                            // Visual damage feedback — brief red flash
-                            targetEntry.group.traverse((child) => {
-                                if (child instanceof THREE.Mesh && child.material && !child.userData.__neonBorderLine) {
-                                    const mat = child.material as THREE.MeshBasicMaterial;
-                                    const origColor = mat.color.clone();
-                                    mat.color.set(0xff4444);
-                                    setTimeout(() => { mat.color.copy(origColor); }, 200);
-                                }
-                            });
-                            console.log(`Opponent idx=${targetIdx} survived with HP=${newHp}`);
-                        }
+                const flashGroup = targetEntry.group;
+                flashGroup.traverse((child) => {
+                    if (child instanceof THREE.Mesh && child.material && !child.userData.__neonBorderLine) {
+                        const mat = child.material as THREE.MeshBasicMaterial;
+                        const origColor = mat.color.clone();
+                        mat.color.set(0xff4444);
+                        setTimeout(() => { mat.color.copy(origColor); }, 200);
                     }
+                });
+
+                if (newHp <= 0) {
+                    setTimeout(() => {
+                        const aliveIdx = opponentAliveOrder.indexOf(targetIdx);
+                        if (aliveIdx >= 0) {
+                            opponentAliveOrder.splice(aliveIdx, 1);
+                        }
+                        reflowOpponentField();
+                        console.log(`Opponent idx=${targetIdx} defeated! Remaining: ${opponentAliveOrder.length}`);
+                    }, 300);
+                } else {
+                    console.log(`Opponent idx=${targetIdx} survived with HP=${newHp}`);
                 }
+
                 clearAllSelection();
                 return;
             }
@@ -389,10 +473,22 @@ async function main(container: HTMLElement): Promise<void> {
 
         const clickPos = { x: clickWorld.x, y: clickWorld.y };
 
+        // Build button list: general → skill1 → skill2 → ... → details
         const buttonSpecs: ActivePanelButtonSpec[] = [
             activePanelFrame.generalButton,
-            activePanelFrame.detailsButton,
         ];
+
+        // Add skill buttons if card has skill textures in image-paths.json
+        const selectedCardId = neonEffect.getActiveEntityIds()[0];
+        const cardSkillPaths = skillImagePaths[String(selectedCardId)] || [];
+        for (let i = 0; i < cardSkillPaths.length; i++) {
+            buttonSpecs.push({
+                type: `skill${i + 1}`,
+                imageSrc: cardSkillPaths[i],
+            });
+        }
+
+        buttonSpecs.push(activePanelFrame.detailsButton);
 
         activePanelGroup = await activePanelRenderer.build(activePanelFrame, clickPos, buttonSpecs);
         scene.add(activePanelGroup);
