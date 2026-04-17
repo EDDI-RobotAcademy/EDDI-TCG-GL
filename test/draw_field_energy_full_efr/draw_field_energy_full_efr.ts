@@ -495,6 +495,126 @@ async function main(container: HTMLElement): Promise<void> {
         interactionState = 'panelVisible';
     });
 
+    // Field energy → card attachment. Intercepts clicks BEFORE bridge when fieldEnergyActive.
+    let availableEnergy = 7;
+    const placedCardEnergy = new Map<number, number>();
+    const cardEnergyMeshes = new Map<number, { iconMesh: THREE.Mesh; textMesh: THREE.Mesh }>();
+
+    function loadTexturePromise(src: string): Promise<THREE.Texture> {
+        return new Promise((resolve, reject) => {
+            new THREE.TextureLoader().load(src, (tex) => {
+                tex.colorSpace = THREE.SRGBColorSpace;
+                tex.magFilter = THREE.LinearFilter;
+                tex.minFilter = THREE.LinearFilter;
+                tex.generateMipmaps = false;
+                resolve(tex);
+            }, undefined, reject);
+        });
+    }
+
+    let energyIconTexture: THREE.Texture | null = null;
+
+    async function attachEnergyToCard(entityId: number): Promise<void> {
+        if (availableEnergy <= 0) return;
+        const entry = entries.find((e) => e.card.cardId === entityId);
+        if (!entry) return;
+        if (!placedOrder.includes(entityId)) return;
+
+        availableEnergy--;
+        const cardEnergy = (placedCardEnergy.get(entityId) ?? 0) + 1;
+        placedCardEnergy.set(entityId, cardEnergy);
+
+        // Update HUD
+        energyRenderer.setEnergy(availableEnergy);
+        energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
+        countRenderer.setCount(cardEnergy);
+        countRenderer.update(countFrame, countElement, window.innerWidth, window.innerHeight);
+
+        // Update card visual — add/update energy icon + text
+        const group = entry.group;
+        const userData = group.userData as { baseCardWidth?: number; baseCardHeight?: number };
+        const cardW = userData.baseCardWidth ?? 100;
+        const cardH = userData.baseCardHeight ?? 160;
+        const eSlot = handCardFrame.slots.energy;
+        const eX = eSlot.offsetXRatio * cardW;
+        const eY = eSlot.offsetYRatio * cardH;
+
+        const existing = cardEnergyMeshes.get(entityId);
+        if (existing) {
+            // Update text only
+            group.remove(existing.textMesh);
+            existing.textMesh.geometry.dispose();
+            (existing.textMesh.material as THREE.MeshBasicMaterial).dispose();
+            const newText = createEnergyCanvasText(cardEnergy, eX, eY, handCardFrame.cardWidthRatio * 0.2 * window.innerWidth);
+            group.add(newText);
+            cardEnergyMeshes.set(entityId, { iconMesh: existing.iconMesh, textMesh: newText });
+        } else {
+            // Create icon + text for first time
+            if (!energyIconTexture) {
+                energyIconTexture = await loadTexturePromise('resource/battle_field_unit/energy/unit_card_energy.png');
+            }
+            const slotW = eSlot.widthRatio * cardW;
+            const slotH = slotW * eSlot.aspect;
+            const iconMat = new THREE.MeshBasicMaterial({ map: energyIconTexture, transparent: true, opacity: 1 });
+            const iconGeo = new THREE.PlaneGeometry(slotW, slotH);
+            const iconMesh = new THREE.Mesh(iconGeo, iconMat);
+            iconMesh.position.set(eX, eY, 0);
+            iconMesh.renderOrder = 2;
+            group.add(iconMesh);
+
+            const textMesh = createEnergyCanvasText(cardEnergy, eX, eY, handCardFrame.cardWidthRatio * 0.2 * window.innerWidth);
+            group.add(textMesh);
+
+            cardEnergyMeshes.set(entityId, { iconMesh, textMesh });
+        }
+
+        setFieldEnergyNeon(false);
+        console.log(`Energy attached to card ${entityId}: ${cardEnergy} total. Available: ${availableEnergy}`);
+    }
+
+    function createEnergyCanvasText(value: number, x: number, y: number, baseScale: number): THREE.Mesh {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d')!;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 96px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(value.toString(), canvas.width / 2, canvas.height / 2);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+        const geo = new THREE.PlaneGeometry(1, 1);
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(x, y, 0.01);
+        mesh.scale.set(baseScale, baseScale, 1);
+        mesh.renderOrder = 3;
+        return mesh;
+    }
+
+    // Intercept card clicks when field energy is active — before bridge
+    rendererManager.getDomElement().addEventListener('mousedown', (e: MouseEvent) => {
+        if (e.button !== 0 || !fieldEnergyActive) return;
+        sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
+        const hits = sharedRaycaster.intersectObjects(handGroup.children, true);
+        for (const hit of hits) {
+            let walkGroup: THREE.Object3D | null = hit.object;
+            while (walkGroup && walkGroup.parent !== handGroup) {
+                walkGroup = walkGroup.parent;
+            }
+            if (walkGroup && walkGroup instanceof THREE.Group && walkGroup.visible) {
+                const eid = (walkGroup.userData as { entityId?: number }).entityId;
+                if (typeof eid === 'number' && placedOrder.includes(eid)) {
+                    e.stopImmediatePropagation();
+                    attachEnergyToCard(eid);
+                    return;
+                }
+            }
+        }
+    });
+
     // Pilot C — click / drag / drop
     const bridge = new HandInteractionBridge(
         rendererManager.getDomElement(),
@@ -555,6 +675,59 @@ async function main(container: HTMLElement): Promise<void> {
     const countRenderer = new FieldEnergyCountHudRendererV2(1);
     const countElement = await countRenderer.build(countFrame);
     document.body.appendChild(countElement);
+
+    // Field Energy interaction — hover focus + click green neon on energy/race/count together
+    const fieldEnergyElements = [energyElement, raceElement, countElement];
+    let fieldEnergyActive = false;
+
+    // Inject CSS keyframes for green neon pulse
+    const neonStyle = document.createElement('style');
+    neonStyle.textContent = `
+        @keyframes greenNeonPulse {
+            0%, 100% { box-shadow: 0 0 6px #00ff88, 0 0 12px #00ff88; filter: brightness(1.1); }
+            50% { box-shadow: 0 0 14px #00ff88, 0 0 28px #00ff88, 0 0 42px #00ff88; filter: brightness(1.3); }
+        }
+        @keyframes greenNeonPulseShiftUp {
+            0%, 100% { box-shadow: 0 -6px 6px #00ff88, 0 -6px 12px #00ff88; filter: brightness(1.1); }
+            50% { box-shadow: 0 -6px 14px #00ff88, 0 -6px 28px #00ff88, 0 -6px 42px #00ff88; filter: brightness(1.3); }
+        }
+        .field-energy-hover { filter: brightness(1.2); transition: filter 0.15s; }
+        .field-energy-neon { animation: greenNeonPulse 1.4s ease-in-out infinite; border-radius: 6px; }
+        .field-energy-neon-shift-up { animation: greenNeonPulseShiftUp 1.4s ease-in-out infinite; border-radius: 6px; }
+    `;
+    document.head.appendChild(neonStyle);
+
+    // Enable pointer events on all 3 elements
+    for (const el of fieldEnergyElements) {
+        el.style.pointerEvents = 'auto';
+        el.style.cursor = 'pointer';
+    }
+
+    function setFieldEnergyHover(on: boolean): void {
+        if (fieldEnergyActive) return;
+        for (const el of fieldEnergyElements) {
+            if (on) el.classList.add('field-energy-hover');
+            else el.classList.remove('field-energy-hover');
+        }
+    }
+
+    function setFieldEnergyNeon(on: boolean): void {
+        fieldEnergyActive = on;
+        for (const el of fieldEnergyElements) {
+            el.classList.remove('field-energy-hover', 'field-energy-neon', 'field-energy-neon-shift-up');
+            if (on) el.classList.add(el === countElement ? 'field-energy-neon-shift-up' : 'field-energy-neon');
+        }
+    }
+
+    // Hover: any of the 3 elements triggers focus on all 3
+    for (const el of fieldEnergyElements) {
+        el.addEventListener('mouseenter', () => setFieldEnergyHover(true));
+        el.addEventListener('mouseleave', () => setFieldEnergyHover(false));
+        el.addEventListener('click', (ev: Event) => {
+            ev.stopPropagation();
+            setFieldEnergyNeon(!fieldEnergyActive);
+        });
+    }
 
     // Pilot E new — guide message / sand timer / turn HUDs
     const guideFrame = createDefaultGuideMessageHudFrame();
