@@ -56,8 +56,11 @@ import { NeonBorderEffect } from "../../src/neon_border/effect/NeonBorderEffect"
 
 import { createDefaultActivePanelFrame, ActivePanelButtonSpec } from "../../src/active_panel_area/frame/ActivePanelFrame";
 import { ActivePanelRendererV2 } from "../../src/active_panel_area/renderer/ActivePanelRendererV2";
+import { AttackAnimationV2 } from "../../src/general_attack/animation/AttackAnimationV2";
 
 import { createDefaultGuideMessageHudFrame } from "../../src/common/guide_message/frame/GuideMessageHudFrame";
+
+declare const TWEEN: { Tween: any; Easing: any; update: (time?: number) => void };
 import { GuideMessageHudRendererV2 } from "../../src/common/guide_message/renderer/GuideMessageHudRendererV2";
 import { createDefaultSandTimerHudFrame } from "../../src/common/timer/frame/SandTimerHudFrame";
 import { SandTimerHudRendererV2 } from "../../src/common/timer/renderer/SandTimerHudRendererV2";
@@ -287,7 +290,10 @@ async function main(container: HTMLElement): Promise<void> {
     }
 
     const animationLoop = new AnimationLoop(rendererManager, sceneManager, cameraManager);
+    const attackAnimation = new AttackAnimationV2(scene);
+
     animationLoop.setCustomUpdate(() => {
+        if (typeof TWEEN !== 'undefined') TWEEN.update();
         neonEffect.updateAnimation();
         enemyNeonEffect.updateAnimation();
     });
@@ -321,7 +327,7 @@ async function main(container: HTMLElement): Promise<void> {
 
     // Active panel button click + opponent card click (attack targeting).
     // stopImmediatePropagation prevents HandInteractionBridge from stealing the same click.
-    rendererManager.getDomElement().addEventListener('mousedown', (e: MouseEvent) => {
+    rendererManager.getDomElement().addEventListener('mousedown', async (e: MouseEvent) => {
         if (e.button !== 0) return;
         sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
 
@@ -428,18 +434,23 @@ async function main(container: HTMLElement): Promise<void> {
             if (masterHits.length > 0) {
                 e.stopImmediatePropagation();
                 const atkPower = pendingAttackDamage;
+                const attackerId = neonEffect.getActiveEntityIds()[0];
+                const attackerEntry = attackerId != null ? entries.find((ent) => ent.card.cardId === attackerId) : null;
+
+                clearAllSelection();
+
+                if (attackerEntry) {
+                    await attackAnimation.playMasterAttack(attackerEntry.group, masterGroup);
+                }
+
                 const prevHp = opponentMasterHp;
                 opponentMasterHp -= atkPower;
-
                 console.log(`Attack on MASTER: ATK=${atkPower} → HP: ${prevHp} → ${opponentMasterHp}`);
-
-                // 본체 피격 표현 없음 (투명 유지)
 
                 if (opponentMasterHp <= 0) {
                     opponentMasterHp = 0;
                     setTimeout(() => { masterGroup.visible = false; console.log('Opponent MASTER defeated!'); }, 300);
                 }
-                clearAllSelection();
                 return;
             }
         }
@@ -466,6 +477,14 @@ async function main(container: HTMLElement): Promise<void> {
                 e.stopImmediatePropagation();
                 const attackPower = pendingAttackDamage;
                 const attackerId = neonEffect.getActiveEntityIds()[0];
+                const attackerEntry = attackerId != null ? entries.find((ent) => ent.card.cardId === attackerId) : null;
+
+                clearAllSelection();
+
+                // Play attack animation before applying damage
+                if (attackerEntry) {
+                    await attackAnimation.playUnitAttack(attackerEntry.group, targetEntry.group);
+                }
 
                 const targetIdx = targetEntry.cardIndex;
                 const currentHp = opponentHpState.get(targetIdx) ?? 0;
@@ -496,8 +515,6 @@ async function main(container: HTMLElement): Promise<void> {
                 } else {
                     console.log(`Opponent idx=${targetIdx} survived with HP=${newHp}`);
                 }
-
-                clearAllSelection();
                 return;
             }
         }

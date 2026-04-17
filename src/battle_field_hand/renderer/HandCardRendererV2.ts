@@ -15,6 +15,7 @@ interface HandCardUserData {
 interface SlotBuild {
     slot: HandCardSlot;
     imageSrc: string;
+    slotType: string;
 }
 
 const RESOURCE_PATHS = {
@@ -42,7 +43,7 @@ export class HandCardRendererV2 {
         group.add(this.createMesh(cardTexture, cardWidth, cardHeight, new Vector2d(0, 0), 1));
 
         const slotBuilds = this.resolveSlotBuilds(entity, frame);
-        for (const { slot, imageSrc } of slotBuilds) {
+        for (const { slot, imageSrc, slotType } of slotBuilds) {
             const slotWidth = slot.widthRatio * cardWidth;
             const slotHeight = slotWidth * slot.aspect;
             const position = new Vector2d(
@@ -50,7 +51,9 @@ export class HandCardRendererV2 {
                 slot.offsetYRatio * cardHeight,
             );
             const texture = await this.loadTexture(imageSrc);
-            group.add(this.createMesh(texture, slotWidth, slotHeight, position, slot.renderOrder));
+            const slotMesh = this.createMesh(texture, slotWidth, slotHeight, position, slot.renderOrder);
+            slotMesh.userData.slotType = slotType;
+            group.add(slotMesh);
         }
 
         // Energy text rides alongside the energy icon; both are gated on energyCount > 0 (see resolveSlotBuilds).
@@ -107,26 +110,26 @@ export class HandCardRendererV2 {
         //   non-UNIT → kinds
         if (entity.cardKind === CardKind.UNIT) {
             if (entity.unitJob === CardJob.WARRIOR) {
-                builds.push({ slot: frame.slots.weapon, imageSrc: RESOURCE_PATHS.swordPower(entity.attackPowerId) });
+                builds.push({ slot: frame.slots.weapon, imageSrc: RESOURCE_PATHS.swordPower(entity.attackPowerId), slotType: 'weapon' });
             } else if (entity.unitJob === CardJob.MAGICIAN) {
-                builds.push({ slot: frame.slots.staff, imageSrc: RESOURCE_PATHS.staffPower(entity.attackPowerId) });
+                builds.push({ slot: frame.slots.staff, imageSrc: RESOURCE_PATHS.staffPower(entity.attackPowerId), slotType: 'weapon' });
             }
         } else {
-            builds.push({ slot: frame.slots.kinds, imageSrc: RESOURCE_PATHS.cardKinds(entity.kindId) });
+            builds.push({ slot: frame.slots.kinds, imageSrc: RESOURCE_PATHS.cardKinds(entity.kindId), slotType: 'kinds' });
         }
 
         if (entity.raceId >= 0) {
-            builds.push({ slot: frame.slots.race, imageSrc: RESOURCE_PATHS.race(entity.raceId) });
+            builds.push({ slot: frame.slots.race, imageSrc: RESOURCE_PATHS.race(entity.raceId), slotType: 'race' });
         }
 
         if (entity.hpId != null && entity.hpId >= 0) {
-            builds.push({ slot: frame.slots.hp, imageSrc: RESOURCE_PATHS.hp(entity.hpId) });
+            builds.push({ slot: frame.slots.hp, imageSrc: RESOURCE_PATHS.hp(entity.hpId), slotType: 'hp' });
         }
 
         // Skip the energy icon entirely when attached energy is 0 — drawing an empty "E" with "0"
         // is considered visual noise, not "displaying a count of zero".
         if (entity.cardKind === CardKind.UNIT && entity.energyCount > 0) {
-            builds.push({ slot: frame.slots.energy, imageSrc: RESOURCE_PATHS.energy() });
+            builds.push({ slot: frame.slots.energy, imageSrc: RESOURCE_PATHS.energy(), slotType: 'energy' });
         }
 
         return builds;
