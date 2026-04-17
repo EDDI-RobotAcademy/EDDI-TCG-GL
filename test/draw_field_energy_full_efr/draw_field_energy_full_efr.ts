@@ -496,7 +496,7 @@ async function main(container: HTMLElement): Promise<void> {
     });
 
     // Field energy → card attachment. Intercepts clicks BEFORE bridge when fieldEnergyActive.
-    let availableEnergy = 7;
+    let availableEnergy = 19;
     const placedCardEnergy = new Map<number, number>();
     const cardEnergyMeshes = new Map<number, { iconMesh: THREE.Mesh; textMesh: THREE.Mesh }>();
 
@@ -662,7 +662,7 @@ async function main(container: HTMLElement): Promise<void> {
 
     // Pilot D-1 — field-energy HUD overlays
     const energyFrame = createDefaultFieldEnergyHudFrame();
-    const energyRenderer = new FieldEnergyHudRendererV2(7);
+    const energyRenderer = new FieldEnergyHudRendererV2(19);
     const energyElement = await energyRenderer.build(energyFrame);
     document.body.appendChild(energyElement);
 
@@ -675,6 +675,80 @@ async function main(container: HTMLElement): Promise<void> {
     const countRenderer = new FieldEnergyCountHudRendererV2(1);
     const countElement = await countRenderer.build(countFrame);
     document.body.appendChild(countElement);
+
+    let fieldEnergyChargeCount = 1;
+    let currentRaceId = 1;
+    const MAX_RACE_ID = 3;
+
+    // Invisible click zones for count prev/next + race prev/next.
+    // Coordinates from legacy MouseCursorDetectAreaMap (screen viewport percentages).
+    function createClickZone(
+        x1Pct: number, y1Pct: number, x2Pct: number, y2Pct: number,
+        arrow: '◁' | '▷',
+        onClick: () => void,
+    ): HTMLElement {
+        const zone = document.createElement('div');
+        zone.style.position = 'fixed';
+        zone.style.left = `${x1Pct * 100}%`;
+        zone.style.top = `${y1Pct * 100}%`;
+        zone.style.width = `${(x2Pct - x1Pct) * 100}%`;
+        zone.style.height = `${(y2Pct - y1Pct) * 100}%`;
+        zone.style.zIndex = '1001';
+        zone.style.pointerEvents = 'auto';
+        zone.style.cursor = 'pointer';
+        zone.style.display = 'flex';
+        zone.style.alignItems = 'center';
+        zone.style.justifyContent = 'center';
+        zone.style.color = '#00ff88';
+        zone.style.fontSize = `${(y2Pct - y1Pct) * 122}vh`;
+        zone.style.lineHeight = '1';
+        zone.style.userSelect = 'none';
+        zone.style.paddingTop = '0.3vh';
+        zone.classList.add('field-energy-arrow');
+        zone.innerText = arrow;
+        zone.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            onClick();
+        });
+        return zone;
+    }
+
+    // Count prev/next (legacy: FIELD_ENERGY_PREV / FIELD_ENERGY_NEXT)
+    const countPrevZone = createClickZone(0.88203, 0.62863, 0.90530, 0.68030, '◁', () => {
+        if (fieldEnergyChargeCount > 0) {
+            fieldEnergyChargeCount--;
+            countRenderer.setCount(fieldEnergyChargeCount);
+            countRenderer.update(countFrame, countElement, window.innerWidth, window.innerHeight);
+        }
+    });
+    const countNextZone = createClickZone(0.97348, 0.62863, 0.995, 0.68030, '▷', () => {
+        if (fieldEnergyChargeCount < availableEnergy) {
+            fieldEnergyChargeCount++;
+            countRenderer.setCount(fieldEnergyChargeCount);
+            countRenderer.update(countFrame, countElement, window.innerWidth, window.innerHeight);
+        }
+    });
+    document.body.appendChild(countPrevZone);
+    document.body.appendChild(countNextZone);
+
+    // Race prev/next — same width/height as Count zones, centered on Race icon (top=72.1%)
+    // Count zone size: w=0.02327, h=0.05167. Race center Y=0.721, half h=0.02584
+    const raceZoneH = 0.68030 - 0.62863;  // same height as count zones
+    const raceCenterY = 0.721;
+    const raceY1 = raceCenterY - raceZoneH / 2 + raceZoneH / 2 + 0.005;
+    const raceY2 = raceCenterY + raceZoneH / 2 + raceZoneH / 2 + 0.005;
+    const racePrevZone = createClickZone(0.88203, raceY1, 0.90530, raceY2, '◁', () => {
+        currentRaceId = ((currentRaceId - 2 + MAX_RACE_ID) % MAX_RACE_ID) + 1;
+        const newRaceFrame = createDefaultFieldEnergyRaceHudFrame(currentRaceId);
+        raceRenderer.update(newRaceFrame, raceElement, window.innerWidth, window.innerHeight);
+    });
+    const raceNextZone = createClickZone(0.97348, raceY1, 0.995, raceY2, '▷', () => {
+        currentRaceId = (currentRaceId % MAX_RACE_ID) + 1;
+        const newRaceFrame = createDefaultFieldEnergyRaceHudFrame(currentRaceId);
+        raceRenderer.update(newRaceFrame, raceElement, window.innerWidth, window.innerHeight);
+    });
+    document.body.appendChild(racePrevZone);
+    document.body.appendChild(raceNextZone);
 
     // Field Energy interaction — hover focus + click green neon on energy/race/count together
     const fieldEnergyElements = [energyElement, raceElement, countElement];
@@ -691,13 +765,20 @@ async function main(container: HTMLElement): Promise<void> {
             0%, 100% { box-shadow: 0 -6px 6px #00ff88, 0 -6px 12px #00ff88; filter: brightness(1.1); }
             50% { box-shadow: 0 -6px 14px #00ff88, 0 -6px 28px #00ff88, 0 -6px 42px #00ff88; filter: brightness(1.3); }
         }
+        @keyframes arrowNeonPulse {
+            0%, 100% { text-shadow: 0 0 4px #00ff88, 0 0 8px #00ff88; opacity: 0.6; }
+            50% { text-shadow: 0 0 8px #00ff88, 0 0 16px #00ff88, 0 0 24px #00ff88; opacity: 1; }
+        }
         .field-energy-hover { filter: brightness(1.2); transition: filter 0.15s; }
         .field-energy-neon { animation: greenNeonPulse 1.4s ease-in-out infinite; border-radius: 6px; }
         .field-energy-neon-shift-up { animation: greenNeonPulseShiftUp 1.4s ease-in-out infinite; border-radius: 6px; }
+        .field-energy-arrow { opacity: 0; pointer-events: none; transition: opacity 0.15s; }
+        .field-energy-arrow-active { opacity: 1; pointer-events: auto; animation: arrowNeonPulse 1.4s ease-in-out infinite; }
     `;
     document.head.appendChild(neonStyle);
 
-    // Enable pointer events on all 3 elements
+    // Enable pointer events on all 3 for hover, but only energyElement for neon toggle click.
+    // Race/count don't get click handlers — their clicks are handled by the invisible zones.
     for (const el of fieldEnergyElements) {
         el.style.pointerEvents = 'auto';
         el.style.cursor = 'pointer';
@@ -711,23 +792,34 @@ async function main(container: HTMLElement): Promise<void> {
         }
     }
 
+    const arrowZones = [countPrevZone, countNextZone, racePrevZone, raceNextZone];
+
     function setFieldEnergyNeon(on: boolean): void {
         fieldEnergyActive = on;
         for (const el of fieldEnergyElements) {
             el.classList.remove('field-energy-hover', 'field-energy-neon', 'field-energy-neon-shift-up');
             if (on) el.classList.add(el === countElement ? 'field-energy-neon-shift-up' : 'field-energy-neon');
         }
+        for (const arrow of arrowZones) {
+            if (on) {
+                arrow.classList.add('field-energy-arrow-active');
+            } else {
+                arrow.classList.remove('field-energy-arrow-active');
+            }
+        }
     }
 
-    // Hover: any of the 3 elements triggers focus on all 3
+    // Hover on any of the 3 → all 3 light up
     for (const el of fieldEnergyElements) {
         el.addEventListener('mouseenter', () => setFieldEnergyHover(true));
         el.addEventListener('mouseleave', () => setFieldEnergyHover(false));
-        el.addEventListener('click', (ev: Event) => {
-            ev.stopPropagation();
-            setFieldEnergyNeon(!fieldEnergyActive);
-        });
     }
+
+    // Neon toggle ONLY on energyElement — race/count are handled by invisible zones
+    energyElement.addEventListener('click', (ev: Event) => {
+        ev.stopPropagation();
+        setFieldEnergyNeon(!fieldEnergyActive);
+    });
 
     // Pilot E new — guide message / sand timer / turn HUDs
     const guideFrame = createDefaultGuideMessageHudFrame();
