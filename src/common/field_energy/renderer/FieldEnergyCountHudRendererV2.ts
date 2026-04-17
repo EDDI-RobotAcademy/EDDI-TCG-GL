@@ -1,8 +1,6 @@
 import { DomFrameRenderer } from "../../../core/renderer/DomFrameRenderer";
 import { FieldEnergyCountHudFrame } from "../frame/FieldEnergyCountHudFrame";
 
-// Mirrors showFieldEnergyCount() in src/common/field_energy/FieldEnergyCount.ts — a fixed,
-// translate(-50%, -50%) centered numeric div. Font size scales with viewport height on resize.
 export class FieldEnergyCountHudRendererV2 implements DomFrameRenderer<FieldEnergyCountHudFrame> {
     private count: number;
 
@@ -19,14 +17,26 @@ export class FieldEnergyCountHudRendererV2 implements DomFrameRenderer<FieldEner
         element.style.position = 'fixed';
         element.style.top = frame.topPercent;
         element.style.left = frame.leftPercent;
+        element.style.width = frame.widthPercent;
+        element.style.aspectRatio = '1';
         element.style.transform = frame.transform;
+        element.style.display = 'flex';
+        element.style.alignItems = 'center';
+        element.style.justifyContent = 'center';
         element.style.color = frame.color;
         element.style.fontWeight = frame.fontWeight;
         element.style.zIndex = frame.zIndex;
         element.style.pointerEvents = 'none';
-        element.innerText = String(this.count);
+        element.style.borderRadius = '6px';
+        element.style.lineHeight = '1';
 
-        this.applyFontSize(frame, element, window.innerHeight);
+        const span = document.createElement('span');
+        span.style.transform = 'translateY(3px)';
+        span.innerText = String(this.count);
+        element.appendChild(span);
+
+        (element as any).__textSpan = span;
+        this.applyFontSize(frame, span, window.innerHeight);
         return element;
     }
 
@@ -36,16 +46,19 @@ export class FieldEnergyCountHudRendererV2 implements DomFrameRenderer<FieldEner
         _viewportWidth: number,
         viewportHeight: number,
     ): void {
-        element.innerText = String(this.count);
-        this.applyFontSize(frame, element, viewportHeight);
+        const span = (element as any).__textSpan as HTMLElement | undefined;
+        if (span) {
+            span.innerText = String(this.count);
+            this.applyFontSize(frame, span, viewportHeight);
+        }
     }
 
     public dispose(element: HTMLElement): void {
         element.remove();
     }
 
-    private applyFontSize(frame: FieldEnergyCountHudFrame, element: HTMLElement, viewportHeight: number): void {
+    private applyFontSize(frame: FieldEnergyCountHudFrame, textEl: HTMLElement, viewportHeight: number): void {
         const fontSize = (viewportHeight / frame.baseViewportHeight) * frame.baseFontSize;
-        element.style.fontSize = `${fontSize}px`;
+        textEl.style.fontSize = `${fontSize}px`;
     }
 }
