@@ -110,9 +110,9 @@ export class HandCardRendererV2 {
         //   non-UNIT → kinds
         if (entity.cardKind === CardKind.UNIT) {
             if (entity.unitJob === CardJob.WARRIOR) {
-                builds.push({ slot: frame.slots.weapon, imageSrc: RESOURCE_PATHS.swordPower(entity.attackPowerId), slotType: 'weapon' });
+                builds.push({ slot: frame.slots.weapon, imageSrc: RESOURCE_PATHS.swordPower(entity.attackPowerId), slotType: 'sword' });
             } else if (entity.unitJob === CardJob.MAGICIAN) {
-                builds.push({ slot: frame.slots.staff, imageSrc: RESOURCE_PATHS.staffPower(entity.attackPowerId), slotType: 'weapon' });
+                builds.push({ slot: frame.slots.staff, imageSrc: RESOURCE_PATHS.staffPower(entity.attackPowerId), slotType: 'staff' });
             }
         } else {
             builds.push({ slot: frame.slots.kinds, imageSrc: RESOURCE_PATHS.cardKinds(entity.kindId), slotType: 'kinds' });
