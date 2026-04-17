@@ -134,6 +134,28 @@ async function main(container: HTMLElement): Promise<void> {
     const opponentFieldAreaGroup = await opponentFieldAreaRenderer.build(opponentFieldAreaFrame);
     scene.add(opponentFieldAreaGroup);
 
+    // Opponent master (본체) — legacy OPPONENT_MASETER area coordinates
+    const masterX1 = (0.4605885 - 0.5) * window.innerWidth;
+    const masterY1 = (0.5 - 0.1920103) * window.innerHeight;
+    const masterX2 = (0.5410156 - 0.5) * window.innerWidth;
+    const masterY2 = (0.5 - 0.0476804) * window.innerHeight;
+    const masterW = Math.abs(masterX2 - masterX1);
+    const masterH = Math.abs(masterY2 - masterY1);
+    const masterCX = (masterX1 + masterX2) / 2;
+    const masterCY = (masterY1 + masterY2) / 2;
+
+    const masterMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, opacity: 0, transparent: true });
+    const masterMesh = new THREE.Mesh(new THREE.PlaneGeometry(masterW, masterH), masterMaterial);
+    masterMesh.renderOrder = 1;
+
+    const masterGroup = new THREE.Group();
+    masterGroup.position.set(masterCX, masterCY, 0);
+    masterGroup.add(masterMesh);
+    masterGroup.userData = { baseCardWidth: masterW, baseCardHeight: masterH };
+    scene.add(masterGroup);
+
+    let opponentMasterHp = 40;
+
     // Pilot B — hand row (6장으로 확장해 페이지네이션 검증)
     const placementFrame = createDefaultPlacedCardPlacementFrame();
 
@@ -365,9 +387,21 @@ async function main(container: HTMLElement): Promise<void> {
                             console.log(`  opponent idx=${idx} HP: ${currentHp} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
                         }
 
+                        // EveryField also hits master
+                        if (skillType === SkillType.EveryField && opponentMasterHp > 0) {
+                            const prevMasterHp = opponentMasterHp;
+                            opponentMasterHp -= damage;
+                            // 본체 피격 표현 없음 (투명 유지)
+                            if (opponentMasterHp <= 0) {
+                                opponentMasterHp = 0;
+                                setTimeout(() => { masterGroup.visible = false; }, 300);
+                            }
+                            console.log(`  MASTER HP: ${prevMasterHp} → ${opponentMasterHp}${opponentMasterHp <= 0 ? ' (defeated)' : ''}`);
+                        }
+
                         clearAllSelection();
                     } else {
-                        // Single-target — enter attack mode, red neon on opponents
+                        // Single-target — enter attack mode, red neon on opponents + master
                         interactionState = 'attackMode';
                         pendingAttackDamage = damage;
                         for (const entry of opponentEntries) {
@@ -375,12 +409,37 @@ async function main(container: HTMLElement): Promise<void> {
                                 enemyNeonEffect.attach(entry.cardIndex, entry.group);
                             }
                         }
-                        console.log(`${btnType} (Single, damage=${damage}) — choose opponent target`);
+                        if (opponentMasterHp > 0) {
+                            enemyNeonEffect.attach(-1, masterGroup);
+                        }
+                        console.log(`${btnType} (Single, damage=${damage}) — choose opponent target or master`);
                     }
                 } else if (btnType === 'details') {
                     console.log('Details clicked — not implemented in pilot');
                     clearActivePanel();
                 }
+                return;
+            }
+        }
+
+        // Check master click while in attack mode
+        if (interactionState === 'attackMode' && opponentMasterHp > 0) {
+            const masterHits = sharedRaycaster.intersectObjects(masterGroup.children, true);
+            if (masterHits.length > 0) {
+                e.stopImmediatePropagation();
+                const atkPower = pendingAttackDamage;
+                const prevHp = opponentMasterHp;
+                opponentMasterHp -= atkPower;
+
+                console.log(`Attack on MASTER: ATK=${atkPower} → HP: ${prevHp} → ${opponentMasterHp}`);
+
+                // 본체 피격 표현 없음 (투명 유지)
+
+                if (opponentMasterHp <= 0) {
+                    opponentMasterHp = 0;
+                    setTimeout(() => { masterGroup.visible = false; console.log('Opponent MASTER defeated!'); }, 300);
+                }
+                clearAllSelection();
                 return;
             }
         }
