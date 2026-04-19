@@ -359,8 +359,13 @@ async function main(container: HTMLElement): Promise<void> {
                     }
 
                     if (skillType === SkillType.EveryUnitField || skillType === SkillType.EveryField) {
-                        // AoE — immediate damage to ALL alive opponents, no targeting phase
+                        // AoE — play animation first, then apply damage
                         console.log(`${btnType} (AoE, damage=${damage}) → hitting all opponents`);
+                        const atkEntry = attackerId != null ? entries.find((ent) => ent.card.cardId === attackerId) : null;
+                        if (atkEntry) {
+                            clearAllSelection();
+                            await attackAnimation.playAoESkill(atkEntry.group);
+                        }
 
                         for (const idx of [...opponentAliveOrder]) {
                             const entry = opponentEntries.find((oe) => oe.cardIndex === idx);
@@ -370,7 +375,7 @@ async function main(container: HTMLElement): Promise<void> {
                             const newHp = currentHp - damage;
                             opponentHpState.set(idx, newHp);
 
-                            // Red flash on all hit targets
+                            // Red flash + shake on all hit targets
                             entry.group.traverse((child) => {
                                 if (child instanceof THREE.Mesh && child.material && !child.userData.__neonBorderLine) {
                                     const mat = child.material as THREE.MeshBasicMaterial;
@@ -379,6 +384,24 @@ async function main(container: HTMLElement): Promise<void> {
                                     setTimeout(() => { mat.color.copy(origColor); }, 200);
                                 }
                             });
+                            // Hit shake — same intensity as single-target attack
+                            const shakeOrigX = entry.group.position.x;
+                            const shakeOrigY = entry.group.position.y;
+                            const cardWidth = 0.06493506493 * window.innerWidth;
+                            let shakeStep = 0;
+                            const shakeTotal = 12;
+                            const shakeInterval = setInterval(() => {
+                                if (shakeStep >= shakeTotal) {
+                                    entry.group.position.x = shakeOrigX;
+                                    entry.group.position.y = shakeOrigY;
+                                    clearInterval(shakeInterval);
+                                    return;
+                                }
+                                const amp = cardWidth * 0.125 * (1 - shakeStep / shakeTotal);
+                                entry.group.position.x = shakeOrigX + (Math.random() - 0.5) * amp;
+                                entry.group.position.y = shakeOrigY + (Math.random() - 0.5) * amp;
+                                shakeStep++;
+                            }, 30);
 
                             if (newHp <= 0) {
                                 const capturedIdx = idx;
@@ -388,7 +411,7 @@ async function main(container: HTMLElement): Promise<void> {
                                         opponentAliveOrder.splice(aliveIdx, 1);
                                     }
                                     reflowOpponentField();
-                                }, 300);
+                                }, 450);
                             }
 
                             console.log(`  opponent idx=${idx} HP: ${currentHp} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
