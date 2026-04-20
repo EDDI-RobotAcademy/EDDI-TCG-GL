@@ -25,7 +25,9 @@ import { OpponentFieldRendererV2 } from "../../src/opponent_field/renderer/Oppon
 import { OpponentFieldMapRepositoryImpl } from "../../src/opponent_field_map/repository/OpponentFieldMapRepositoryImpl";
 
 import { BattleFieldHandMapRepositoryImpl } from "../../src/battle_field_hand/repository/BattleFieldHandMapRepositoryImpl";
+import { YourDeckRepositoryImpl } from "../../src/your_deck/repository/YourDeckRepositoryImpl";
 import { HandCard } from "../../src/battle_field_hand/entity/HandCard";
+import { HandEntry } from "../../src/battle_field_hand/renderer/BattleFieldHandRendererV2";
 import { createDefaultHandCardFrame } from "../../src/battle_field_hand/frame/HandCardFrame";
 import {
     createDefaultBattleFieldHandLayoutFrame,
@@ -163,11 +165,32 @@ async function main(container: HTMLElement): Promise<void> {
     const placementFrame = createDefaultPlacedCardPlacementFrame();
 
     const handMapRepo = BattleFieldHandMapRepositoryImpl.getInstance();
+    // Initial hand — 5 cards drawn from the 40-card deck spec. Mix of UNIT/SUPPORT/ENERGY.
+    // Default repo seed already contains (2, 19, 93, 26); add 27 to reach 5.
     handMapRepo.addBattleFieldHand(27);
-    handMapRepo.addBattleFieldHand(31);
-    handMapRepo.addBattleFieldHand(32);
     const handCardIds = handMapRepo.getBattleFieldHandList();
     const hand = resolveCards(handCardIds, 'hand');
+
+    // Draw pile — remaining 35 cards after subtracting 1 of each of (2, 19, 26, 27, 93) from
+    // the 40-card deck spec. Array order is draw order (index 0 = next draw).
+    const deckRepo = YourDeckRepositoryImpl.getInstance();
+    deckRepo.seed([
+        8, 8, 8,          // 죽음의 낫 x3 (legendary)
+        9, 9,             // 에너지 번 x2 (hero)
+        25, 25, 25,       // 파멸의 계약 x3 (hero)
+        27,               // 영혼 수확자 벨른 x1 (hero, 2 - 1 in hand)
+        151, 151,         // 차갑게 불타는 암흑 에너지 x2 (hero)
+        20, 20, 20,       // 망자의 늪 x3 (uncommon)
+        2, 2,             // 넘쳐 흐르는 사기 x2 (uncommon, 3 - 1 in hand)
+        26, 26,           // 망령 x2 (uncommon, 3 - 1 in hand)
+        30,               // 레오닉의 부름 x1 (uncommon)
+        31, 31, 31,       // 구울 x3 (normal)
+        32, 32, 32,       // 스켈레톤 워리어 x3 (normal)
+        33, 33,           // 시체 폭발 x2 (normal)
+        35, 35,           // 사기 전환 x2 (normal)
+        36, 36,           // 죽음의 대지 x2 (normal)
+        93, 93, 93, 93,   // 일반 에너지 x4 (energy, 5 - 1 in hand)
+    ]);
 
     const handCardFrame = createDefaultHandCardFrame();
     const handLayoutFrame = createDefaultBattleFieldHandLayoutFrame();
@@ -177,12 +200,15 @@ async function main(container: HTMLElement): Promise<void> {
 
     const entries = handRenderer.getEntries(handGroup);
 
-    const handOrder: number[] = entries.map((e) => e.card.cardId);
-    const placedOrder: number[] = [];
+    // handOrder/placedOrder track HandEntry references, not cardIds — the 40-card deck contains
+    // duplicate cardIds (e.g., 8×3, 93×4), so cardId-keyed lookups would collapse them together.
+    const handOrder: HandEntry[] = [...entries];
+    const placedOrder: HandEntry[] = [];
     const MAX_PER_PAGE = 4;
     let currentPage = 1;
 
-    const getEntryByCardId = (cardId: number) => entries.find((e) => e.card.cardId === cardId);
+    const findEntryByGroup = (group: THREE.Object3D): HandEntry | undefined =>
+        entries.find((e) => e.group === group);
     const getMaxPage = () => Math.max(1, Math.ceil(handOrder.length / MAX_PER_PAGE));
 
     const reflowHandAndPlaced = (): void => {
@@ -191,9 +217,7 @@ async function main(container: HTMLElement): Promise<void> {
         const pageStart = (currentPage - 1) * MAX_PER_PAGE;
         const pageEnd = pageStart + MAX_PER_PAGE;
 
-        handOrder.forEach((cardId, index) => {
-            const entry = getEntryByCardId(cardId);
-            if (!entry) return;
+        handOrder.forEach((entry, index) => {
             if (index >= pageStart && index < pageEnd) {
                 const pageLocalIndex = index - pageStart;
                 const { x, y } = computeHandCardCenter(handLayoutFrame, pageLocalIndex, w, h);
@@ -204,9 +228,7 @@ async function main(container: HTMLElement): Promise<void> {
             }
         });
 
-        placedOrder.forEach((cardId, index) => {
-            const entry = getEntryByCardId(cardId);
-            if (!entry) return;
+        placedOrder.forEach((entry, index) => {
             const { x, y } = computePlacedCardPosition(placementFrame, index, w, h);
             entry.group.position.set(x, y, 0);
             entry.group.visible = true;
@@ -272,6 +294,9 @@ async function main(container: HTMLElement): Promise<void> {
     let activePanelGroup: THREE.Group | null = null;
     type InteractionState = 'idle' | 'cardSelected' | 'panelVisible' | 'attackMode';
     let interactionState: InteractionState = 'idle';
+    // Tracks the currently-selected ally card as a concrete entry reference — neonEffect's
+    // cardId-keyed getActiveEntityIds() can't disambiguate duplicate cardIds in the hand.
+    let selectedAttackerEntry: HandEntry | null = null;
 
     function clearActivePanel(): void {
         if (activePanelGroup) {
@@ -287,6 +312,7 @@ async function main(container: HTMLElement): Promise<void> {
     function clearAllSelection(): void {
         clearActivePanel();
         neonEffect.detachAll();
+        selectedAttackerEntry = null;
         interactionState = 'idle';
     }
 
@@ -339,7 +365,7 @@ async function main(container: HTMLElement): Promise<void> {
                 e.stopImmediatePropagation();
                 const btnType = panelHits[0].object.userData.buttonType;
                 if (btnType === 'general' || btnType.startsWith('skill')) {
-                    const attackerId = neonEffect.getActiveEntityIds()[0];
+                    const attackerId = selectedAttackerEntry?.card.cardId ?? null;
                     const attackerCard = attackerId != null ? getCardById(attackerId) : null;
 
                     // Determine skill type for skill buttons
@@ -361,7 +387,7 @@ async function main(container: HTMLElement): Promise<void> {
                     if (skillType === SkillType.EveryUnitField || skillType === SkillType.EveryField) {
                         // AoE — play animation first, then apply damage
                         console.log(`${btnType} (AoE, damage=${damage}) → hitting all opponents`);
-                        const atkEntry = attackerId != null ? entries.find((ent) => ent.card.cardId === attackerId) : null;
+                        const atkEntry = selectedAttackerEntry;
                         if (atkEntry) {
                             clearAllSelection();
                             await attackAnimation.playAoESkill(atkEntry.group);
@@ -459,8 +485,7 @@ async function main(container: HTMLElement): Promise<void> {
             if (masterHits.length > 0) {
                 e.stopImmediatePropagation();
                 const atkPower = pendingAttackDamage;
-                const attackerId = neonEffect.getActiveEntityIds()[0];
-                const attackerEntry = attackerId != null ? entries.find((ent) => ent.card.cardId === attackerId) : null;
+                const attackerEntry = selectedAttackerEntry;
 
                 clearAllSelection();
 
@@ -501,8 +526,8 @@ async function main(container: HTMLElement): Promise<void> {
             if (targetEntry) {
                 e.stopImmediatePropagation();
                 const attackPower = pendingAttackDamage;
-                const attackerId = neonEffect.getActiveEntityIds()[0];
-                const attackerEntry = attackerId != null ? entries.find((ent) => ent.card.cardId === attackerId) : null;
+                const attackerEntry = selectedAttackerEntry;
+                const attackerId = attackerEntry?.card.cardId ?? null;
 
                 clearAllSelection();
 
@@ -560,9 +585,9 @@ async function main(container: HTMLElement): Promise<void> {
 
         if (interactionState !== 'cardSelected') return;
 
-        const selectedId = neonEffect.getActiveEntityIds()[0];
-        if (selectedId == null) return;
-        const isPlaced = placedOrder.includes(selectedId);
+        const selectedEntry = selectedAttackerEntry;
+        if (!selectedEntry) return;
+        const isPlaced = placedOrder.includes(selectedEntry);
         if (!isPlaced) return;
 
         // Panel spawns at mouse right-click world position (legacy: activePanelAreaRepository.create(clickPoint.x, clickPoint.y, cardId))
@@ -580,8 +605,7 @@ async function main(container: HTMLElement): Promise<void> {
         ];
 
         // Add skill buttons if card has skill textures in image-paths.json
-        const selectedCardId = neonEffect.getActiveEntityIds()[0];
-        const cardSkillPaths = skillImagePaths[String(selectedCardId)] || [];
+        const cardSkillPaths = skillImagePaths[String(selectedEntry.card.cardId)] || [];
         for (let i = 0; i < cardSkillPaths.length; i++) {
             buttonSpecs.push({
                 type: `skill${i + 1}`,
@@ -598,8 +622,9 @@ async function main(container: HTMLElement): Promise<void> {
 
     // Field energy → card attachment. Intercepts clicks BEFORE bridge when fieldEnergyActive.
     let availableEnergy = 19;
-    const placedCardEnergy = new Map<number, number>();
-    const cardEnergyMeshes = new Map<number, { iconMesh: THREE.Mesh; textMesh: THREE.Mesh }>();
+    // Keyed by HandEntry so duplicate-cardId copies don't share counters/meshes.
+    const placedCardEnergy = new Map<HandEntry, number>();
+    const cardEnergyMeshes = new Map<HandEntry, { iconMesh: THREE.Mesh; textMesh: THREE.Mesh }>();
 
     function loadTexturePromise(src: string): Promise<THREE.Texture> {
         return new Promise((resolve, reject) => {
@@ -615,15 +640,13 @@ async function main(container: HTMLElement): Promise<void> {
 
     let energyIconTexture: THREE.Texture | null = null;
 
-    async function attachEnergyToCard(entityId: number): Promise<void> {
+    async function attachEnergyToCard(entry: HandEntry): Promise<void> {
         if (availableEnergy <= 0) return;
-        const entry = entries.find((e) => e.card.cardId === entityId);
-        if (!entry) return;
-        if (!placedOrder.includes(entityId)) return;
+        if (!placedOrder.includes(entry)) return;
 
         availableEnergy--;
-        const cardEnergy = (placedCardEnergy.get(entityId) ?? 0) + 1;
-        placedCardEnergy.set(entityId, cardEnergy);
+        const cardEnergy = (placedCardEnergy.get(entry) ?? 0) + 1;
+        placedCardEnergy.set(entry, cardEnergy);
 
         // Update HUD
         energyRenderer.setEnergy(availableEnergy);
@@ -640,7 +663,7 @@ async function main(container: HTMLElement): Promise<void> {
         const eX = eSlot.offsetXRatio * cardW;
         const eY = eSlot.offsetYRatio * cardH;
 
-        const existing = cardEnergyMeshes.get(entityId);
+        const existing = cardEnergyMeshes.get(entry);
         if (existing) {
             // Update text only
             group.remove(existing.textMesh);
@@ -648,7 +671,7 @@ async function main(container: HTMLElement): Promise<void> {
             (existing.textMesh.material as THREE.MeshBasicMaterial).dispose();
             const newText = createEnergyCanvasText(cardEnergy, eX, eY, handCardFrame.cardWidthRatio * 0.2 * window.innerWidth);
             group.add(newText);
-            cardEnergyMeshes.set(entityId, { iconMesh: existing.iconMesh, textMesh: newText });
+            cardEnergyMeshes.set(entry, { iconMesh: existing.iconMesh, textMesh: newText });
         } else {
             // Create icon + text for first time
             if (!energyIconTexture) {
@@ -666,11 +689,11 @@ async function main(container: HTMLElement): Promise<void> {
             const textMesh = createEnergyCanvasText(cardEnergy, eX, eY, handCardFrame.cardWidthRatio * 0.2 * window.innerWidth);
             group.add(textMesh);
 
-            cardEnergyMeshes.set(entityId, { iconMesh, textMesh });
+            cardEnergyMeshes.set(entry, { iconMesh, textMesh });
         }
 
         setFieldEnergyNeon(false);
-        console.log(`Energy attached to card ${entityId}: ${cardEnergy} total. Available: ${availableEnergy}`);
+        console.log(`Energy attached to card ${entry.card.cardId}: ${cardEnergy} total. Available: ${availableEnergy}`);
     }
 
     function createEnergyCanvasText(value: number, x: number, y: number, baseScale: number): THREE.Mesh {
@@ -706,10 +729,10 @@ async function main(container: HTMLElement): Promise<void> {
                 walkGroup = walkGroup.parent;
             }
             if (walkGroup && walkGroup instanceof THREE.Group && walkGroup.visible) {
-                const eid = (walkGroup.userData as { entityId?: number }).entityId;
-                if (typeof eid === 'number' && placedOrder.includes(eid)) {
+                const entry = findEntryByGroup(walkGroup);
+                if (entry && placedOrder.includes(entry)) {
                     e.stopImmediatePropagation();
-                    attachEnergyToCard(eid);
+                    attachEnergyToCard(entry);
                     return;
                 }
             }
@@ -728,9 +751,10 @@ async function main(container: HTMLElement): Promise<void> {
                 group.position.z = 1;
                 neonEffect.detachAll();
                 neonEffect.attach(entityId, group);
+                selectedAttackerEntry = findEntryByGroup(group) ?? null;
                 interactionState = 'cardSelected';
             },
-            onDrop: (entityId, group, worldX, worldY) => {
+            onDrop: (_entityId, group, worldX, worldY) => {
                 group.renderOrder = 0;
                 group.position.z = 0;
 
@@ -743,15 +767,21 @@ async function main(container: HTMLElement): Promise<void> {
                     worldX >= bounds.minX && worldX <= bounds.maxX &&
                     worldY >= bounds.minY && worldY <= bounds.maxY;
 
-                const wasInHand = handOrder.indexOf(entityId) >= 0;
+                const droppedEntry = findEntryByGroup(group);
+                const handIndex = droppedEntry ? handOrder.indexOf(droppedEntry) : -1;
+                // Legacy MouseDropHandler only lands UNIT cards on the field — ITEM/ENERGY/
+                // SUPPORT/TRAP/TOOL/ENVIRONMENT/TOKEN are no-ops and snap back to hand.
+                const isUnit = droppedEntry?.card.cardKind === CardKind.UNIT;
 
-                if (wasInHand && inside) {
-                    handOrder.splice(handOrder.indexOf(entityId), 1);
-                    placedOrder.push(entityId);
+                if (droppedEntry && handIndex >= 0 && inside && isUnit) {
+                    handOrder.splice(handIndex, 1);
+                    placedOrder.push(droppedEntry);
                     neonEffect.detachAll();
+                    selectedAttackerEntry = null;
                     interactionState = 'idle';
-                } else if (wasInHand && !inside) {
+                } else if (handIndex >= 0) {
                     neonEffect.detachAll();
+                    selectedAttackerEntry = null;
                     interactionState = 'idle';
                 }
 
@@ -760,6 +790,24 @@ async function main(container: HTMLElement): Promise<void> {
         },
     );
     bridge.attach();
+
+    // 'd' key — draw 1 card from the deck and append it to the hand. No deck visual.
+    // New cards land at the end of handOrder; pagination reflow hides overflow on other pages.
+    document.addEventListener('keydown', async (e: KeyboardEvent) => {
+        if (e.key !== 'd' && e.key !== 'D') return;
+        const drawnId = deckRepo.drawCard();
+        if (drawnId == null) {
+            console.log('[deck] empty — nothing to draw');
+            return;
+        }
+        const resolved = resolveCards([drawnId], 'draw');
+        if (resolved.length === 0) return;
+        const newCard = resolved[0];
+        const newEntry = await handRenderer.appendCard(handGroup, newCard, handCardFrame);
+        handOrder.push(newEntry);
+        reflowHandAndPlaced();
+        console.log(`[deck] drew cardId=${drawnId}. Remaining: ${deckRepo.getRemainingCount()}`);
+    });
 
     // Pilot D-1 — field-energy HUD overlays
     const energyFrame = createDefaultFieldEnergyHudFrame();
