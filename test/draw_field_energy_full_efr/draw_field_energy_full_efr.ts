@@ -60,6 +60,7 @@ import { NeonBorderEffect } from "../../src/neon_border/effect/NeonBorderEffect"
 import { createDefaultActivePanelFrame, ActivePanelButtonSpec } from "../../src/active_panel_area/frame/ActivePanelFrame";
 import { ActivePanelRendererV2 } from "../../src/active_panel_area/renderer/ActivePanelRendererV2";
 import { AttackAnimationV2 } from "../../src/general_attack/animation/AttackAnimationV2";
+import { ScytheCutEffect } from "../../src/animation/scythe/ScytheCutEffect";
 
 import { createDefaultGuideMessageHudFrame } from "../../src/common/guide_message/frame/GuideMessageHudFrame";
 
@@ -322,6 +323,7 @@ async function main(container: HTMLElement): Promise<void> {
 
     const animationLoop = new AnimationLoop(rendererManager, sceneManager, cameraManager);
     const attackAnimation = new AttackAnimationV2(scene);
+    const scytheCutEffect = new ScytheCutEffect(scene);
 
     animationLoop.setCustomUpdate(() => {
         if (typeof TWEEN !== 'undefined') TWEEN.update();
@@ -765,7 +767,7 @@ async function main(container: HTMLElement): Promise<void> {
         return null;
     };
 
-    const applyScytheEffect = (target: OpponentEntry): void => {
+    const applyScytheEffect = async (target: OpponentEntry): Promise<void> => {
         const targetCard = getCardById(target.card.cardId);
         const grade = targetCard ? parseInt(targetCard.등급, 10) : 0;
         const isMythic = grade === CardGrade.MYTHICAL;
@@ -775,25 +777,19 @@ async function main(container: HTMLElement): Promise<void> {
         const damage = isMythic ? SCYTHE_MYTHIC_DAMAGE : currentHp;
         const newHp = Math.max(0, currentHp - damage);
         opponentHpState.set(targetIdx, newHp);
-
-        target.group.traverse((child) => {
-            if (child instanceof THREE.Mesh && child.material && !child.userData.__neonBorderLine) {
-                const mat = child.material as THREE.MeshBasicMaterial;
-                const origColor = mat.color.clone();
-                mat.color.set(0xff4444);
-                setTimeout(() => { mat.color.copy(origColor); }, 200);
-            }
-        });
+        const killing = newHp <= 0;
 
         console.log(`[scythe] target cardId=${target.card.cardId} grade=${grade}${isMythic ? ' (MYTHICAL → 30 dmg)' : ' (instant kill)'} HP: ${currentHp} → ${newHp}`);
 
-        if (newHp <= 0) {
-            setTimeout(() => {
-                const aliveIdx = opponentAliveOrder.indexOf(targetIdx);
-                if (aliveIdx >= 0) opponentAliveOrder.splice(aliveIdx, 1);
-                reflowOpponentField();
-                console.log(`[scythe] opponent idx=${targetIdx} defeated. Remaining: ${opponentAliveOrder.length}`);
-            }, 300);
+        // Play the cut animation. For killing hits it hides the target and plays the split
+        // halves; for mythic-survives it plays a dark flash without splitting.
+        await scytheCutEffect.play(target.group, target.card.cardId, killing);
+
+        if (killing) {
+            const aliveIdx = opponentAliveOrder.indexOf(targetIdx);
+            if (aliveIdx >= 0) opponentAliveOrder.splice(aliveIdx, 1);
+            reflowOpponentField();
+            console.log(`[scythe] opponent idx=${targetIdx} defeated. Remaining: ${opponentAliveOrder.length}`);
         }
     };
 
