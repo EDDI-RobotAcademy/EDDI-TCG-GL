@@ -50,6 +50,21 @@ export class BattleFieldHandRendererV2 {
         return handGroup;
     }
 
+    // Appends a single card to an already-built hand group and registers it in userData.entries.
+    // Position is left at (0,0) — the caller is responsible for reflowing hand/placed slots after.
+    public async appendCard(
+        handGroup: THREE.Group,
+        card: HandCard,
+        cardFrame: HandCardFrame,
+    ): Promise<HandEntry> {
+        const { entries } = handGroup.userData as HandUserData;
+        const cardGroup = await this.cardRenderer.build(card, cardFrame);
+        handGroup.add(cardGroup);
+        const entry: HandEntry = { card, cardIndex: entries.length, group: cardGroup };
+        entries.push(entry);
+        return entry;
+    }
+
     public resize(
         cardFrame: HandCardFrame,
         layout: BattleFieldHandLayoutFrame,

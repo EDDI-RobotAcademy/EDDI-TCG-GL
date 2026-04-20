@@ -151,8 +151,12 @@ async function main(container: HTMLElement): Promise<void> {
                     worldX >= bounds.minX && worldX <= bounds.maxX &&
                     worldY >= bounds.minY && worldY <= bounds.maxY;
 
+                // Legacy MouseDropHandler only lands UNIT cards on the field — ITEM/ENERGY/
+                // SUPPORT/TRAP/TOOL/ENVIRONMENT/TOKEN are no-ops and snap back to hand.
                 const handIndex = handOrder.indexOf(entityId);
-                if (inside && handIndex >= 0) {
+                const droppedEntry = getEntryByCardId(entityId);
+                const isUnit = droppedEntry?.card.cardKind === CardKind.UNIT;
+                if (inside && handIndex >= 0 && isUnit) {
                     handOrder.splice(handIndex, 1);
                     placedOrder.push(entityId);
                 }
