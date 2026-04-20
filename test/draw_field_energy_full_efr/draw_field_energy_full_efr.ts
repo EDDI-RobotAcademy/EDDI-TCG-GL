@@ -44,6 +44,7 @@ import * as THREE from "three";
 import { getCardById } from "../../src/card/utility";
 import { CardJob } from "../../src/card/job";
 import { CardKind } from "../../src/card/kind";
+import { CardGrade } from "../../src/card/grade";
 import { getSkillType, SkillType } from "../../src/card/SkillType";
 
 import { createDefaultFieldEnergyHudFrame } from "../../src/common/field_energy/frame/FieldEnergyHudFrame";
@@ -238,6 +239,9 @@ async function main(container: HTMLElement): Promise<void> {
     reflowHandAndPlaced();
 
     // Pilot E new — opponent field units (reuses HandCardRendererV2 via OpponentFieldRendererV2)
+    // Add mythic unit (네더 블레이드, cardId 19) to the opponent field for scythe-targeting tests:
+    //   scythe vs <MYTHICAL → instant kill; scythe vs MYTHICAL → 30 damage.
+    OpponentFieldMapRepositoryImpl.getInstance().addOpponentField(19);
     const opponentCardIds = OpponentFieldMapRepositoryImpl.getInstance().getOpponentFieldList();
     const opponentCards = resolveCards(opponentCardIds, 'opponent');
     const opponentLayoutFrame = createDefaultOpponentFieldLayoutFrame();
@@ -739,6 +743,66 @@ async function main(container: HTMLElement): Promise<void> {
         }
     });
 
+    // Scythe (cardId 8) — consume + effect on opponent card drop.
+    // Below MYTHICAL → instant kill; MYTHICAL → 30 damage.
+    const SCYTHE_CARD_ID = 8;
+    const SCYTHE_MYTHIC_DAMAGE = 30;
+
+    type OpponentEntry = typeof opponentEntries[number];
+
+    const hitOpponentAt = (x: number, y: number): OpponentEntry | null => {
+        for (const entry of opponentEntries) {
+            if (!entry.group.visible) continue;
+            const ud = entry.group.userData as { baseCardWidth?: number; baseCardHeight?: number };
+            const bw = (ud.baseCardWidth ?? 0) * (entry.group.scale.x || 1);
+            const bh = (ud.baseCardHeight ?? 0) * (entry.group.scale.y || 1);
+            const cx = entry.group.position.x;
+            const cy = entry.group.position.y;
+            if (x >= cx - bw / 2 && x <= cx + bw / 2 && y >= cy - bh / 2 && y <= cy + bh / 2) {
+                return entry;
+            }
+        }
+        return null;
+    };
+
+    const applyScytheEffect = (target: OpponentEntry): void => {
+        const targetCard = getCardById(target.card.cardId);
+        const grade = targetCard ? parseInt(targetCard.등급, 10) : 0;
+        const isMythic = grade === CardGrade.MYTHICAL;
+
+        const targetIdx = target.cardIndex;
+        const currentHp = opponentHpState.get(targetIdx) ?? 0;
+        const damage = isMythic ? SCYTHE_MYTHIC_DAMAGE : currentHp;
+        const newHp = Math.max(0, currentHp - damage);
+        opponentHpState.set(targetIdx, newHp);
+
+        target.group.traverse((child) => {
+            if (child instanceof THREE.Mesh && child.material && !child.userData.__neonBorderLine) {
+                const mat = child.material as THREE.MeshBasicMaterial;
+                const origColor = mat.color.clone();
+                mat.color.set(0xff4444);
+                setTimeout(() => { mat.color.copy(origColor); }, 200);
+            }
+        });
+
+        console.log(`[scythe] target cardId=${target.card.cardId} grade=${grade}${isMythic ? ' (MYTHICAL → 30 dmg)' : ' (instant kill)'} HP: ${currentHp} → ${newHp}`);
+
+        if (newHp <= 0) {
+            setTimeout(() => {
+                const aliveIdx = opponentAliveOrder.indexOf(targetIdx);
+                if (aliveIdx >= 0) opponentAliveOrder.splice(aliveIdx, 1);
+                reflowOpponentField();
+                console.log(`[scythe] opponent idx=${targetIdx} defeated. Remaining: ${opponentAliveOrder.length}`);
+            }, 300);
+        }
+    };
+
+    const consumeHandCard = (entry: HandEntry, idx: number): void => {
+        handOrder.splice(idx, 1);
+        handGroup.remove(entry.group);
+        handRenderer.getCardRenderer().dispose(entry.group);
+    };
+
     // Pilot C — click / drag / drop
     const bridge = new HandInteractionBridge(
         rendererManager.getDomElement(),
@@ -753,11 +817,53 @@ async function main(container: HTMLElement): Promise<void> {
                 neonEffect.attach(entityId, group);
                 selectedAttackerEntry = findEntryByGroup(group) ?? null;
                 interactionState = 'cardSelected';
+
+                // Scythe pickup → red targeting border on all visible opponent units (no master).
+                if (selectedAttackerEntry?.card.cardId === SCYTHE_CARD_ID) {
+                    for (const oe of opponentEntries) {
+                        if (oe.group.visible) {
+                            enemyNeonEffect.attach(oe.cardIndex, oe.group);
+                        }
+                    }
+                }
             },
             onDrop: (_entityId, group, worldX, worldY) => {
                 group.renderOrder = 0;
                 group.position.z = 0;
 
+                const droppedEntry = findEntryByGroup(group);
+                const handIndex = droppedEntry ? handOrder.indexOf(droppedEntry) : -1;
+
+                // Always clear the scythe's targeting border on release.
+                enemyNeonEffect.detachAll();
+
+                if (!droppedEntry || handIndex < 0) {
+                    reflowHandAndPlaced();
+                    return;
+                }
+
+                const kind = droppedEntry.card.cardKind;
+                const cardId = droppedEntry.card.cardId;
+
+                // ITEM: scythe consumes + hits opponent. Drop-location uses the card's visual
+                // center (group.position) rather than the cursor — feels more natural.
+                if (kind === CardKind.ITEM) {
+                    const dropCx = group.position.x;
+                    const dropCy = group.position.y;
+                    const target = cardId === SCYTHE_CARD_ID ? hitOpponentAt(dropCx, dropCy) : null;
+                    if (target) {
+                        applyScytheEffect(target);
+                        consumeHandCard(droppedEntry, handIndex);
+                    }
+                    neonEffect.detachAll();
+                    selectedAttackerEntry = null;
+                    interactionState = 'idle';
+                    reflowHandAndPlaced();
+                    return;
+                }
+
+                // UNIT → YourField placement. Non-UNIT non-ITEM (support/energy/trap/etc.) falls
+                // through to snap back — matches legacy MouseDropHandler's no-op handlers.
                 const bounds = computeYourFieldAreaBounds(
                     yourFieldAreaFrame,
                     window.innerWidth,
@@ -766,25 +872,15 @@ async function main(container: HTMLElement): Promise<void> {
                 const inside =
                     worldX >= bounds.minX && worldX <= bounds.maxX &&
                     worldY >= bounds.minY && worldY <= bounds.maxY;
+                const isUnit = kind === CardKind.UNIT;
 
-                const droppedEntry = findEntryByGroup(group);
-                const handIndex = droppedEntry ? handOrder.indexOf(droppedEntry) : -1;
-                // Legacy MouseDropHandler only lands UNIT cards on the field — ITEM/ENERGY/
-                // SUPPORT/TRAP/TOOL/ENVIRONMENT/TOKEN are no-ops and snap back to hand.
-                const isUnit = droppedEntry?.card.cardKind === CardKind.UNIT;
-
-                if (droppedEntry && handIndex >= 0 && inside && isUnit) {
+                if (inside && isUnit) {
                     handOrder.splice(handIndex, 1);
                     placedOrder.push(droppedEntry);
-                    neonEffect.detachAll();
-                    selectedAttackerEntry = null;
-                    interactionState = 'idle';
-                } else if (handIndex >= 0) {
-                    neonEffect.detachAll();
-                    selectedAttackerEntry = null;
-                    interactionState = 'idle';
                 }
-
+                neonEffect.detachAll();
+                selectedAttackerEntry = null;
+                interactionState = 'idle';
                 reflowHandAndPlaced();
             },
         },
