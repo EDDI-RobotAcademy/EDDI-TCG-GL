@@ -62,6 +62,7 @@ import { ActivePanelRendererV2 } from "../../src/active_panel_area/renderer/Acti
 import { AttackAnimationV2 } from "../../src/general_attack/animation/AttackAnimationV2";
 import { ScytheCutEffect } from "../../src/animation/scythe/ScytheCutEffect";
 import { EnergyBurnEffect } from "../../src/animation/energy_burn/EnergyBurnEffect";
+import { DoomContractEffect } from "../../src/animation/doom_contract/DoomContractEffect";
 
 import { YourLostZoneRepositoryImpl } from "../../src/your_lost_zone/repository/YourLostZoneRepositoryImpl";
 import {
@@ -483,6 +484,15 @@ async function main(container: HTMLElement): Promise<void> {
     const attackAnimation = new AttackAnimationV2(scene);
     const scytheCutEffect = new ScytheCutEffect(scene);
     const energyBurnEffect = new EnergyBurnEffect(scene);
+    // DoomContract takes extra deps: it uses a render-target + warp shader pipeline, which
+    // needs the WebGLRenderer, the active camera, and a hook into AnimationLoop's render
+    // path (setRenderOverride) to intercept per-frame rendering during the warp phase.
+    const doomContractEffect = new DoomContractEffect(
+        scene,
+        rendererManager.getRenderer(),
+        camera,
+        animationLoop,
+    );
 
     animationLoop.setCustomUpdate(() => {
         if (typeof TWEEN !== 'undefined') TWEEN.update();
@@ -1153,15 +1163,15 @@ async function main(container: HTMLElement): Promise<void> {
         handRenderer.getCardRenderer().dispose(entry.group);
     };
 
-    // 파멸의 계약 — pure mechanics this step, NO effects/animations:
+    // 파멸의 계약:
     //   1) 15 dmg to every alive opponent unit (HP state + death reflow)
     //   2) 15 dmg to the opponent master body
-    //   3) Draw 1 card from YOUR deck → push to YOUR lost zone (visual state only,
-    //      no draw animation)
-    const applyDoomContractEffect = (): void => {
+    //   3) Draw 1 card from YOUR deck → push to YOUR lost zone
+    // State mutations are timed to the effect's BOOM phase (~1400ms in) so the numbers
+    // change on-screen the same beat the grimoire explodes.
+    const applyStateChangesForDoomContract = (): void => {
         console.log(`[doom-contract] AoE ${DOOM_CONTRACT_DAMAGE} dmg to all opponent units + master; deck → lost zone`);
 
-        // (1) Units. Iterate a COPY of opponentAliveOrder since we splice on kill.
         for (const idx of [...opponentAliveOrder]) {
             const currentHp = opponentHpState.get(idx) ?? 0;
             const newHp = Math.max(0, currentHp - DOOM_CONTRACT_DAMAGE);
@@ -1174,12 +1184,10 @@ async function main(container: HTMLElement): Promise<void> {
         }
         reflowOpponentField();
 
-        // (2) Master.
         const masterBefore = opponentMasterHp;
         opponentMasterHp = Math.max(0, opponentMasterHp - DOOM_CONTRACT_DAMAGE);
         console.log(`  opponent master HP: ${masterBefore} → ${opponentMasterHp}`);
 
-        // (3) Deck → lost zone. drawCard() shifts the top cardId; if empty, skip silently.
         const drawn = YourDeckRepositoryImpl.getInstance().drawCard();
         if (drawn != null) {
             YourLostZoneRepositoryImpl.getInstance().addCard(drawn);
@@ -1187,6 +1195,16 @@ async function main(container: HTMLElement): Promise<void> {
         } else {
             console.log(`  deck empty — nothing to send to lost zone`);
         }
+    };
+
+    const applyDoomContractEffect = async (): Promise<void> => {
+        // Effect timeline (DoomContractEffect.play phases): emerge 350 + shake 500 + suck
+        // 500 + boom 300 + fade 400 ≈ 2050ms. The BOOM begins ~1350ms in — schedule mechanics
+        // to land at that moment so units visibly die / deck count drops with the flash.
+        const boomMs = 1380;
+        const effectPromise = doomContractEffect.play();
+        setTimeout(applyStateChangesForDoomContract, boomMs);
+        await effectPromise;
     };
 
     // Pilot C — click / drag / drop

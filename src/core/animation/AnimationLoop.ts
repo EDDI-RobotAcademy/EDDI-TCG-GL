@@ -8,6 +8,10 @@ export class AnimationLoop {
     private animationFrameId: number | null = null;
     private clock: THREE.Clock;
     private customUpdateCallback: ((delta: number, elapsedTime: number) => void) | null = null;
+    // Optional render-path override. When set, called INSTEAD of the default single-pass
+    // renderer.render(scene, camera) — lets effects (e.g. doom-contract warp) render the
+    // scene to a target, apply a screen-space shader, and draw overlays on top.
+    private renderOverride: ((scene: THREE.Scene, camera: THREE.Camera, renderer: THREE.WebGLRenderer) => void) | null = null;
 
     constructor(
         private rendererManager: RendererManager,
@@ -50,6 +54,12 @@ export class AnimationLoop {
         this.customUpdateCallback = callback;
     }
 
+    public setRenderOverride(
+        fn: ((scene: THREE.Scene, camera: THREE.Camera, renderer: THREE.WebGLRenderer) => void) | null,
+    ): void {
+        this.renderOverride = fn;
+    }
+
     private animate = (time?: number): void => {
         if (!this.isRunning) {
             return;
@@ -86,7 +96,11 @@ export class AnimationLoop {
             return;
         }
 
-        renderer.render(scene, camera);
+        if (this.renderOverride) {
+            this.renderOverride(scene, camera, renderer);
+        } else {
+            renderer.render(scene, camera);
+        }
     }
 
     public isActive(): boolean {
