@@ -75,6 +75,14 @@ import {
 import { YourLostZonePanelRendererV2 } from "../../src/your_lost_zone/renderer/YourLostZonePanelRendererV2";
 import { YourLostZonePopupRendererV2 } from "../../src/your_lost_zone/renderer/YourLostZonePopupRendererV2";
 
+import {
+    createDefaultOpponentLostZonePanelFrame,
+    computeOpponentLostZonePanelBounds,
+} from "../../src/opponent_lost_zone/frame/OpponentLostZonePanelFrame";
+import { createDefaultOpponentLostZonePopupFrame } from "../../src/opponent_lost_zone/frame/OpponentLostZonePopupFrame";
+import { OpponentLostZonePanelRendererV2 } from "../../src/opponent_lost_zone/renderer/OpponentLostZonePanelRendererV2";
+import { OpponentLostZoneRepositoryImpl } from "../../src/opponent_lost_zone/repository/OpponentLostZoneRepositoryImpl";
+
 import { createDefaultGuideMessageHudFrame } from "../../src/common/guide_message/frame/GuideMessageHudFrame";
 
 declare const TWEEN: { Tween: any; Easing: any; update: (time?: number) => void };
@@ -284,6 +292,60 @@ async function main(container: HTMLElement): Promise<void> {
     const lostZonePanelGroup = await lostZonePanelRenderer.build(lostZonePanelFrame);
     scene.add(lostZonePanelGroup);
 
+    // ── Opponent Lost Zone — mirror of Your Lost Zone, with its own panel, popup, and repo.
+    const opponentLostZonePanelFrame = createDefaultOpponentLostZonePanelFrame();
+    const opponentLostZonePopupFrame = createDefaultOpponentLostZonePopupFrame();
+    const opponentLostZonePanelRenderer = new OpponentLostZonePanelRendererV2();
+    // Popup reuses YourLostZonePopupRendererV2 — popup rendering is generic (takes frame +
+    // cards), so both lost zones share the same renderer. Keeps card layout identical.
+    const opponentLostZonePopupRenderer = new YourLostZonePopupRendererV2();
+    const opponentLostZonePanelGroup = await opponentLostZonePanelRenderer.build(opponentLostZonePanelFrame);
+    scene.add(opponentLostZonePanelGroup);
+
+    const opponentLostZoneRepo = OpponentLostZoneRepositoryImpl.getInstance();
+    // Seed opponent repo with 12 test cards so pagination (2 pages at 10/page) is exercised.
+    for (const id of [31, 32, 26, 27, 93, 19, 2, 8, 9, 20, 25, 33]) opponentLostZoneRepo.addCard(id);
+
+    let opponentLostZonePopupGroup: THREE.Group | null = null;
+    let opponentLostZonePage = 0;
+    const opponentLostZoneCardsPerPage =
+        opponentLostZonePopupFrame.cardColumns * opponentLostZonePopupFrame.rowsPerPage;
+
+    const buildOpponentLostZonePopupForCurrentPage = async (): Promise<THREE.Group> => {
+        const all = [...opponentLostZoneRepo.getCards()];
+        const start = opponentLostZonePage * opponentLostZoneCardsPerPage;
+        const slice = all.slice(start, start + opponentLostZoneCardsPerPage);
+        const resolved = resolveCards(slice, 'opponent-lost-zone');
+        return opponentLostZonePopupRenderer.build(opponentLostZonePopupFrame, resolved);
+    };
+
+    const openOpponentLostZonePopup = async (): Promise<void> => {
+        if (opponentLostZonePopupGroup) return;
+        // Modal mutex — close the player's popup first if it's open so the two don't stack.
+        if (lostZonePopupGroup) closeLostZonePopup();
+        opponentLostZonePopupGroup = await buildOpponentLostZonePopupForCurrentPage();
+        scene.add(opponentLostZonePopupGroup);
+    };
+
+    const closeOpponentLostZonePopup = (): void => {
+        if (!opponentLostZonePopupGroup) return;
+        scene.remove(opponentLostZonePopupGroup);
+        opponentLostZonePopupRenderer.dispose(opponentLostZonePopupGroup);
+        opponentLostZonePopupGroup = null;
+        opponentLostZonePage = 0;
+    };
+
+    const reloadOpponentLostZonePopup = async (): Promise<void> => {
+        if (!opponentLostZonePopupGroup) return;
+        scene.remove(opponentLostZonePopupGroup);
+        opponentLostZonePopupRenderer.dispose(opponentLostZonePopupGroup);
+        opponentLostZonePopupGroup = await buildOpponentLostZonePopupForCurrentPage();
+        scene.add(opponentLostZonePopupGroup);
+    };
+
+    const opponentLostZoneTotalPages = (): number =>
+        Math.max(1, Math.ceil(opponentLostZoneRepo.getCards().length / opponentLostZoneCardsPerPage));
+
     // Popup is built on demand when panel is clicked; null when hidden.
     let lostZonePopupGroup: THREE.Group | null = null;
     let lostZonePage = 0;
@@ -299,6 +361,8 @@ async function main(container: HTMLElement): Promise<void> {
 
     const openLostZonePopup = async (): Promise<void> => {
         if (lostZonePopupGroup) return;
+        // Modal mutex — only one lost-zone popup at a time.
+        if (opponentLostZonePopupGroup) closeOpponentLostZonePopup();
         lostZonePopupGroup = await buildLostZonePopupForCurrentPage();
         scene.add(lostZonePopupGroup);
     };
@@ -417,7 +481,7 @@ async function main(container: HTMLElement): Promise<void> {
         );
     }
 
-    // Lost-Zone click — registered in CAPTURE phase so when the popup is open we can
+    // Lost-Zone click — registered in CAPTURE phase so when a popup is open we can
     // consume the click before hand/opponent/page handlers run. Screen → world coords:
     //   world_x = clientX - width/2     (OrthographicCamera centered at 0, width full-span)
     //   world_y = height/2 - clientY    (y flipped: screen y grows down, world y grows up)
@@ -428,42 +492,46 @@ async function main(container: HTMLElement): Promise<void> {
         const worldX = e.clientX - w / 2;
         const worldY = h / 2 - e.clientY;
 
-        const panelBounds = computeYourLostZonePanelBounds(lostZonePanelFrame, w, h);
-        const onPanel =
-            worldX >= panelBounds.minX && worldX <= panelBounds.maxX &&
-            worldY >= panelBounds.minY && worldY <= panelBounds.maxY;
-
-        if (onPanel) {
-            // Toggle — and consume the event so the hand/page handlers don't also react.
+        // ── 1) Your Lost Zone panel ────────────────────────────────────────────────
+        const yourPanelBounds = computeYourLostZonePanelBounds(lostZonePanelFrame, w, h);
+        const onYourPanel =
+            worldX >= yourPanelBounds.minX && worldX <= yourPanelBounds.maxX &&
+            worldY >= yourPanelBounds.minY && worldY <= yourPanelBounds.maxY;
+        if (onYourPanel) {
             e.stopImmediatePropagation();
             if (lostZonePopupGroup) closeLostZonePopup();
             else void openLostZonePopup();
             return;
         }
 
-        // Popup is open → consume all clicks while modal is up so underlying cards can't be
-        // picked up. Inside the popup: check prev/next buttons first, then swallow. Outside:
-        // close the popup.
+        // ── 2) Opponent Lost Zone panel ────────────────────────────────────────────
+        const oppPanelBounds = computeOpponentLostZonePanelBounds(opponentLostZonePanelFrame, w, h);
+        const onOppPanel =
+            worldX >= oppPanelBounds.minX && worldX <= oppPanelBounds.maxX &&
+            worldY >= oppPanelBounds.minY && worldY <= oppPanelBounds.maxY;
+        if (onOppPanel) {
+            e.stopImmediatePropagation();
+            if (opponentLostZonePopupGroup) closeOpponentLostZonePopup();
+            else void openOpponentLostZonePopup();
+            return;
+        }
+
+        // ── 3) A popup is open → consume the click, check buttons, close on outside ─
+        // Only one popup can be open at a time (opens are modal-mutex'd above), so exactly
+        // one of these branches runs.
         if (lostZonePopupGroup) {
             e.stopImmediatePropagation();
 
-            // Raycast popup children for prev/next buttons (descend into nested groups).
             sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
             const hits = sharedRaycaster.intersectObjects(lostZonePopupGroup.children, true);
             for (const hit of hits) {
                 const bt = hit.object.userData.buttonType;
                 if (bt === 'prev') {
-                    if (lostZonePage > 0) {
-                        lostZonePage--;
-                        void reloadLostZonePopup();
-                    }
+                    if (lostZonePage > 0) { lostZonePage--; void reloadLostZonePopup(); }
                     return;
                 }
                 if (bt === 'next') {
-                    if (lostZonePage < lostZoneTotalPages() - 1) {
-                        lostZonePage++;
-                        void reloadLostZonePopup();
-                    }
+                    if (lostZonePage < lostZoneTotalPages() - 1) { lostZonePage++; void reloadLostZonePopup(); }
                     return;
                 }
             }
@@ -473,6 +541,34 @@ async function main(container: HTMLElement): Promise<void> {
                 worldX >= popupBounds.minX && worldX <= popupBounds.maxX &&
                 worldY >= popupBounds.minY && worldY <= popupBounds.maxY;
             if (!onPopup) closeLostZonePopup();
+            return;
+        }
+
+        if (opponentLostZonePopupGroup) {
+            e.stopImmediatePropagation();
+
+            sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
+            const hits = sharedRaycaster.intersectObjects(opponentLostZonePopupGroup.children, true);
+            for (const hit of hits) {
+                const bt = hit.object.userData.buttonType;
+                if (bt === 'prev') {
+                    if (opponentLostZonePage > 0) { opponentLostZonePage--; void reloadOpponentLostZonePopup(); }
+                    return;
+                }
+                if (bt === 'next') {
+                    if (opponentLostZonePage < opponentLostZoneTotalPages() - 1) {
+                        opponentLostZonePage++; void reloadOpponentLostZonePopup();
+                    }
+                    return;
+                }
+            }
+
+            // Opponent popup uses the SAME world bounds as Your popup (both centered, same size).
+            const popupBounds = computeYourLostZonePopupBounds(opponentLostZonePopupFrame, w, h);
+            const onPopup =
+                worldX >= popupBounds.minX && worldX <= popupBounds.maxX &&
+                worldY >= popupBounds.minY && worldY <= popupBounds.maxY;
+            if (!onPopup) closeOpponentLostZonePopup();
         }
     }, true);
 
