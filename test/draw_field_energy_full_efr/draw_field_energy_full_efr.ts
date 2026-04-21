@@ -61,6 +61,7 @@ import { createDefaultActivePanelFrame, ActivePanelButtonSpec } from "../../src/
 import { ActivePanelRendererV2 } from "../../src/active_panel_area/renderer/ActivePanelRendererV2";
 import { AttackAnimationV2 } from "../../src/general_attack/animation/AttackAnimationV2";
 import { ScytheCutEffect } from "../../src/animation/scythe/ScytheCutEffect";
+import { EnergyBurnEffect } from "../../src/animation/energy_burn/EnergyBurnEffect";
 
 import { createDefaultGuideMessageHudFrame } from "../../src/common/guide_message/frame/GuideMessageHudFrame";
 
@@ -167,9 +168,10 @@ async function main(container: HTMLElement): Promise<void> {
     const placementFrame = createDefaultPlacedCardPlacementFrame();
 
     const handMapRepo = BattleFieldHandMapRepositoryImpl.getInstance();
-    // Initial hand — 5 cards drawn from the 40-card deck spec. Mix of UNIT/SUPPORT/ENERGY.
-    // Default repo seed already contains (2, 19, 93, 26); add 27 to reach 5.
+    // Initial hand — 6 cards drawn from the 40-card deck spec. Mix of UNIT/SUPPORT/ENERGY/ITEM.
+    // Default repo seed already contains (2, 19, 93, 26); add 27 + Energy Burn (9) for testing.
     handMapRepo.addBattleFieldHand(27);
+    handMapRepo.addBattleFieldHand(9);  // 에너지 번 (ITEM) — drains up to 2 energy off opponent units
     const handCardIds = handMapRepo.getBattleFieldHandList();
     const hand = resolveCards(handCardIds, 'hand');
 
@@ -245,6 +247,13 @@ async function main(container: HTMLElement): Promise<void> {
     OpponentFieldMapRepositoryImpl.getInstance().addOpponentField(19);
     const opponentCardIds = OpponentFieldMapRepositoryImpl.getInstance().getOpponentFieldList();
     const opponentCards = resolveCards(opponentCardIds, 'opponent');
+
+    // Seed energy on opponent units for energy-burn testing:
+    //   index 1 = 스켈레톤 워리어 #1 → 1 energy (partial drain: removes 1, deals 10 dmg)
+    //   index 3 = 길 잃은 망령 → 2 energy (full drain: removes 2, no damage)
+    //   all others → 0 energy (no drain: deals 20 dmg).
+    if (opponentCards[1]) opponentCards[1] = { ...opponentCards[1], energyCount: 1 };
+    if (opponentCards[3]) opponentCards[3] = { ...opponentCards[3], energyCount: 2 };
     const opponentLayoutFrame = createDefaultOpponentFieldLayoutFrame();
     const opponentRenderer = new OpponentFieldRendererV2();
     const opponentGroup = await opponentRenderer.build(opponentCards, handCardFrame, opponentLayoutFrame);
@@ -252,12 +261,14 @@ async function main(container: HTMLElement): Promise<void> {
 
     // Opponent HP state + alive order for reflow on death
     const opponentHpState = new Map<number, number>();
+    const opponentEnergyState = new Map<number, number>();
     const opponentAliveOrder: number[] = [];
     for (let i = 0; i < opponentCards.length; i++) {
         const oc = opponentCards[i];
         const card = getCardById(oc.cardId);
         const hp = card?.체력 ?? 0;
         opponentHpState.set(i, typeof hp === 'number' ? hp : 0);
+        opponentEnergyState.set(i, oc.energyCount);
         opponentAliveOrder.push(i);
     }
 
@@ -324,6 +335,7 @@ async function main(container: HTMLElement): Promise<void> {
     const animationLoop = new AnimationLoop(rendererManager, sceneManager, cameraManager);
     const attackAnimation = new AttackAnimationV2(scene);
     const scytheCutEffect = new ScytheCutEffect(scene);
+    const energyBurnEffect = new EnergyBurnEffect(scene);
 
     animationLoop.setCustomUpdate(() => {
         if (typeof TWEEN !== 'undefined') TWEEN.update();
@@ -750,6 +762,16 @@ async function main(container: HTMLElement): Promise<void> {
     const SCYTHE_CARD_ID = 8;
     const SCYTHE_MYTHIC_DAMAGE = 30;
 
+    // Energy Burn (cardId 9) — ITEM that targets opponent units like scythe.
+    //   0 energy on target → 20 damage (10 × 2)
+    //   1 energy on target → 10 damage (10 × 1) + drain 1 energy
+    //  ≥2 energy on target → 0 damage          + drain 2 energy
+    const ENERGY_BURN_CARD_ID = 9;
+    const ENERGY_BURN_PER_MISSING_DAMAGE = 10;
+
+    // Card IDs that target opponent units when picked up (red neon on all visible opponents).
+    const OPPONENT_TARGETING_ITEM_IDS: readonly number[] = [SCYTHE_CARD_ID, ENERGY_BURN_CARD_ID];
+
     type OpponentEntry = typeof opponentEntries[number];
 
     const hitOpponentAt = (x: number, y: number): OpponentEntry | null => {
@@ -793,6 +815,92 @@ async function main(container: HTMLElement): Promise<void> {
         }
     };
 
+    // Flash-and-shake feedback shared by energy-burn damage and (future) other item hits.
+    // Mirrors the AoE-skill damage block above but kept self-contained here.
+    const flashAndShakeTarget = (group: THREE.Group): void => {
+        group.traverse((child) => {
+            if (!(child instanceof THREE.Mesh) || !child.material) return;
+            if (child.userData.__neonBorderLine) return;
+            if (child.userData.__energyBurnSurfaceFlame) return;
+            // ShaderMaterial (e.g., burn/flame overlays) has no `.color` — skip silently.
+            const mat = child.material as THREE.MeshBasicMaterial;
+            if (!mat.color) return;
+            const origColor = mat.color.clone();
+            mat.color.set(0xff4444);
+            setTimeout(() => { mat.color.copy(origColor); }, 200);
+        });
+        const shakeOrigX = group.position.x;
+        const shakeOrigY = group.position.y;
+        const cardWidth = 0.06493506493 * window.innerWidth;
+        let shakeStep = 0;
+        const shakeTotal = 12;
+        const shakeInterval = setInterval(() => {
+            if (shakeStep >= shakeTotal) {
+                group.position.x = shakeOrigX;
+                group.position.y = shakeOrigY;
+                clearInterval(shakeInterval);
+                return;
+            }
+            const amp = cardWidth * 0.125 * (1 - shakeStep / shakeTotal);
+            group.position.x = shakeOrigX + (Math.random() - 0.5) * amp;
+            group.position.y = shakeOrigY + (Math.random() - 0.5) * amp;
+            shakeStep++;
+        }, 30);
+    };
+
+    const applyEnergyBurnEffect = async (target: OpponentEntry): Promise<void> => {
+        const targetIdx = target.cardIndex;
+        const currentEnergy = opponentEnergyState.get(targetIdx) ?? 0;
+        const energyDrained = Math.min(2, currentEnergy);
+        const damageMultiplier = 2 - energyDrained;  // 0 e → 2, 1 e → 1, ≥2 e → 0
+        const damage = damageMultiplier * ENERGY_BURN_PER_MISSING_DAMAGE;
+
+        const newEnergy = currentEnergy - energyDrained;
+        opponentEnergyState.set(targetIdx, newEnergy);
+
+        let newHp = 0;
+        let killing = false;
+        if (damage > 0) {
+            const currentHp = opponentHpState.get(targetIdx) ?? 0;
+            newHp = Math.max(0, currentHp - damage);
+            opponentHpState.set(targetIdx, newHp);
+            killing = newHp <= 0;
+            console.log(`[energy-burn] target cardId=${target.card.cardId} energy: ${currentEnergy} → ${newEnergy} (drained ${energyDrained}) damage=${damage} HP → ${newHp}${killing ? ' (defeated — card burns away)' : ''}`);
+        } else {
+            console.log(`[energy-burn] target cardId=${target.card.cardId} energy: ${currentEnergy} → ${newEnergy} (drained ${energyDrained}) no damage`);
+        }
+
+        // Play the effect (passes killing so the card dissolves inside the flame) + damage
+        // feedback in parallel. The icon refreshes ~1s in AFTER motes visually consume, but
+        // ONLY on survive — a killing hit dissolves the whole card, so updating its energy
+        // icon mid-burn is wasted (and would flash the text back on while the card fades).
+        await Promise.all([
+            energyBurnEffect.play(target.group, energyDrained, killing),
+            (async () => {
+                if (damage > 0) {
+                    await new Promise((r) => setTimeout(r, 500));
+                    flashAndShakeTarget(target.group);
+                }
+            })(),
+            (async () => {
+                if (killing) return;
+                if (energyDrained <= 0) return;  // no drain → icons unchanged
+                // Let the mote-burn shader visuals get well underway before the icons on the
+                // card start to burn — ties the on-card drain visually to the mote burning.
+                await new Promise((r) => setTimeout(r, 600));
+                await energyBurnEffect.playEnergyIconBurnAway(target.group);
+                // After burn, redraw with the new (reduced) count — shows any remaining energy.
+                opponentRenderer.getCardRenderer().updateEnergyCount(target.group, newEnergy, handCardFrame);
+            })(),
+        ]);
+
+        if (killing) {
+            const aliveIdx = opponentAliveOrder.indexOf(targetIdx);
+            if (aliveIdx >= 0) opponentAliveOrder.splice(aliveIdx, 1);
+            reflowOpponentField();
+        }
+    };
+
     const consumeHandCard = (entry: HandEntry, idx: number): void => {
         handOrder.splice(idx, 1);
         handGroup.remove(entry.group);
@@ -814,8 +922,10 @@ async function main(container: HTMLElement): Promise<void> {
                 selectedAttackerEntry = findEntryByGroup(group) ?? null;
                 interactionState = 'cardSelected';
 
-                // Scythe pickup → red targeting border on all visible opponent units (no master).
-                if (selectedAttackerEntry?.card.cardId === SCYTHE_CARD_ID) {
+                // Opponent-targeting items (scythe, energy-burn) → red targeting border on all
+                // visible opponent units (no master).
+                const pickedCardId = selectedAttackerEntry?.card.cardId;
+                if (pickedCardId != null && OPPONENT_TARGETING_ITEM_IDS.includes(pickedCardId)) {
                     for (const oe of opponentEntries) {
                         if (oe.group.visible) {
                             enemyNeonEffect.attach(oe.cardIndex, oe.group);
@@ -841,14 +951,19 @@ async function main(container: HTMLElement): Promise<void> {
                 const kind = droppedEntry.card.cardKind;
                 const cardId = droppedEntry.card.cardId;
 
-                // ITEM: scythe consumes + hits opponent. Drop-location uses the card's visual
-                // center (group.position) rather than the cursor — feels more natural.
+                // ITEM: scythe / energy-burn consume + hit opponent. Drop-location uses the
+                // card's visual center (group.position) rather than the cursor — feels more natural.
                 if (kind === CardKind.ITEM) {
                     const dropCx = group.position.x;
                     const dropCy = group.position.y;
-                    const target = cardId === SCYTHE_CARD_ID ? hitOpponentAt(dropCx, dropCy) : null;
+                    const isTargeting = OPPONENT_TARGETING_ITEM_IDS.includes(cardId);
+                    const target = isTargeting ? hitOpponentAt(dropCx, dropCy) : null;
                     if (target) {
-                        applyScytheEffect(target);
+                        if (cardId === SCYTHE_CARD_ID) {
+                            applyScytheEffect(target);
+                        } else if (cardId === ENERGY_BURN_CARD_ID) {
+                            applyEnergyBurnEffect(target);
+                        }
                         consumeHandCard(droppedEntry, handIndex);
                     }
                     neonEffect.detachAll();

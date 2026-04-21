@@ -64,7 +64,9 @@ export class HandCardRendererV2 {
                 energySlot.offsetYRatio * cardHeight,
             );
             const textScale = frame.cardWidthRatio * 0.2 * window.innerWidth;
-            group.add(this.createEnergyTextMesh(entity.energyCount, energyPos, textScale));
+            const textMesh = this.createEnergyTextMesh(entity.energyCount, energyPos, textScale);
+            textMesh.userData.slotType = 'energyText';
+            group.add(textMesh);
         }
 
         const userData: HandCardUserData = {
@@ -100,6 +102,54 @@ export class HandCardRendererV2 {
             }
         });
         group.clear();
+    }
+
+    // Updates the attached-energy display on an already-built card Group IN PLACE:
+    // disposes the existing energy icon + text mesh (if any) and, when newCount > 0,
+    // adds fresh ones using the same positioning math as build().
+    public updateEnergyCount(group: THREE.Group, newCount: number, frame: HandCardFrame): void {
+        const ud = group.userData as HandCardUserData;
+        const cardWidth = ud.baseCardWidth;
+        const cardHeight = ud.baseCardHeight;
+
+        const toRemove: THREE.Object3D[] = [];
+        for (const child of group.children) {
+            const slotType = (child.userData as { slotType?: string }).slotType;
+            if (slotType === 'energy' || slotType === 'energyText') {
+                toRemove.push(child);
+            }
+        }
+        for (const child of toRemove) {
+            group.remove(child);
+            if (child instanceof THREE.Mesh) {
+                child.geometry?.dispose();
+                const material = child.material;
+                if (Array.isArray(material)) material.forEach((m) => m.dispose());
+                else material?.dispose();
+            }
+        }
+
+        if (newCount <= 0) return;
+
+        const energySlot = frame.slots.energy;
+        const slotWidth = energySlot.widthRatio * cardWidth;
+        const slotHeight = slotWidth * energySlot.aspect;
+        const position = new Vector2d(
+            energySlot.offsetXRatio * cardWidth,
+            energySlot.offsetYRatio * cardHeight,
+        );
+        // Icon — loaded asynchronously; added on completion. Callers don't await because the
+        // rest of the turn flow doesn't depend on the icon being visible immediately.
+        void this.loadTexture(RESOURCE_PATHS.energy()).then((texture) => {
+            const iconMesh = this.createMesh(texture, slotWidth, slotHeight, position, energySlot.renderOrder);
+            iconMesh.userData.slotType = 'energy';
+            group.add(iconMesh);
+        });
+
+        const textScale = frame.cardWidthRatio * 0.2 * window.innerWidth;
+        const textMesh = this.createEnergyTextMesh(newCount, position, textScale);
+        textMesh.userData.slotType = 'energyText';
+        group.add(textMesh);
     }
 
     private resolveSlotBuilds(entity: HandCard, frame: HandCardFrame): SlotBuild[] {
@@ -152,13 +202,27 @@ export class HandCardRendererV2 {
         ctx.fillText(value.toString(), canvas.width / 2, yOffset);
 
         const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.magFilter = THREE.LinearFilter;
+        texture.minFilter = THREE.LinearFilter;
+        texture.generateMipmaps = false;
         texture.needsUpdate = true;
 
-        const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+        // alphaTest + depthWrite:false kill the square-box halo behind the glyph — without
+        // alphaTest the faintly-shaded filtered pixels around the text leave a visible rect.
+        const material = new THREE.MeshBasicMaterial({
+            map: texture,
+            transparent: true,
+            alphaTest: 0.01,
+            depthWrite: false,
+        });
         const geometry = new THREE.PlaneGeometry(1, 1);
         const mesh = new THREE.Mesh(geometry, material);
         mesh.position.set(position.getX(), position.getY(), 0.01);
         mesh.scale.set(baseScale, baseScale, 1);
+        // MUST draw after the card body (renderOrder=1) and the energy icon (renderOrder=2).
+        // With depthWrite:false the text no longer relies on depth-buffer occlusion to stay on top.
+        mesh.renderOrder = 3;
         return mesh;
     }
 
