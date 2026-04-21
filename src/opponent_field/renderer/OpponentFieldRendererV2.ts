@@ -85,4 +85,8 @@ export class OpponentFieldRendererV2 {
         }
         opponentGroup.clear();
     }
+
+    public getCardRenderer(): HandCardRendererV2 {
+        return this.cardRenderer;
+    }
 }
