@@ -1576,6 +1576,49 @@ async function main(container: HTMLElement): Promise<void> {
     const turnElement = await turnRenderer.build(turnFrame);
     document.body.appendChild(turnElement);
 
+    // ── 'f' key: opponent → your turn. Each full opponent→your cycle counts as one turn,
+    // so we (a) increment TURN, (b) bump the main FIELD ENERGY by 1, (c) restart the 60 s
+    // hourglass, and (d) DRAW one card from your deck into your hand (standard turn-start
+    // draw). No-op if it's already your turn (idempotent).
+    let currentTurn = 1;  // matches TurnHudRendererV2's initial
+    document.addEventListener('keydown', async (e: KeyboardEvent) => {
+        if (e.key !== 'f' && e.key !== 'F') return;
+        if (turnStateRepo.getOwner() !== 'opponent') {
+            console.log(`[turn-state] 'f' ignored — already your turn`);
+            return;
+        }
+        turnStateRepo.setOwner('your');
+
+        currentTurn += 1;
+        turnRenderer.setTurn(currentTurn);
+        turnRenderer.update(turnFrame, turnElement, window.innerWidth, window.innerHeight);
+
+        // Field Energy total (the big number, 19 → 20 → …), tracked by `availableEnergy`.
+        // NOT the small `fieldEnergyChargeCount` above the Race marker — that one is a
+        // per-card charge selector driven by prev/next hover zones.
+        availableEnergy += 1;
+        energyRenderer.setEnergy(availableEnergy);
+        energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
+
+        timerRenderer.reset(timerElement);
+
+        // Turn-start deck draw — mirrors the 'd'-key handler but runs automatically.
+        const drawnId = deckRepo.drawCard();
+        if (drawnId != null) {
+            const resolved = resolveCards([drawnId], 'turn-start-draw');
+            if (resolved.length > 0) {
+                const newEntry = await handRenderer.appendCard(handGroup, resolved[0], handCardFrame);
+                handOrder.push(newEntry);
+                reflowHandAndPlaced();
+                console.log(`[deck] turn-start drew cardId=${drawnId}. Remaining: ${deckRepo.getRemainingCount()}`);
+            }
+        } else {
+            console.log(`[deck] empty — no turn-start draw`);
+        }
+
+        console.log(`[turn-state] opponent → your · TURN ${currentTurn} · field energy ${availableEnergy}`);
+    });
+
     window.addEventListener('resize', () => {
         const width = window.innerWidth;
         const height = window.innerHeight;
