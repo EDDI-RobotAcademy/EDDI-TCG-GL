@@ -162,6 +162,24 @@ async function main(container: HTMLElement): Promise<void> {
     const opponentFieldAreaGroup = await opponentFieldAreaRenderer.build(opponentFieldAreaFrame);
     scene.add(opponentFieldAreaGroup);
 
+    // Dedicated host group for attaching a NEON BORDER to the whole opponent field area
+    // (used by 파멸의 계약's pickup highlight). OpponentFieldAreaRendererV2 positions its mesh
+    // INSIDE its group (group stays at origin, mesh at xPercent*vw, yPercent*vh), and its
+    // userData keys are `baseWidth/baseHeight` while NeonBorderEffect expects
+    // `baseCardWidth/baseCardHeight`. A wrapper host placed at the mesh's world position
+    // with the right userData keys lets NeonBorderEffect size + anchor its glow correctly.
+    const opponentFieldNeonHost = new THREE.Group();
+    opponentFieldNeonHost.position.set(
+        opponentFieldAreaFrame.xPercent * window.innerWidth,
+        opponentFieldAreaFrame.yPercent * window.innerHeight,
+        0,
+    );
+    opponentFieldNeonHost.userData = {
+        baseCardWidth:  opponentFieldAreaFrame.widthPercent  * window.innerWidth,
+        baseCardHeight: opponentFieldAreaFrame.heightPercent * window.innerHeight,
+    };
+    scene.add(opponentFieldNeonHost);
+
     // Opponent master (본체) — legacy OPPONENT_MASETER area coordinates
     const masterX1 = (0.4605885 - 0.5) * window.innerWidth;
     const masterY1 = (0.5 - 0.1920103) * window.innerHeight;
@@ -191,7 +209,8 @@ async function main(container: HTMLElement): Promise<void> {
     // Initial hand — 6 cards drawn from the 40-card deck spec. Mix of UNIT/SUPPORT/ENERGY/ITEM.
     // Default repo seed already contains (2, 19, 93, 26); add 27 + Energy Burn (9) for testing.
     handMapRepo.addBattleFieldHand(27);
-    handMapRepo.addBattleFieldHand(9);  // 에너지 번 (ITEM) — drains up to 2 energy off opponent units
+    handMapRepo.addBattleFieldHand(9);   // 에너지 번 (ITEM) — drains up to 2 energy off opponent units
+    handMapRepo.addBattleFieldHand(25);  // 파멸의 계약 (ITEM) — 15 AoE dmg + deck-to-lost-zone
     const handCardIds = handMapRepo.getBattleFieldHandList();
     const hand = resolveCards(handCardIds, 'hand');
 
@@ -991,6 +1010,14 @@ async function main(container: HTMLElement): Promise<void> {
     // Card IDs that target opponent units when picked up (red neon on all visible opponents).
     const OPPONENT_TARGETING_ITEM_IDS: readonly number[] = [SCYTHE_CARD_ID, ENERGY_BURN_CARD_ID];
 
+    // 파멸의 계약 (Contract of Doom, cardId 25) — ITEM that targets the OPPONENT FIELD
+    // AS A WHOLE (neon border on the field area rectangle, not individual units). On drop
+    // it deals 15 dmg to every alive opponent unit + the opponent master body, and moves
+    // 1 card from the player's deck into the lost zone. No visual effect this step.
+    const DOOM_CONTRACT_CARD_ID = 25;
+    const DOOM_CONTRACT_DAMAGE = 15;
+    const FIELD_NEON_ENTITY_ID = -1;  // sentinel — distinct from any card.cardIndex
+
     type OpponentEntry = typeof opponentEntries[number];
 
     const hitOpponentAt = (x: number, y: number): OpponentEntry | null => {
@@ -1126,6 +1153,42 @@ async function main(container: HTMLElement): Promise<void> {
         handRenderer.getCardRenderer().dispose(entry.group);
     };
 
+    // 파멸의 계약 — pure mechanics this step, NO effects/animations:
+    //   1) 15 dmg to every alive opponent unit (HP state + death reflow)
+    //   2) 15 dmg to the opponent master body
+    //   3) Draw 1 card from YOUR deck → push to YOUR lost zone (visual state only,
+    //      no draw animation)
+    const applyDoomContractEffect = (): void => {
+        console.log(`[doom-contract] AoE ${DOOM_CONTRACT_DAMAGE} dmg to all opponent units + master; deck → lost zone`);
+
+        // (1) Units. Iterate a COPY of opponentAliveOrder since we splice on kill.
+        for (const idx of [...opponentAliveOrder]) {
+            const currentHp = opponentHpState.get(idx) ?? 0;
+            const newHp = Math.max(0, currentHp - DOOM_CONTRACT_DAMAGE);
+            opponentHpState.set(idx, newHp);
+            console.log(`  opponent idx=${idx} HP: ${currentHp} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
+            if (newHp <= 0) {
+                const aliveIdx = opponentAliveOrder.indexOf(idx);
+                if (aliveIdx >= 0) opponentAliveOrder.splice(aliveIdx, 1);
+            }
+        }
+        reflowOpponentField();
+
+        // (2) Master.
+        const masterBefore = opponentMasterHp;
+        opponentMasterHp = Math.max(0, opponentMasterHp - DOOM_CONTRACT_DAMAGE);
+        console.log(`  opponent master HP: ${masterBefore} → ${opponentMasterHp}`);
+
+        // (3) Deck → lost zone. drawCard() shifts the top cardId; if empty, skip silently.
+        const drawn = YourDeckRepositoryImpl.getInstance().drawCard();
+        if (drawn != null) {
+            YourLostZoneRepositoryImpl.getInstance().addCard(drawn);
+            console.log(`  deck → lost zone: cardId ${drawn} (deck remaining: ${YourDeckRepositoryImpl.getInstance().getRemainingCount()})`);
+        } else {
+            console.log(`  deck empty — nothing to send to lost zone`);
+        }
+    };
+
     // Pilot C — click / drag / drop
     const bridge = new HandInteractionBridge(
         rendererManager.getDomElement(),
@@ -1150,6 +1213,13 @@ async function main(container: HTMLElement): Promise<void> {
                             enemyNeonEffect.attach(oe.cardIndex, oe.group);
                         }
                     }
+                }
+
+                // 파멸의 계약 → red targeting border on the opponent FIELD AREA AS A WHOLE
+                // (not individual units). Uses a dedicated wrapper host with the right
+                // userData keys so NeonBorderEffect sizes the glow to the field rectangle.
+                if (pickedCardId === DOOM_CONTRACT_CARD_ID) {
+                    enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, opponentFieldNeonHost);
                 }
             },
             onDrop: (_entityId, group, worldX, worldY) => {
@@ -1183,6 +1253,10 @@ async function main(container: HTMLElement): Promise<void> {
                         } else if (cardId === ENERGY_BURN_CARD_ID) {
                             applyEnergyBurnEffect(target);
                         }
+                        consumeHandCard(droppedEntry, handIndex);
+                    } else if (cardId === DOOM_CONTRACT_CARD_ID) {
+                        // AoE + deck drain — no target check (activates anywhere it's dropped).
+                        applyDoomContractEffect();
                         consumeHandCard(droppedEntry, handIndex);
                     }
                     neonEffect.detachAll();
