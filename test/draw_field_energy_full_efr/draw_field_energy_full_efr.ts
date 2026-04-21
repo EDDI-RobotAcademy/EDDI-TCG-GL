@@ -63,6 +63,18 @@ import { AttackAnimationV2 } from "../../src/general_attack/animation/AttackAnim
 import { ScytheCutEffect } from "../../src/animation/scythe/ScytheCutEffect";
 import { EnergyBurnEffect } from "../../src/animation/energy_burn/EnergyBurnEffect";
 
+import { YourLostZoneRepositoryImpl } from "../../src/your_lost_zone/repository/YourLostZoneRepositoryImpl";
+import {
+    createDefaultYourLostZonePanelFrame,
+    computeYourLostZonePanelBounds,
+} from "../../src/your_lost_zone/frame/YourLostZonePanelFrame";
+import {
+    createDefaultYourLostZonePopupFrame,
+    computeYourLostZonePopupBounds,
+} from "../../src/your_lost_zone/frame/YourLostZonePopupFrame";
+import { YourLostZonePanelRendererV2 } from "../../src/your_lost_zone/renderer/YourLostZonePanelRendererV2";
+import { YourLostZonePopupRendererV2 } from "../../src/your_lost_zone/renderer/YourLostZonePopupRendererV2";
+
 import { createDefaultGuideMessageHudFrame } from "../../src/common/guide_message/frame/GuideMessageHudFrame";
 
 declare const TWEEN: { Tween: any; Easing: any; update: (time?: number) => void };
@@ -259,6 +271,58 @@ async function main(container: HTMLElement): Promise<void> {
     const opponentGroup = await opponentRenderer.build(opponentCards, handCardFrame, opponentLayoutFrame);
     scene.add(opponentGroup);
 
+    // ── Your Lost Zone — clickable panel at bottom-left + modal popup of ally cards.
+    const lostZoneRepo = YourLostZoneRepositoryImpl.getInstance();
+    // Seed with 12 test cards — exactly two full rows at 6 columns. Exercises horizontal
+    // spacing (vs. hand layout) AND vertical row spacing / aspect ratio of the popup grid.
+    for (const id of [31, 32, 26, 27, 93, 19, 2, 8, 9, 20, 25, 33]) lostZoneRepo.addCard(id);
+
+    const lostZonePanelFrame = createDefaultYourLostZonePanelFrame();
+    const lostZonePopupFrame = createDefaultYourLostZonePopupFrame();
+    const lostZonePanelRenderer = new YourLostZonePanelRendererV2();
+    const lostZonePopupRenderer = new YourLostZonePopupRendererV2();
+    const lostZonePanelGroup = await lostZonePanelRenderer.build(lostZonePanelFrame);
+    scene.add(lostZonePanelGroup);
+
+    // Popup is built on demand when panel is clicked; null when hidden.
+    let lostZonePopupGroup: THREE.Group | null = null;
+    let lostZonePage = 0;
+    const lostZoneCardsPerPage = lostZonePopupFrame.cardColumns * lostZonePopupFrame.rowsPerPage;
+
+    const buildLostZonePopupForCurrentPage = async (): Promise<THREE.Group> => {
+        const all = [...lostZoneRepo.getCards()];
+        const start = lostZonePage * lostZoneCardsPerPage;
+        const slice = all.slice(start, start + lostZoneCardsPerPage);
+        const resolved = resolveCards(slice, 'lost-zone');
+        return lostZonePopupRenderer.build(lostZonePopupFrame, resolved);
+    };
+
+    const openLostZonePopup = async (): Promise<void> => {
+        if (lostZonePopupGroup) return;
+        lostZonePopupGroup = await buildLostZonePopupForCurrentPage();
+        scene.add(lostZonePopupGroup);
+    };
+
+    const closeLostZonePopup = (): void => {
+        if (!lostZonePopupGroup) return;
+        scene.remove(lostZonePopupGroup);
+        lostZonePopupRenderer.dispose(lostZonePopupGroup);
+        lostZonePopupGroup = null;
+        // Reset to first page when closing so the next open starts fresh.
+        lostZonePage = 0;
+    };
+
+    const reloadLostZonePopup = async (): Promise<void> => {
+        if (!lostZonePopupGroup) return;
+        scene.remove(lostZonePopupGroup);
+        lostZonePopupRenderer.dispose(lostZonePopupGroup);
+        lostZonePopupGroup = await buildLostZonePopupForCurrentPage();
+        scene.add(lostZonePopupGroup);
+    };
+
+    const lostZoneTotalPages = (): number =>
+        Math.max(1, Math.ceil(lostZoneRepo.getCards().length / lostZoneCardsPerPage));
+
     // Opponent HP state + alive order for reflow on death
     const opponentHpState = new Map<number, number>();
     const opponentEnergyState = new Map<number, number>();
@@ -352,6 +416,65 @@ async function main(container: HTMLElement): Promise<void> {
             -(e.clientY / window.innerHeight) * 2 + 1,
         );
     }
+
+    // Lost-Zone click — registered in CAPTURE phase so when the popup is open we can
+    // consume the click before hand/opponent/page handlers run. Screen → world coords:
+    //   world_x = clientX - width/2     (OrthographicCamera centered at 0, width full-span)
+    //   world_y = height/2 - clientY    (y flipped: screen y grows down, world y grows up)
+    rendererManager.getDomElement().addEventListener('mousedown', (e: MouseEvent) => {
+        if (e.button !== 0) return;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const worldX = e.clientX - w / 2;
+        const worldY = h / 2 - e.clientY;
+
+        const panelBounds = computeYourLostZonePanelBounds(lostZonePanelFrame, w, h);
+        const onPanel =
+            worldX >= panelBounds.minX && worldX <= panelBounds.maxX &&
+            worldY >= panelBounds.minY && worldY <= panelBounds.maxY;
+
+        if (onPanel) {
+            // Toggle — and consume the event so the hand/page handlers don't also react.
+            e.stopImmediatePropagation();
+            if (lostZonePopupGroup) closeLostZonePopup();
+            else void openLostZonePopup();
+            return;
+        }
+
+        // Popup is open → consume all clicks while modal is up so underlying cards can't be
+        // picked up. Inside the popup: check prev/next buttons first, then swallow. Outside:
+        // close the popup.
+        if (lostZonePopupGroup) {
+            e.stopImmediatePropagation();
+
+            // Raycast popup children for prev/next buttons (descend into nested groups).
+            sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
+            const hits = sharedRaycaster.intersectObjects(lostZonePopupGroup.children, true);
+            for (const hit of hits) {
+                const bt = hit.object.userData.buttonType;
+                if (bt === 'prev') {
+                    if (lostZonePage > 0) {
+                        lostZonePage--;
+                        void reloadLostZonePopup();
+                    }
+                    return;
+                }
+                if (bt === 'next') {
+                    if (lostZonePage < lostZoneTotalPages() - 1) {
+                        lostZonePage++;
+                        void reloadLostZonePopup();
+                    }
+                    return;
+                }
+            }
+
+            const popupBounds = computeYourLostZonePopupBounds(lostZonePopupFrame, w, h);
+            const onPopup =
+                worldX >= popupBounds.minX && worldX <= popupBounds.maxX &&
+                worldY >= popupBounds.minY && worldY <= popupBounds.maxY;
+            if (!onPopup) closeLostZonePopup();
+        }
+    }, true);
 
     // Page button click
     rendererManager.getDomElement().addEventListener('mousedown', (e: MouseEvent) => {
