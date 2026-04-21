@@ -61,6 +61,7 @@ import { createDefaultActivePanelFrame, ActivePanelButtonSpec } from "../../src/
 import { ActivePanelRendererV2 } from "../../src/active_panel_area/renderer/ActivePanelRendererV2";
 import { AttackAnimationV2 } from "../../src/general_attack/animation/AttackAnimationV2";
 import { ScytheCutEffect } from "../../src/animation/scythe/ScytheCutEffect";
+import { EnergyBurnEffect } from "../../src/animation/energy_burn/EnergyBurnEffect";
 
 import { createDefaultGuideMessageHudFrame } from "../../src/common/guide_message/frame/GuideMessageHudFrame";
 
@@ -334,6 +335,7 @@ async function main(container: HTMLElement): Promise<void> {
     const animationLoop = new AnimationLoop(rendererManager, sceneManager, cameraManager);
     const attackAnimation = new AttackAnimationV2(scene);
     const scytheCutEffect = new ScytheCutEffect(scene);
+    const energyBurnEffect = new EnergyBurnEffect(scene);
 
     animationLoop.setCustomUpdate(() => {
         if (typeof TWEEN !== 'undefined') TWEEN.update();
@@ -817,12 +819,15 @@ async function main(container: HTMLElement): Promise<void> {
     // Mirrors the AoE-skill damage block above but kept self-contained here.
     const flashAndShakeTarget = (group: THREE.Group): void => {
         group.traverse((child) => {
-            if (child instanceof THREE.Mesh && child.material && !child.userData.__neonBorderLine) {
-                const mat = child.material as THREE.MeshBasicMaterial;
-                const origColor = mat.color.clone();
-                mat.color.set(0xff4444);
-                setTimeout(() => { mat.color.copy(origColor); }, 200);
-            }
+            if (!(child instanceof THREE.Mesh) || !child.material) return;
+            if (child.userData.__neonBorderLine) return;
+            if (child.userData.__energyBurnSurfaceFlame) return;
+            // ShaderMaterial (e.g., burn/flame overlays) has no `.color` — skip silently.
+            const mat = child.material as THREE.MeshBasicMaterial;
+            if (!mat.color) return;
+            const origColor = mat.color.clone();
+            mat.color.set(0xff4444);
+            setTimeout(() => { mat.color.copy(origColor); }, 200);
         });
         const shakeOrigX = group.position.x;
         const shakeOrigY = group.position.y;
@@ -843,7 +848,7 @@ async function main(container: HTMLElement): Promise<void> {
         }, 30);
     };
 
-    const applyEnergyBurnEffect = (target: OpponentEntry): void => {
+    const applyEnergyBurnEffect = async (target: OpponentEntry): Promise<void> => {
         const targetIdx = target.cardIndex;
         const currentEnergy = opponentEnergyState.get(targetIdx) ?? 0;
         const energyDrained = Math.min(2, currentEnergy);
@@ -853,24 +858,46 @@ async function main(container: HTMLElement): Promise<void> {
         const newEnergy = currentEnergy - energyDrained;
         opponentEnergyState.set(targetIdx, newEnergy);
 
-        // Visual energy-count update on the opponent card group.
-        opponentRenderer.getCardRenderer().updateEnergyCount(target.group, newEnergy, handCardFrame);
-
-        console.log(`[energy-burn] target cardId=${target.card.cardId} energy: ${currentEnergy} → ${newEnergy} (drained ${energyDrained}) damage=${damage}`);
-
+        let newHp = 0;
+        let killing = false;
         if (damage > 0) {
             const currentHp = opponentHpState.get(targetIdx) ?? 0;
-            const newHp = Math.max(0, currentHp - damage);
+            newHp = Math.max(0, currentHp - damage);
             opponentHpState.set(targetIdx, newHp);
-            flashAndShakeTarget(target.group);
-            console.log(`  HP: ${currentHp} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
-            if (newHp <= 0) {
-                setTimeout(() => {
-                    const aliveIdx = opponentAliveOrder.indexOf(targetIdx);
-                    if (aliveIdx >= 0) opponentAliveOrder.splice(aliveIdx, 1);
-                    reflowOpponentField();
-                }, 450);
-            }
+            killing = newHp <= 0;
+            console.log(`[energy-burn] target cardId=${target.card.cardId} energy: ${currentEnergy} → ${newEnergy} (drained ${energyDrained}) damage=${damage} HP → ${newHp}${killing ? ' (defeated — card burns away)' : ''}`);
+        } else {
+            console.log(`[energy-burn] target cardId=${target.card.cardId} energy: ${currentEnergy} → ${newEnergy} (drained ${energyDrained}) no damage`);
+        }
+
+        // Play the effect (passes killing so the card dissolves inside the flame) + damage
+        // feedback in parallel. The icon refreshes ~1s in AFTER motes visually consume, but
+        // ONLY on survive — a killing hit dissolves the whole card, so updating its energy
+        // icon mid-burn is wasted (and would flash the text back on while the card fades).
+        await Promise.all([
+            energyBurnEffect.play(target.group, energyDrained, killing),
+            (async () => {
+                if (damage > 0) {
+                    await new Promise((r) => setTimeout(r, 500));
+                    flashAndShakeTarget(target.group);
+                }
+            })(),
+            (async () => {
+                if (killing) return;
+                if (energyDrained <= 0) return;  // no drain → icons unchanged
+                // Let the mote-burn shader visuals get well underway before the icons on the
+                // card start to burn — ties the on-card drain visually to the mote burning.
+                await new Promise((r) => setTimeout(r, 600));
+                await energyBurnEffect.playEnergyIconBurnAway(target.group);
+                // After burn, redraw with the new (reduced) count — shows any remaining energy.
+                opponentRenderer.getCardRenderer().updateEnergyCount(target.group, newEnergy, handCardFrame);
+            })(),
+        ]);
+
+        if (killing) {
+            const aliveIdx = opponentAliveOrder.indexOf(targetIdx);
+            if (aliveIdx >= 0) opponentAliveOrder.splice(aliveIdx, 1);
+            reflowOpponentField();
         }
     };
 
