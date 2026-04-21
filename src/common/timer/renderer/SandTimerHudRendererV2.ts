@@ -14,6 +14,8 @@ interface BuildResult {
     readonly canvas: HTMLCanvasElement;
     readonly ctx: CanvasRenderingContext2D;
     readonly timeDisplay: HTMLDivElement;
+    // Stored so reset() can restart the rAF loop without the caller re-passing the frame.
+    frame: SandTimerHudFrame;
     elapsed: number;
     lastTime: number;
     grains: Grain[];
@@ -67,6 +69,7 @@ export class SandTimerHudRendererV2 implements DomFrameRenderer<SandTimerHudFram
             canvas,
             ctx,
             timeDisplay,
+            frame,
             elapsed: 0,
             lastTime: performance.now(),
             grains: [],
@@ -89,6 +92,21 @@ export class SandTimerHudRendererV2 implements DomFrameRenderer<SandTimerHudFram
         const build = (element as HTMLElement & { __buildResult?: BuildResult }).__buildResult;
         if (!build) return;
         this.applyViewportStyling(frame, build, viewportWidth, viewportHeight);
+    }
+
+    // Restart the timer from 0 with a fresh rAF loop. Safe to call any time — if the timer
+    // had already run out (rafHandle null), we re-start the loop; if it's still running we
+    // just rewind elapsed and let the existing loop pick up the new time.
+    public reset(element: HTMLElement): void {
+        const build = (element as HTMLElement & { __buildResult?: BuildResult }).__buildResult;
+        if (!build) return;
+        build.elapsed = 0;
+        build.lastTime = performance.now();
+        build.grains.length = 0;
+        if (build.rafHandle === null) {
+            this.startLoop(build.frame, build);
+        }
+        this.draw(build.frame, build);  // immediate repaint so the "60" flashes on screen now
     }
 
     public dispose(element: HTMLElement): void {

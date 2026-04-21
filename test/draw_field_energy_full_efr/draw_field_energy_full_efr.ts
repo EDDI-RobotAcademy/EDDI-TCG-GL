@@ -83,6 +83,14 @@ import {
 import { createDefaultOpponentLostZonePopupFrame } from "../../src/opponent_lost_zone/frame/OpponentLostZonePopupFrame";
 import { OpponentLostZonePanelRendererV2 } from "../../src/opponent_lost_zone/renderer/OpponentLostZonePanelRendererV2";
 import { OpponentLostZoneRepositoryImpl } from "../../src/opponent_lost_zone/repository/OpponentLostZoneRepositoryImpl";
+import { OpponentDeckRepositoryImpl } from "../../src/opponent_deck/repository/OpponentDeckRepositoryImpl";
+
+import {
+    createDefaultTurnEndButtonFrame,
+    isPointInsideTurnEndButton,
+} from "../../src/turn_end_button/frame/TurnEndButtonFrame";
+import { TurnEndButtonRendererV2 } from "../../src/turn_end_button/renderer/TurnEndButtonRendererV2";
+import { TurnStateRepositoryImpl } from "../../src/turn_state/repository/TurnStateRepositoryImpl";
 
 import { createDefaultGuideMessageHudFrame } from "../../src/common/guide_message/frame/GuideMessageHudFrame";
 
@@ -326,6 +334,44 @@ async function main(container: HTMLElement): Promise<void> {
     // Seed opponent repo with 12 test cards so pagination (2 pages at 10/page) is exercised.
     for (const id of [31, 32, 26, 27, 93, 19, 2, 8, 9, 20, 25, 33]) opponentLostZoneRepo.addCard(id);
 
+    // ── Turn-end button — right-side click zone that hands control to the opponent.
+    const turnEndButtonFrame = createDefaultTurnEndButtonFrame();
+    const turnEndButtonRenderer = new TurnEndButtonRendererV2();
+    const turnEndButtonGroup = await turnEndButtonRenderer.build(turnEndButtonFrame);
+    scene.add(turnEndButtonGroup);
+    const turnStateRepo = TurnStateRepositoryImpl.getInstance();
+
+    // Hover → show the red blinking neon border around the hex. Cheap per-mousemove
+    // point-in-hex test + a uniform flip on the shader material.
+    let turnEndButtonHovered = false;
+    rendererManager.getDomElement().addEventListener('mousemove', (e: MouseEvent) => {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const worldX = e.clientX - w / 2;
+        const worldY = h / 2 - e.clientY;
+        const nowHover = isPointInsideTurnEndButton(worldX, worldY, turnEndButtonFrame, w, h);
+        if (nowHover !== turnEndButtonHovered) {
+            turnEndButtonHovered = nowHover;
+            turnEndButtonRenderer.setHover(turnEndButtonGroup, nowHover);
+        }
+    });
+    // Also clear hover when the cursor leaves the canvas entirely.
+    rendererManager.getDomElement().addEventListener('mouseleave', () => {
+        if (turnEndButtonHovered) {
+            turnEndButtonHovered = false;
+            turnEndButtonRenderer.setHover(turnEndButtonGroup, false);
+        }
+    });
+
+    // ── OPPONENT DECK — PILOT-ONLY DUMMY SEED ──
+    // OpponentDeckRepositoryImpl starts empty. In production, a network handler will seed
+    // it with the server-provided deck snapshot — the server is the authority on opponent
+    // deck contents. Because the dummy seed lives HERE (in the pilot) rather than inside
+    // the repository itself, it never leaks into production callers that reuse the repo.
+    OpponentDeckRepositoryImpl.getInstance().seed([
+        31, 32, 33, 35, 36, 26, 27, 25, 30, 20, 2, 8, 9, 93, 151,
+    ]);
+
     let opponentLostZonePopupGroup: THREE.Group | null = null;
     let opponentLostZonePage = 0;
     const opponentLostZoneCardsPerPage =
@@ -498,6 +544,7 @@ async function main(container: HTMLElement): Promise<void> {
         if (typeof TWEEN !== 'undefined') TWEEN.update();
         neonEffect.updateAnimation();
         enemyNeonEffect.updateAnimation();
+        turnEndButtonRenderer.updateAnimation(turnEndButtonGroup, turnEndButtonFrame);
     });
     animationLoop.start();
 
@@ -520,6 +567,23 @@ async function main(container: HTMLElement): Promise<void> {
         const h = window.innerHeight;
         const worldX = e.clientX - w / 2;
         const worldY = h / 2 - e.clientY;
+
+        // ── 0) Turn-end button (hexagon) ───────────────────────────────────────────
+        // Only active while NO popup is open (popup checks below handle their own consume).
+        // Only effective while it's YOUR turn — idempotent otherwise. Hit-test is a true
+        // point-in-hexagon check, not a bounding rect — clicks just outside the hex corners
+        // don't register. On a real transfer, the 60-second hourglass restarts from the top
+        // so the new turn owner (the opponent) gets a fresh budget.
+        if (!lostZonePopupGroup && !opponentLostZonePopupGroup) {
+            if (isPointInsideTurnEndButton(worldX, worldY, turnEndButtonFrame, w, h)) {
+                e.stopImmediatePropagation();
+                if (turnStateRepo.getOwner() === 'your') {
+                    turnStateRepo.setOwner('opponent');
+                    timerRenderer.reset(timerElement);
+                }
+                return;
+            }
+        }
 
         // ── 1) Your Lost Zone panel ────────────────────────────────────────────────
         const yourPanelBounds = computeYourLostZonePanelBounds(lostZonePanelFrame, w, h);
@@ -1166,11 +1230,13 @@ async function main(container: HTMLElement): Promise<void> {
     // 파멸의 계약:
     //   1) 15 dmg to every alive opponent unit (HP state + death reflow)
     //   2) 15 dmg to the opponent master body
-    //   3) Draw 1 card from YOUR deck → push to YOUR lost zone
+    //   3) Draw 1 card from the OPPONENT's deck → push to the OPPONENT's lost zone.
+    //      (Not Your deck. In production this source will be the server-driven opponent
+    //      deck snapshot; see OpponentDeckRepositoryImpl's comment.)
     // State mutations are timed to the effect's BOOM phase (~1400ms in) so the numbers
     // change on-screen the same beat the grimoire explodes.
     const applyStateChangesForDoomContract = (): void => {
-        console.log(`[doom-contract] AoE ${DOOM_CONTRACT_DAMAGE} dmg to all opponent units + master; deck → lost zone`);
+        console.log(`[doom-contract] AoE ${DOOM_CONTRACT_DAMAGE} dmg to all opponent units + master; opponent deck → opponent lost zone`);
 
         for (const idx of [...opponentAliveOrder]) {
             const currentHp = opponentHpState.get(idx) ?? 0;
@@ -1188,12 +1254,13 @@ async function main(container: HTMLElement): Promise<void> {
         opponentMasterHp = Math.max(0, opponentMasterHp - DOOM_CONTRACT_DAMAGE);
         console.log(`  opponent master HP: ${masterBefore} → ${opponentMasterHp}`);
 
-        const drawn = YourDeckRepositoryImpl.getInstance().drawCard();
+        const oppDeck = OpponentDeckRepositoryImpl.getInstance();
+        const drawn = oppDeck.drawCard();
         if (drawn != null) {
-            YourLostZoneRepositoryImpl.getInstance().addCard(drawn);
-            console.log(`  deck → lost zone: cardId ${drawn} (deck remaining: ${YourDeckRepositoryImpl.getInstance().getRemainingCount()})`);
+            OpponentLostZoneRepositoryImpl.getInstance().addCard(drawn);
+            console.log(`  opponent deck → opponent lost zone: cardId ${drawn} (opp deck remaining: ${oppDeck.getRemainingCount()})`);
         } else {
-            console.log(`  deck empty — nothing to send to lost zone`);
+            console.log(`  opponent deck empty — nothing to send to lost zone`);
         }
     };
 
@@ -1213,6 +1280,10 @@ async function main(container: HTMLElement): Promise<void> {
         camera,
         scene,
         {
+            // Hand is locked during the opponent's turn — no card can leave Your Hand.
+            // Returning false cancels the pickup before any drag starts, so the card
+            // doesn't visually "lift" at all.
+            canPickup: () => turnStateRepo.getOwner() === 'your',
             onPickup: (entityId, group) => {
                 clearActivePanel();
                 group.renderOrder = 100;

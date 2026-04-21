@@ -8,6 +8,12 @@ import * as THREE from "three";
 // MouseDropServiceImpl — see project_legacy_input_services memory.
 
 export interface HandInteractionCallbacks {
+    // Gate that runs AFTER the raycaster finds an entity group, but BEFORE the bridge
+    // commits its active-pickup state. Returning false cancels the entire interaction —
+    // no onPickup / onDrag / onDrop will fire, and the card stays put. Used by the pilot
+    // to lock the hand during the opponent's turn (and any similar "not clickable right
+    // now" conditions). Default behaviour (undefined) = always allow.
+    canPickup?: (entityId: number, group: THREE.Group) => boolean;
     onPickup?: (entityId: number, group: THREE.Group) => void;
     onDrag?: (entityId: number, group: THREE.Group, worldX: number, worldY: number) => void;
     onDrop?: (entityId: number, group: THREE.Group, worldX: number, worldY: number) => void;
@@ -53,6 +59,12 @@ export class HandInteractionBridge {
 
         const pick = this.pickEntityGroup(event.clientX, event.clientY);
         if (!pick) return;
+
+        // Gate check — if the scenario vetoes this pickup (e.g. opponent's turn), bail
+        // out BEFORE setting active state so no drag or drop callbacks will fire later.
+        if (this.callbacks.canPickup && !this.callbacks.canPickup(pick.entityId, pick.group)) {
+            return;
+        }
 
         this.activeEntityId = pick.entityId;
         this.activeGroup = pick.group;
