@@ -80,6 +80,14 @@ import {
     createDefaultOpponentLostZonePanelFrame,
     computeOpponentLostZonePanelBounds,
 } from "../../src/opponent_lost_zone/frame/OpponentLostZonePanelFrame";
+
+import {
+    createDefaultYourTombPanelFrame,
+    isPointInsideYourTomb,
+} from "../../src/your_tomb/frame/YourTombPanelFrame";
+import { createDefaultYourTombPopupFrame } from "../../src/your_tomb/frame/YourTombPopupFrame";
+import { YourTombPanelRendererV2 } from "../../src/your_tomb/renderer/YourTombPanelRendererV2";
+import { YourTombRepositoryImpl } from "../../src/your_tomb/repository/YourTombRepositoryImpl";
 import { createDefaultOpponentLostZonePopupFrame } from "../../src/opponent_lost_zone/frame/OpponentLostZonePopupFrame";
 import { OpponentLostZonePanelRendererV2 } from "../../src/opponent_lost_zone/renderer/OpponentLostZonePanelRendererV2";
 import { OpponentLostZoneRepositoryImpl } from "../../src/opponent_lost_zone/repository/OpponentLostZoneRepositoryImpl";
@@ -387,8 +395,9 @@ async function main(container: HTMLElement): Promise<void> {
 
     const openOpponentLostZonePopup = async (): Promise<void> => {
         if (opponentLostZonePopupGroup) return;
-        // Modal mutex — close the player's popup first if it's open so the two don't stack.
+        // Modal mutex — close any other centred popup first so they don't stack.
         if (lostZonePopupGroup) closeLostZonePopup();
+        if (tombPopupGroup) closeTombPopup();
         opponentLostZonePopupGroup = await buildOpponentLostZonePopupForCurrentPage();
         scene.add(opponentLostZonePopupGroup);
     };
@@ -412,6 +421,59 @@ async function main(container: HTMLElement): Promise<void> {
     const opponentLostZoneTotalPages = (): number =>
         Math.max(1, Math.ceil(opponentLostZoneRepo.getCards().length / opponentLostZoneCardsPerPage));
 
+    // ── Your Tomb — gravestone-shaped panel + popup (same as Your Lost Zone). ─────────
+    const tombPanelFrame = createDefaultYourTombPanelFrame();
+    const tombPopupFrame = createDefaultYourTombPopupFrame();
+    const tombPanelRenderer = new YourTombPanelRendererV2();
+    // Reuses the generic lost-zone popup renderer — popup rendering is stateless.
+    const tombPopupRenderer = new YourLostZonePopupRendererV2();
+    const tombPanelGroup = await tombPanelRenderer.build(tombPanelFrame);
+    scene.add(tombPanelGroup);
+
+    const tombRepo = YourTombRepositoryImpl.getInstance();
+    // Pilot-only dummy seed for testing pagination; production seed will come from network.
+    for (const id of [31, 32, 33, 35, 36, 26, 27, 25, 30, 20, 2, 8]) tombRepo.addCard(id);
+
+    let tombPopupGroup: THREE.Group | null = null;
+    let tombPage = 0;
+    const tombCardsPerPage = tombPopupFrame.cardColumns * tombPopupFrame.rowsPerPage;
+
+    const buildTombPopupForCurrentPage = async (): Promise<THREE.Group> => {
+        const all = [...tombRepo.getCards()];
+        const start = tombPage * tombCardsPerPage;
+        const slice = all.slice(start, start + tombCardsPerPage);
+        const resolved = resolveCards(slice, 'tomb');
+        return tombPopupRenderer.build(tombPopupFrame, resolved);
+    };
+
+    const openTombPopup = async (): Promise<void> => {
+        if (tombPopupGroup) return;
+        // Modal mutex — close any open lost-zone popup first.
+        if (lostZonePopupGroup) closeLostZonePopup();
+        if (opponentLostZonePopupGroup) closeOpponentLostZonePopup();
+        tombPopupGroup = await buildTombPopupForCurrentPage();
+        scene.add(tombPopupGroup);
+    };
+
+    const closeTombPopup = (): void => {
+        if (!tombPopupGroup) return;
+        scene.remove(tombPopupGroup);
+        tombPopupRenderer.dispose(tombPopupGroup);
+        tombPopupGroup = null;
+        tombPage = 0;
+    };
+
+    const reloadTombPopup = async (): Promise<void> => {
+        if (!tombPopupGroup) return;
+        scene.remove(tombPopupGroup);
+        tombPopupRenderer.dispose(tombPopupGroup);
+        tombPopupGroup = await buildTombPopupForCurrentPage();
+        scene.add(tombPopupGroup);
+    };
+
+    const tombTotalPages = (): number =>
+        Math.max(1, Math.ceil(tombRepo.getCards().length / tombCardsPerPage));
+
     // Popup is built on demand when panel is clicked; null when hidden.
     let lostZonePopupGroup: THREE.Group | null = null;
     let lostZonePage = 0;
@@ -427,8 +489,9 @@ async function main(container: HTMLElement): Promise<void> {
 
     const openLostZonePopup = async (): Promise<void> => {
         if (lostZonePopupGroup) return;
-        // Modal mutex — only one lost-zone popup at a time.
+        // Modal mutex — only one centred popup at a time.
         if (opponentLostZonePopupGroup) closeOpponentLostZonePopup();
+        if (tombPopupGroup) closeTombPopup();
         lostZonePopupGroup = await buildLostZonePopupForCurrentPage();
         scene.add(lostZonePopupGroup);
     };
@@ -609,6 +672,14 @@ async function main(container: HTMLElement): Promise<void> {
             return;
         }
 
+        // ── 2b) Your Tomb panel (tombstone-shaped) ────────────────────────────────
+        if (isPointInsideYourTomb(worldX, worldY, tombPanelFrame, w, h)) {
+            e.stopImmediatePropagation();
+            if (tombPopupGroup) closeTombPopup();
+            else void openTombPopup();
+            return;
+        }
+
         // ── 3) A popup is open → consume the click, check buttons, close on outside ─
         // Only one popup can be open at a time (opens are modal-mutex'd above), so exactly
         // one of these branches runs.
@@ -662,6 +733,32 @@ async function main(container: HTMLElement): Promise<void> {
                 worldX >= popupBounds.minX && worldX <= popupBounds.maxX &&
                 worldY >= popupBounds.minY && worldY <= popupBounds.maxY;
             if (!onPopup) closeOpponentLostZonePopup();
+            return;
+        }
+
+        if (tombPopupGroup) {
+            e.stopImmediatePropagation();
+
+            sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
+            const hits = sharedRaycaster.intersectObjects(tombPopupGroup.children, true);
+            for (const hit of hits) {
+                const bt = hit.object.userData.buttonType;
+                if (bt === 'prev') {
+                    if (tombPage > 0) { tombPage--; void reloadTombPopup(); }
+                    return;
+                }
+                if (bt === 'next') {
+                    if (tombPage < tombTotalPages() - 1) { tombPage++; void reloadTombPopup(); }
+                    return;
+                }
+            }
+
+            // Tomb popup shares the lost-zone popup's world bounds (centred, same size).
+            const popupBounds = computeYourLostZonePopupBounds(tombPopupFrame, w, h);
+            const onPopup =
+                worldX >= popupBounds.minX && worldX <= popupBounds.maxX &&
+                worldY >= popupBounds.minY && worldY <= popupBounds.maxY;
+            if (!onPopup) closeTombPopup();
         }
     }, true);
 
