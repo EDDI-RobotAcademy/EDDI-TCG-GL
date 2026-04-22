@@ -67,6 +67,7 @@ import { AttackAnimationV2 } from "../../src/general_attack/animation/AttackAnim
 import { ScytheCutEffect } from "../../src/animation/scythe/ScytheCutEffect";
 import { EnergyBurnEffect } from "../../src/animation/energy_burn/EnergyBurnEffect";
 import { DoomContractEffect } from "../../src/animation/doom_contract/DoomContractEffect";
+import { MoraleConvertEffect } from "../../src/animation/morale_convert/MoraleConvertEffect";
 
 import { YourLostZoneRepositoryImpl } from "../../src/your_lost_zone/repository/YourLostZoneRepositoryImpl";
 import {
@@ -610,6 +611,7 @@ async function main(container: HTMLElement): Promise<void> {
         camera,
         animationLoop,
     );
+    const moraleConvertEffect = new MoraleConvertEffect(scene);
 
     animationLoop.setCustomUpdate(() => {
         if (typeof TWEEN !== 'undefined') TWEEN.update();
@@ -1402,23 +1404,28 @@ async function main(container: HTMLElement): Promise<void> {
         return null;
     };
 
-    // 사기 전환 — sacrifice a placed ally for field energy:
-    //   energyGain = floor(allyHP / 5) (from getCardById(targetCardId).체력)
-    //   target card → tomb repo
-    //   target mesh removed + disposed; placedOrder reflowed.
-    // 사기 전환 itself is consumed by the surrounding onDrop flow.
-    const applyMoraleConvertEffect = (target: HandEntry): void => {
+    // 사기 전환 — sacrifice a placed ally for field energy, with a death-energy transfer
+    // animation: a violet/green aura blooms where the ally was, then N motes (N = energy
+    // gain) arc along a bezier toward the Field Energy HUD. Each mote's arrival bumps the
+    // displayed energy count by 1 — so the number climbs visibly in sync with the flow.
+    //
+    // Fire-and-forget from the pilot's perspective (onDrop doesn't await it).
+    const applyMoraleConvertEffect = async (target: HandEntry): Promise<void> => {
         const card = getCardById(target.card.cardId);
         const rawHp = card?.체력;
         const hpNum = typeof rawHp === 'number' ? rawHp : parseInt(String(rawHp ?? 0), 10) || 0;
         const energyGain = Math.floor(hpNum / 5);
 
-        availableEnergy += energyGain;
-        energyRenderer.setEnergy(availableEnergy);
-        energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
+        // Capture the source world position BEFORE removing the mesh.
+        const sourceWorld = new THREE.Vector3(
+            target.group.position.x,
+            target.group.position.y,
+            5,
+        );
 
+        // Remove target mesh immediately — the aura will bloom where it was. Target goes
+        // to the tomb up front; the energy gain is deferred to mote arrivals.
         tombRepo.addCard(target.card.cardId);
-
         const placedIdx = placedOrder.indexOf(target);
         if (placedIdx >= 0) {
             placedOrder.splice(placedIdx, 1);
@@ -1427,7 +1434,29 @@ async function main(container: HTMLElement): Promise<void> {
         }
         reflowHandAndPlaced();
 
-        console.log(`[morale-convert] target cardId=${target.card.cardId} HP=${hpNum} → +${energyGain} energy (total ${availableEnergy}); target → tomb`);
+        console.log(`[morale-convert] target cardId=${target.card.cardId} HP=${hpNum} → +${energyGain} energy pending (via animation); target → tomb`);
+
+        if (energyGain <= 0) return;  // nothing to tick (HP 0-4)
+
+        // Field Energy HUD destination in world coords. The HUD is a DOM element positioned
+        // via createDefaultFieldEnergyHudFrame — bottom-right corner, NOT top-right where
+        // the sand timer lives:
+        //   leftPercent '90.4%', widthPercent '7.2%'  → x-centre ≈ 0.940 of viewport width
+        //   topPercent  '82.4%' + (~7.2% height since image is squarish) → y-centre ≈ 0.89
+        const destWorld = new THREE.Vector3(
+            (0.940 - 0.5) * window.innerWidth,
+            (0.5 - 0.89)  * window.innerHeight,
+            5,
+        );
+
+        // One mote per unit of energy gain. Arrival bumps the counter + updates the HUD.
+        await moraleConvertEffect.play(sourceWorld, destWorld, energyGain, () => {
+            availableEnergy += 1;
+            energyRenderer.setEnergy(availableEnergy);
+            energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
+        });
+
+        console.log(`[morale-convert] effect complete; total field energy = ${availableEnergy}`);
     };
 
     // Pilot C — click / drag / drop
