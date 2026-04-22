@@ -54,7 +54,11 @@ import { FieldEnergyRaceHudRendererV2 } from "../../src/common/field_energy/rend
 import { createDefaultFieldEnergyCountHudFrame } from "../../src/common/field_energy/frame/FieldEnergyCountHudFrame";
 import { FieldEnergyCountHudRendererV2 } from "../../src/common/field_energy/renderer/FieldEnergyCountHudRendererV2";
 
-import { createAllyNeonBorderFrame, createEnemyNeonBorderFrame } from "../../src/neon_border/frame/NeonBorderFrame";
+import {
+    createAllyNeonBorderFrame,
+    createEnemyNeonBorderFrame,
+    createAllyTargetingNeonBorderFrame,
+} from "../../src/neon_border/frame/NeonBorderFrame";
 import { NeonBorderEffect } from "../../src/neon_border/effect/NeonBorderEffect";
 
 import { createDefaultActivePanelFrame, ActivePanelButtonSpec } from "../../src/active_panel_area/frame/ActivePanelFrame";
@@ -228,6 +232,7 @@ async function main(container: HTMLElement): Promise<void> {
     handMapRepo.addBattleFieldHand(27);
     handMapRepo.addBattleFieldHand(9);   // 에너지 번 (ITEM) — drains up to 2 energy off opponent units
     handMapRepo.addBattleFieldHand(25);  // 파멸의 계약 (ITEM) — 15 AoE dmg + deck-to-lost-zone
+    handMapRepo.addBattleFieldHand(35);  // 사기 전환 (ITEM) — sacrifice ally for floor(hp/5) field energy
     const handCardIds = handMapRepo.getBattleFieldHandList();
     const hand = resolveCards(handCardIds, 'hand');
 
@@ -560,6 +565,9 @@ async function main(container: HTMLElement): Promise<void> {
     const neonBorderFrame = createAllyNeonBorderFrame();
     const neonEffect = new NeonBorderEffect(neonBorderFrame);
     const enemyNeonEffect = new NeonBorderEffect(createEnemyNeonBorderFrame());
+    // Green neon for ally-targeting items (사기 전환): highlights YOUR field units as
+    // potential drop targets when the item is picked up.
+    const allyTargetNeonEffect = new NeonBorderEffect(createAllyTargetingNeonBorderFrame());
 
     // Active panel state
     const activePanelFrame = createDefaultActivePanelFrame();
@@ -607,6 +615,7 @@ async function main(container: HTMLElement): Promise<void> {
         if (typeof TWEEN !== 'undefined') TWEEN.update();
         neonEffect.updateAnimation();
         enemyNeonEffect.updateAnimation();
+        allyTargetNeonEffect.updateAnimation();
         turnEndButtonRenderer.updateAnimation(turnEndButtonGroup, turnEndButtonFrame);
     });
     animationLoop.start();
@@ -1181,6 +1190,12 @@ async function main(container: HTMLElement): Promise<void> {
     // Card IDs that target opponent units when picked up (red neon on all visible opponents).
     const OPPONENT_TARGETING_ITEM_IDS: readonly number[] = [SCYTHE_CARD_ID, ENERGY_BURN_CARD_ID];
 
+    // 사기 전환 (Morale Conversion, cardId 35) — ITEM that targets YOUR OWN placed units.
+    // On drop onto an ally: gain floor(ally_hp / 5) field energy, and the ally goes to the
+    // tomb. Picking up the card highlights all placed allies with a green neon border.
+    const MORALE_CONVERT_CARD_ID = 35;
+    const ALLY_TARGETING_ITEM_IDS: readonly number[] = [MORALE_CONVERT_CARD_ID];
+
     // 파멸의 계약 (Contract of Doom, cardId 25) — ITEM that targets the OPPONENT FIELD
     // AS A WHOLE (neon border on the field area rectangle, not individual units). On drop
     // it deals 15 dmg to every alive opponent unit + the opponent master body, and moves
@@ -1371,6 +1386,50 @@ async function main(container: HTMLElement): Promise<void> {
         await effectPromise;
     };
 
+    // Hit-test for a placed ally card at world coords — used by 사기 전환 drops.
+    const hitAllyAt = (x: number, y: number): HandEntry | null => {
+        for (const entry of placedOrder) {
+            if (!entry.group.visible) continue;
+            const ud = entry.group.userData as { baseCardWidth?: number; baseCardHeight?: number };
+            const bw = (ud.baseCardWidth ?? 0) * (entry.group.scale.x || 1);
+            const bh = (ud.baseCardHeight ?? 0) * (entry.group.scale.y || 1);
+            const cx = entry.group.position.x;
+            const cy = entry.group.position.y;
+            if (x >= cx - bw / 2 && x <= cx + bw / 2 && y >= cy - bh / 2 && y <= cy + bh / 2) {
+                return entry;
+            }
+        }
+        return null;
+    };
+
+    // 사기 전환 — sacrifice a placed ally for field energy:
+    //   energyGain = floor(allyHP / 5) (from getCardById(targetCardId).체력)
+    //   target card → tomb repo
+    //   target mesh removed + disposed; placedOrder reflowed.
+    // 사기 전환 itself is consumed by the surrounding onDrop flow.
+    const applyMoraleConvertEffect = (target: HandEntry): void => {
+        const card = getCardById(target.card.cardId);
+        const rawHp = card?.체력;
+        const hpNum = typeof rawHp === 'number' ? rawHp : parseInt(String(rawHp ?? 0), 10) || 0;
+        const energyGain = Math.floor(hpNum / 5);
+
+        availableEnergy += energyGain;
+        energyRenderer.setEnergy(availableEnergy);
+        energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
+
+        tombRepo.addCard(target.card.cardId);
+
+        const placedIdx = placedOrder.indexOf(target);
+        if (placedIdx >= 0) {
+            placedOrder.splice(placedIdx, 1);
+            handGroup.remove(target.group);
+            handRenderer.getCardRenderer().dispose(target.group);
+        }
+        reflowHandAndPlaced();
+
+        console.log(`[morale-convert] target cardId=${target.card.cardId} HP=${hpNum} → +${energyGain} energy (total ${availableEnergy}); target → tomb`);
+    };
+
     // Pilot C — click / drag / drop
     const bridge = new HandInteractionBridge(
         rendererManager.getDomElement(),
@@ -1407,6 +1466,20 @@ async function main(container: HTMLElement): Promise<void> {
                 if (pickedCardId === DOOM_CONTRACT_CARD_ID) {
                     enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, opponentFieldNeonHost);
                 }
+
+                // Ally-targeting items (사기 전환) → green targeting border on every placed
+                // ally unit on YOUR field. placedOrder holds each HandEntry whose group
+                // already lives in handGroup at the placed position.
+                if (pickedCardId != null && ALLY_TARGETING_ITEM_IDS.includes(pickedCardId)) {
+                    for (let i = 0; i < placedOrder.length; i++) {
+                        const entry = placedOrder[i];
+                        if (entry.group.visible) {
+                            // Use the placed index as the neon entityId (distinct from card.cardId,
+                            // which may duplicate across placed allies).
+                            allyTargetNeonEffect.attach(i, entry.group);
+                        }
+                    }
+                }
             },
             onDrop: (_entityId, group, worldX, worldY) => {
                 group.renderOrder = 0;
@@ -1415,8 +1488,10 @@ async function main(container: HTMLElement): Promise<void> {
                 const droppedEntry = findEntryByGroup(group);
                 const handIndex = droppedEntry ? handOrder.indexOf(droppedEntry) : -1;
 
-                // Always clear the scythe's targeting border on release.
+                // Always clear ALL targeting borders on release (red enemy border for scythe/
+                // energy-burn/doom contract, green ally border for 사기 전환).
                 enemyNeonEffect.detachAll();
+                allyTargetNeonEffect.detachAll();
 
                 if (!droppedEntry || handIndex < 0) {
                     reflowHandAndPlaced();
@@ -1431,19 +1506,26 @@ async function main(container: HTMLElement): Promise<void> {
                 if (kind === CardKind.ITEM) {
                     const dropCx = group.position.x;
                     const dropCy = group.position.y;
-                    const isTargeting = OPPONENT_TARGETING_ITEM_IDS.includes(cardId);
-                    const target = isTargeting ? hitOpponentAt(dropCx, dropCy) : null;
-                    if (target) {
+                    const isOpponentTargeting = OPPONENT_TARGETING_ITEM_IDS.includes(cardId);
+                    const opponentTarget = isOpponentTargeting ? hitOpponentAt(dropCx, dropCy) : null;
+                    if (opponentTarget) {
                         if (cardId === SCYTHE_CARD_ID) {
-                            applyScytheEffect(target);
+                            applyScytheEffect(opponentTarget);
                         } else if (cardId === ENERGY_BURN_CARD_ID) {
-                            applyEnergyBurnEffect(target);
+                            applyEnergyBurnEffect(opponentTarget);
                         }
                         consumeHandCard(droppedEntry, handIndex);
                     } else if (cardId === DOOM_CONTRACT_CARD_ID) {
                         // AoE + deck drain — no target check (activates anywhere it's dropped).
                         applyDoomContractEffect();
                         consumeHandCard(droppedEntry, handIndex);
+                    } else if (cardId === MORALE_CONVERT_CARD_ID) {
+                        // 사기 전환 — MUST land on a placed ally, else snap back unused.
+                        const allyTarget = hitAllyAt(dropCx, dropCy);
+                        if (allyTarget) {
+                            applyMoraleConvertEffect(allyTarget);
+                            consumeHandCard(droppedEntry, handIndex);
+                        }
                     }
                     neonEffect.detachAll();
                     selectedAttackerEntry = null;

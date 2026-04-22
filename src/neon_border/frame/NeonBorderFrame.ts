@@ -25,3 +25,16 @@ export function createEnemyNeonBorderFrame(): NeonBorderFrame {
         zOffset: 0.001,
     };
 }
+
+// Green neon for ALLY-targeting items (e.g. 사기 전환) — highlights the player's OWN field
+// units as valid drop targets. Distinct from createAllyNeonBorderFrame (blue) which signals
+// "this is the currently-selected ally card", not "this is a potential target".
+export function createAllyTargetingNeonBorderFrame(): NeonBorderFrame {
+    return {
+        baseColor: 0x22AA44,
+        glowColor: 0xA8FFB0,
+        lineThickness: 18,
+        timeIncrement: 0.015,
+        zOffset: 0.001,
+    };
+}
