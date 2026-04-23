@@ -1769,9 +1769,21 @@ async function main(container: HTMLElement): Promise<void> {
                         }
                         consumeHandCard(droppedEntry, handIndex);
                     } else if (cardId === DOOM_CONTRACT_CARD_ID) {
-                        // AoE + deck drain — no target check (activates anywhere it's dropped).
-                        applyDoomContractEffect();
-                        consumeHandCard(droppedEntry, handIndex);
+                        // AoE + deck drain — MUST land on the OPPONENT field area. Dropping
+                        // on your own field or somewhere on the hand leaves it unused (snap
+                        // back). Bounds inlined from opponentFieldAreaFrame's percent values
+                        // (same formula as computeYourFieldAreaBounds).
+                        const oHalfW = (opponentFieldAreaFrame.widthPercent  * window.innerWidth)  / 2;
+                        const oHalfH = (opponentFieldAreaFrame.heightPercent * window.innerHeight) / 2;
+                        const oCX = opponentFieldAreaFrame.xPercent * window.innerWidth;
+                        const oCY = opponentFieldAreaFrame.yPercent * window.innerHeight;
+                        const insideOppField =
+                            dropCx >= oCX - oHalfW && dropCx <= oCX + oHalfW &&
+                            dropCy >= oCY - oHalfH && dropCy <= oCY + oHalfH;
+                        if (insideOppField) {
+                            applyDoomContractEffect();
+                            consumeHandCard(droppedEntry, handIndex);
+                        }
                     } else if (cardId === MORALE_CONVERT_CARD_ID) {
                         // 사기 전환 — MUST land on a placed ally, else snap back unused.
                         const allyTarget = hitAllyAt(dropCx, dropCy);
