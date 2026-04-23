@@ -1454,7 +1454,12 @@ async function main(container: HTMLElement): Promise<void> {
         }
     };
 
+    // Used when an ITEM card from Your Hand resolves its effect — the spent card moves
+    // into Your Tomb before the mesh is disposed. All current call sites are ITEM drops
+    // (scythe, energy burn, doom contract, morale convert), so the burial is unconditional.
     const consumeHandCard = (entry: HandEntry, idx: number): void => {
+        tombRepo.addCard(entry.card.cardId);
+        console.log(`[tomb] your cardId=${entry.card.cardId} → your tomb (used from hand)`);
         handOrder.splice(idx, 1);
         handGroup.remove(entry.group);
         handRenderer.getCardRenderer().dispose(entry.group);
