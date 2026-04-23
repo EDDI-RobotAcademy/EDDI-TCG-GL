@@ -93,6 +93,14 @@ import {
 import { createDefaultYourTombPopupFrame } from "../../src/your_tomb/frame/YourTombPopupFrame";
 import { YourTombPanelRendererV2 } from "../../src/your_tomb/renderer/YourTombPanelRendererV2";
 import { YourTombRepositoryImpl } from "../../src/your_tomb/repository/YourTombRepositoryImpl";
+
+import {
+    createDefaultOpponentTombPanelFrame,
+    isPointInsideOpponentTomb,
+} from "../../src/opponent_tomb/frame/OpponentTombPanelFrame";
+import { createDefaultOpponentTombPopupFrame } from "../../src/opponent_tomb/frame/OpponentTombPopupFrame";
+import { OpponentTombPanelRendererV2 } from "../../src/opponent_tomb/renderer/OpponentTombPanelRendererV2";
+import { OpponentTombRepositoryImpl } from "../../src/opponent_tomb/repository/OpponentTombRepositoryImpl";
 import { createDefaultOpponentLostZonePopupFrame } from "../../src/opponent_lost_zone/frame/OpponentLostZonePopupFrame";
 import { OpponentLostZonePanelRendererV2 } from "../../src/opponent_lost_zone/renderer/OpponentLostZonePanelRendererV2";
 import { OpponentLostZoneRepositoryImpl } from "../../src/opponent_lost_zone/repository/OpponentLostZoneRepositoryImpl";
@@ -404,6 +412,7 @@ async function main(container: HTMLElement): Promise<void> {
         // Modal mutex — close any other centred popup first so they don't stack.
         if (lostZonePopupGroup) closeLostZonePopup();
         if (tombPopupGroup) closeTombPopup();
+        if (opponentTombPopupGroup) closeOpponentTombPopup();
         opponentLostZonePopupGroup = await buildOpponentLostZonePopupForCurrentPage();
         scene.add(opponentLostZonePopupGroup);
     };
@@ -454,9 +463,10 @@ async function main(container: HTMLElement): Promise<void> {
 
     const openTombPopup = async (): Promise<void> => {
         if (tombPopupGroup) return;
-        // Modal mutex — close any open lost-zone popup first.
+        // Modal mutex — close every other centred popup first.
         if (lostZonePopupGroup) closeLostZonePopup();
         if (opponentLostZonePopupGroup) closeOpponentLostZonePopup();
+        if (opponentTombPopupGroup) closeOpponentTombPopup();
         tombPopupGroup = await buildTombPopupForCurrentPage();
         scene.add(tombPopupGroup);
     };
@@ -480,6 +490,71 @@ async function main(container: HTMLElement): Promise<void> {
     const tombTotalPages = (): number =>
         Math.max(1, Math.ceil(tombRepo.getCards().length / tombCardsPerPage));
 
+    // ── Opponent Tomb — 180° mirror of Your Tomb. Same popup reuse pattern as opp LZ. ──
+    const opponentTombPanelFrame = createDefaultOpponentTombPanelFrame();
+    const opponentTombPopupFrame = createDefaultOpponentTombPopupFrame();
+    const opponentTombPanelRenderer = new OpponentTombPanelRendererV2();
+    const opponentTombPopupRenderer = new YourLostZonePopupRendererV2();
+    const opponentTombPanelGroup = await opponentTombPanelRenderer.build(opponentTombPanelFrame);
+    scene.add(opponentTombPanelGroup);
+
+    const opponentTombRepo = OpponentTombRepositoryImpl.getInstance();
+    // Pilot-only dummy seed for testing pagination (12 cards = 2 pages).
+    for (const id of [31, 32, 33, 35, 36, 26, 27, 25, 30, 20, 2, 8]) opponentTombRepo.addCard(id);
+
+    let opponentTombPopupGroup: THREE.Group | null = null;
+    let opponentTombPage = 0;
+    const opponentTombCardsPerPage =
+        opponentTombPopupFrame.cardColumns * opponentTombPopupFrame.rowsPerPage;
+
+    const buildOpponentTombPopupForCurrentPage = async (): Promise<THREE.Group> => {
+        const all = [...opponentTombRepo.getCards()];
+        const start = opponentTombPage * opponentTombCardsPerPage;
+        const slice = all.slice(start, start + opponentTombCardsPerPage);
+        const resolved = resolveCards(slice, 'opponent-tomb');
+        return opponentTombPopupRenderer.build(opponentTombPopupFrame, resolved);
+    };
+
+    const openOpponentTombPopup = async (): Promise<void> => {
+        if (opponentTombPopupGroup) return;
+        // Modal mutex — close every other centred popup first.
+        if (lostZonePopupGroup) closeLostZonePopup();
+        if (opponentLostZonePopupGroup) closeOpponentLostZonePopup();
+        if (tombPopupGroup) closeTombPopup();
+        opponentTombPopupGroup = await buildOpponentTombPopupForCurrentPage();
+        scene.add(opponentTombPopupGroup);
+    };
+
+    const closeOpponentTombPopup = (): void => {
+        if (!opponentTombPopupGroup) return;
+        scene.remove(opponentTombPopupGroup);
+        opponentTombPopupRenderer.dispose(opponentTombPopupGroup);
+        opponentTombPopupGroup = null;
+        opponentTombPage = 0;
+    };
+
+    const reloadOpponentTombPopup = async (): Promise<void> => {
+        if (!opponentTombPopupGroup) return;
+        scene.remove(opponentTombPopupGroup);
+        opponentTombPopupRenderer.dispose(opponentTombPopupGroup);
+        opponentTombPopupGroup = await buildOpponentTombPopupForCurrentPage();
+        scene.add(opponentTombPopupGroup);
+    };
+
+    const opponentTombTotalPages = (): number =>
+        Math.max(1, Math.ceil(opponentTombRepo.getCards().length / opponentTombCardsPerPage));
+
+    // Burial helper — whenever an opponent unit dies on the field (HP ≤ 0), look up its
+    // cardId by cardIndex and push it into the Opponent Tomb repo. Call at every death
+    // site (scythe, energy-burn, doom-contract, AoE skill, single-target attack) right
+    // next to the existing opponentAliveOrder.splice(aliveIdx, 1).
+    const buryOpponentUnit = (cardIndex: number): void => {
+        const card = opponentCards[cardIndex];
+        if (!card) return;
+        opponentTombRepo.addCard(card.cardId);
+        console.log(`[tomb] opponent cardId=${card.cardId} (idx=${cardIndex}) → opponent tomb`);
+    };
+
     // Popup is built on demand when panel is clicked; null when hidden.
     let lostZonePopupGroup: THREE.Group | null = null;
     let lostZonePage = 0;
@@ -498,6 +573,7 @@ async function main(container: HTMLElement): Promise<void> {
         // Modal mutex — only one centred popup at a time.
         if (opponentLostZonePopupGroup) closeOpponentLostZonePopup();
         if (tombPopupGroup) closeTombPopup();
+        if (opponentTombPopupGroup) closeOpponentTombPopup();
         lostZonePopupGroup = await buildLostZonePopupForCurrentPage();
         scene.add(lostZonePopupGroup);
     };
@@ -691,6 +767,14 @@ async function main(container: HTMLElement): Promise<void> {
             return;
         }
 
+        // ── 2c) Opponent Tomb panel (inverted tombstone) ──────────────────────────
+        if (isPointInsideOpponentTomb(worldX, worldY, opponentTombPanelFrame, w, h)) {
+            e.stopImmediatePropagation();
+            if (opponentTombPopupGroup) closeOpponentTombPopup();
+            else void openOpponentTombPopup();
+            return;
+        }
+
         // ── 3) A popup is open → consume the click, check buttons, close on outside ─
         // Only one popup can be open at a time (opens are modal-mutex'd above), so exactly
         // one of these branches runs.
@@ -770,6 +854,33 @@ async function main(container: HTMLElement): Promise<void> {
                 worldX >= popupBounds.minX && worldX <= popupBounds.maxX &&
                 worldY >= popupBounds.minY && worldY <= popupBounds.maxY;
             if (!onPopup) closeTombPopup();
+            return;
+        }
+
+        if (opponentTombPopupGroup) {
+            e.stopImmediatePropagation();
+
+            sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
+            const hits = sharedRaycaster.intersectObjects(opponentTombPopupGroup.children, true);
+            for (const hit of hits) {
+                const bt = hit.object.userData.buttonType;
+                if (bt === 'prev') {
+                    if (opponentTombPage > 0) { opponentTombPage--; void reloadOpponentTombPopup(); }
+                    return;
+                }
+                if (bt === 'next') {
+                    if (opponentTombPage < opponentTombTotalPages() - 1) {
+                        opponentTombPage++; void reloadOpponentTombPopup();
+                    }
+                    return;
+                }
+            }
+
+            const popupBounds = computeYourLostZonePopupBounds(opponentTombPopupFrame, w, h);
+            const onPopup =
+                worldX >= popupBounds.minX && worldX <= popupBounds.maxX &&
+                worldY >= popupBounds.minY && worldY <= popupBounds.maxY;
+            if (!onPopup) closeOpponentTombPopup();
         }
     }, true);
 
@@ -872,6 +983,7 @@ async function main(container: HTMLElement): Promise<void> {
                                 setTimeout(() => {
                                     const aliveIdx = opponentAliveOrder.indexOf(capturedIdx);
                                     if (aliveIdx >= 0) {
+                                        buryOpponentUnit(capturedIdx);
                                         opponentAliveOrder.splice(aliveIdx, 1);
                                     }
                                     reflowOpponentField();
@@ -995,6 +1107,7 @@ async function main(container: HTMLElement): Promise<void> {
                     setTimeout(() => {
                         const aliveIdx = opponentAliveOrder.indexOf(targetIdx);
                         if (aliveIdx >= 0) {
+                            buryOpponentUnit(targetIdx);
                             opponentAliveOrder.splice(aliveIdx, 1);
                         }
                         reflowOpponentField();
@@ -1243,7 +1356,10 @@ async function main(container: HTMLElement): Promise<void> {
 
         if (killing) {
             const aliveIdx = opponentAliveOrder.indexOf(targetIdx);
-            if (aliveIdx >= 0) opponentAliveOrder.splice(aliveIdx, 1);
+            if (aliveIdx >= 0) {
+                buryOpponentUnit(targetIdx);
+                opponentAliveOrder.splice(aliveIdx, 1);
+            }
             reflowOpponentField();
             console.log(`[scythe] opponent idx=${targetIdx} defeated. Remaining: ${opponentAliveOrder.length}`);
         }
@@ -1330,7 +1446,10 @@ async function main(container: HTMLElement): Promise<void> {
 
         if (killing) {
             const aliveIdx = opponentAliveOrder.indexOf(targetIdx);
-            if (aliveIdx >= 0) opponentAliveOrder.splice(aliveIdx, 1);
+            if (aliveIdx >= 0) {
+                buryOpponentUnit(targetIdx);
+                opponentAliveOrder.splice(aliveIdx, 1);
+            }
             reflowOpponentField();
         }
     };
@@ -1359,7 +1478,10 @@ async function main(container: HTMLElement): Promise<void> {
             console.log(`  opponent idx=${idx} HP: ${currentHp} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
             if (newHp <= 0) {
                 const aliveIdx = opponentAliveOrder.indexOf(idx);
-                if (aliveIdx >= 0) opponentAliveOrder.splice(aliveIdx, 1);
+                if (aliveIdx >= 0) {
+                    buryOpponentUnit(idx);
+                    opponentAliveOrder.splice(aliveIdx, 1);
+                }
             }
         }
         reflowOpponentField();
