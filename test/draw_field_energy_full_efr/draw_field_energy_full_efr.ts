@@ -210,6 +210,21 @@ async function main(container: HTMLElement): Promise<void> {
     };
     scene.add(opponentFieldNeonHost);
 
+    // Mirror wrapper host for YOUR field area — used by 망자의 늪's pickup highlight to
+    // attach a green neon border around the whole player field rectangle. Same userData
+    // key requirement (baseCardWidth/baseCardHeight) as opponentFieldNeonHost.
+    const yourFieldNeonHost = new THREE.Group();
+    yourFieldNeonHost.position.set(
+        yourFieldAreaFrame.xPercent * window.innerWidth,
+        yourFieldAreaFrame.yPercent * window.innerHeight,
+        0,
+    );
+    yourFieldNeonHost.userData = {
+        baseCardWidth:  yourFieldAreaFrame.widthPercent  * window.innerWidth,
+        baseCardHeight: yourFieldAreaFrame.heightPercent * window.innerHeight,
+    };
+    scene.add(yourFieldNeonHost);
+
     // Opponent master (본체) — legacy OPPONENT_MASETER area coordinates
     const masterX1 = (0.4605885 - 0.5) * window.innerWidth;
     const masterY1 = (0.5 - 0.1920103) * window.innerHeight;
@@ -242,6 +257,7 @@ async function main(container: HTMLElement): Promise<void> {
     handMapRepo.addBattleFieldHand(9);   // 에너지 번 (ITEM) — drains up to 2 energy off opponent units
     handMapRepo.addBattleFieldHand(25);  // 파멸의 계약 (ITEM) — 15 AoE dmg + deck-to-lost-zone
     handMapRepo.addBattleFieldHand(35);  // 사기 전환 (ITEM) — sacrifice ally for floor(hp/5) field energy
+    handMapRepo.addBattleFieldHand(20);  // 망자의 늪 (SUPPORT) — draw 3 from deck
     const handCardIds = handMapRepo.getBattleFieldHandList();
     const hand = resolveCards(handCardIds, 'hand');
 
@@ -1311,6 +1327,11 @@ async function main(container: HTMLElement): Promise<void> {
     const MORALE_CONVERT_CARD_ID = 35;
     const ALLY_TARGETING_ITEM_IDS: readonly number[] = [MORALE_CONVERT_CARD_ID];
 
+    // 망자의 늪 (Swamp of the Dead, cardId 20) — SUPPORT card. Pickup puts a green neon
+    // border on the WHOLE YOUR FIELD AREA. Drop onto your field → draw 3 from your deck.
+    const SWAMP_OF_DEAD_CARD_ID = 20;
+    const SWAMP_DRAW_COUNT = 3;
+
     // 파멸의 계약 (Contract of Doom, cardId 25) — ITEM that targets the OPPONENT FIELD
     // AS A WHOLE (neon border on the field area rectangle, not individual units). On drop
     // it deals 15 dmg to every alive opponent unit + the opponent master body, and moves
@@ -1515,6 +1536,25 @@ async function main(container: HTMLElement): Promise<void> {
         await effectPromise;
     };
 
+    // 망자의 늪 — draw SWAMP_DRAW_COUNT cards from Your Deck into Your Hand. Async because
+    // appendCard awaits card-texture load. Fire-and-forget from onDrop.
+    const applySwampEffect = async (): Promise<void> => {
+        console.log(`[swamp] draw ${SWAMP_DRAW_COUNT} from deck`);
+        for (let i = 0; i < SWAMP_DRAW_COUNT; i++) {
+            const drawnId = deckRepo.drawCard();
+            if (drawnId == null) {
+                console.log(`[swamp] deck empty — stopped at ${i}/${SWAMP_DRAW_COUNT}`);
+                break;
+            }
+            const resolved = resolveCards([drawnId], 'swamp-draw');
+            if (resolved.length === 0) continue;
+            const newEntry = await handRenderer.appendCard(handGroup, resolved[0], handCardFrame);
+            handOrder.push(newEntry);
+            console.log(`  swamp drew cardId=${drawnId}`);
+        }
+        reflowHandAndPlaced();
+    };
+
     // Hit-test for a placed ally card at world coords — used by 사기 전환 drops.
     const hitAllyAt = (x: number, y: number): HandEntry | null => {
         for (const entry of placedOrder) {
@@ -1636,6 +1676,13 @@ async function main(container: HTMLElement): Promise<void> {
                         }
                     }
                 }
+
+                // 망자의 늪 → green targeting border on the WHOLE YOUR FIELD AREA (not
+                // individual placed cards). Same wrapper-host trick as doom contract's
+                // opponent-field highlight, just on the player side with green neon.
+                if (pickedCardId === SWAMP_OF_DEAD_CARD_ID) {
+                    allyTargetNeonEffect.attach(FIELD_NEON_ENTITY_ID, yourFieldNeonHost);
+                }
             },
             onDrop: (_entityId, group, worldX, worldY) => {
                 group.renderOrder = 0;
@@ -1690,8 +1737,9 @@ async function main(container: HTMLElement): Promise<void> {
                     return;
                 }
 
-                // UNIT → YourField placement. Non-UNIT non-ITEM (support/energy/trap/etc.) falls
-                // through to snap back — matches legacy MouseDropHandler's no-op handlers.
+                // UNIT → YourField placement. SUPPORT (망자의 늪) also requires being dropped
+                // onto YOUR field area to activate; other SUPPORT/ENERGY/TRAP fall through to
+                // snap back — matches legacy MouseDropHandler's no-op handlers.
                 const bounds = computeYourFieldAreaBounds(
                     yourFieldAreaFrame,
                     window.innerWidth,
@@ -1705,6 +1753,10 @@ async function main(container: HTMLElement): Promise<void> {
                 if (inside && isUnit) {
                     handOrder.splice(handIndex, 1);
                     placedOrder.push(droppedEntry);
+                } else if (inside && kind === CardKind.SUPPORT && cardId === SWAMP_OF_DEAD_CARD_ID) {
+                    // 망자의 늪 — draw 3 and consume (goes to tomb via consumeHandCard).
+                    void applySwampEffect();
+                    consumeHandCard(droppedEntry, handIndex);
                 }
                 neonEffect.detachAll();
                 selectedAttackerEntry = null;
