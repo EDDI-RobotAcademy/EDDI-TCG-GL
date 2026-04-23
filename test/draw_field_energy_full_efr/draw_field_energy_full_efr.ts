@@ -68,6 +68,7 @@ import { ScytheCutEffect } from "../../src/animation/scythe/ScytheCutEffect";
 import { EnergyBurnEffect } from "../../src/animation/energy_burn/EnergyBurnEffect";
 import { DoomContractEffect } from "../../src/animation/doom_contract/DoomContractEffect";
 import { MoraleConvertEffect } from "../../src/animation/morale_convert/MoraleConvertEffect";
+import { SwampEffect } from "../../src/animation/swamp/SwampEffect";
 
 import { YourLostZoneRepositoryImpl } from "../../src/your_lost_zone/repository/YourLostZoneRepositoryImpl";
 import {
@@ -704,6 +705,7 @@ async function main(container: HTMLElement): Promise<void> {
         animationLoop,
     );
     const moraleConvertEffect = new MoraleConvertEffect(scene);
+    const swampEffect = new SwampEffect(scene);
 
     animationLoop.setCustomUpdate(() => {
         if (typeof TWEEN !== 'undefined') TWEEN.update();
@@ -1536,23 +1538,71 @@ async function main(container: HTMLElement): Promise<void> {
         await effectPromise;
     };
 
-    // 망자의 늪 — draw SWAMP_DRAW_COUNT cards from Your Deck into Your Hand. Async because
-    // appendCard awaits card-texture load. Fire-and-forget from onDrop.
+    // 망자의 늪 — swamp + wraiths + spectral cards visual. Pre-draws cardIds from the
+    // deck, then plays SwampEffect. Each spectral card's arrival at the hand triggers
+    // `onCardArrive`, which resolves the real card and appends it to Your Hand. If the
+    // deck runs dry at < 3 cards, only that many wraiths/cards spawn.
+    // Async, fire-and-forget from onDrop.
     const applySwampEffect = async (): Promise<void> => {
-        console.log(`[swamp] draw ${SWAMP_DRAW_COUNT} from deck`);
+        const drawnIds: number[] = [];
         for (let i = 0; i < SWAMP_DRAW_COUNT; i++) {
-            const drawnId = deckRepo.drawCard();
-            if (drawnId == null) {
-                console.log(`[swamp] deck empty — stopped at ${i}/${SWAMP_DRAW_COUNT}`);
-                break;
-            }
-            const resolved = resolveCards([drawnId], 'swamp-draw');
-            if (resolved.length === 0) continue;
-            const newEntry = await handRenderer.appendCard(handGroup, resolved[0], handCardFrame);
-            handOrder.push(newEntry);
-            console.log(`  swamp drew cardId=${drawnId}`);
+            const id = deckRepo.drawCard();
+            if (id == null) break;
+            drawnIds.push(id);
         }
-        reflowHandAndPlaced();
+        if (drawnIds.length === 0) {
+            console.log(`[swamp] deck empty — effect skipped`);
+            return;
+        }
+        console.log(`[swamp] drawing ${drawnIds.length}/${SWAMP_DRAW_COUNT}: cardIds=${drawnIds.join(',')}`);
+
+        // Swamp plays over the your-field rectangle.
+        const fieldCenter = new THREE.Vector3(
+            yourFieldAreaFrame.xPercent * window.innerWidth,
+            yourFieldAreaFrame.yPercent * window.innerHeight,
+            2,
+        );
+        const fieldW = yourFieldAreaFrame.widthPercent  * window.innerWidth;
+        const fieldH = yourFieldAreaFrame.heightPercent * window.innerHeight;
+
+        // Deck world position — sits LEFT of the Field Energy HUD (HUD centre at
+        // screen ~0.940). Screen (0.81, 0.87) puts the deck visibly left of the big
+        // energy number, in the bottom-right cluster.
+        const deckPos = new THREE.Vector3(
+            (0.81 - 0.5) * window.innerWidth,
+            (0.5 - 0.87) * window.innerHeight,
+            2,
+        );
+
+        // Spectral cards fly to the Your Hand area. Use the hand layout's baseline for a
+        // reasonable centre destination. The actual cards land wherever appendCard + reflow
+        // places them (page overflow handled separately).
+        const handDest = new THREE.Vector3(
+            0,
+            handLayoutFrame.baselineYHeightRatio * window.innerHeight +
+                handLayoutFrame.baselineYWidthOffsetRatio * window.innerWidth,
+            2,
+        );
+
+        await swampEffect.play(
+            fieldCenter,
+            fieldW,
+            fieldH,
+            deckPos,
+            handDest,
+            drawnIds,
+            (cardId) => {
+                const resolved = resolveCards([cardId], 'swamp-draw');
+                if (resolved.length === 0) return;
+                // handRenderer.appendCard returns a Promise; we fire-and-forget and let the
+                // texture load asynchronously. handOrder push happens once the append resolves.
+                void handRenderer.appendCard(handGroup, resolved[0], handCardFrame).then((newEntry) => {
+                    handOrder.push(newEntry);
+                    reflowHandAndPlaced();
+                });
+                console.log(`  swamp card landed — cardId=${cardId}`);
+            },
+        );
     };
 
     // Hit-test for a placed ally card at world coords — used by 사기 전환 drops.
