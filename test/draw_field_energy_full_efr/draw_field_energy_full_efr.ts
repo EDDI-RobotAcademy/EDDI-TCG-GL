@@ -1209,21 +1209,15 @@ async function main(container: HTMLElement): Promise<void> {
 
     let energyIconTexture: THREE.Texture | null = null;
 
-    async function attachEnergyToCard(entry: HandEntry): Promise<void> {
-        if (availableEnergy <= 0) return;
-        if (!placedOrder.includes(entry)) return;
+    // Shared renderer for per-card energy visuals (icon + count text + the global Count HUD).
+    // Used by attachEnergyToCard (field-energy → card) AND by the overflow-morale flow
+    // (deck-energy → card). Source-of-energy tracking is the CALLER's responsibility.
+    async function updateCardEnergyVisual(entry: HandEntry, newCount: number): Promise<void> {
+        placedCardEnergy.set(entry, newCount);
 
-        availableEnergy--;
-        const cardEnergy = (placedCardEnergy.get(entry) ?? 0) + 1;
-        placedCardEnergy.set(entry, cardEnergy);
-
-        // Update HUD
-        energyRenderer.setEnergy(availableEnergy);
-        energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
-        countRenderer.setCount(cardEnergy);
+        countRenderer.setCount(newCount);
         countRenderer.update(countFrame, countElement, window.innerWidth, window.innerHeight);
 
-        // Update card visual — add/update energy icon + text
         const group = entry.group;
         const userData = group.userData as { baseCardWidth?: number; baseCardHeight?: number };
         const cardW = userData.baseCardWidth ?? 100;
@@ -1234,15 +1228,13 @@ async function main(container: HTMLElement): Promise<void> {
 
         const existing = cardEnergyMeshes.get(entry);
         if (existing) {
-            // Update text only
             group.remove(existing.textMesh);
             existing.textMesh.geometry.dispose();
             (existing.textMesh.material as THREE.MeshBasicMaterial).dispose();
-            const newText = createEnergyCanvasText(cardEnergy, eX, eY, handCardFrame.cardWidthRatio * 0.2 * window.innerWidth);
+            const newText = createEnergyCanvasText(newCount, eX, eY, handCardFrame.cardWidthRatio * 0.2 * window.innerWidth);
             group.add(newText);
             cardEnergyMeshes.set(entry, { iconMesh: existing.iconMesh, textMesh: newText });
         } else {
-            // Create icon + text for first time
             if (!energyIconTexture) {
                 energyIconTexture = await loadTexturePromise('resource/battle_field_unit/energy/unit_card_energy.png');
             }
@@ -1255,11 +1247,23 @@ async function main(container: HTMLElement): Promise<void> {
             iconMesh.renderOrder = 2;
             group.add(iconMesh);
 
-            const textMesh = createEnergyCanvasText(cardEnergy, eX, eY, handCardFrame.cardWidthRatio * 0.2 * window.innerWidth);
+            const textMesh = createEnergyCanvasText(newCount, eX, eY, handCardFrame.cardWidthRatio * 0.2 * window.innerWidth);
             group.add(textMesh);
 
             cardEnergyMeshes.set(entry, { iconMesh, textMesh });
         }
+    }
+
+    async function attachEnergyToCard(entry: HandEntry): Promise<void> {
+        if (availableEnergy <= 0) return;
+        if (!placedOrder.includes(entry)) return;
+
+        availableEnergy--;
+        const cardEnergy = (placedCardEnergy.get(entry) ?? 0) + 1;
+
+        energyRenderer.setEnergy(availableEnergy);
+        energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
+        await updateCardEnergyVisual(entry, cardEnergy);
 
         setFieldEnergyNeon(false);
         console.log(`Energy attached to card ${entry.card.cardId}: ${cardEnergy} total. Available: ${availableEnergy}`);
@@ -1327,7 +1331,17 @@ async function main(container: HTMLElement): Promise<void> {
     // On drop onto an ally: gain floor(ally_hp / 5) field energy, and the ally goes to the
     // tomb. Picking up the card highlights all placed allies with a green neon border.
     const MORALE_CONVERT_CARD_ID = 35;
-    const ALLY_TARGETING_ITEM_IDS: readonly number[] = [MORALE_CONVERT_CARD_ID];
+
+    // 넘쳐흐르는 사기 (Overflowing Morale, cardId 2) — SUPPORT that targets YOUR OWN placed units.
+    // On drop onto an ally: search the deck for death-energy (cardId 93), remove up to 2 of
+    // them, and attach that many energy to the target. Pickup highlights placed allies same
+    // as 사기 전환 (green neon); the card is SUPPORT not ITEM but the pickup branch below is
+    // cardId-gated, not kind-gated, so the list name is historical.
+    const OVERFLOW_MORALE_CARD_ID = 2;
+    const DEATH_ENERGY_CARD_ID = 93;
+    const OVERFLOW_MORALE_MAX = 2;
+
+    const ALLY_TARGETING_ITEM_IDS: readonly number[] = [MORALE_CONVERT_CARD_ID, OVERFLOW_MORALE_CARD_ID];
 
     // 망자의 늪 (Swamp of the Dead, cardId 20) — SUPPORT card. Pickup puts a green neon
     // border on the WHOLE YOUR FIELD AREA. Drop onto your field → draw 3 from your deck.
@@ -1676,6 +1690,24 @@ async function main(container: HTMLElement): Promise<void> {
         console.log(`[morale-convert] effect complete; total field energy = ${availableEnergy}`);
     };
 
+    // 넘쳐흐르는 사기 — drop on a placed ally to pull up to OVERFLOW_MORALE_MAX copies of
+    // death-energy (cardId 93) out of the deck and attach them to that ally. If the deck
+    // has fewer than MAX, attach however many were available (0-2). The card itself still
+    // gets consumed (moved to tomb) regardless of how many energies were pulled — matches
+    // the card's passive text "덱에서 찾아 최대 0~2개를 선택하여 유닛에게 수급".
+    const applyOverflowMoraleEffect = async (target: HandEntry): Promise<void> => {
+        const pulled = deckRepo.drawMatching(DEATH_ENERGY_CARD_ID, OVERFLOW_MORALE_MAX);
+        const attached = pulled.length;
+        console.log(`[overflow-morale] target cardId=${target.card.cardId} → pulled ${attached} death-energy from deck (deck remaining=${deckRepo.getRemainingCount()})`);
+
+        if (attached > 0) {
+            const newCount = (placedCardEnergy.get(target) ?? 0) + attached;
+            await updateCardEnergyVisual(target, newCount);
+            // Consumed energy cards go to the tomb, one entry per pulled copy.
+            for (const energyId of pulled) tombRepo.addCard(energyId);
+        }
+    };
+
     // Pilot C — click / drag / drop
     const bridge = new HandInteractionBridge(
         rendererManager.getDomElement(),
@@ -1819,6 +1851,17 @@ async function main(container: HTMLElement): Promise<void> {
                     // 망자의 늪 — draw 3 and consume (goes to tomb via consumeHandCard).
                     void applySwampEffect();
                     consumeHandCard(droppedEntry, handIndex);
+                } else if (kind === CardKind.SUPPORT && cardId === OVERFLOW_MORALE_CARD_ID) {
+                    // 넘쳐흐르는 사기 — MUST land on a placed ally, else snap back unused.
+                    // Uses the card's visual centre (same convention as the ITEM ally-target
+                    // branch above) instead of the cursor for a more natural drop feel.
+                    const dropCx = group.position.x;
+                    const dropCy = group.position.y;
+                    const allyTarget = hitAllyAt(dropCx, dropCy);
+                    if (allyTarget) {
+                        void applyOverflowMoraleEffect(allyTarget);
+                        consumeHandCard(droppedEntry, handIndex);
+                    }
                 }
                 neonEffect.detachAll();
                 selectedAttackerEntry = null;
