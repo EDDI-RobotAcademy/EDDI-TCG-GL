@@ -1343,7 +1343,13 @@ async function main(container: HTMLElement): Promise<void> {
     const DEATH_ENERGY_CARD_ID = 93;
     const OVERFLOW_MORALE_MAX = 2;
 
-    const ALLY_TARGETING_ITEM_IDS: readonly number[] = [MORALE_CONVERT_CARD_ID, OVERFLOW_MORALE_CARD_ID];
+    // Death-energy (ENERGY kind) also targets placed allies when picked up — same
+    // green-neon highlight + hitAllyAt drop test, just with its own ENERGY branch below.
+    const ALLY_TARGETING_ITEM_IDS: readonly number[] = [
+        MORALE_CONVERT_CARD_ID,
+        OVERFLOW_MORALE_CARD_ID,
+        DEATH_ENERGY_CARD_ID,
+    ];
 
     // 망자의 늪 (Swamp of the Dead, cardId 20) — SUPPORT card. Pickup puts a green neon
     // border on the WHOLE YOUR FIELD AREA. Drop onto your field → draw 3 from your deck.
@@ -1881,6 +1887,19 @@ async function main(container: HTMLElement): Promise<void> {
                     if (allyTarget) {
                         void applyOverflowMoraleEffect(allyTarget);
                         consumeHandCard(droppedEntry, handIndex);
+                    }
+                } else if (kind === CardKind.ENERGY && cardId === DEATH_ENERGY_CARD_ID) {
+                    // 죽음의 에너지 — drop onto a placed ally to attach 1 energy. The card
+                    // itself is consumed (handled by consumeHandCard → tomb). No field
+                    // energy is spent; this is a hand-to-unit direct attach.
+                    const dropCx = group.position.x;
+                    const dropCy = group.position.y;
+                    const allyTarget = hitAllyAt(dropCx, dropCy);
+                    if (allyTarget) {
+                        const newCount = (placedCardEnergy.get(allyTarget) ?? 0) + 1;
+                        void updateCardEnergyVisual(allyTarget, newCount);
+                        consumeHandCard(droppedEntry, handIndex);
+                        console.log(`[death-energy] attached 1 energy → placed cardId=${allyTarget.card.cardId} total=${newCount}`);
                     }
                 }
                 neonEffect.detachAll();
