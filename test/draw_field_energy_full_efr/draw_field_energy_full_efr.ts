@@ -1892,14 +1892,28 @@ async function main(container: HTMLElement): Promise<void> {
                     // 죽음의 에너지 — drop onto a placed ally to attach 1 energy. The card
                     // itself is consumed (handled by consumeHandCard → tomb). No field
                     // energy is spent; this is a hand-to-unit direct attach.
+                    //
+                    // Effect reuses the OverflowMoraleEffect.playDirectAttach variant so
+                    // the "gather around target → impact (shockwave + flash + shrink)"
+                    // visual beat matches the energies arriving from Overflowing Morale.
+                    // The card is consumed immediately so the hand reflows before the
+                    // effect finishes; the energy count bump is deferred to the impact
+                    // callback so it ticks exactly when the shockwave fires.
                     const dropCx = group.position.x;
                     const dropCy = group.position.y;
                     const allyTarget = hitAllyAt(dropCx, dropCy);
                     if (allyTarget) {
-                        const newCount = (placedCardEnergy.get(allyTarget) ?? 0) + 1;
-                        void updateCardEnergyVisual(allyTarget, newCount);
                         consumeHandCard(droppedEntry, handIndex);
-                        console.log(`[death-energy] attached 1 energy → placed cardId=${allyTarget.card.cardId} total=${newCount}`);
+                        const targetWorld = new THREE.Vector3(
+                            allyTarget.group.position.x,
+                            allyTarget.group.position.y,
+                            5,
+                        );
+                        void overflowMoraleEffect.playDirectAttach(targetWorld, () => {
+                            const newCount = (placedCardEnergy.get(allyTarget) ?? 0) + 1;
+                            void updateCardEnergyVisual(allyTarget, newCount);
+                            console.log(`[death-energy] attached 1 energy → placed cardId=${allyTarget.card.cardId} total=${newCount}`);
+                        });
                     }
                 }
                 neonEffect.detachAll();
