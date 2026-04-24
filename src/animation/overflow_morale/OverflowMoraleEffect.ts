@@ -105,6 +105,60 @@ export class OverflowMoraleEffect {
         this.disposeMesh(aura);
     }
 
+    // Direct hand→unit attach variant (used by 죽음의 에너지). No deck, no motes, no
+    // launch burst — instead a single "dark power gathers around the target" beat:
+    //   1) GATHER (~340 ms) — two converging rings shrink onto the target + a brief
+    //      dark aura blooms around it. Reads as "darkness rushing in to bind".
+    //   2) IMPACT — onArrive() fires, triple shockwave + impact flash + shrink ring
+    //      all triggered simultaneously (reuses the same spawners as the mote arrival).
+    //   3) HALO LINGER (~460 ms) — same empowered-state halo as the full flow.
+    public async playDirectAttach(
+        targetPos: THREE.Vector3,
+        onArrive: () => void,
+    ): Promise<void> {
+        // ─── Gather aura around the target ────────────────────────────────────────
+        const AURA_SIZE = 210;
+        const aura = this.createGatherAuraMesh(AURA_SIZE);
+        aura.position.copy(targetPos);
+        aura.renderOrder = 500;
+        this.scene.add(aura);
+        const auraMat = aura.material as THREE.ShaderMaterial;
+
+        const clockStart = performance.now();
+        let clockRunning = true;
+        const runClock = () => {
+            if (!clockRunning) return;
+            auraMat.uniforms.u_time.value = (performance.now() - clockStart) / 1000;
+            requestAnimationFrame(runClock);
+        };
+        requestAnimationFrame(runClock);
+
+        // Aura blooms around the target and two rings converge from outside inward.
+        void this.tween(auraMat.uniforms.u_alpha, 1.0, 220, 'easeOutQuad');
+        this.spawnChargeRing(targetPos, AURA_SIZE * 2.1, 380);
+        await this.delay(100);
+        this.spawnChargeRing(targetPos, AURA_SIZE * 1.6, 320);
+        await this.delay(240);
+
+        // ─── Impact — onArrive + single shockwave + flash + shrink ring ──────────
+        // Death-energy attaches exactly 1 energy, so one wave. Matches "1 energy = 1 wave".
+        onArrive();
+        this.spawnImpactFlash(targetPos, 220);
+        this.spawnShockwaveRing(targetPos, 300, 480, 0);
+        this.spawnShrinkRing(targetPos, 150, 380);
+
+        // ─── Halo linger ──────────────────────────────────────────────────────────
+        this.spawnHaloPulse(targetPos, 200, 460);
+        await this.delay(320);
+
+        // ─── Fade the target aura ─────────────────────────────────────────────────
+        await this.tween(auraMat.uniforms.u_alpha, 0.0, 300, 'easeInQuad');
+
+        clockRunning = false;
+        this.scene.remove(aura);
+        this.disposeMesh(aura);
+    }
+
     // One mote along the bezier. On arrival: onArrive() + outward triple shockwave +
     // impact flash + inward shrink ring, all simultaneous so the hit reads as a SLAM.
     private async flyMote(
@@ -146,12 +200,11 @@ export class OverflowMoraleEffect {
             requestAnimationFrame(step);
         });
 
-        // IMPACT — fire them all at once for maximum thud.
+        // IMPACT — one shockwave ring per mote arrival, so 2 motes = 2 distinct waves,
+        // 1 mote = 1 wave. Paired with the impact flash + shrink ring for a readable slam.
         onArrive();
         this.spawnImpactFlash(targetPos, 220);
-        this.spawnShockwaveRing(targetPos, 240, 380, 0);
-        this.spawnShockwaveRing(targetPos, 300, 460, 80);
-        this.spawnShockwaveRing(targetPos, 360, 540, 160);
+        this.spawnShockwaveRing(targetPos, 300, 480, 0);
         this.spawnShrinkRing(targetPos, 150, 380);
 
         await this.tween(mat.uniforms.u_alpha, 0.0, 120, 'easeInQuad');

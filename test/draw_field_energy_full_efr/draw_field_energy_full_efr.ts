@@ -67,6 +67,7 @@ import { AttackAnimationV2 } from "../../src/general_attack/animation/AttackAnim
 import { ScytheCutEffect } from "../../src/animation/scythe/ScytheCutEffect";
 import { EnergyBurnEffect } from "../../src/animation/energy_burn/EnergyBurnEffect";
 import { DoomContractEffect } from "../../src/animation/doom_contract/DoomContractEffect";
+import { DeadLandsEffect } from "../../src/animation/dead_lands/DeadLandsEffect";
 import { MoraleConvertEffect } from "../../src/animation/morale_convert/MoraleConvertEffect";
 import { OverflowMoraleEffect } from "../../src/animation/overflow_morale/OverflowMoraleEffect";
 import { SwampEffect } from "../../src/animation/swamp/SwampEffect";
@@ -102,6 +103,11 @@ import {
 } from "../../src/opponent_tomb/frame/OpponentTombPanelFrame";
 import { createDefaultOpponentTombPopupFrame } from "../../src/opponent_tomb/frame/OpponentTombPopupFrame";
 import { OpponentTombPanelRendererV2 } from "../../src/opponent_tomb/renderer/OpponentTombPanelRendererV2";
+import {
+    computeOpponentFieldEnergyBounds,
+    createDefaultOpponentFieldEnergyAreaFrame,
+} from "../../src/opponent_field_energy/frame/OpponentFieldEnergyAreaFrame";
+import { OpponentFieldEnergyAreaRendererV2 } from "../../src/opponent_field_energy/renderer/OpponentFieldEnergyAreaRendererV2";
 import { OpponentTombRepositoryImpl } from "../../src/opponent_tomb/repository/OpponentTombRepositoryImpl";
 import { createDefaultOpponentLostZonePopupFrame } from "../../src/opponent_lost_zone/frame/OpponentLostZonePopupFrame";
 import { OpponentLostZonePanelRendererV2 } from "../../src/opponent_lost_zone/renderer/OpponentLostZonePanelRendererV2";
@@ -260,6 +266,7 @@ async function main(container: HTMLElement): Promise<void> {
     handMapRepo.addBattleFieldHand(25);  // 파멸의 계약 (ITEM) — 15 AoE dmg + deck-to-lost-zone
     handMapRepo.addBattleFieldHand(35);  // 사기 전환 (ITEM) — sacrifice ally for floor(hp/5) field energy
     handMapRepo.addBattleFieldHand(20);  // 망자의 늪 (SUPPORT) — draw 3 from deck
+    handMapRepo.addBattleFieldHand(36);  // 죽음의 대지 (ITEM) — drain 2 opponent field energy
     const handCardIds = handMapRepo.getBattleFieldHandList();
     const hand = resolveCards(handCardIds, 'hand');
 
@@ -705,6 +712,7 @@ async function main(container: HTMLElement): Promise<void> {
         camera,
         animationLoop,
     );
+    const deadLandsEffect = new DeadLandsEffect(scene);
     const moraleConvertEffect = new MoraleConvertEffect(scene);
     const overflowMoraleEffect = new OverflowMoraleEffect(scene);
     const swampEffect = new SwampEffect(scene);
@@ -1364,6 +1372,12 @@ async function main(container: HTMLElement): Promise<void> {
     const DOOM_CONTRACT_DAMAGE = 15;
     const FIELD_NEON_ENTITY_ID = -1;  // sentinel — distinct from any card.cardIndex
 
+    // 죽음의 대지 (Dead Lands, cardId 36) — ITEM that targets the OPPONENT FIELD AS A
+    // WHOLE (same red neon highlight pattern as 파멸의 계약). On drop it drains the
+    // opponent's field energy by DEAD_LANDS_DRAIN, flooring at 0. No unit damage.
+    const DEAD_LANDS_CARD_ID = 36;
+    const DEAD_LANDS_DRAIN = 2;
+
     type OpponentEntry = typeof opponentEntries[number];
 
     const hitOpponentAt = (x: number, y: number): OpponentEntry | null => {
@@ -1764,10 +1778,14 @@ async function main(container: HTMLElement): Promise<void> {
                     }
                 }
 
-                // 파멸의 계약 → red targeting border on the opponent FIELD AREA AS A WHOLE
-                // (not individual units). Uses a dedicated wrapper host with the right
-                // userData keys so NeonBorderEffect sizes the glow to the field rectangle.
-                if (pickedCardId === DOOM_CONTRACT_CARD_ID) {
+                // 파멸의 계약 / 죽음의 대지 → red targeting border on the opponent FIELD
+                // AREA AS A WHOLE (not individual units). Uses a dedicated wrapper host
+                // with the right userData keys so NeonBorderEffect sizes the glow to the
+                // field rectangle.
+                if (
+                    pickedCardId === DOOM_CONTRACT_CARD_ID ||
+                    pickedCardId === DEAD_LANDS_CARD_ID
+                ) {
                     enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, opponentFieldNeonHost);
                 }
 
@@ -1849,6 +1867,45 @@ async function main(container: HTMLElement): Promise<void> {
                             applyMoraleConvertEffect(allyTarget);
                             consumeHandCard(droppedEntry, handIndex);
                         }
+                    } else if (cardId === DEAD_LANDS_CARD_ID) {
+                        // 죽음의 대지 — MUST land on the OPPONENT field area (same bounds
+                        // check as 파멸의 계약). On hit: card → tomb immediately, then the
+                        // DeadLandsEffect plays. The count decrement fires at the effect's
+                        // SHATTER peak (~1.3 s in), NOT at drop time — so the visual
+                        // tearing/shattering of the HUD is in sync with the number drop.
+                        const oHalfW = (opponentFieldAreaFrame.widthPercent  * window.innerWidth)  / 2;
+                        const oHalfH = (opponentFieldAreaFrame.heightPercent * window.innerHeight) / 2;
+                        const oCX = opponentFieldAreaFrame.xPercent * window.innerWidth;
+                        const oCY = opponentFieldAreaFrame.yPercent * window.innerHeight;
+                        const insideOppField =
+                            dropCx >= oCX - oHalfW && dropCx <= oCX + oHalfW &&
+                            dropCy >= oCY - oHalfH && dropCy <= oCY + oHalfH;
+                        if (insideOppField) {
+                            consumeHandCard(droppedEntry, handIndex);
+
+                            // Resolve the opponent HUD's world centre + world size from the
+                            // shaded-area bounds (same frame that defines the 180°-mirror).
+                            const bounds = computeOpponentFieldEnergyBounds(
+                                opponentFieldEnergyAreaFrame,
+                                window.innerWidth,
+                                window.innerHeight,
+                            );
+                            const targetWorld = new THREE.Vector3(bounds.centerX, bounds.centerY, 5);
+
+                            void deadLandsEffect.play(
+                                targetWorld,
+                                { width: bounds.width, height: bounds.height },
+                                opponentEnergyElement,
+                                rendererManager.getDomElement(),
+                                () => {
+                                    const prev = opponentAvailableEnergy;
+                                    opponentAvailableEnergy = Math.max(0, prev - DEAD_LANDS_DRAIN);
+                                    opponentEnergyRenderer.setEnergy(opponentAvailableEnergy);
+                                    opponentEnergyRenderer.update(opponentEnergyFrame, opponentEnergyElement, window.innerWidth, window.innerHeight);
+                                    console.log(`[dead-lands] opponent field energy ${prev} → ${opponentAvailableEnergy} (drained ${prev - opponentAvailableEnergy})`);
+                                },
+                            );
+                        }
                     }
                     neonEffect.detachAll();
                     selectedAttackerEntry = null;
@@ -1892,14 +1949,28 @@ async function main(container: HTMLElement): Promise<void> {
                     // 죽음의 에너지 — drop onto a placed ally to attach 1 energy. The card
                     // itself is consumed (handled by consumeHandCard → tomb). No field
                     // energy is spent; this is a hand-to-unit direct attach.
+                    //
+                    // Effect reuses the OverflowMoraleEffect.playDirectAttach variant so
+                    // the "gather around target → impact (shockwave + flash + shrink)"
+                    // visual beat matches the energies arriving from Overflowing Morale.
+                    // The card is consumed immediately so the hand reflows before the
+                    // effect finishes; the energy count bump is deferred to the impact
+                    // callback so it ticks exactly when the shockwave fires.
                     const dropCx = group.position.x;
                     const dropCy = group.position.y;
                     const allyTarget = hitAllyAt(dropCx, dropCy);
                     if (allyTarget) {
-                        const newCount = (placedCardEnergy.get(allyTarget) ?? 0) + 1;
-                        void updateCardEnergyVisual(allyTarget, newCount);
                         consumeHandCard(droppedEntry, handIndex);
-                        console.log(`[death-energy] attached 1 energy → placed cardId=${allyTarget.card.cardId} total=${newCount}`);
+                        const targetWorld = new THREE.Vector3(
+                            allyTarget.group.position.x,
+                            allyTarget.group.position.y,
+                            5,
+                        );
+                        void overflowMoraleEffect.playDirectAttach(targetWorld, () => {
+                            const newCount = (placedCardEnergy.get(allyTarget) ?? 0) + 1;
+                            void updateCardEnergyVisual(allyTarget, newCount);
+                            console.log(`[death-energy] attached 1 energy → placed cardId=${allyTarget.card.cardId} total=${newCount}`);
+                        });
                     }
                 }
                 neonEffect.detachAll();
@@ -1934,6 +2005,37 @@ async function main(container: HTMLElement): Promise<void> {
     const energyRenderer = new FieldEnergyHudRendererV2(19);
     const energyElement = await energyRenderer.build(energyFrame);
     document.body.appendChild(energyElement);
+
+    // Opponent field energy HUD — 180° mirror of the player's (top 82.4%, left 90.4%)
+    // around screen centre. The horizontal mirror is trivial: left = 100% - 90.4% - 7.2%
+    // = 2.4%. The vertical mirror is SUBTLE: the HUD's height depends on viewport width
+    // (image aspect 638/622 × widthPercent × vw), so a static `topPercent` would drift
+    // at non-16:9 aspects. Instead anchor by the BOTTOM edge — "bottom: 82.4%" puts the
+    // HUD's bottom edge at (100-82.4)=17.6% vh from top, the exact mirror of the player's
+    // static TOP edge at 82.4% vh. This matches the opponent shaded-area mesh whose
+    // stable anchor is also bottomEdgeYRatio = 0.176.
+    let opponentAvailableEnergy = 15;
+    const opponentEnergyFrame = {
+        ...createDefaultFieldEnergyHudFrame(),
+        // topPercent is left as-is; the style override below replaces it with a
+        // bottom-edge anchor (topPercent becomes irrelevant post-override).
+        leftPercent: '2.4%',
+    };
+    const opponentEnergyRenderer = new FieldEnergyHudRendererV2(opponentAvailableEnergy);
+    const opponentEnergyElement = await opponentEnergyRenderer.build(opponentEnergyFrame);
+    opponentEnergyElement.style.top = 'auto';
+    opponentEnergyElement.style.bottom = '82.4%';
+    document.body.appendChild(opponentEnergyElement);
+
+    // Opponent field-energy SHADED AREA — a Three.js mesh at the 180°-mirror of the
+    // player's Field Energy HUD. This is the visual target for the upcoming 죽음의 대지
+    // drain effect (dark motes will converge here). Opacity 0.6 for position verification
+    // now; once the final effect + position are confirmed the opacity drops to 0.
+    const opponentFieldEnergyAreaFrame = createDefaultOpponentFieldEnergyAreaFrame();
+    const opponentFieldEnergyAreaRenderer = new OpponentFieldEnergyAreaRendererV2();
+    const opponentFieldEnergyAreaGroup =
+        await opponentFieldEnergyAreaRenderer.build(opponentFieldEnergyAreaFrame);
+    scene.add(opponentFieldEnergyAreaGroup);
 
     const raceFrame = createDefaultFieldEnergyRaceHudFrame(1);
     const raceRenderer = new FieldEnergyRaceHudRendererV2();
@@ -2175,6 +2277,8 @@ async function main(container: HTMLElement): Promise<void> {
         handPageButtonsRenderer.resize(handPageButtonsFrame, handPageButtonsGroup, width, height);
 
         energyRenderer.update(energyFrame, energyElement, width, height);
+        opponentEnergyRenderer.update(opponentEnergyFrame, opponentEnergyElement, width, height);
+        opponentFieldEnergyAreaRenderer.resize(opponentFieldEnergyAreaFrame, opponentFieldEnergyAreaGroup, width, height);
         raceRenderer.update(raceFrame, raceElement, width, height);
         countRenderer.update(countFrame, countElement, width, height);
         guideRenderer.update(guideFrame, guideElement, width, height);
