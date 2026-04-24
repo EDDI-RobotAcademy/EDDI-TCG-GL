@@ -260,6 +260,7 @@ async function main(container: HTMLElement): Promise<void> {
     handMapRepo.addBattleFieldHand(25);  // 파멸의 계약 (ITEM) — 15 AoE dmg + deck-to-lost-zone
     handMapRepo.addBattleFieldHand(35);  // 사기 전환 (ITEM) — sacrifice ally for floor(hp/5) field energy
     handMapRepo.addBattleFieldHand(20);  // 망자의 늪 (SUPPORT) — draw 3 from deck
+    handMapRepo.addBattleFieldHand(36);  // 죽음의 대지 (ITEM) — drain 2 opponent field energy
     const handCardIds = handMapRepo.getBattleFieldHandList();
     const hand = resolveCards(handCardIds, 'hand');
 
@@ -1364,6 +1365,12 @@ async function main(container: HTMLElement): Promise<void> {
     const DOOM_CONTRACT_DAMAGE = 15;
     const FIELD_NEON_ENTITY_ID = -1;  // sentinel — distinct from any card.cardIndex
 
+    // 죽음의 대지 (Dead Lands, cardId 36) — ITEM that targets the OPPONENT FIELD AS A
+    // WHOLE (same red neon highlight pattern as 파멸의 계약). On drop it drains the
+    // opponent's field energy by DEAD_LANDS_DRAIN, flooring at 0. No unit damage.
+    const DEAD_LANDS_CARD_ID = 36;
+    const DEAD_LANDS_DRAIN = 2;
+
     type OpponentEntry = typeof opponentEntries[number];
 
     const hitOpponentAt = (x: number, y: number): OpponentEntry | null => {
@@ -1764,10 +1771,14 @@ async function main(container: HTMLElement): Promise<void> {
                     }
                 }
 
-                // 파멸의 계약 → red targeting border on the opponent FIELD AREA AS A WHOLE
-                // (not individual units). Uses a dedicated wrapper host with the right
-                // userData keys so NeonBorderEffect sizes the glow to the field rectangle.
-                if (pickedCardId === DOOM_CONTRACT_CARD_ID) {
+                // 파멸의 계약 / 죽음의 대지 → red targeting border on the opponent FIELD
+                // AREA AS A WHOLE (not individual units). Uses a dedicated wrapper host
+                // with the right userData keys so NeonBorderEffect sizes the glow to the
+                // field rectangle.
+                if (
+                    pickedCardId === DOOM_CONTRACT_CARD_ID ||
+                    pickedCardId === DEAD_LANDS_CARD_ID
+                ) {
                     enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, opponentFieldNeonHost);
                 }
 
@@ -1847,6 +1858,25 @@ async function main(container: HTMLElement): Promise<void> {
                         const allyTarget = hitAllyAt(dropCx, dropCy);
                         if (allyTarget) {
                             applyMoraleConvertEffect(allyTarget);
+                            consumeHandCard(droppedEntry, handIndex);
+                        }
+                    } else if (cardId === DEAD_LANDS_CARD_ID) {
+                        // 죽음의 대지 — MUST land on the OPPONENT field area (same bounds
+                        // check as 파멸의 계약). Drains 2 from the opponent's field energy,
+                        // floored at 0. Card → tomb via consumeHandCard. No unit damage.
+                        const oHalfW = (opponentFieldAreaFrame.widthPercent  * window.innerWidth)  / 2;
+                        const oHalfH = (opponentFieldAreaFrame.heightPercent * window.innerHeight) / 2;
+                        const oCX = opponentFieldAreaFrame.xPercent * window.innerWidth;
+                        const oCY = opponentFieldAreaFrame.yPercent * window.innerHeight;
+                        const insideOppField =
+                            dropCx >= oCX - oHalfW && dropCx <= oCX + oHalfW &&
+                            dropCy >= oCY - oHalfH && dropCy <= oCY + oHalfH;
+                        if (insideOppField) {
+                            const prev = opponentAvailableEnergy;
+                            opponentAvailableEnergy = Math.max(0, prev - DEAD_LANDS_DRAIN);
+                            opponentEnergyRenderer.setEnergy(opponentAvailableEnergy);
+                            opponentEnergyRenderer.update(opponentEnergyFrame, opponentEnergyElement, window.innerWidth, window.innerHeight);
+                            console.log(`[dead-lands] opponent field energy ${prev} → ${opponentAvailableEnergy} (drained ${prev - opponentAvailableEnergy})`);
                             consumeHandCard(droppedEntry, handIndex);
                         }
                     }
@@ -1948,6 +1978,20 @@ async function main(container: HTMLElement): Promise<void> {
     const energyRenderer = new FieldEnergyHudRendererV2(19);
     const energyElement = await energyRenderer.build(energyFrame);
     document.body.appendChild(energyElement);
+
+    // Opponent field energy HUD — mirror of the player's at bottom-right (82.4%,90.4%)
+    // rotated across screen centre → top-left (10.4%,2.4%). Same renderer, new frame.
+    // Initial value picked for pilot testability so DEAD_LANDS_DRAIN = 2 produces visible
+    // decrements over multiple drops before hitting the 0 floor.
+    let opponentAvailableEnergy = 15;
+    const opponentEnergyFrame = {
+        ...createDefaultFieldEnergyHudFrame(),
+        topPercent: '10.4%',
+        leftPercent: '2.4%',
+    };
+    const opponentEnergyRenderer = new FieldEnergyHudRendererV2(opponentAvailableEnergy);
+    const opponentEnergyElement = await opponentEnergyRenderer.build(opponentEnergyFrame);
+    document.body.appendChild(opponentEnergyElement);
 
     const raceFrame = createDefaultFieldEnergyRaceHudFrame(1);
     const raceRenderer = new FieldEnergyRaceHudRendererV2();
@@ -2189,6 +2233,7 @@ async function main(container: HTMLElement): Promise<void> {
         handPageButtonsRenderer.resize(handPageButtonsFrame, handPageButtonsGroup, width, height);
 
         energyRenderer.update(energyFrame, energyElement, width, height);
+        opponentEnergyRenderer.update(opponentEnergyFrame, opponentEnergyElement, width, height);
         raceRenderer.update(raceFrame, raceElement, width, height);
         countRenderer.update(countFrame, countElement, width, height);
         guideRenderer.update(guideFrame, guideElement, width, height);
