@@ -68,6 +68,7 @@ import { ScytheCutEffect } from "../../src/animation/scythe/ScytheCutEffect";
 import { EnergyBurnEffect } from "../../src/animation/energy_burn/EnergyBurnEffect";
 import { DoomContractEffect } from "../../src/animation/doom_contract/DoomContractEffect";
 import { MoraleConvertEffect } from "../../src/animation/morale_convert/MoraleConvertEffect";
+import { OverflowMoraleEffect } from "../../src/animation/overflow_morale/OverflowMoraleEffect";
 import { SwampEffect } from "../../src/animation/swamp/SwampEffect";
 
 import { YourLostZoneRepositoryImpl } from "../../src/your_lost_zone/repository/YourLostZoneRepositoryImpl";
@@ -705,6 +706,7 @@ async function main(container: HTMLElement): Promise<void> {
         animationLoop,
     );
     const moraleConvertEffect = new MoraleConvertEffect(scene);
+    const overflowMoraleEffect = new OverflowMoraleEffect(scene);
     const swampEffect = new SwampEffect(scene);
 
     animationLoop.setCustomUpdate(() => {
@@ -1341,7 +1343,13 @@ async function main(container: HTMLElement): Promise<void> {
     const DEATH_ENERGY_CARD_ID = 93;
     const OVERFLOW_MORALE_MAX = 2;
 
-    const ALLY_TARGETING_ITEM_IDS: readonly number[] = [MORALE_CONVERT_CARD_ID, OVERFLOW_MORALE_CARD_ID];
+    // Death-energy (ENERGY kind) also targets placed allies when picked up — same
+    // green-neon highlight + hitAllyAt drop test, just with its own ENERGY branch below.
+    const ALLY_TARGETING_ITEM_IDS: readonly number[] = [
+        MORALE_CONVERT_CARD_ID,
+        OVERFLOW_MORALE_CARD_ID,
+        DEATH_ENERGY_CARD_ID,
+    ];
 
     // 망자의 늪 (Swamp of the Dead, cardId 20) — SUPPORT card. Pickup puts a green neon
     // border on the WHOLE YOUR FIELD AREA. Drop onto your field → draw 3 from your deck.
@@ -1700,12 +1708,30 @@ async function main(container: HTMLElement): Promise<void> {
         const attached = pulled.length;
         console.log(`[overflow-morale] target cardId=${target.card.cardId} → pulled ${attached} death-energy from deck (deck remaining=${deckRepo.getRemainingCount()})`);
 
-        if (attached > 0) {
-            const newCount = (placedCardEnergy.get(target) ?? 0) + attached;
-            await updateCardEnergyVisual(target, newCount);
-            // Consumed energy cards go to the tomb, one entry per pulled copy.
-            for (const energyId of pulled) tombRepo.addCard(energyId);
-        }
+        // Deck world-position — same convention as SwampEffect (screen 0.81, 0.87),
+        // sitting left of the Field Energy HUD.
+        const deckPos = new THREE.Vector3(
+            (0.81 - 0.5) * window.innerWidth,
+            (0.5 - 0.87) * window.innerHeight,
+            5,
+        );
+        // Target is the placed ally the card was dropped on.
+        const targetPos = new THREE.Vector3(
+            target.group.position.x,
+            target.group.position.y,
+            5,
+        );
+
+        // Each mote's arrival bumps the target's energy count by 1 so the icon + HUD
+        // tick in sync with the visible absorption. If attached === 0 the effect still
+        // plays the gather aura (deck "searched", nothing found) and fades — no motes.
+        await overflowMoraleEffect.play(deckPos, targetPos, attached, () => {
+            const newCount = (placedCardEnergy.get(target) ?? 0) + 1;
+            void updateCardEnergyVisual(target, newCount);
+        });
+
+        // Consumed energy cards go to the tomb after the flow resolves.
+        for (const energyId of pulled) tombRepo.addCard(energyId);
     };
 
     // Pilot C — click / drag / drop
@@ -1861,6 +1887,19 @@ async function main(container: HTMLElement): Promise<void> {
                     if (allyTarget) {
                         void applyOverflowMoraleEffect(allyTarget);
                         consumeHandCard(droppedEntry, handIndex);
+                    }
+                } else if (kind === CardKind.ENERGY && cardId === DEATH_ENERGY_CARD_ID) {
+                    // 죽음의 에너지 — drop onto a placed ally to attach 1 energy. The card
+                    // itself is consumed (handled by consumeHandCard → tomb). No field
+                    // energy is spent; this is a hand-to-unit direct attach.
+                    const dropCx = group.position.x;
+                    const dropCy = group.position.y;
+                    const allyTarget = hitAllyAt(dropCx, dropCy);
+                    if (allyTarget) {
+                        const newCount = (placedCardEnergy.get(allyTarget) ?? 0) + 1;
+                        void updateCardEnergyVisual(allyTarget, newCount);
+                        consumeHandCard(droppedEntry, handIndex);
+                        console.log(`[death-energy] attached 1 energy → placed cardId=${allyTarget.card.cardId} total=${newCount}`);
                     }
                 }
                 neonEffect.detachAll();
