@@ -68,6 +68,7 @@ import { ScytheCutEffect } from "../../src/animation/scythe/ScytheCutEffect";
 import { EnergyBurnEffect } from "../../src/animation/energy_burn/EnergyBurnEffect";
 import { DoomContractEffect } from "../../src/animation/doom_contract/DoomContractEffect";
 import { DeadLandsEffect } from "../../src/animation/dead_lands/DeadLandsEffect";
+import { LeonikSummonEffect } from "../../src/animation/leonik_summon/LeonikSummonEffect";
 import { MoraleConvertEffect } from "../../src/animation/morale_convert/MoraleConvertEffect";
 import { OverflowMoraleEffect } from "../../src/animation/overflow_morale/OverflowMoraleEffect";
 import { SwampEffect } from "../../src/animation/swamp/SwampEffect";
@@ -714,6 +715,7 @@ async function main(container: HTMLElement): Promise<void> {
         animationLoop,
     );
     const deadLandsEffect = new DeadLandsEffect(scene);
+    const leonikSummonEffect = new LeonikSummonEffect(scene);
     const moraleConvertEffect = new MoraleConvertEffect(scene);
     const overflowMoraleEffect = new OverflowMoraleEffect(scene);
     const swampEffect = new SwampEffect(scene);
@@ -2168,6 +2170,9 @@ async function main(container: HTMLElement): Promise<void> {
         if (leonikSelectedPopupIndices.size !== LEONIK_MAX_PICK) return;
         if (!leonikSourceEntry) return;
 
+        // Capture source entry before closeLeonikPopup nulls it.
+        const sourceEntry = leonikSourceEntry;
+
         // Map popup-local indices → absolute deck indices, remove in descending order so
         // earlier removals don't shift later indices.
         const selectedDeckIndices = Array.from(leonikSelectedPopupIndices)
@@ -2179,26 +2184,51 @@ async function main(container: HTMLElement): Promise<void> {
             if (id != null) pulledIds.push(id);
         }
 
-        // Push the picked cards into the hand (same path as the 'd' key manual draw).
-        for (const id of pulledIds) {
-            const resolved = resolveCards([id], 'leonik-summon');
-            if (resolved.length === 0) continue;
-            const newEntry = await handRenderer.appendCard(handGroup, resolved[0], handCardFrame);
-            handOrder.push(newEntry);
-        }
+        // Tear down the popup BEFORE the effect plays — the gate visual sits centred
+        // and would be hidden behind a popup overlay otherwise.
+        closeLeonikPopup();
 
-        // Leonik card → tomb. Use indexOf in case the hand shifted while the popup was
-        // open (belt + braces — the popup is modal so it shouldn't, but harmless).
-        const idx = handOrder.indexOf(leonikSourceEntry);
-        if (idx >= 0) consumeHandCard(leonikSourceEntry, idx);
+        // Hand baseline — same recipe as the swamp-effect destination calc. Cards
+        // arrive near the centre of the hand baseline; reflowHandAndPlaced shifts them
+        // into actual position after appendCard.
+        const handBaselineY =
+            handLayoutFrame.baselineYHeightRatio * window.innerHeight +
+            handLayoutFrame.baselineYWidthOffsetRatio * window.innerWidth;
+        const handDestinations = pulledIds.map((_id, i) => new THREE.Vector3(
+            // Slight x-spread so the two cards visibly arrive at different spots.
+            (i - (pulledIds.length - 1) / 2) * 80,
+            handBaselineY,
+            5,
+        ));
 
-        // Shuffle deck per spec.
+        const gateCenter = new THREE.Vector3(0, 0, 5);
+
+        // Per-card onArrive callback: appendCard at landing time. The placeholder
+        // mesh fades out a beat after onArrive fires so the swap reads as the card
+        // materialising into the hand.
+        await leonikSummonEffect.play(
+            gateCenter,
+            handDestinations,
+            rendererManager.getDomElement(),
+            (idx: number) => {
+                const id = pulledIds[idx];
+                const resolved = resolveCards([id], 'leonik-summon');
+                if (resolved.length === 0) return;
+                void (async () => {
+                    const newEntry = await handRenderer.appendCard(handGroup, resolved[0], handCardFrame);
+                    handOrder.push(newEntry);
+                    reflowHandAndPlaced();
+                })();
+            },
+        );
+
+        // After effect fully resolves: Leonik → tomb + deck shuffle.
+        const idx = handOrder.indexOf(sourceEntry);
+        if (idx >= 0) consumeHandCard(sourceEntry, idx);
         deckRepo.shuffle();
+        reflowHandAndPlaced();
 
         console.log(`[leonik] pulled ${pulledIds.join(',')} from deck → hand; leonik → tomb; deck shuffled; remaining=${deckRepo.getRemainingCount()}`);
-
-        closeLeonikPopup();
-        reflowHandAndPlaced();
     };
 
     // Pilot C — click / drag / drop
