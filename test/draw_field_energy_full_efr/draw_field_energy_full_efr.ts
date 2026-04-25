@@ -267,6 +267,7 @@ async function main(container: HTMLElement): Promise<void> {
     handMapRepo.addBattleFieldHand(35);  // 사기 전환 (ITEM) — sacrifice ally for floor(hp/5) field energy
     handMapRepo.addBattleFieldHand(20);  // 망자의 늪 (SUPPORT) — draw 3 from deck
     handMapRepo.addBattleFieldHand(36);  // 죽음의 대지 (ITEM) — drain 2 opponent field energy
+    handMapRepo.addBattleFieldHand(30);  // 레오닉의 부름 (SUPPORT) — pick 2 hero-or-below UNITs from deck
     const handCardIds = handMapRepo.getBattleFieldHandList();
     const hand = resolveCards(handCardIds, 'hand');
 
@@ -277,7 +278,7 @@ async function main(container: HTMLElement): Promise<void> {
         8, 8, 8,          // 죽음의 낫 x3 (legendary)
         9, 9,             // 에너지 번 x2 (hero)
         25, 25, 25,       // 파멸의 계약 x3 (hero)
-        27,               // 영혼 수확자 벨른 x1 (hero, 2 - 1 in hand)
+        27, 27, 27,       // 영혼 수확자 벨른 x3 (hero)
         151, 151,         // 차갑게 불타는 암흑 에너지 x2 (hero)
         20, 20, 20,       // 망자의 늪 x3 (uncommon)
         2, 2,             // 넘쳐 흐르는 사기 x2 (uncommon, 3 - 1 in hand)
@@ -745,6 +746,54 @@ async function main(container: HTMLElement): Promise<void> {
         const h = window.innerHeight;
         const worldX = e.clientX - w / 2;
         const worldY = h / 2 - e.clientY;
+
+        // ── -1) LEONIK popup — full modal lock ─────────────────────────────────────
+        // The Leonik picker is a committed-action popup: until the user clicks CONFIRM
+        // (or explicitly aborts via a future escape), NO other click can fire. Panels,
+        // turn-end, cards — all intercepted. Clicks inside the popup route to card
+        // selection or pagination/confirm buttons; clicks outside are a no-op.
+        if (leonikPopupGroup) {
+            e.stopImmediatePropagation();
+
+            sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
+            const hits = sharedRaycaster.intersectObjects(leonikPopupGroup.children, true);
+            for (const hit of hits) {
+                const bt = hit.object.userData.buttonType;
+                if (bt === 'prev') {
+                    if (leonikPopupPage > 0) { leonikPopupPage--; void reloadLeonikPopup(); }
+                    return;
+                }
+                if (bt === 'next') {
+                    if (leonikPopupPage < leonikTotalPages() - 1) {
+                        leonikPopupPage++; void reloadLeonikPopup();
+                    }
+                    return;
+                }
+                if (bt === 'confirm') {
+                    void confirmLeonikSummon();
+                    return;
+                }
+            }
+
+            // Card-cell hit test — toggle selection with LEONIK_MAX_PICK cap. Clicking
+            // an already-selected card deselects. Clicking a fresh card when the cap
+            // is reached is a no-op (user must deselect one first). Incremental border
+            // add/remove (no popup rebuild) — avoids the one-frame blank flicker.
+            const absIdx = hitLeonikPopupCard(worldX, worldY);
+            if (absIdx >= 0) {
+                if (leonikSelectedPopupIndices.has(absIdx)) {
+                    leonikSelectedPopupIndices.delete(absIdx);
+                    removeLeonikBorder(absIdx);
+                } else if (leonikSelectedPopupIndices.size < LEONIK_MAX_PICK) {
+                    leonikSelectedPopupIndices.add(absIdx);
+                    addLeonikBorder(absIdx);
+                }
+                updateLeonikConfirmState();
+                return;
+            }
+            // Outside popup bounds → absorbed, no-op.
+            return;
+        }
 
         // ── 0) Turn-end button (hexagon) ───────────────────────────────────────────
         // Only active while NO popup is open (popup checks below handle their own consume).
@@ -1378,6 +1427,16 @@ async function main(container: HTMLElement): Promise<void> {
     const DEAD_LANDS_CARD_ID = 36;
     const DEAD_LANDS_DRAIN = 2;
 
+    // 레오닉의 부름 (Leonik's Summon, cardId 30) — SUPPORT that lets the player hand-pick
+    // LEONIK_MAX_PICK UNIT cards from the deck whose grade is ≤ LEONIK_MAX_GRADE (HERO or
+    // below). Pickup highlights the whole YOUR FIELD with green neon (same as 망자의 늪).
+    // Drop on the field opens a picker popup; the Leonik card itself isn't consumed until
+    // the user clicks CONFIRM in the popup. On confirm: the two picked cards move from
+    // deck → hand, Leonik → tomb, and the deck is shuffled.
+    const LEONIK_SUMMON_CARD_ID = 30;
+    const LEONIK_MAX_PICK = 2;
+    const LEONIK_MAX_GRADE = CardGrade.HERO;
+
     type OpponentEntry = typeof opponentEntries[number];
 
     const hitOpponentAt = (x: number, y: number): OpponentEntry | null => {
@@ -1748,6 +1807,400 @@ async function main(container: HTMLElement): Promise<void> {
         for (const energyId of pulled) tombRepo.addCard(energyId);
     };
 
+    // ─── 레오닉의 부름 (Leonik's Summon) popup ───────────────────────────────────
+    // Opens after the card is dropped on Your Field. Shows every deck card whose kind
+    // is UNIT and whose grade ≤ HERO. User picks EXACTLY LEONIK_MAX_PICK; selected cards
+    // get a green border. A centred "확인" button commits: picks leave the deck for the
+    // hand, the Leonik card itself goes to the tomb, and the deck is shuffled.
+    //
+    // State is kept in outer-scope lets so the capture-phase mousedown handler can
+    // branch on the popup being open (mirrors tomb/lost-zone popup pattern).
+    // Custom overrides from tomb's defaults: taller popup (80% vs 60%) + double row
+    // gap so the two rows sit well clear of the centre. Confirm button lives at centerY
+    // (between the rows) and was overlapping card bodies with the default 0.5 gap.
+    const leonikPopupFrame = {
+        ...createDefaultYourTombPopupFrame(),
+        topRatio:      0.10,
+        bottomRatio:   0.90,
+        cardGapYRatio: 1.0,
+    };
+    const leonikPopupRenderer = new YourLostZonePopupRendererV2();
+    const leonikCardsPerPage = leonikPopupFrame.cardColumns * leonikPopupFrame.rowsPerPage;
+
+    let leonikPopupGroup: THREE.Group | null = null;
+    let leonikPopupPage = 0;
+    let leonikSourceEntry: HandEntry | null = null;
+    let leonikEligibleDeckIndices: number[] = [];
+    // Popup-local indices into leonikEligibleDeckIndices (absolute across all pages, not
+    // just the current page) — selection persists across page turns.
+    const leonikSelectedPopupIndices = new Set<number>();
+
+    // Per-selection border meshes on the CURRENT page (absIdx → { mesh, material }).
+    // Only populated for absIdx values that live on the visible page; when the page
+    // turns, this map is rebuilt. Kept separate from leonikSelectedPopupIndices (which
+    // is permanent selection state) so selection persists through page turns but
+    // on-screen meshes are page-scoped.
+    const leonikBorderByAbsIdx = new Map<number, { mesh: THREE.Mesh; material: THREE.ShaderMaterial }>();
+    // Active border shader materials — the shared clock loop ticks u_time on all of
+    // them so pulsation is synchronised and cheap (one RAF, not one per border).
+    const leonikActivePulseMats = new Set<THREE.ShaderMaterial>();
+    // Confirm button material handle — opacity updated inline on selection changes.
+    let leonikConfirmMat: THREE.MeshBasicMaterial | null = null;
+
+    // Single shared RAF loop that drives pulsation on every active border material.
+    // Matches NeonBorderEffect.updateAnimation — increments `time` by timeIncrement
+    // per frame (rather than reading wall-clock) so the visual cadence is identical.
+    let leonikPulseRunning = false;
+    const startLeonikPulseClock = (): void => {
+        if (leonikPulseRunning) return;
+        leonikPulseRunning = true;
+        const step = () => {
+            if (!leonikPulseRunning) return;
+            leonikActivePulseMats.forEach((mat) => {
+                mat.uniforms.time.value += leonikBorderPalette.timeIncrement;
+            });
+            requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+    };
+
+    // Build a pulsing green neon border material. Uses the SAME shader as
+    // NeonBorderEffect (the effect attached when an ally card is picked up in hand) so
+    // the Leonik popup's selection highlight reads identically to the rest of the game.
+    // Colours come from createAllyTargetingNeonBorderFrame (green family).
+    const leonikBorderPalette = createAllyTargetingNeonBorderFrame();
+    const LEONIK_BORDER_THICKNESS = leonikBorderPalette.lineThickness;  // px margin around the card
+    const buildLeonikBorderMaterial = (planeW: number, planeH: number): THREE.ShaderMaterial => {
+        // Glow extent in UV space — shader uses min-edge distance and smoothsteps it
+        // against borderX/borderY to fade the ring inward.
+        const borderX = (LEONIK_BORDER_THICKNESS / 2) / planeW;
+        const borderY = (LEONIK_BORDER_THICKNESS / 2) / planeH;
+        return new THREE.ShaderMaterial({
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+            uniforms: {
+                baseColor: { value: new THREE.Color(leonikBorderPalette.baseColor) },
+                glowColor: { value: new THREE.Color(leonikBorderPalette.glowColor) },
+                time:      { value: 0.0 },
+                borderX:   { value: borderX },
+                borderY:   { value: borderY },
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 baseColor;
+                uniform vec3 glowColor;
+                uniform float time;
+                uniform float borderX;
+                uniform float borderY;
+                varying vec2 vUv;
+                void main() {
+                    float dx = min(vUv.x, 1.0 - vUv.x);
+                    float dy = min(vUv.y, 1.0 - vUv.y);
+                    float ex = 1.0 - smoothstep(0.0, borderX, dx);
+                    float ey = 1.0 - smoothstep(0.0, borderY, dy);
+                    float glow = max(ex, ey);
+                    float pulse = sin(time * 5.0) * 0.3 + 0.7;
+                    vec3 finalColor = mix(baseColor, glowColor, pulse);
+                    gl_FragColor = vec4(finalColor, glow * pulse * 0.85);
+                }
+            `,
+        });
+    };
+
+    // Given an absIdx, return its (col, row) position on the CURRENT page, or null if
+    // the index is on a different page. Used by addBorder for positioning + by the
+    // page-turn rebuild to reseat border meshes.
+    const leonikCardPositionForAbsIdx = (absIdx: number): { cx: number; cy: number; cw: number; ch: number } | null => {
+        const start = leonikPopupPage * leonikCardsPerPage;
+        const end = start + leonikCardsPerPage;
+        if (absIdx < start || absIdx >= end) return null;
+        const i = absIdx - start;
+        const bounds = computeYourLostZonePopupBounds(leonikPopupFrame, window.innerWidth, window.innerHeight);
+        const cw = window.innerWidth * createDefaultHandCardFrame().cardWidthRatio;
+        const ch = cw * createDefaultHandCardFrame().cardAspect;
+        const stepX = cw * (1 + leonikPopupFrame.cardGapXRatio);
+        const stepY = ch * (1 + leonikPopupFrame.cardGapYRatio);
+        const cols = Math.max(1, leonikPopupFrame.cardColumns);
+        const originX = bounds.centerX - ((cols - 1) * stepX) / 2;
+        const pageRows = Math.max(1, leonikPopupFrame.rowsPerPage);
+        const originY = bounds.centerY + ((pageRows - 1) * stepY) / 2;
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        return { cx: originX + col * stepX, cy: originY - row * stepY, cw, ch };
+    };
+
+    // Add a pulsing border mesh for the given absIdx (if on the current page). Idempotent.
+    // Plane is card-dimensions + thickness on each side (matches NeonBorderEffect's sizing).
+    const addLeonikBorder = (absIdx: number): void => {
+        if (!leonikPopupGroup) return;
+        if (leonikBorderByAbsIdx.has(absIdx)) return;
+        const pos = leonikCardPositionForAbsIdx(absIdx);
+        if (!pos) return;
+        const planeW = pos.cw + LEONIK_BORDER_THICKNESS * 2;
+        const planeH = pos.ch + LEONIK_BORDER_THICKNESS * 2;
+        const material = buildLeonikBorderMaterial(planeW, planeH);
+        const geometry = new THREE.PlaneGeometry(planeW, planeH);
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(pos.cx, pos.cy, leonikBorderPalette.zOffset);
+        mesh.renderOrder = leonikPopupFrame.renderOrder + 5;
+        leonikPopupGroup.add(mesh);
+        leonikBorderByAbsIdx.set(absIdx, { mesh, material });
+        leonikActivePulseMats.add(material);
+    };
+
+    // Remove a specific border mesh + dispose. Idempotent.
+    const removeLeonikBorder = (absIdx: number): void => {
+        if (!leonikPopupGroup) return;
+        const entry = leonikBorderByAbsIdx.get(absIdx);
+        if (!entry) return;
+        leonikPopupGroup.remove(entry.mesh);
+        entry.mesh.geometry.dispose();
+        entry.material.dispose();
+        leonikActivePulseMats.delete(entry.material);
+        leonikBorderByAbsIdx.delete(absIdx);
+    };
+
+    // Re-tint the confirm button's material based on current selection count.
+    const updateLeonikConfirmState = (): void => {
+        if (!leonikConfirmMat) return;
+        const active = leonikSelectedPopupIndices.size === LEONIK_MAX_PICK;
+        leonikConfirmMat.opacity = active ? 1.0 : 0.45;
+    };
+
+    const collectLeonikEligibleIndices = (): number[] => {
+        const out: number[] = [];
+        const cards = deckRepo.getCards();
+        for (let i = 0; i < cards.length; i++) {
+            const cardData = getCardById(cards[i]);
+            if (!cardData) continue;
+            const kind = parseInt(cardData.종류, 10) as CardKind;
+            const grade = parseInt(cardData.등급, 10);
+            if (kind === CardKind.UNIT && grade <= LEONIK_MAX_GRADE) out.push(i);
+        }
+        return out;
+    };
+
+    const leonikTotalPages = (): number =>
+        Math.max(1, Math.ceil(leonikEligibleDeckIndices.length / leonikCardsPerPage));
+
+    // Cached confirm-button texture so rebuilds don't re-render the canvas.
+    let leonikConfirmTexture: THREE.CanvasTexture | null = null;
+    const buildLeonikConfirmTexture = (): THREE.CanvasTexture => {
+        if (leonikConfirmTexture) return leonikConfirmTexture;
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d')!;
+        // Rounded dark-gold plate with "확인" text.
+        const radius = 24;
+        ctx.fillStyle = '#2d1f08';
+        ctx.strokeStyle = '#d4af37';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(radius, 0);
+        ctx.lineTo(canvas.width - radius, 0);
+        ctx.quadraticCurveTo(canvas.width, 0, canvas.width, radius);
+        ctx.lineTo(canvas.width, canvas.height - radius);
+        ctx.quadraticCurveTo(canvas.width, canvas.height, canvas.width - radius, canvas.height);
+        ctx.lineTo(radius, canvas.height);
+        ctx.quadraticCurveTo(0, canvas.height, 0, canvas.height - radius);
+        ctx.lineTo(0, radius);
+        ctx.quadraticCurveTo(0, 0, radius, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#ffd868';
+        ctx.font = 'bold 60px "Inter", "Roboto", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('확인', canvas.width / 2, canvas.height / 2 + 2);
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.magFilter = THREE.LinearFilter;
+        tex.minFilter = THREE.LinearFilter;
+        tex.generateMipmaps = false;
+        leonikConfirmTexture = tex;
+        return tex;
+    };
+
+    const buildLeonikPopupForCurrentPage = async (): Promise<THREE.Group> => {
+        const start = leonikPopupPage * leonikCardsPerPage;
+        const pageDeckIndices = leonikEligibleDeckIndices.slice(start, start + leonikCardsPerPage);
+        const deckCards = deckRepo.getCards();
+        const pageCardIds = pageDeckIndices.map((di) => deckCards[di]);
+        const resolved = resolveCards(pageCardIds, 'leonik');
+        const group = await leonikPopupRenderer.build(leonikPopupFrame, resolved);
+
+        const bounds = computeYourLostZonePopupBounds(leonikPopupFrame, window.innerWidth, window.innerHeight);
+
+        // Confirm button — centred at popup centre, between prev/next pagination buttons.
+        // Material handle stashed so selection-change handlers can re-tint without
+        // rebuilding the whole popup (that's what caused the flicker before).
+        const confirmTex = buildLeonikConfirmTexture();
+        const confirmMat = new THREE.MeshBasicMaterial({ map: confirmTex, transparent: true });
+        // Slightly smaller button (was 0.16) — the confirm plate was too prominent.
+        const btnW = bounds.width * 0.12;
+        const btnH = btnW * 0.5;
+        const confirmGeo = new THREE.PlaneGeometry(btnW, btnH);
+        const confirmMesh = new THREE.Mesh(confirmGeo, confirmMat);
+        confirmMesh.position.set(bounds.centerX, bounds.centerY, 0);
+        confirmMesh.renderOrder = leonikPopupFrame.renderOrder + 12;
+        confirmMesh.userData.buttonType = 'confirm';
+        confirmMat.opacity = leonikSelectedPopupIndices.size === LEONIK_MAX_PICK ? 1.0 : 0.45;
+        group.add(confirmMesh);
+        leonikConfirmMat = confirmMat;
+
+        return group;
+    };
+
+    // Populate border meshes for every selected absIdx that lives on the CURRENT page.
+    // Called after the popup group is built (on open + on page turn).
+    const refreshLeonikBordersForPage = (): void => {
+        // Clear any stale entries (in case the map wasn't cleared — belt + braces).
+        leonikBorderByAbsIdx.forEach((_entry, absIdx) => removeLeonikBorder(absIdx));
+        leonikBorderByAbsIdx.clear();
+        leonikSelectedPopupIndices.forEach((absIdx) => addLeonikBorder(absIdx));
+    };
+
+    const openLeonikPopup = async (sourceEntry: HandEntry): Promise<void> => {
+        if (leonikPopupGroup) return;
+        // Modal mutex — close every other centred popup first.
+        if (lostZonePopupGroup) closeLostZonePopup();
+        if (opponentLostZonePopupGroup) closeOpponentLostZonePopup();
+        if (tombPopupGroup) closeTombPopup();
+        if (opponentTombPopupGroup) closeOpponentTombPopup();
+
+        leonikSourceEntry = sourceEntry;
+        leonikEligibleDeckIndices = collectLeonikEligibleIndices();
+        leonikSelectedPopupIndices.clear();
+        leonikPopupPage = 0;
+
+        if (leonikEligibleDeckIndices.length === 0) {
+            console.log('[leonik] no eligible deck cards (hero-or-below UNIT) — effect no-ops');
+            // Still consume the card per spec (card is used regardless of result).
+            const idx = handOrder.indexOf(sourceEntry);
+            if (idx >= 0) consumeHandCard(sourceEntry, idx);
+            deckRepo.shuffle();
+            leonikSourceEntry = null;
+            reflowHandAndPlaced();
+            return;
+        }
+
+        leonikPopupGroup = await buildLeonikPopupForCurrentPage();
+        scene.add(leonikPopupGroup);
+        refreshLeonikBordersForPage();
+        startLeonikPulseClock();
+    };
+
+    const closeLeonikPopup = (): void => {
+        if (!leonikPopupGroup) return;
+        // Dispose per-selection border materials first (the popup renderer's dispose
+        // walks the whole tree, but the pulse set needs to be cleared explicitly).
+        leonikBorderByAbsIdx.forEach((_entry, absIdx) => removeLeonikBorder(absIdx));
+        leonikBorderByAbsIdx.clear();
+        leonikActivePulseMats.clear();
+        leonikPulseRunning = false;
+
+        scene.remove(leonikPopupGroup);
+        leonikPopupRenderer.dispose(leonikPopupGroup);
+        leonikPopupGroup = null;
+        leonikConfirmMat = null;
+        leonikPopupPage = 0;
+        leonikSelectedPopupIndices.clear();
+        leonikEligibleDeckIndices = [];
+        leonikSourceEntry = null;
+    };
+
+    const reloadLeonikPopup = async (): Promise<void> => {
+        if (!leonikPopupGroup) return;
+        // Tear down current page's borders (new page = new card positions).
+        leonikBorderByAbsIdx.forEach((_entry, absIdx) => removeLeonikBorder(absIdx));
+        leonikBorderByAbsIdx.clear();
+
+        scene.remove(leonikPopupGroup);
+        leonikPopupRenderer.dispose(leonikPopupGroup);
+        leonikPopupGroup = await buildLeonikPopupForCurrentPage();
+        scene.add(leonikPopupGroup);
+        refreshLeonikBordersForPage();
+    };
+
+    // Hit-test: which popup-local index sits under (worldX, worldY)? Returns the
+    // ABSOLUTE eligibleDeckIndices index (not page-relative). Returns -1 if no card.
+    const hitLeonikPopupCard = (worldX: number, worldY: number): number => {
+        const bounds = computeYourLostZonePopupBounds(leonikPopupFrame, window.innerWidth, window.innerHeight);
+        const cw = window.innerWidth * createDefaultHandCardFrame().cardWidthRatio;
+        const ch = cw * createDefaultHandCardFrame().cardAspect;
+        const stepX = cw * (1 + leonikPopupFrame.cardGapXRatio);
+        const stepY = ch * (1 + leonikPopupFrame.cardGapYRatio);
+        const cols = Math.max(1, leonikPopupFrame.cardColumns);
+        const originX = bounds.centerX - ((cols - 1) * stepX) / 2;
+        const pageRows = Math.max(1, leonikPopupFrame.rowsPerPage);
+        const originY = bounds.centerY + ((pageRows - 1) * stepY) / 2;
+
+        const start = leonikPopupPage * leonikCardsPerPage;
+        const pageLen = Math.min(
+            leonikCardsPerPage,
+            leonikEligibleDeckIndices.length - start,
+        );
+        for (let i = 0; i < pageLen; i++) {
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+            const cx = originX + col * stepX;
+            const cy = originY - row * stepY;
+            if (
+                worldX >= cx - cw / 2 && worldX <= cx + cw / 2 &&
+                worldY >= cy - ch / 2 && worldY <= cy + ch / 2
+            ) {
+                return start + i;
+            }
+        }
+        return -1;
+    };
+
+    const confirmLeonikSummon = async (): Promise<void> => {
+        if (leonikSelectedPopupIndices.size !== LEONIK_MAX_PICK) return;
+        if (!leonikSourceEntry) return;
+
+        // Map popup-local indices → absolute deck indices, remove in descending order so
+        // earlier removals don't shift later indices.
+        const selectedDeckIndices = Array.from(leonikSelectedPopupIndices)
+            .map((i) => leonikEligibleDeckIndices[i])
+            .sort((a, b) => b - a);
+        const pulledIds: number[] = [];
+        for (const deckIdx of selectedDeckIndices) {
+            const id = deckRepo.removeAt(deckIdx);
+            if (id != null) pulledIds.push(id);
+        }
+
+        // Push the picked cards into the hand (same path as the 'd' key manual draw).
+        for (const id of pulledIds) {
+            const resolved = resolveCards([id], 'leonik-summon');
+            if (resolved.length === 0) continue;
+            const newEntry = await handRenderer.appendCard(handGroup, resolved[0], handCardFrame);
+            handOrder.push(newEntry);
+        }
+
+        // Leonik card → tomb. Use indexOf in case the hand shifted while the popup was
+        // open (belt + braces — the popup is modal so it shouldn't, but harmless).
+        const idx = handOrder.indexOf(leonikSourceEntry);
+        if (idx >= 0) consumeHandCard(leonikSourceEntry, idx);
+
+        // Shuffle deck per spec.
+        deckRepo.shuffle();
+
+        console.log(`[leonik] pulled ${pulledIds.join(',')} from deck → hand; leonik → tomb; deck shuffled; remaining=${deckRepo.getRemainingCount()}`);
+
+        closeLeonikPopup();
+        reflowHandAndPlaced();
+    };
+
     // Pilot C — click / drag / drop
     const bridge = new HandInteractionBridge(
         rendererManager.getDomElement(),
@@ -1803,10 +2256,14 @@ async function main(container: HTMLElement): Promise<void> {
                     }
                 }
 
-                // 망자의 늪 → green targeting border on the WHOLE YOUR FIELD AREA (not
-                // individual placed cards). Same wrapper-host trick as doom contract's
-                // opponent-field highlight, just on the player side with green neon.
-                if (pickedCardId === SWAMP_OF_DEAD_CARD_ID) {
+                // 망자의 늪 / 레오닉의 부름 → green targeting border on the WHOLE YOUR
+                // FIELD AREA (not individual placed cards). Same wrapper-host trick as
+                // doom contract's opponent-field highlight, just on the player side with
+                // green neon.
+                if (
+                    pickedCardId === SWAMP_OF_DEAD_CARD_ID ||
+                    pickedCardId === LEONIK_SUMMON_CARD_ID
+                ) {
                     allyTargetNeonEffect.attach(FIELD_NEON_ENTITY_ID, yourFieldNeonHost);
                 }
             },
@@ -1934,6 +2391,12 @@ async function main(container: HTMLElement): Promise<void> {
                     // 망자의 늪 — draw 3 and consume (goes to tomb via consumeHandCard).
                     void applySwampEffect();
                     consumeHandCard(droppedEntry, handIndex);
+                } else if (inside && kind === CardKind.SUPPORT && cardId === LEONIK_SUMMON_CARD_ID) {
+                    // 레오닉의 부름 — opens a picker popup. DO NOT consume the card yet —
+                    // the popup's confirm handler calls consumeHandCard itself once the user
+                    // picks their 2 cards and clicks 확인. Dropping outside Your Field just
+                    // snaps back unused (handled by the `inside &&` guard).
+                    void openLeonikPopup(droppedEntry);
                 } else if (kind === CardKind.SUPPORT && cardId === OVERFLOW_MORALE_CARD_ID) {
                     // 넘쳐흐르는 사기 — MUST land on a placed ally, else snap back unused.
                     // Uses the card's visual centre (same convention as the ITEM ally-target

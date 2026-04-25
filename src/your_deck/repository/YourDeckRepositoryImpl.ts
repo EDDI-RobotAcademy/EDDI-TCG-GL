@@ -36,6 +36,21 @@ export class YourDeckRepositoryImpl implements YourDeckRepository {
         return removed;
     }
 
+    public removeAt(index: number): number | null {
+        if (index < 0 || index >= this.cards.length) return null;
+        return this.cards.splice(index, 1)[0];
+    }
+
+    public shuffle(): void {
+        // Fisher-Yates in place.
+        for (let i = this.cards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const tmp = this.cards[i];
+            this.cards[i] = this.cards[j];
+            this.cards[j] = tmp;
+        }
+    }
+
     public getRemainingCount(): number {
         return this.cards.length;
     }
