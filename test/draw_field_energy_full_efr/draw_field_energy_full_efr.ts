@@ -345,6 +345,8 @@ async function main(container: HTMLElement): Promise<void> {
     // Pilot E new — opponent field units (reuses HandCardRendererV2 via OpponentFieldRendererV2)
     // Add mythic unit (네더 블레이드, cardId 19) to the opponent field for scythe-targeting tests:
     //   scythe vs <MYTHICAL → instant kill; scythe vs MYTHICAL → 30 damage.
+    // 2 copies for testing duplicate-target picks (e.g., 시체 폭발) + multi-NB scenarios.
+    OpponentFieldMapRepositoryImpl.getInstance().addOpponentField(19);
     OpponentFieldMapRepositoryImpl.getInstance().addOpponentField(19);
     const opponentCardIds = OpponentFieldMapRepositoryImpl.getInstance().getOpponentFieldList();
     const opponentCards = resolveCards(opponentCardIds, 'opponent');
@@ -1119,30 +1121,38 @@ async function main(container: HTMLElement): Promise<void> {
     type NetherBladePassive2Pick =
         | { readonly kind: 'master' }
         | { readonly kind: 'opponent'; readonly cardIndex: number };
-    let netherBladePassive2State: { deployedEntry: HandEntry } | null = null;
+    // State carries the resolver of the Promise returned by enterNetherBladePassive2 —
+    // resolve() fires after the picker's damage application so chained callers (deploy
+    // chain + turn-start loop) can sequentially `await` multiple Nether Blade passes.
+    let netherBladePassive2State: {
+        deployedEntry: HandEntry;
+        onResolve: () => void;
+    } | null = null;
 
-    const enterNetherBladePassive2 = (deployedEntry: HandEntry): void => {
-        // No valid targets → skip the passive entirely (no neon, no state).
-        const hasOpponents = opponentAliveOrder.length > 0 &&
-            opponentEntries.some((oe) =>
-                oe.group.visible && opponentAliveOrder.includes(oe.cardIndex),
-            );
-        const hasMaster = opponentMasterHp > 0;
-        if (!hasOpponents && !hasMaster) {
-            console.log('[nether-blade] passive 2 → no valid targets, skipped');
-            return;
-        }
-
-        for (const oe of opponentEntries) {
-            if (oe.group.visible && opponentAliveOrder.includes(oe.cardIndex)) {
-                enemyNeonEffect.attach(oe.cardIndex, oe.group);
+    const enterNetherBladePassive2 = (deployedEntry: HandEntry): Promise<void> => {
+        return new Promise<void>((resolve) => {
+            const hasOpponents = opponentAliveOrder.length > 0 &&
+                opponentEntries.some((oe) =>
+                    oe.group.visible && opponentAliveOrder.includes(oe.cardIndex),
+                );
+            const hasMaster = opponentMasterHp > 0;
+            if (!hasOpponents && !hasMaster) {
+                console.log('[nether-blade] passive 2 → no valid targets, skipped');
+                resolve();
+                return;
             }
-        }
-        if (hasMaster) {
-            enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, masterGroup);
-        }
-        netherBladePassive2State = { deployedEntry };
-        console.log('[nether-blade] passive 2 → choose opponent unit or master (red highlights)');
+
+            for (const oe of opponentEntries) {
+                if (oe.group.visible && opponentAliveOrder.includes(oe.cardIndex)) {
+                    enemyNeonEffect.attach(oe.cardIndex, oe.group);
+                }
+            }
+            if (hasMaster) {
+                enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, masterGroup);
+            }
+            netherBladePassive2State = { deployedEntry, onResolve: resolve };
+            console.log('[nether-blade] passive 2 → choose opponent unit or master (red highlights)');
+        });
     };
 
     const resolveNetherBladePassive2 = async (pick: NetherBladePassive2Pick): Promise<void> => {
@@ -1166,29 +1176,41 @@ async function main(container: HTMLElement): Promise<void> {
                     console.log('[nether-blade] opponent MASTER defeated by passive 2!');
                 }
             }
-            return;
+        } else {
+            // Opponent unit pick.
+            const target = opponentEntries.find((oe) => oe.cardIndex === pick.cardIndex);
+            if (target && target.group.visible) {
+                const prev = opponentHpState.get(pick.cardIndex) ?? 0;
+                const newHp = Math.max(0, prev - dmg);
+                opponentHpState.set(pick.cardIndex, newHp);
+                console.log(`[nether-blade] passive 2 → opponent idx=${pick.cardIndex} cardId=${target.card.cardId} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
+                if (newHp <= 0) {
+                    buryOpponentUnit(pick.cardIndex);
+                    opponentAliveOrder.splice(opponentAliveOrder.indexOf(pick.cardIndex), 1);
+                    target.group.visible = false;
+                    reflowOpponentField();
+                }
+            }
         }
-        // Opponent unit pick.
-        const target = opponentEntries.find((oe) => oe.cardIndex === pick.cardIndex);
-        if (!target || !target.group.visible) return;
-        const prev = opponentHpState.get(pick.cardIndex) ?? 0;
-        const newHp = Math.max(0, prev - dmg);
-        opponentHpState.set(pick.cardIndex, newHp);
-        console.log(`[nether-blade] passive 2 → opponent idx=${pick.cardIndex} cardId=${target.card.cardId} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
-        if (newHp <= 0) {
-            buryOpponentUnit(pick.cardIndex);
-            opponentAliveOrder.splice(opponentAliveOrder.indexOf(pick.cardIndex), 1);
-            target.group.visible = false;
-            reflowOpponentField();
-        }
+
+        // Settle window — mirrors AoE's pause so the picked-target damage lands and
+        // the field reflows visibly before the next placed Nether Blade (if any) takes
+        // its turn at the skill panel.
+        await new Promise<void>((r) => setTimeout(r, NETHER_BLADE_PHASE_SETTLE_MS));
+
+        // Signal completion to whatever caller was awaiting enterNetherBladePassive2.
+        state.onResolve();
     };
 
     // 광역기 패시브 (passive 1, AoE EveryUnitField) — extracted so it can be invoked
     // independently from BOTH on-deploy AND every turn-start ('f' key). Card travels
-    // to the skill-panel slot, holds, returns, THEN applies 10 dmg to every visible
-    // opponent unit (master excluded). NO chain to passive 2 — caller decides whether
-    // to chain (deploy yes, turn-start no — single-target picker shouldn't auto-fire
-    // on every turn return).
+    // to the skill-panel slot, holds, returns, applies 10 dmg to every visible opponent
+    // unit (master excluded), then reflows the opponent field, then awaits a short
+    // SETTLE window so the field state-change visibly lands BEFORE the next phase
+    // (passive 2 picker) starts. This guarantees the user sees AoE → damage → reflow
+    // before the single-target picker comes up — the damage isn't visually merged
+    // into "after both passives".
+    const NETHER_BLADE_PHASE_SETTLE_MS = 450;
     const triggerNetherBladeAoEPassive = async (deployedEntry: HandEntry): Promise<void> => {
         // Yield once so any pending sync layout work (e.g., onDrop's trailing reflow)
         // lands before we capture origPos inside playSkillPanelMoveOnly.
@@ -1216,14 +1238,18 @@ async function main(container: HTMLElement): Promise<void> {
             if (e) e.group.visible = false;
         }
         if (deadIndices.length > 0) reflowOpponentField();
+
+        // Phase-settle window — gives the user time to read the new field state
+        // before passive 2's picker enters.
+        await new Promise<void>((r) => setTimeout(r, NETHER_BLADE_PHASE_SETTLE_MS));
     };
 
-    // 출격 시 패시브 풀체인 — passive 1 (AoE) → passive 2 (single-target picker). Used
-    // ONLY on initial deployment. Turn-start re-fires of passive 1 don't chain into
-    // passive 2; a recurring picker every turn would be too disruptive.
+    // 출격 시 패시브 풀체인 — passive 1 (AoE) → passive 2 (single-target picker, awaited).
+    // Same chain runs every turn-start while the unit is alive; this wrapper is shared
+    // so deploy and turn-start use identical logic.
     const triggerNetherBladePassive = async (deployedEntry: HandEntry): Promise<void> => {
         await triggerNetherBladeAoEPassive(deployedEntry);
-        enterNetherBladePassive2(deployedEntry);
+        await enterNetherBladePassive2(deployedEntry);
     };
 
     // Active panel button click + opponent card click (attack targeting).
@@ -3223,17 +3249,17 @@ async function main(container: HTMLElement): Promise<void> {
 
         console.log(`[turn-state] opponent → your · TURN ${currentTurn} · field energy ${availableEnergy}`);
 
-        // ── 네더 블레이드 매 턴 광역기 발동 ─────────────────────────────────
-        // For every Nether Blade currently placed on Your field, re-fire passive 1
-        // (AoE only — the single-target chain stays deploy-only). Sequential await so
-        // multiple instances visibly take turns at the skill-panel slot rather than
-        // overlapping at the same world position.
+        // ── 네더 블레이드 매 턴 패시브 풀체인 발동 ─────────────────────────
+        // Each placed + alive Nether Blade re-fires passive 1 (AoE) → passive 2 (single
+        // pick) every turn. enterNetherBladePassive2 returns a Promise that resolves
+        // when the user finishes their pick, so multiple Nether Blades cleanly take
+        // turns: NB#1 AoE → NB#1 picker (modal, awaits user click) → NB#2 AoE → … .
         const netherBladesOnField = placedOrder.filter(
             (e) => e.card.cardId === NETHER_BLADE_CARD_ID && e.group.visible,
         );
         for (const entry of netherBladesOnField) {
-            console.log(`[nether-blade] turn-start AoE passive · TURN ${currentTurn}`);
-            await triggerNetherBladeAoEPassive(entry);
+            console.log(`[nether-blade] turn-start passive chain · TURN ${currentTurn}`);
+            await triggerNetherBladePassive(entry);
         }
     });
 
