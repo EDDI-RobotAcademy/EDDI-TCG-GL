@@ -44,6 +44,7 @@ import * as THREE from "three";
 import { getCardById } from "../../src/card/utility";
 import { CardJob } from "../../src/card/job";
 import { CardKind } from "../../src/card/kind";
+import { CardRace } from "../../src/card/race";
 import { CardGrade } from "../../src/card/grade";
 import { getSkillType, SkillType } from "../../src/card/SkillType";
 
@@ -269,6 +270,7 @@ async function main(container: HTMLElement): Promise<void> {
     handMapRepo.addBattleFieldHand(20);  // 망자의 늪 (SUPPORT) — draw 3 from deck
     handMapRepo.addBattleFieldHand(36);  // 죽음의 대지 (ITEM) — drain 2 opponent field energy
     handMapRepo.addBattleFieldHand(30);  // 레오닉의 부름 (SUPPORT) — pick 2 hero-or-below UNITs from deck
+    handMapRepo.addBattleFieldHand(33);  // 시체 폭발 (ITEM) — sacrifice undead ally → 2x10 dmg to enemies
     const handCardIds = handMapRepo.getBattleFieldHandList();
     const hand = resolveCards(handCardIds, 'hand');
 
@@ -794,6 +796,54 @@ async function main(container: HTMLElement): Promise<void> {
                 return;
             }
             // Outside popup bounds → absorbed, no-op.
+            return;
+        }
+
+        // ── -0.5) Corpse Explosion 2-pick targeting state ─────────────────────────
+        // Clicks on opponent units / master are RECORDED silently — NO flash/shake or
+        // any visual mutation per click. Hit feedback (flash+shake), damage, kills,
+        // hide, and reflow ALL run inside applyCorpseExplosionDamage after the user
+        // has spent both picks, so the shake's position-restore can't race the reflow.
+        // Clicks elsewhere are absorbed (modal). Targets stay alive through both picks.
+        if (corpseExplosionState !== null) {
+            e.stopImmediatePropagation();
+
+            sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
+
+            const recordPick = (pick: CorpseExplosionPick): void => {
+                if (!corpseExplosionState) return;
+                corpseExplosionState.picks.push(pick);
+                console.log(`[corpse-explosion] pick ${corpseExplosionState.picks.length}/${CORPSE_EXPLOSION_PICKS} → ${pick.kind}${pick.kind === 'opponent' ? ` idx=${pick.cardIndex}` : ''}`);
+                if (corpseExplosionState.picks.length >= CORPSE_EXPLOSION_PICKS) {
+                    applyCorpseExplosionDamage();
+                    exitCorpseExplosionTargeting();
+                }
+            };
+
+            // Master first (smaller target; raycast doesn't intersect opponent group).
+            if (opponentMasterHp > 0) {
+                const masterHits = sharedRaycaster.intersectObjects(masterGroup.children, true);
+                if (masterHits.length > 0) {
+                    recordPick({ kind: 'master' });
+                    return;
+                }
+            }
+
+            // Opponent units — visible only. Walk up to the entry group like attackMode.
+            const oppHits = sharedRaycaster.intersectObjects(opponentGroup.children, true);
+            for (const hit of oppHits) {
+                let walkGroup: THREE.Object3D | null = hit.object;
+                while (walkGroup && walkGroup.parent !== opponentGroup) {
+                    walkGroup = walkGroup.parent;
+                }
+                if (!(walkGroup instanceof THREE.Group) || !walkGroup.visible) continue;
+                const targetEntry = opponentEntries.find((oe) => oe.group === walkGroup);
+                if (!targetEntry) continue;
+                recordPick({ kind: 'opponent', cardIndex: targetEntry.cardIndex });
+                return;
+            }
+
+            // Click off any valid target — absorb, no-op.
             return;
         }
 
@@ -1439,6 +1489,17 @@ async function main(container: HTMLElement): Promise<void> {
     const LEONIK_MAX_PICK = 2;
     const LEONIK_MAX_GRADE = CardGrade.HERO;
 
+    // 시체 폭발 (Corpse Explosion, cardId 33) — ITEM (CardKind 2). Requires at least one
+    // UNDEAD ally on Your Field. Pickup paints green neon on UNDEAD allies only. Drop
+    // onto an UNDEAD ally → that ally is sacrificed (→ tomb). Game then enters a 2-pick
+    // targeting state with red neon on every visible opponent unit + opponent master
+    // body. The next two clicks on opponent/master each deal CORPSE_EXPLOSION_DAMAGE;
+    // the SAME TARGET can be picked twice (10 + 10 = 20 dmg on one). After the 2nd pick:
+    // corpse-explosion card → tomb, neons cleared, state exits.
+    const CORPSE_EXPLOSION_CARD_ID = 33;
+    const CORPSE_EXPLOSION_DAMAGE = 10;
+    const CORPSE_EXPLOSION_PICKS = 2;
+
     type OpponentEntry = typeof opponentEntries[number];
 
     const hitOpponentAt = (x: number, y: number): OpponentEntry | null => {
@@ -1807,6 +1868,136 @@ async function main(container: HTMLElement): Promise<void> {
 
         // Consumed energy cards go to the tomb after the flow resolves.
         for (const energyId of pulled) tombRepo.addCard(energyId);
+    };
+
+    // ─── 시체 폭발 (Corpse Explosion) — sacrifice + 2-pick targeting state ──────
+    // Picks are RECORDED (not applied) on each click — the source card stays in hand
+    // and targets stay alive through both picks, so the user can legitimately point at
+    // the same target twice for 20 damage on one. Damage / kill / bury / hide all run
+    // in applyCorpseExplosionDamage AFTER both picks land. Hand pickup is gated off
+    // while this state is active so the user can't drag another card mid-flow.
+    type CorpseExplosionPick =
+        | { readonly kind: 'master' }
+        | { readonly kind: 'opponent'; readonly cardIndex: number };
+    let corpseExplosionState: {
+        sourceEntry: HandEntry;
+        picks: CorpseExplosionPick[];
+    } | null = null;
+
+    const enterCorpseExplosionTargeting = (sourceEntry: HandEntry, sacrificed: HandEntry): void => {
+        // Sacrifice the chosen undead ally — to tomb, removed from field.
+        tombRepo.addCard(sacrificed.card.cardId);
+        const sIdx = placedOrder.indexOf(sacrificed);
+        if (sIdx >= 0) {
+            placedOrder.splice(sIdx, 1);
+            handGroup.remove(sacrificed.group);
+            handRenderer.getCardRenderer().dispose(sacrificed.group);
+        }
+        reflowHandAndPlaced();
+        console.log(`[corpse-explosion] sacrificed undead ally cardId=${sacrificed.card.cardId} → tomb. Pick 2 enemy targets.`);
+
+        corpseExplosionState = { sourceEntry, picks: [] };
+
+        // Red neon on every visible opponent unit + the master body.
+        for (const oe of opponentEntries) {
+            if (oe.group.visible) enemyNeonEffect.attach(oe.cardIndex, oe.group);
+        }
+        if (opponentMasterHp > 0) {
+            enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, masterGroup);
+        }
+    };
+
+    // Resolve once both picks land. Order:
+    //   1) Apply damage to every hit target (master + opponents). Same target picked
+    //      twice = 20 dmg in one go. State (HP, opponentAliveOrder, tomb) mutated.
+    //   2) Fire flashAndShakeTarget on every UNIQUE target — once per target, not per
+    //      pick. Two picks on the same opponent = one flash; one master + one opponent
+    //      pick = one flash each.
+    //   3) After the shake settles (~360 ms), hide every dead opponent and call
+    //      reflowOpponentField ONCE. The shake captures and restores group.position; if
+    //      reflow ran during the shake the restored position would conflict with the
+    //      reflowed position and the cards "꼬여" — so reflow waits until shake is done.
+    const applyCorpseExplosionDamage = (): void => {
+        if (!corpseExplosionState) return;
+        const picks = corpseExplosionState.picks;
+        let masterHits = 0;
+        const opponentHits = new Map<number, number>();  // cardIndex → hit count
+        for (const p of picks) {
+            if (p.kind === 'master') masterHits++;
+            else opponentHits.set(p.cardIndex, (opponentHits.get(p.cardIndex) ?? 0) + 1);
+        }
+
+        const deadOpponentIndices: number[] = [];
+        let masterDied = false;
+
+        // ─── 1) Damage application ─────────────────────────────────────────────
+        if (masterHits > 0 && opponentMasterHp > 0) {
+            const totalDmg = masterHits * CORPSE_EXPLOSION_DAMAGE;
+            const prev = opponentMasterHp;
+            opponentMasterHp = Math.max(0, prev - totalDmg);
+            console.log(`[corpse-explosion] MASTER hit ×${masterHits} = ${totalDmg} dmg: ${prev} → ${opponentMasterHp}${opponentMasterHp <= 0 ? ' (defeated)' : ''}`);
+            if (opponentMasterHp <= 0) masterDied = true;
+        }
+        for (const [cardIndex, hits] of opponentHits) {
+            const targetEntry = opponentEntries.find((oe) => oe.cardIndex === cardIndex);
+            if (!targetEntry) continue;
+            const totalDmg = hits * CORPSE_EXPLOSION_DAMAGE;
+            const currentHp = opponentHpState.get(cardIndex) ?? 0;
+            const newHp = Math.max(0, currentHp - totalDmg);
+            opponentHpState.set(cardIndex, newHp);
+            console.log(`[corpse-explosion] hit opponent idx=${cardIndex} cardId=${targetEntry.card.cardId} ×${hits} = ${totalDmg} dmg: ${currentHp} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
+            if (newHp <= 0) {
+                const aliveIdx = opponentAliveOrder.indexOf(cardIndex);
+                if (aliveIdx >= 0) {
+                    buryOpponentUnit(cardIndex);
+                    opponentAliveOrder.splice(aliveIdx, 1);
+                }
+                deadOpponentIndices.push(cardIndex);
+            }
+        }
+
+        // ─── 2) Hit feedback — flash + shake on UNIQUE targets, once each ──────
+        if (masterHits > 0 && masterGroup.visible) {
+            flashAndShakeTarget(masterGroup);
+        }
+        for (const cardIndex of opponentHits.keys()) {
+            const targetEntry = opponentEntries.find((oe) => oe.cardIndex === cardIndex);
+            if (targetEntry && targetEntry.group.visible) {
+                flashAndShakeTarget(targetEntry.group);
+            }
+        }
+
+        // ─── 3) Hide dead + reflow — ONCE, after the shake has fully restored ──
+        // flashAndShakeTarget runs setInterval @ 30 ms; after 12 ticks (360 ms) the
+        // 13th tick (~390 ms) is when the position is RESTORED to shakeOrigX. If
+        // reflow fired before that 13th tick, the restore would clobber the new slot
+        // position with the old one — survivors would visibly snap back. 450 ms is
+        // safely past the restore so reflow's repositioning sticks.
+        const REFLOW_DELAY_MS = 450;
+        if (deadOpponentIndices.length > 0 || masterDied) {
+            setTimeout(() => {
+                for (const idx of deadOpponentIndices) {
+                    const e = opponentEntries.find((oe) => oe.cardIndex === idx);
+                    if (e) e.group.visible = false;
+                }
+                if (masterDied) {
+                    masterGroup.visible = false;
+                    console.log('[corpse-explosion] opponent MASTER defeated!');
+                }
+                if (deadOpponentIndices.length > 0) reflowOpponentField();
+            }, REFLOW_DELAY_MS);
+        }
+    };
+
+    const exitCorpseExplosionTargeting = (): void => {
+        if (!corpseExplosionState) return;
+        const sourceEntry = corpseExplosionState.sourceEntry;
+        corpseExplosionState = null;
+        enemyNeonEffect.detachAll();
+        const idx = handOrder.indexOf(sourceEntry);
+        if (idx >= 0) consumeHandCard(sourceEntry, idx);
+        reflowHandAndPlaced();
+        console.log(`[corpse-explosion] effect resolved — corpse-explosion card → tomb.`);
     };
 
     // ─── 레오닉의 부름 (Leonik's Summon) popup ───────────────────────────────────
@@ -2240,7 +2431,11 @@ async function main(container: HTMLElement): Promise<void> {
             // Hand is locked during the opponent's turn — no card can leave Your Hand.
             // Returning false cancels the pickup before any drag starts, so the card
             // doesn't visually "lift" at all.
-            canPickup: () => turnStateRepo.getOwner() === 'your',
+            // Block pickup while a 시체 폭발 2-pick targeting flow is in progress —
+            // the source card is still in hand but the user must finish their two
+            // damage picks before doing anything else.
+            canPickup: () =>
+                turnStateRepo.getOwner() === 'your' && corpseExplosionState === null,
             onPickup: (entityId, group) => {
                 clearActivePanel();
                 group.renderOrder = 100;
@@ -2295,6 +2490,24 @@ async function main(container: HTMLElement): Promise<void> {
                     pickedCardId === LEONIK_SUMMON_CARD_ID
                 ) {
                     allyTargetNeonEffect.attach(FIELD_NEON_ENTITY_ID, yourFieldNeonHost);
+                }
+
+                // 시체 폭발 → green targeting border on UNDEAD allies ONLY (not all
+                // placed allies). The card requires an undead sacrifice; non-undead
+                // allies are not valid drop targets so they shouldn't pulse green.
+                // If no undead exists, the loop attaches nothing — drop will snap back.
+                if (pickedCardId === CORPSE_EXPLOSION_CARD_ID) {
+                    let undeadCount = 0;
+                    for (let i = 0; i < placedOrder.length; i++) {
+                        const entry = placedOrder[i];
+                        if (!entry.group.visible) continue;
+                        if (entry.card.raceId !== CardRace.UNDEAD) continue;
+                        allyTargetNeonEffect.attach(i, entry.group);
+                        undeadCount++;
+                    }
+                    if (undeadCount === 0) {
+                        console.log('[corpse-explosion] no undead ally on field — drop will snap back');
+                    }
                 }
             },
             onDrop: (_entityId, group, worldX, worldY) => {
@@ -2353,6 +2566,19 @@ async function main(container: HTMLElement): Promise<void> {
                         if (allyTarget) {
                             applyMoraleConvertEffect(allyTarget);
                             consumeHandCard(droppedEntry, handIndex);
+                        }
+                    } else if (cardId === CORPSE_EXPLOSION_CARD_ID) {
+                        // 시체 폭발 — MUST land on an UNDEAD ally. Snap back if hit nothing
+                        // or hit a non-undead ally. On valid hit: sacrifice that ally + enter
+                        // the 2-pick targeting state (DO NOT consume corpse-explosion yet —
+                        // it's consumed at the end of the second damage pick).
+                        const allyTarget = hitAllyAt(dropCx, dropCy);
+                        if (allyTarget && allyTarget.card.raceId === CardRace.UNDEAD) {
+                            enterCorpseExplosionTargeting(droppedEntry, allyTarget);
+                        } else if (allyTarget) {
+                            console.log(`[corpse-explosion] target cardId=${allyTarget.card.cardId} is not UNDEAD — snap back`);
+                        } else {
+                            console.log('[corpse-explosion] drop missed any placed ally — snap back');
                         }
                     } else if (cardId === DEAD_LANDS_CARD_ID) {
                         // 죽음의 대지 — MUST land on the OPPONENT field area (same bounds
