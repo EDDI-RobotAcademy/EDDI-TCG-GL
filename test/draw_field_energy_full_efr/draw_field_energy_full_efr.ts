@@ -71,6 +71,7 @@ import { DoomContractEffect } from "../../src/animation/doom_contract/DoomContra
 import { CorpseExplosionEffect } from "../../src/animation/corpse_explosion/CorpseExplosionEffect";
 import { DeadLandsEffect } from "../../src/animation/dead_lands/DeadLandsEffect";
 import { LeonikSummonEffect } from "../../src/animation/leonik_summon/LeonikSummonEffect";
+import { NetherBladeEntranceEffect } from "../../src/animation/nether_blade_entrance/NetherBladeEntranceEffect";
 import { MoraleConvertEffect } from "../../src/animation/morale_convert/MoraleConvertEffect";
 import { OverflowMoraleEffect } from "../../src/animation/overflow_morale/OverflowMoraleEffect";
 import { SwampEffect } from "../../src/animation/swamp/SwampEffect";
@@ -723,6 +724,7 @@ async function main(container: HTMLElement): Promise<void> {
     const corpseExplosionEffect = new CorpseExplosionEffect(scene);
     const deadLandsEffect = new DeadLandsEffect(scene);
     const leonikSummonEffect = new LeonikSummonEffect(scene);
+    const netherBladeEntranceEffect = new NetherBladeEntranceEffect(scene);
     const moraleConvertEffect = new MoraleConvertEffect(scene);
     const overflowMoraleEffect = new OverflowMoraleEffect(scene);
     const swampEffect = new SwampEffect(scene);
@@ -2915,12 +2917,15 @@ async function main(container: HTMLElement): Promise<void> {
                 if (inside && isUnit) {
                     handOrder.splice(handIndex, 1);
                     placedOrder.push(droppedEntry);
-                    // 출격 시 패시브 — fire-and-forget. The placement reflow at the
-                    // bottom of onDrop runs synchronously first; the passive's first
-                    // await yields to the event loop so its captured origPos is the
-                    // post-reflow placed slot, not the pre-reflow drop coords.
+                    // 출격 시 — entrance scene → passive chain. Fire-and-forget; the
+                    // placement reflow at the bottom of onDrop runs synchronously first.
+                    // The entrance is deploy-ONLY (no replay on turn-start).
                     if (cardId === NETHER_BLADE_CARD_ID) {
-                        void triggerNetherBladePassive(droppedEntry);
+                        const entry = droppedEntry;
+                        void (async () => {
+                            await netherBladeEntranceEffect.play(rendererManager.getDomElement());
+                            await triggerNetherBladePassive(entry);
+                        })();
                     }
                 } else if (inside && kind === CardKind.SUPPORT && cardId === SWAMP_OF_DEAD_CARD_ID) {
                     // 망자의 늪 — draw 3 and consume (goes to tomb via consumeHandCard).
