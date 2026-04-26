@@ -853,6 +853,41 @@ async function main(container: HTMLElement): Promise<void> {
             return;
         }
 
+        // ── -0.4) Nether Blade passive 2 single-pick targeting state ───────────────
+        // Auto-entered after passive 1 resolves on deployment. Modal: only clicks on a
+        // visible opponent or the master register; everything else is absorbed. On a
+        // valid pick, resolveNetherBladePassive2 fires the move-and-return motion +
+        // applies 20 dmg to that target.
+        if (netherBladePassive2State !== null) {
+            e.stopImmediatePropagation();
+
+            sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
+
+            // Master first (own raycast tree).
+            if (opponentMasterHp > 0) {
+                const masterHits = sharedRaycaster.intersectObjects(masterGroup.children, true);
+                if (masterHits.length > 0) {
+                    void resolveNetherBladePassive2({ kind: 'master' });
+                    return;
+                }
+            }
+            // Opponent units.
+            const oppHits = sharedRaycaster.intersectObjects(opponentGroup.children, true);
+            for (const hit of oppHits) {
+                let walkGroup: THREE.Object3D | null = hit.object;
+                while (walkGroup && walkGroup.parent !== opponentGroup) {
+                    walkGroup = walkGroup.parent;
+                }
+                if (!(walkGroup instanceof THREE.Group) || !walkGroup.visible) continue;
+                const target = opponentEntries.find((oe) => oe.group === walkGroup);
+                if (!target) continue;
+                void resolveNetherBladePassive2({ kind: 'opponent', cardIndex: target.cardIndex });
+                return;
+            }
+            // Click off any valid target — absorb, no-op.
+            return;
+        }
+
         // ── 0) Turn-end button (hexagon) ───────────────────────────────────────────
         // Only active while NO popup is open (popup checks below handle their own consume).
         // Only effective while it's YOUR turn — idempotent otherwise. Hit-test is a true
@@ -1078,9 +1113,80 @@ async function main(container: HTMLElement): Promise<void> {
         group.position.copy(origPos);
     };
 
+    // 출격 시 두번째 패시브 (단일기) — auto-entered after passive 1 resolves. User picks
+    // ONE opponent unit OR the master; the deployed unit then performs the same move-
+    // and-return motion before damage applies. State is null when not active.
+    type NetherBladePassive2Pick =
+        | { readonly kind: 'master' }
+        | { readonly kind: 'opponent'; readonly cardIndex: number };
+    let netherBladePassive2State: { deployedEntry: HandEntry } | null = null;
+
+    const enterNetherBladePassive2 = (deployedEntry: HandEntry): void => {
+        // No valid targets → skip the passive entirely (no neon, no state).
+        const hasOpponents = opponentAliveOrder.length > 0 &&
+            opponentEntries.some((oe) =>
+                oe.group.visible && opponentAliveOrder.includes(oe.cardIndex),
+            );
+        const hasMaster = opponentMasterHp > 0;
+        if (!hasOpponents && !hasMaster) {
+            console.log('[nether-blade] passive 2 → no valid targets, skipped');
+            return;
+        }
+
+        for (const oe of opponentEntries) {
+            if (oe.group.visible && opponentAliveOrder.includes(oe.cardIndex)) {
+                enemyNeonEffect.attach(oe.cardIndex, oe.group);
+            }
+        }
+        if (hasMaster) {
+            enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, masterGroup);
+        }
+        netherBladePassive2State = { deployedEntry };
+        console.log('[nether-blade] passive 2 → choose opponent unit or master (red highlights)');
+    };
+
+    const resolveNetherBladePassive2 = async (pick: NetherBladePassive2Pick): Promise<void> => {
+        if (!netherBladePassive2State) return;
+        const state = netherBladePassive2State;
+        // Detach neons + null state up-front so the modal lock releases immediately
+        // (the await below yields to the event loop and we don't want re-entry).
+        enemyNeonEffect.detachAll();
+        netherBladePassive2State = null;
+
+        await playSkillPanelMoveOnly(state.deployedEntry.group);
+
+        const dmg = NETHER_BLADE_PASSIVE2_DAMAGE;
+        if (pick.kind === 'master') {
+            if (opponentMasterHp > 0) {
+                const prev = opponentMasterHp;
+                opponentMasterHp = Math.max(0, prev - dmg);
+                console.log(`[nether-blade] passive 2 → MASTER ${prev} → ${opponentMasterHp}${opponentMasterHp <= 0 ? ' (defeated)' : ''}`);
+                if (opponentMasterHp <= 0) {
+                    masterGroup.visible = false;
+                    console.log('[nether-blade] opponent MASTER defeated by passive 2!');
+                }
+            }
+            return;
+        }
+        // Opponent unit pick.
+        const target = opponentEntries.find((oe) => oe.cardIndex === pick.cardIndex);
+        if (!target || !target.group.visible) return;
+        const prev = opponentHpState.get(pick.cardIndex) ?? 0;
+        const newHp = Math.max(0, prev - dmg);
+        opponentHpState.set(pick.cardIndex, newHp);
+        console.log(`[nether-blade] passive 2 → opponent idx=${pick.cardIndex} cardId=${target.card.cardId} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
+        if (newHp <= 0) {
+            buryOpponentUnit(pick.cardIndex);
+            opponentAliveOrder.splice(opponentAliveOrder.indexOf(pick.cardIndex), 1);
+            target.group.visible = false;
+            reflowOpponentField();
+        }
+    };
+
     // 출격 시 첫번째 패시브 — Nether Blade auto-passive. Card travels to the skill-panel
     // slot, holds, returns, THEN applies AoE damage to every visible opponent unit
-    // (master excluded, EveryUnitField). No spell visuals — mythical-tier effect deferred.
+    // (master excluded, EveryUnitField). On completion, auto-chains into passive 2
+    // (single target) so the user picks one target for the follow-up strike.
     const triggerNetherBladePassive = async (deployedEntry: HandEntry): Promise<void> => {
         // Yield once so onDrop's trailing reflowHandAndPlaced lands the unit at its
         // proper slot before we capture origPos inside playSkillPanelMoveOnly.
@@ -1109,6 +1215,9 @@ async function main(container: HTMLElement): Promise<void> {
             if (e) e.group.visible = false;
         }
         if (deadIndices.length > 0) reflowOpponentField();
+
+        // ── Chain into passive 2 (single-target) target selection. ───────────
+        enterNetherBladePassive2(deployedEntry);
     };
 
     // Active panel button click + opponent card click (attack targeting).
@@ -1597,6 +1706,10 @@ async function main(container: HTMLElement): Promise<void> {
     // effect lands in a later pass; for now just the move-and-return motion + damage.
     const NETHER_BLADE_CARD_ID = 19;
     const NETHER_BLADE_PASSIVE_DAMAGE = 10;
+    // Second passive: 패시브 2 = "1" (Single), 패시브2 데미지 = 20. Auto-enters target
+    // selection after passive 1 resolves. Picks an opponent unit OR the master; same
+    // skill-panel move-and-return motion fires after the user clicks; THEN damage.
+    const NETHER_BLADE_PASSIVE2_DAMAGE = 20;
 
     type OpponentEntry = typeof opponentEntries[number];
 
@@ -2556,11 +2669,13 @@ async function main(container: HTMLElement): Promise<void> {
             // Hand is locked during the opponent's turn — no card can leave Your Hand.
             // Returning false cancels the pickup before any drag starts, so the card
             // doesn't visually "lift" at all.
-            // Block pickup while a 시체 폭발 2-pick targeting flow is in progress —
-            // the source card is still in hand but the user must finish their two
-            // damage picks before doing anything else.
+            // Block pickup while a 시체 폭발 2-pick targeting flow OR a 네더 블레이드
+            // passive 2 single-pick flow is in progress — neither card flow should be
+            // interruptible by another hand action.
             canPickup: () =>
-                turnStateRepo.getOwner() === 'your' && corpseExplosionState === null,
+                turnStateRepo.getOwner() === 'your' &&
+                corpseExplosionState === null &&
+                netherBladePassive2State === null,
             onPickup: (entityId, group) => {
                 clearActivePanel();
                 group.renderOrder = 100;
