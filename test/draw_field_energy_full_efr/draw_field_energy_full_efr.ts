@@ -186,6 +186,7 @@ async function main(container: HTMLElement): Promise<void> {
         console.warn('Failed to load image-paths.json for skill buttons:', err);
     }
 
+
     // Pilot A — background + your field area
     const backgroundFrame = createBattleFieldBackgroundFrame();
     const backgroundRenderer = new BackgroundRendererV2();
@@ -1035,6 +1036,81 @@ async function main(container: HTMLElement): Promise<void> {
         }
     });
 
+    // Minimal "move to skill panel + return" motion — no spell visuals. Used by
+    // 네더 블레이드's first passive (mythical AoE) until the dedicated effect lands.
+    // Sequence: ease card from current pos → skill-panel slot → brief hold → ease back.
+    // The skill-panel slot coords mirror AttackAnimationV2.playAoESkill (x=0, y=(0.5-
+    // 0.78221649)*h) so the visual lines up with where 벨른's full animation parks.
+    const playSkillPanelMoveOnly = async (group: THREE.Group): Promise<void> => {
+        const h = window.innerHeight;
+        const skillPanelX = 0;
+        const skillPanelY = (0.5 - 0.78221649) * h;
+        const origPos = group.position.clone();
+
+        const moveTo = (tx: number, ty: number, tz: number, durMs: number): Promise<void> => {
+            const startMs = performance.now();
+            const fromX = group.position.x;
+            const fromY = group.position.y;
+            const fromZ = group.position.z;
+            return new Promise<void>((resolve) => {
+                const step = () => {
+                    const t = Math.min(1, (performance.now() - startMs) / durMs);
+                    const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+                    group.position.set(
+                        fromX + (tx - fromX) * e,
+                        fromY + (ty - fromY) * e,
+                        fromZ + (tz - fromZ) * e,
+                    );
+                    if (t < 1) requestAnimationFrame(step);
+                    else resolve();
+                };
+                requestAnimationFrame(step);
+            });
+        };
+
+        // Forward: lift z by +1 so the card draws above other field meshes during travel.
+        await moveTo(skillPanelX, skillPanelY, origPos.z + 1, 700);
+        // Brief hold at the panel — reads as "casting" without any visual effect.
+        await new Promise<void>((r) => setTimeout(r, 300));
+        // Return to original slot.
+        await moveTo(origPos.x, origPos.y, origPos.z, 700);
+        // Snap to exact original to avoid sub-pixel drift.
+        group.position.copy(origPos);
+    };
+
+    // 출격 시 첫번째 패시브 — Nether Blade auto-passive. Card travels to the skill-panel
+    // slot, holds, returns, THEN applies AoE damage to every visible opponent unit
+    // (master excluded, EveryUnitField). No spell visuals — mythical-tier effect deferred.
+    const triggerNetherBladePassive = async (deployedEntry: HandEntry): Promise<void> => {
+        // Yield once so onDrop's trailing reflowHandAndPlaced lands the unit at its
+        // proper slot before we capture origPos inside playSkillPanelMoveOnly.
+        await Promise.resolve();
+
+        await playSkillPanelMoveOnly(deployedEntry.group);
+
+        // ── Apply AoE damage AFTER the move-and-return resolves. ─────────────
+        const dmg = NETHER_BLADE_PASSIVE_DAMAGE;
+        const deadIndices: number[] = [];
+        for (const idx of [...opponentAliveOrder]) {
+            const target = opponentEntries.find((oe) => oe.cardIndex === idx);
+            if (!target || !target.group.visible) continue;
+            const prev = opponentHpState.get(idx) ?? 0;
+            const newHp = Math.max(0, prev - dmg);
+            opponentHpState.set(idx, newHp);
+            console.log(`[nether-blade] passive → opponent idx=${idx} cardId=${target.card.cardId} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
+            if (newHp <= 0) {
+                buryOpponentUnit(idx);
+                opponentAliveOrder.splice(opponentAliveOrder.indexOf(idx), 1);
+                deadIndices.push(idx);
+            }
+        }
+        for (const idx of deadIndices) {
+            const e = opponentEntries.find((oe) => oe.cardIndex === idx);
+            if (e) e.group.visible = false;
+        }
+        if (deadIndices.length > 0) reflowOpponentField();
+    };
+
     // Active panel button click + opponent card click (attack targeting).
     // stopImmediatePropagation prevents HandInteractionBridge from stealing the same click.
     rendererManager.getDomElement().addEventListener('mousedown', async (e: MouseEvent) => {
@@ -1073,7 +1149,15 @@ async function main(container: HTMLElement): Promise<void> {
                         const atkEntry = selectedAttackerEntry;
                         if (atkEntry) {
                             clearAllSelection();
-                            await attackAnimation.playAoESkill(atkEntry.group);
+                            // 네더 블레이드 — only the bare move-to-panel + return motion
+                            // (no dark vortex / dementors / magic circle yet — the
+                            // mythical-tier effect is intentionally deferred). 벨른
+                            // (and other cards) keeps the full playAoESkill sequence.
+                            if (atkEntry.card.cardId === NETHER_BLADE_CARD_ID) {
+                                await playSkillPanelMoveOnly(atkEntry.group);
+                            } else {
+                                await attackAnimation.playAoESkill(atkEntry.group);
+                            }
                         }
 
                         for (const idx of [...opponentAliveOrder]) {
@@ -1504,6 +1588,15 @@ async function main(container: HTMLElement): Promise<void> {
     const CORPSE_EXPLOSION_CARD_ID = 33;
     const CORPSE_EXPLOSION_DAMAGE = 10;
     const CORPSE_EXPLOSION_PICKS = 2;
+
+    // 마검의 지배자 네더 블레이드 (Nether Blade, cardId 19) — UNIT, MYTHICAL.
+    // First passive: AUTO-FIRES on deployment (출격 시) — the unit briefly travels to
+    // the skill-panel slot (same trajectory used by 벨른's playAoESkill) and returns;
+    // ONLY THEN is AoE damage applied to every visible opponent UNIT (master EXCLUDED,
+    // skill-type 패시브 1 = "2" = EveryUnitField). No spell visuals yet — mythical-tier
+    // effect lands in a later pass; for now just the move-and-return motion + damage.
+    const NETHER_BLADE_CARD_ID = 19;
+    const NETHER_BLADE_PASSIVE_DAMAGE = 10;
 
     type OpponentEntry = typeof opponentEntries[number];
 
@@ -2675,6 +2768,13 @@ async function main(container: HTMLElement): Promise<void> {
                 if (inside && isUnit) {
                     handOrder.splice(handIndex, 1);
                     placedOrder.push(droppedEntry);
+                    // 출격 시 패시브 — fire-and-forget. The placement reflow at the
+                    // bottom of onDrop runs synchronously first; the passive's first
+                    // await yields to the event loop so its captured origPos is the
+                    // post-reflow placed slot, not the pre-reflow drop coords.
+                    if (cardId === NETHER_BLADE_CARD_ID) {
+                        void triggerNetherBladePassive(droppedEntry);
+                    }
                 } else if (inside && kind === CardKind.SUPPORT && cardId === SWAMP_OF_DEAD_CARD_ID) {
                     // 망자의 늪 — draw 3 and consume (goes to tomb via consumeHandCard).
                     void applySwampEffect();
