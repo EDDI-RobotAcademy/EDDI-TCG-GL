@@ -68,6 +68,7 @@ import { AttackAnimationV2 } from "../../src/general_attack/animation/AttackAnim
 import { ScytheCutEffect } from "../../src/animation/scythe/ScytheCutEffect";
 import { EnergyBurnEffect } from "../../src/animation/energy_burn/EnergyBurnEffect";
 import { DoomContractEffect } from "../../src/animation/doom_contract/DoomContractEffect";
+import { CorpseExplosionEffect } from "../../src/animation/corpse_explosion/CorpseExplosionEffect";
 import { DeadLandsEffect } from "../../src/animation/dead_lands/DeadLandsEffect";
 import { LeonikSummonEffect } from "../../src/animation/leonik_summon/LeonikSummonEffect";
 import { MoraleConvertEffect } from "../../src/animation/morale_convert/MoraleConvertEffect";
@@ -716,6 +717,7 @@ async function main(container: HTMLElement): Promise<void> {
         camera,
         animationLoop,
     );
+    const corpseExplosionEffect = new CorpseExplosionEffect(scene);
     const deadLandsEffect = new DeadLandsEffect(scene);
     const leonikSummonEffect = new LeonikSummonEffect(scene);
     const moraleConvertEffect = new MoraleConvertEffect(scene);
@@ -815,8 +817,11 @@ async function main(container: HTMLElement): Promise<void> {
                 corpseExplosionState.picks.push(pick);
                 console.log(`[corpse-explosion] pick ${corpseExplosionState.picks.length}/${CORPSE_EXPLOSION_PICKS} → ${pick.kind}${pick.kind === 'opponent' ? ` idx=${pick.cardIndex}` : ''}`);
                 if (corpseExplosionState.picks.length >= CORPSE_EXPLOSION_PICKS) {
-                    applyCorpseExplosionDamage();
-                    exitCorpseExplosionTargeting();
+                    // Detach red neon at pick completion so the targeting borders go
+                    // away the instant the corpse starts flying (not after the effect
+                    // resolves) — keeps the visual focus on the corpse + projectiles.
+                    enemyNeonEffect.detachAll();
+                    void resolveCorpseExplosion();
                 }
             };
 
@@ -1881,22 +1886,21 @@ async function main(container: HTMLElement): Promise<void> {
         | { readonly kind: 'opponent'; readonly cardIndex: number };
     let corpseExplosionState: {
         sourceEntry: HandEntry;
+        // The sacrificed undead unit — STAYS in placedOrder + on the field as a normal
+        // unit during target selection. Removed from placedOrder + tombed + flown in
+        // resolveCorpseExplosion (after the user has picked both targets) so the unit
+        // visibly sits in its slot the whole time the user is picking.
+        sacrificed: HandEntry;
         picks: CorpseExplosionPick[];
     } | null = null;
 
     const enterCorpseExplosionTargeting = (sourceEntry: HandEntry, sacrificed: HandEntry): void => {
-        // Sacrifice the chosen undead ally — to tomb, removed from field.
-        tombRepo.addCard(sacrificed.card.cardId);
-        const sIdx = placedOrder.indexOf(sacrificed);
-        if (sIdx >= 0) {
-            placedOrder.splice(sIdx, 1);
-            handGroup.remove(sacrificed.group);
-            handRenderer.getCardRenderer().dispose(sacrificed.group);
-        }
-        reflowHandAndPlaced();
-        console.log(`[corpse-explosion] sacrificed undead ally cardId=${sacrificed.card.cardId} → tomb. Pick 2 enemy targets.`);
+        // Sacrificed unit STAYS in placedOrder + visible at its slot until the user
+        // finishes picking. No tomb / splice / reflow here — the only state change is
+        // entering the targeting mode + painting red neons on enemies.
+        console.log(`[corpse-explosion] target locked: undead ally cardId=${sacrificed.card.cardId}. Pick 2 enemy targets — the sacrifice flies after both picks.`);
 
-        corpseExplosionState = { sourceEntry, picks: [] };
+        corpseExplosionState = { sourceEntry, sacrificed, picks: [] };
 
         // Red neon on every visible opponent unit + the master body.
         for (const oe of opponentEntries) {
@@ -1907,86 +1911,114 @@ async function main(container: HTMLElement): Promise<void> {
         }
     };
 
-    // Resolve once both picks land. Order:
-    //   1) Apply damage to every hit target (master + opponents). Same target picked
-    //      twice = 20 dmg in one go. State (HP, opponentAliveOrder, tomb) mutated.
-    //   2) Fire flashAndShakeTarget on every UNIQUE target — once per target, not per
-    //      pick. Two picks on the same opponent = one flash; one master + one opponent
-    //      pick = one flash each.
-    //   3) After the shake settles (~360 ms), hide every dead opponent and call
-    //      reflowOpponentField ONCE. The shake captures and restores group.position; if
-    //      reflow ran during the shake the restored position would conflict with the
-    //      reflowed position and the cards "꼬여" — so reflow waits until shake is done.
-    const applyCorpseExplosionDamage = (): void => {
+    // Async resolution: drives CorpseExplosionEffect (corpse flies → explodes →
+    // projectiles fan out to each pick). Damage ticks per projectile arrival; the
+    // visual feedback for each hit comes from the effect's per-projectile impact
+    // flash, NOT flashAndShakeTarget — so no shake races against the post-effect
+    // bury+reflow. After the effect resolves, dead targets get buried + hidden +
+    // reflowed in one synchronous pass; the corpse mesh disposes; state exits.
+    const resolveCorpseExplosion = async (): Promise<void> => {
         if (!corpseExplosionState) return;
-        const picks = corpseExplosionState.picks;
-        let masterHits = 0;
-        const opponentHits = new Map<number, number>();  // cardIndex → hit count
-        for (const p of picks) {
-            if (p.kind === 'master') masterHits++;
-            else opponentHits.set(p.cardIndex, (opponentHits.get(p.cardIndex) ?? 0) + 1);
+        const state = corpseExplosionState;
+        const sacrificed = state.sacrificed;
+
+        // ── NOW remove the sacrificed unit from placedOrder + tomb it. The mesh
+        // stays in handGroup at its slot position (orphan from reflow) so the
+        // CorpseExplosionEffect can animate it from there. The OTHER placed
+        // allies reflow to fill the empty slot in the same frame.
+        tombRepo.addCard(sacrificed.card.cardId);
+        const sIdx = placedOrder.indexOf(sacrificed);
+        if (sIdx >= 0) placedOrder.splice(sIdx, 1);
+        reflowHandAndPlaced();
+        console.log(`[corpse-explosion] sacrificed undead cardId=${sacrificed.card.cardId} → tomb; corpse flies now.`);
+
+        // Per-pick world target positions (duplicates allowed when same target is
+        // picked twice; effect fires N projectiles regardless).
+        const projectileTargets: THREE.Vector3[] = state.picks.map((p) => {
+            if (p.kind === 'master') {
+                return new THREE.Vector3(masterGroup.position.x, masterGroup.position.y, 5);
+            }
+            const entry = opponentEntries.find((oe) => oe.cardIndex === p.cardIndex);
+            return entry
+                ? new THREE.Vector3(entry.group.position.x, entry.group.position.y, 5)
+                : new THREE.Vector3(0, 0, 5);
+        });
+
+        // Landing position — opponent field area CENTRE. opponentFieldAreaFrame's
+        // xPercent / yPercent are already in WORLD coords (y-up, origin at screen
+        // centre) — xPercent 0 = horizontal centre, yPercent 0.153 = upper half. So
+        // multiply by viewport directly, NO (x-0.5) / (0.5-y) re-centering.
+        const landingPos = new THREE.Vector3(
+            opponentFieldAreaFrame.xPercent * window.innerWidth,
+            opponentFieldAreaFrame.yPercent * window.innerHeight,
+            5,
+        );
+
+        // Per-projectile arrival: tick HP for that pick. The effect handles the
+        // visual impact (impact flash sprite at target position) — we don't call
+        // flashAndShakeTarget so there's no shake-vs-reflow race.
+        const onProjectileLand = (idx: number): void => {
+            const pick = state.picks[idx];
+            if (pick.kind === 'master') {
+                if (opponentMasterHp > 0) {
+                    const prev = opponentMasterHp;
+                    opponentMasterHp = Math.max(0, prev - CORPSE_EXPLOSION_DAMAGE);
+                    console.log(`[corpse-explosion] projectile → MASTER ${prev} → ${opponentMasterHp}${opponentMasterHp <= 0 ? ' (defeated)' : ''}`);
+                }
+            } else {
+                const prev = opponentHpState.get(pick.cardIndex) ?? 0;
+                const newHp = Math.max(0, prev - CORPSE_EXPLOSION_DAMAGE);
+                opponentHpState.set(pick.cardIndex, newHp);
+                const entry = opponentEntries.find((oe) => oe.cardIndex === pick.cardIndex);
+                console.log(`[corpse-explosion] projectile → opponent idx=${pick.cardIndex}${entry ? ` cardId=${entry.card.cardId}` : ''} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
+            }
+        };
+
+        await corpseExplosionEffect.play(
+            sacrificed.group,
+            landingPos,
+            projectileTargets,
+            rendererManager.getDomElement(),
+            onProjectileLand,
+        );
+
+        // ── Post-effect: bury + hide + reflow in one pass ──────────────────────
+        const uniqueOpponentIdxs = new Set<number>();
+        let masterPicked = false;
+        for (const p of state.picks) {
+            if (p.kind === 'master') masterPicked = true;
+            else uniqueOpponentIdxs.add(p.cardIndex);
         }
 
+        const masterDied = masterPicked && opponentMasterHp <= 0 && masterGroup.visible;
         const deadOpponentIndices: number[] = [];
-        let masterDied = false;
-
-        // ─── 1) Damage application ─────────────────────────────────────────────
-        if (masterHits > 0 && opponentMasterHp > 0) {
-            const totalDmg = masterHits * CORPSE_EXPLOSION_DAMAGE;
-            const prev = opponentMasterHp;
-            opponentMasterHp = Math.max(0, prev - totalDmg);
-            console.log(`[corpse-explosion] MASTER hit ×${masterHits} = ${totalDmg} dmg: ${prev} → ${opponentMasterHp}${opponentMasterHp <= 0 ? ' (defeated)' : ''}`);
-            if (opponentMasterHp <= 0) masterDied = true;
-        }
-        for (const [cardIndex, hits] of opponentHits) {
-            const targetEntry = opponentEntries.find((oe) => oe.cardIndex === cardIndex);
-            if (!targetEntry) continue;
-            const totalDmg = hits * CORPSE_EXPLOSION_DAMAGE;
-            const currentHp = opponentHpState.get(cardIndex) ?? 0;
-            const newHp = Math.max(0, currentHp - totalDmg);
-            opponentHpState.set(cardIndex, newHp);
-            console.log(`[corpse-explosion] hit opponent idx=${cardIndex} cardId=${targetEntry.card.cardId} ×${hits} = ${totalDmg} dmg: ${currentHp} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
-            if (newHp <= 0) {
-                const aliveIdx = opponentAliveOrder.indexOf(cardIndex);
-                if (aliveIdx >= 0) {
-                    buryOpponentUnit(cardIndex);
-                    opponentAliveOrder.splice(aliveIdx, 1);
-                }
-                deadOpponentIndices.push(cardIndex);
+        for (const idx of uniqueOpponentIdxs) {
+            const hp = opponentHpState.get(idx) ?? 0;
+            if (hp > 0) continue;
+            const entry = opponentEntries.find((oe) => oe.cardIndex === idx);
+            if (!entry || !entry.group.visible) continue;
+            const aliveIdx = opponentAliveOrder.indexOf(idx);
+            if (aliveIdx >= 0) {
+                buryOpponentUnit(idx);
+                opponentAliveOrder.splice(aliveIdx, 1);
             }
+            deadOpponentIndices.push(idx);
         }
+        for (const idx of deadOpponentIndices) {
+            const e = opponentEntries.find((oe) => oe.cardIndex === idx);
+            if (e) e.group.visible = false;
+        }
+        if (masterDied) {
+            masterGroup.visible = false;
+            console.log('[corpse-explosion] opponent MASTER defeated!');
+        }
+        if (deadOpponentIndices.length > 0) reflowOpponentField();
 
-        // ─── 2) Hit feedback — flash + shake on UNIQUE targets, once each ──────
-        if (masterHits > 0 && masterGroup.visible) {
-            flashAndShakeTarget(masterGroup);
-        }
-        for (const cardIndex of opponentHits.keys()) {
-            const targetEntry = opponentEntries.find((oe) => oe.cardIndex === cardIndex);
-            if (targetEntry && targetEntry.group.visible) {
-                flashAndShakeTarget(targetEntry.group);
-            }
-        }
+        // ── Dispose corpse mesh ───────────────────────────────────────────────
+        handGroup.remove(sacrificed.group);
+        handRenderer.getCardRenderer().dispose(sacrificed.group);
 
-        // ─── 3) Hide dead + reflow — ONCE, after the shake has fully restored ──
-        // flashAndShakeTarget runs setInterval @ 30 ms; after 12 ticks (360 ms) the
-        // 13th tick (~390 ms) is when the position is RESTORED to shakeOrigX. If
-        // reflow fired before that 13th tick, the restore would clobber the new slot
-        // position with the old one — survivors would visibly snap back. 450 ms is
-        // safely past the restore so reflow's repositioning sticks.
-        const REFLOW_DELAY_MS = 450;
-        if (deadOpponentIndices.length > 0 || masterDied) {
-            setTimeout(() => {
-                for (const idx of deadOpponentIndices) {
-                    const e = opponentEntries.find((oe) => oe.cardIndex === idx);
-                    if (e) e.group.visible = false;
-                }
-                if (masterDied) {
-                    masterGroup.visible = false;
-                    console.log('[corpse-explosion] opponent MASTER defeated!');
-                }
-                if (deadOpponentIndices.length > 0) reflowOpponentField();
-            }, REFLOW_DELAY_MS);
-        }
+        exitCorpseExplosionTargeting();
     };
 
     const exitCorpseExplosionTargeting = (): void => {
