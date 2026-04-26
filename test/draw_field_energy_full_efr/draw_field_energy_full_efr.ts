@@ -1183,18 +1183,19 @@ async function main(container: HTMLElement): Promise<void> {
         }
     };
 
-    // 출격 시 첫번째 패시브 — Nether Blade auto-passive. Card travels to the skill-panel
-    // slot, holds, returns, THEN applies AoE damage to every visible opponent unit
-    // (master excluded, EveryUnitField). On completion, auto-chains into passive 2
-    // (single target) so the user picks one target for the follow-up strike.
-    const triggerNetherBladePassive = async (deployedEntry: HandEntry): Promise<void> => {
-        // Yield once so onDrop's trailing reflowHandAndPlaced lands the unit at its
-        // proper slot before we capture origPos inside playSkillPanelMoveOnly.
+    // 광역기 패시브 (passive 1, AoE EveryUnitField) — extracted so it can be invoked
+    // independently from BOTH on-deploy AND every turn-start ('f' key). Card travels
+    // to the skill-panel slot, holds, returns, THEN applies 10 dmg to every visible
+    // opponent unit (master excluded). NO chain to passive 2 — caller decides whether
+    // to chain (deploy yes, turn-start no — single-target picker shouldn't auto-fire
+    // on every turn return).
+    const triggerNetherBladeAoEPassive = async (deployedEntry: HandEntry): Promise<void> => {
+        // Yield once so any pending sync layout work (e.g., onDrop's trailing reflow)
+        // lands before we capture origPos inside playSkillPanelMoveOnly.
         await Promise.resolve();
 
         await playSkillPanelMoveOnly(deployedEntry.group);
 
-        // ── Apply AoE damage AFTER the move-and-return resolves. ─────────────
         const dmg = NETHER_BLADE_PASSIVE_DAMAGE;
         const deadIndices: number[] = [];
         for (const idx of [...opponentAliveOrder]) {
@@ -1203,7 +1204,7 @@ async function main(container: HTMLElement): Promise<void> {
             const prev = opponentHpState.get(idx) ?? 0;
             const newHp = Math.max(0, prev - dmg);
             opponentHpState.set(idx, newHp);
-            console.log(`[nether-blade] passive → opponent idx=${idx} cardId=${target.card.cardId} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
+            console.log(`[nether-blade] AoE → opponent idx=${idx} cardId=${target.card.cardId} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
             if (newHp <= 0) {
                 buryOpponentUnit(idx);
                 opponentAliveOrder.splice(opponentAliveOrder.indexOf(idx), 1);
@@ -1215,8 +1216,13 @@ async function main(container: HTMLElement): Promise<void> {
             if (e) e.group.visible = false;
         }
         if (deadIndices.length > 0) reflowOpponentField();
+    };
 
-        // ── Chain into passive 2 (single-target) target selection. ───────────
+    // 출격 시 패시브 풀체인 — passive 1 (AoE) → passive 2 (single-target picker). Used
+    // ONLY on initial deployment. Turn-start re-fires of passive 1 don't chain into
+    // passive 2; a recurring picker every turn would be too disruptive.
+    const triggerNetherBladePassive = async (deployedEntry: HandEntry): Promise<void> => {
+        await triggerNetherBladeAoEPassive(deployedEntry);
         enterNetherBladePassive2(deployedEntry);
     };
 
@@ -3216,6 +3222,19 @@ async function main(container: HTMLElement): Promise<void> {
         }
 
         console.log(`[turn-state] opponent → your · TURN ${currentTurn} · field energy ${availableEnergy}`);
+
+        // ── 네더 블레이드 매 턴 광역기 발동 ─────────────────────────────────
+        // For every Nether Blade currently placed on Your field, re-fire passive 1
+        // (AoE only — the single-target chain stays deploy-only). Sequential await so
+        // multiple instances visibly take turns at the skill-panel slot rather than
+        // overlapping at the same world position.
+        const netherBladesOnField = placedOrder.filter(
+            (e) => e.card.cardId === NETHER_BLADE_CARD_ID && e.group.visible,
+        );
+        for (const entry of netherBladesOnField) {
+            console.log(`[nether-blade] turn-start AoE passive · TURN ${currentTurn}`);
+            await triggerNetherBladeAoEPassive(entry);
+        }
     });
 
     window.addEventListener('resize', () => {
