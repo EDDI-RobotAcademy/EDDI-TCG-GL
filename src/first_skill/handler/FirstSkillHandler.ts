@@ -104,23 +104,23 @@ export class FirstSkillHandler {
     private async handleOpponentFieldUnit(x: number, y: number): Promise<void> {
         console.log(`첫 번째 스킬 (타겟팅) 공격: 상대 필드 유닛 공격 처리 (x:${x}, y:${y})`);
 
-        const { cardGroup, selectedYourFieldCard } = await this.prepareYourAttacker();
+        const { cardGroup, selectedYourFieldCard, attackerCardId } = await this.prepareYourAttacker();
 
         this.neonBorderHandler.cleanupAfterAction(selectedYourFieldCard)
 
         this.firstSkillAnimation.setScene(this.scene);
-        this.firstSkillAnimation.targetingSkillToOpponent(cardGroup)
+        this.firstSkillAnimation.targetingSkillToOpponent(cardGroup, attackerCardId, x, y)
     }
 
     private async handleOpponentMaster(x: number, y: number): Promise<void> {
         console.log(`첫 번째 스킬 (타겟팅) 공격: 상대 본체 공격 처리 (x:${x}, y:${y})`);
 
-        const { cardGroup, selectedYourFieldCard } = await this.prepareYourAttacker();
+        const { cardGroup, selectedYourFieldCard, attackerCardId } = await this.prepareYourAttacker();
 
         this.neonBorderHandler.cleanupAfterAction(selectedYourFieldCard)
 
         this.firstSkillAnimation.setScene(this.scene);
-        this.firstSkillAnimation.targetingSkillToOpponentMaster(cardGroup)
+        this.firstSkillAnimation.targetingSkillToOpponentMaster(cardGroup, attackerCardId, x, y)
     }
 
     private async prepareYourAttacker() {
@@ -188,6 +188,6 @@ export class FirstSkillHandler {
             console.log(`child[${idx}] mesh position:`, child.position);
         });
 
-        return { cardGroup, selectedYourFieldCard };
+        return { cardGroup, selectedYourFieldCard, attackerCardId: cardId };
     }
 }

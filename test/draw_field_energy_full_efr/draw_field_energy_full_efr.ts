@@ -72,6 +72,7 @@ import { CorpseExplosionEffect } from "../../src/animation/corpse_explosion/Corp
 import { DeadLandsEffect } from "../../src/animation/dead_lands/DeadLandsEffect";
 import { LeonikSummonEffect } from "../../src/animation/leonik_summon/LeonikSummonEffect";
 import { NetherBladeEntranceEffect } from "../../src/animation/nether_blade_entrance/NetherBladeEntranceEffect";
+import { NetherBladeFirstPassiveEffect } from "../../src/animation/nether_blade/NetherBladeFirstPassiveEffect";
 import { MoraleConvertEffect } from "../../src/animation/morale_convert/MoraleConvertEffect";
 import { OverflowMoraleEffect } from "../../src/animation/overflow_morale/OverflowMoraleEffect";
 import { SwampEffect } from "../../src/animation/swamp/SwampEffect";
@@ -1075,12 +1076,18 @@ async function main(container: HTMLElement): Promise<void> {
         }
     });
 
-    // Minimal "move to skill panel + return" motion — no spell visuals. Used by
-    // 네더 블레이드's first passive (mythical AoE) until the dedicated effect lands.
-    // Sequence: ease card from current pos → skill-panel slot → brief hold → ease back.
-    // The skill-panel slot coords mirror AttackAnimationV2.playAoESkill (x=0, y=(0.5-
-    // 0.78221649)*h) so the visual lines up with where 벨른's full animation parks.
-    const playSkillPanelMoveOnly = async (group: THREE.Group): Promise<void> => {
+    // "Move to skill panel + run effect + return" motion. Sequence:
+    //   • ease card from current pos → skill-panel slot
+    //   • run effectCallback (passed the panel-slot world pos so callers can
+    //     spawn meshes there); if no callback is given, hold ~300 ms instead
+    //   • ease back to the original slot
+    // Skill-panel slot coords mirror AttackAnimationV2.playAoESkill (x=0,
+    // y=(0.5-0.78221649)*h) so the visual lines up with where 벨른's full
+    // animation parks.
+    const playSkillPanelMoveOnly = async (
+        group: THREE.Group,
+        effectCallback?: (panelPos: THREE.Vector3) => Promise<void>,
+    ): Promise<void> => {
         const h = window.innerHeight;
         const skillPanelX = 0;
         const skillPanelY = (0.5 - 0.78221649) * h;
@@ -1109,8 +1116,17 @@ async function main(container: HTMLElement): Promise<void> {
 
         // Forward: lift z by +1 so the card draws above other field meshes during travel.
         await moveTo(skillPanelX, skillPanelY, origPos.z + 1, 700);
-        // Brief hold at the panel — reads as "casting" without any visual effect.
-        await new Promise<void>((r) => setTimeout(r, 300));
+        // Cast — run the effect at the panel slot, or just hold briefly.
+        if (effectCallback) {
+            const panelPos = new THREE.Vector3(skillPanelX, skillPanelY, origPos.z + 1);
+            try {
+                await effectCallback(panelPos);
+            } catch (err) {
+                console.error('[nether-blade] panel effect failed:', err);
+            }
+        } else {
+            await new Promise<void>((r) => setTimeout(r, 300));
+        }
         // Return to original slot.
         await moveTo(origPos.x, origPos.y, origPos.z, 700);
         // Snap to exact original to avoid sub-pixel drift.
@@ -1165,7 +1181,32 @@ async function main(container: HTMLElement): Promise<void> {
         enemyNeonEffect.detachAll();
         netherBladePassive2State = null;
 
-        await playSkillPanelMoveOnly(state.deployedEntry.group);
+        // Capture the picked target's world position BEFORE the cast so the slash
+        // flies to where the unit currently sits.
+        let singleTarget: THREE.Vector3 | null = null;
+        if (pick.kind === 'master') {
+            if (opponentMasterHp > 0) {
+                singleTarget = masterGroup.getWorldPosition(new THREE.Vector3());
+            }
+        } else {
+            const target = opponentEntries.find((oe) => oe.cardIndex === pick.cardIndex);
+            if (target && target.group.visible) {
+                singleTarget = target.group.getWorldPosition(new THREE.Vector3());
+            }
+        }
+        const canvasEl = document.querySelector('canvas') as HTMLElement | null;
+
+        await playSkillPanelMoveOnly(state.deployedEntry.group, async (panelPos) => {
+            if (!canvasEl || !singleTarget) {
+                await new Promise<void>((r) => setTimeout(r, 300));
+                return;
+            }
+            const effect = new NetherBladeFirstPassiveEffect(scene);
+            await effect.play(
+                panelPos, [singleTarget], canvasEl, () => { /* per-strike SFX hook */ },
+                rendererManager.getRenderer(), camera,
+            );
+        });
 
         const dmg = NETHER_BLADE_PASSIVE2_DAMAGE;
         if (pick.kind === 'master') {
@@ -1218,7 +1259,46 @@ async function main(container: HTMLElement): Promise<void> {
         // lands before we capture origPos inside playSkillPanelMoveOnly.
         await Promise.resolve();
 
-        await playSkillPanelMoveOnly(deployedEntry.group);
+        // Capture target world positions BEFORE the move, while opponent units are
+        // still in their grid slots. The slash mesh will fly from the panel slot to
+        // each captured position.
+        const aoeTargets: THREE.Vector3[] = [];
+        for (const idx of [...opponentAliveOrder]) {
+            const target = opponentEntries.find((oe) => oe.cardIndex === idx);
+            if (!target || !target.group.visible) continue;
+            aoeTargets.push(target.group.getWorldPosition(new THREE.Vector3()));
+        }
+        const canvasEl = document.querySelector('canvas') as HTMLElement | null;
+
+        await playSkillPanelMoveOnly(deployedEntry.group, async (panelPos) => {
+            if (!canvasEl || aoeTargets.length === 0) {
+                // Fall back to the brief hold if we can't render visuals.
+                await new Promise<void>((r) => setTimeout(r, 300));
+                return;
+            }
+            // Wave 2 + shatter cover the ENTIRE upper portion of the battle
+            // screen — from the opponent battlefield's bottom edge up to the
+            // very top of the viewport, full width — so the cuts visibly tear
+            // the actual battle background, not just the opponent's row.
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const oppCenterY = opponentFieldAreaFrame.yPercent      * vh;
+            const oppHeight  = opponentFieldAreaFrame.heightPercent * vh;
+            const oppBottomY = oppCenterY - oppHeight * 0.5;
+            const screenTopY = vh * 0.5;
+            const upperRect = {
+                x: 0,
+                y: (oppBottomY + screenTopY) * 0.5,
+                width: vw,
+                height: screenTopY - oppBottomY,
+            };
+            const effect = new NetherBladeFirstPassiveEffect(scene);
+            await effect.play(
+                panelPos, aoeTargets, canvasEl, () => { /* per-strike SFX hook */ },
+                rendererManager.getRenderer(), camera,
+                upperRect,
+            );
+        });
 
         const dmg = NETHER_BLADE_PASSIVE_DAMAGE;
         const deadIndices: number[] = [];

@@ -119,14 +119,15 @@ export class SecondSkillHandler {
     }
 
     private async handleEveryOpponentFieldUnit(x: number, y: number): Promise<void> {
-        console.log(`두 번째 스킬 필드 유닛 전체 공격`);
+        console.log(`[SecondSkillHandler] handleEveryOpponentFieldUnit (x=${x}, y=${y})`);
 
-        const { cardGroup, selectedYourFieldCard } = await this.prepareYourAttacker();
+        const { cardGroup, selectedYourFieldCard, attackerCardId } = await this.prepareYourAttacker();
+        console.log(`[SecondSkillHandler] attackerCardId=${attackerCardId}`);
 
         this.neonBorderHandler.cleanupAfterAction(selectedYourFieldCard)
 
         this.secondSkillAnimation.setScene(this.scene);
-        this.secondSkillAnimation.skillToEveryOpponentFieldUnit(cardGroup)
+        this.secondSkillAnimation.skillToEveryOpponentFieldUnit(cardGroup, attackerCardId)
     }
 
     private async prepareYourAttacker() {
@@ -194,6 +195,6 @@ export class SecondSkillHandler {
             console.log(`child[${idx}] mesh position:`, child.position);
         });
 
-        return { cardGroup, selectedYourFieldCard };
+        return { cardGroup, selectedYourFieldCard, attackerCardId: cardId };
     }
 }
