@@ -347,8 +347,20 @@ export class NetherBladeFirstPassiveEffect {
         // visibly LANDED on the panel and the trailing ones are arriving —
         // only THEN does the panel break. No more "panel shatters before the
         // slashes have even passed through".
-        const RECT_SLASH_DURATION = 50; // ~0.83 s — slashes traverse to the panel
-        const SHATTER_DURATION = 70;   // ~1.17 s — captured texture pieces drift apart along the slash lines
+        // Wave 2 is split into a slow zoom-in followed by the actual slashes
+        // so the player has time to register that the enemy field has grown
+        // to fill the viewport ("지금 적진이 전체 화면이 되었구나") before
+        // the strike lands. ZOOM_IN_FRAMES occupies the front of the
+        // rectSlash phase; slashes are u_triggerTime-delayed by that same
+        // amount so they only become visible after zoom-in finishes.
+        const ZOOM_IN_FRAMES   = 36;   // ~0.60 s gradual zoom-in (easeInOut)
+        const RECT_SLASH_DURATION = 80; // ~1.33 s — zoom-in + slash traversal
+        // Shatter holds full zoom for the first half (panel breaks at full
+        // scale), then zooms back over the second half alongside the
+        // fragment fade — so the restoration also reads as a slow,
+        // perceptible "back to original size" rather than a snap.
+        const SHATTER_DURATION = 80;   // ~1.33 s — break + slow zoom-out
+        const SHATTER_HOLD_RATIO = 0.50; // first 50 %: full zoom, fragments drift
 
         // ─── Particles — purple sparks spiralling INTO screen centre ────────
         type Particle = {
@@ -437,6 +449,21 @@ export class NetherBladeFirstPassiveEffect {
         // shatter, restoring the live scene to its original look.
         let panelBackdrop: THREE.Mesh | null = null;
         let panelBackdropMat: THREE.MeshBasicMaterial | null = null;
+        // Captured-field plane — single intact mesh that shows the rect's
+        // slice of the captured live scene. Visible during the rectSlash
+        // phase so as w2Group ZOOMS up, the player sees the enemy field
+        // itself grow to fill the viewport. Hidden the moment the shatter
+        // starts (the fragment meshes take over rendering the captured
+        // content from there).
+        let panelField: THREE.Mesh | null = null;
+        let panelFieldMat: THREE.ShaderMaterial | null = null;
+        // Group that holds all wave-2 visuals (panelBackdrop + fragments +
+        // rectSlashMesh). Animated to ZOOM IN during the AoE strike — the
+        // upper rect scales up to fill the entire viewport so the slashes
+        // and the panel-shatter feel screen-wide. After the panel breaks the
+        // group ZOOMS BACK OUT to the original rect, restoring the live scene
+        // ratio while the fragments fade.
+        let w2Group: THREE.Group | null = null;
 
         // Slash defs for the polygon clipping. Built from refSlashes so the
         // CUT LINES on the panel match the visible slash strokes from the
@@ -616,24 +643,90 @@ export class NetherBladeFirstPassiveEffect {
                         overlay.visible = wasOverlayVisible;
                         slashMesh.visible = wasSlashVisible;
                     }
+                    // Wave-2 group — anchored at the rect centre. All wave-2
+                    // visuals (panelField / panelBackdrop / rectSlashMesh /
+                    // fragments) are attached as children. Per-frame the
+                    // group's scale/pos is animated so the rect ZOOMS to fill
+                    // the viewport during the strike + shatter, then ZOOMS
+                    // BACK during restoration.
+                    w2Group = new THREE.Group();
+                    w2Group.position.set(w2Rect.x, w2Rect.y, 8);
+                    this.scene.add(w2Group);
+
+                    // Captured-field plane — shows the rect slice of the
+                    // captured live scene. Lives at local (0,0) so when the
+                    // group zooms, this plane is the thing the player SEES
+                    // growing to fullscreen ("적진이 전체 화면이 되었구나").
+                    // Sampling uses the vertex's ORIGINAL world position so
+                    // the texture content stays "pinned" to its real
+                    // battlefield coordinates while the parent scales.
+                    if (captureRT) {
+                        panelFieldMat = new THREE.ShaderMaterial({
+                            transparent: true,
+                            depthTest: false,
+                            depthWrite: false,
+                            uniforms: {
+                                u_captured:   { value: captureRT.texture },
+                                u_rectCenter: { value: new THREE.Vector2(w2Rect.x, w2Rect.y) },
+                                u_viewSize:   { value: new THREE.Vector2(vw, vh) },
+                                u_alpha:      { value: 1.0 },
+                            },
+                            vertexShader: `
+                                uniform vec2 u_rectCenter;
+                                uniform vec2 u_viewSize;
+                                varying vec2 v_uv;
+                                void main() {
+                                    vec2 origWorld = position.xy + u_rectCenter;
+                                    v_uv = vec2(
+                                        0.5 + origWorld.x / u_viewSize.x,
+                                        0.5 + origWorld.y / u_viewSize.y
+                                    );
+                                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                                }
+                            `,
+                            fragmentShader: `
+                                precision highp float;
+                                uniform sampler2D u_captured;
+                                uniform float     u_alpha;
+                                varying vec2      v_uv;
+                                void main() {
+                                    vec4 c = texture2D(u_captured, v_uv);
+                                    gl_FragColor = vec4(c.rgb, c.a * u_alpha);
+                                }
+                            `,
+                        });
+                        panelField = new THREE.Mesh(
+                            new THREE.PlaneGeometry(w2Rect.width, w2Rect.height),
+                            panelFieldMat,
+                        );
+                        panelField.position.set(0, 0, 0.04);
+                        panelField.renderOrder = 9999;
+                        w2Group.add(panelField);
+                    }
+
                     // Wave-2 mesh — SAME reference-style slash shader as wave 1
                     // but z is INVERTED (-60 → +30) so the slashes fly AWAY
                     // from the camera, INTO the panel. Same RefSlash array so
                     // the cuts continue along the same trajectories — only the
                     // depth direction flips ("monitor 쪽으로 → monitor 에서 멀어지면서").
+                    // u_triggerTime is delayed by the zoom-in duration so the
+                    // slashes only start flying AFTER the zoom-in completes —
+                    // the player gets a clean beat to register the fullscreen
+                    // enemy field before the strike lands.
+                    const slashTriggerDelaySec = ZOOM_IN_FRAMES / 60;
                     rectSlashMaterial = createRefSlashMaterial(
                         w2Rect.width, w2Rect.height,
                         -60.0, 30.0,
-                        elapsedSec,
+                        elapsedSec + slashTriggerDelaySec,
                     );
                     rectSlashMaterial.uniforms.u_alpha.value = 1.0;
                     rectSlashMesh = new THREE.Mesh(
                         new THREE.PlaneGeometry(w2Rect.width, w2Rect.height),
                         rectSlashMaterial,
                     );
-                    rectSlashMesh.position.set(w2Rect.x, w2Rect.y, 8.5);
+                    rectSlashMesh.position.set(0, 0, 0.5);
                     rectSlashMesh.renderOrder = 10002;
-                    this.scene.add(rectSlashMesh);
+                    w2Group.add(rectSlashMesh);
                     phase = 'rectSlash';
                     phaseTimer = 0;
                     cameraShake = 18;
@@ -655,6 +748,9 @@ export class NetherBladeFirstPassiveEffect {
                 // ORIGINAL world position) and drifts perpendicular to the
                 // nearest cut line. Pieces visibly peel away from each other.
                 if (fragments.length === 0 && captureRT) {
+                    // The captured-field mesh is replaced by the per-shard
+                    // meshes from this point on — hide it cleanly.
+                    if (panelField) panelField.visible = false;
                     // Spawn the opaque black backdrop FIRST, behind the
                     // fragments. While the panel is "broken" the live scene
                     // beneath is hidden — gaps between drifting pieces show
@@ -670,9 +766,10 @@ export class NetherBladeFirstPassiveEffect {
                         new THREE.PlaneGeometry(w2Rect.width, w2Rect.height),
                         panelBackdropMat,
                     );
-                    panelBackdrop.position.set(w2Rect.x, w2Rect.y, 8.05);
+                    panelBackdrop.position.set(0, 0, 0.05);
                     panelBackdrop.renderOrder = 10000;     // BELOW fragments (10001)
-                    this.scene.add(panelBackdrop);
+                    if (w2Group) (w2Group as THREE.Group).add(panelBackdrop);
+                    else this.scene.add(panelBackdrop);
 
                     const minDim = Math.min(w2Rect.width, w2Rect.height);
                     // Seed polygon list with the rect itself.
@@ -795,9 +892,15 @@ export class NetherBladeFirstPassiveEffect {
                         });
 
                         const mesh = new THREE.Mesh(geom, mat);
-                        mesh.position.set(pcx, pcy, 8.2);
+                        // Position is LOCAL to w2Group (rect-centre origin).
+                        // The vertex shader still uses the WORLD centroid
+                        // (u_origCentroid) for texture sampling so each shard
+                        // carries its original slice of the captured scene
+                        // even while the parent group is zooming.
+                        mesh.position.set(pcx - w2Rect.x, pcy - w2Rect.y, 0.2);
                         mesh.renderOrder = 10001;
-                        this.scene.add(mesh);
+                        if (w2Group) (w2Group as THREE.Group).add(mesh);
+                        else this.scene.add(mesh);
 
                         fragments.push({
                             origCx: pcx, origCy: pcy,
@@ -815,14 +918,20 @@ export class NetherBladeFirstPassiveEffect {
                 const slowT = Math.min(sT * 0.65, 1);
                 const ease = 1 - Math.pow(1 - slowT, 3);
                 const distScale = Math.max(w2Rect.width, w2Rect.height) * 0.55;
-                // Fragments + backdrop fade in lockstep over the last 30 % so
-                // the panel's "shatter" dissolves cleanly into the live scene
-                // (panel is restored to its original look — 원상복구).
-                const breakAlpha = sT > 0.70 ? Math.max(1 - (sT - 0.70) / 0.30, 0) : 1;
+                // Fragments + backdrop fade alongside the slow zoom-out
+                // (last 50 % of shatter) so restoration reads as one
+                // continuous motion: pieces fade WHILE the panel shrinks
+                // back to its original size — 원상복구.
+                const breakAlpha = sT > SHATTER_HOLD_RATIO
+                    ? Math.max(1 - (sT - SHATTER_HOLD_RATIO) / (1 - SHATTER_HOLD_RATIO), 0)
+                    : 1;
                 for (const f of fragments) {
                     const d = ease * f.splitSpeed * distScale;
-                    f.mesh.position.x = f.origCx + f.driftX * d;
-                    f.mesh.position.y = f.origCy + f.driftY * d;
+                    // Drift in LOCAL space (relative to w2Group's rect-centre
+                    // origin) so the zoom transform on w2Group multiplies the
+                    // motion correctly.
+                    f.mesh.position.x = (f.origCx - w2Rect.x) + f.driftX * d;
+                    f.mesh.position.y = (f.origCy - w2Rect.y) + f.driftY * d;
                     f.material.uniforms.u_alpha.value = breakAlpha;
                 }
                 if (panelBackdropMat) panelBackdropMat.opacity = breakAlpha;
@@ -834,6 +943,48 @@ export class NetherBladeFirstPassiveEffect {
                     if (panelBackdrop) panelBackdrop.visible = false;
                     phase = 'done';
                 }
+            }
+
+            // ── Wave-2 ZOOM animation ───────────────────────────────────────
+            // The whole upper rect (w2Group) scales up to fill the viewport
+            // GRADUALLY (~0.6 s easeInOut) so the player perceives the
+            // enemy field becoming the full screen ("적진이 전체 화면이
+            // 되었구나") before the strike lands. After the panel breaks,
+            // it eases BACK to its original ratio over the second half of
+            // the shatter — restoration reads as one slow continuous motion
+            // rather than a snap.
+            if (w2Group) {
+                // easeInOutCubic: smooth ramp at both ends.
+                const easeInOutCubic = (t: number): number =>
+                    t < 0.5
+                        ? 4 * t * t * t
+                        : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                let zoomT = 0;
+                if (phase === 'rectSlash') {
+                    // First ZOOM_IN_FRAMES of rectSlash: gradual easeInOut
+                    // ramp from 0 → 1. Slashes are u_triggerTime-delayed by
+                    // the same amount so they only fire AFTER zoom-in.
+                    if (phaseTimer <= ZOOM_IN_FRAMES) {
+                        const raw = Math.max(0, phaseTimer / ZOOM_IN_FRAMES);
+                        zoomT = easeInOutCubic(Math.min(raw, 1));
+                    } else {
+                        zoomT = 1;
+                    }
+                } else if (phase === 'shatter') {
+                    const sT = Math.min(phaseTimer / SHATTER_DURATION, 1);
+                    if (sT <= SHATTER_HOLD_RATIO) {
+                        zoomT = 1;
+                    } else {
+                        // Last (1 - HOLD) fraction of shatter: ease BACK out.
+                        const outRaw = (sT - SHATTER_HOLD_RATIO) / (1 - SHATTER_HOLD_RATIO);
+                        zoomT = 1 - easeInOutCubic(Math.min(outRaw, 1));
+                    }
+                }
+                const scaleX = 1 + (vw / w2Rect.width  - 1) * zoomT;
+                const scaleY = 1 + (vh / w2Rect.height - 1) * zoomT;
+                w2Group.scale.set(scaleX, scaleY, 1);
+                w2Group.position.x = w2Rect.x * (1 - zoomT);
+                w2Group.position.y = w2Rect.y * (1 - zoomT);
             }
 
             // ── Update particles ────────────────────────────────────────────
@@ -1023,25 +1174,34 @@ export class NetherBladeFirstPassiveEffect {
         this.scene.remove(slashMesh);
         slashGeom.dispose();
         slashMaterial.dispose();
+        // Wave-2 children live under w2Group; dispose their resources but
+        // skip the per-mesh scene.remove (the whole group goes at once).
         for (const f of fragments) {
-            this.scene.remove(f.mesh);
             f.mesh.geometry.dispose();
             f.material.dispose();
         }
         fragments.length = 0;
         if (panelBackdrop !== null) {
             const m = panelBackdrop as THREE.Mesh;
-            this.scene.remove(m);
             m.geometry.dispose();
             (m.material as THREE.Material).dispose();
         }
+        if (panelField !== null) {
+            const m = panelField as THREE.Mesh;
+            m.geometry.dispose();
+        }
+        if (panelFieldMat !== null) {
+            (panelFieldMat as THREE.ShaderMaterial).dispose();
+        }
         if (rectSlashMesh !== null) {
             const m = rectSlashMesh as THREE.Mesh;
-            this.scene.remove(m);
             m.geometry.dispose();
         }
         if (rectSlashMaterial !== null) {
             (rectSlashMaterial as THREE.ShaderMaterial).dispose();
+        }
+        if (w2Group !== null) {
+            this.scene.remove(w2Group as THREE.Group);
         }
         if (captureRT !== null) {
             (captureRT as THREE.WebGLRenderTarget).dispose();
