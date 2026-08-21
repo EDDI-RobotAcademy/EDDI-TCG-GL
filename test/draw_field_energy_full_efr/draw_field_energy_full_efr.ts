@@ -710,6 +710,37 @@ async function main(container: HTMLElement): Promise<void> {
         }
     }
 
+    // cardData의 "스킬N {언데드|휴먼|트런트}필요에너지" 3개 열 = 그 스킬의 종족별 비용.
+    // 0인 종족은 담지 않으므로, 빈 Map이면 비용 없는 스킬이다.
+    function skillEnergyCost(cardAny: any, btnType: string): Map<CardRace, number> {
+        const cost = new Map<CardRace, number>();
+        const n = btnType === 'skill1' ? 1 : btnType === 'skill2' ? 2 : 0;
+        if (n === 0 || !cardAny) return cost;
+        const columns: ReadonlyArray<readonly [CardRace, string]> = [
+            [CardRace.UNDEAD, `스킬${n} 언데드필요에너지`],
+            [CardRace.HUMAN, `스킬${n} 휴먼필요에너지`],
+            [CardRace.TRENT, `스킬${n} 트런트필요에너지`],
+        ];
+        for (const [race, column] of columns) {
+            const amount = cardAny[column] ?? 0;
+            if (amount > 0) cost.set(race, amount);
+        }
+        return cost;
+    }
+
+    // 비용을 종족별로 하나씩 대조해 처음 모자란 종족을 돌려준다. 전부 충족하면 null.
+    // 총량 비교로는 "언데드 2 필요 / 휴먼 2 보유"를 통과시켜 버리므로 반드시 종족별로 본다.
+    function findMissingSkillEnergy(
+        entry: HandEntry,
+        cost: Map<CardRace, number>,
+    ): { race: CardRace; need: number; have: number } | null {
+        for (const [race, need] of cost) {
+            const have = cardEnergyOfRace(entry, race);
+            if (have < need) return { race, need, have };
+        }
+        return null;
+    }
+
     function clearAllSelection(): void {
         clearActivePanel();
         neonEffect.detachAll();
@@ -1419,6 +1450,25 @@ async function main(container: HTMLElement): Promise<void> {
                         damage = cardAny['스킬2 데미지'] ?? 0;
                     }
 
+                    // ── 스킬 에너지 요구량 검사 ────────────────────────────────
+                    // cardData의 "스킬N {종족}필요에너지" 3개 열이 그 스킬의 종족별 비용이다.
+                    // 카드에 붙은 에너지도 종족별로 보관하므로 종족을 하나씩 대조한다.
+                    // 일반 공격(general)은 비용 없음.
+                    if (btnType.startsWith('skill') && attackerCard && selectedAttackerEntry) {
+                        const cost = skillEnergyCost(cardAny, btnType);
+                        const missing = findMissingSkillEnergy(selectedAttackerEntry, cost);
+                        if (missing) {
+                            guideRenderer.show(guideElement, '에너지가 부족하여 스킬을 사용할 수 없습니다.', 3000);
+                            console.log(`[skill-energy] ${btnType} blocked — cardId=${attackerId} ${RACE_LABEL[missing.race]} 보유 ${missing.have} < 필요 ${missing.need}`);
+                            clearActivePanel();
+                            return;
+                        }
+                        const costText = cost.size === 0
+                            ? '비용 없음'
+                            : [...cost].map(([r, n]) => `${RACE_LABEL[r]} ${n}`).join(', ');
+                        console.log(`[skill-energy] ${btnType} ok — cardId=${attackerId} (${costText})`);
+                    }
+
                     if (skillType === SkillType.EveryUnitField || skillType === SkillType.EveryField) {
                         // AoE — play animation first, then apply damage
                         console.log(`${btnType} (AoE, damage=${damage}) → hitting all opponents`);
@@ -1675,9 +1725,56 @@ async function main(container: HTMLElement): Promise<void> {
 
     // Field energy → card attachment. Intercepts clicks BEFORE bridge when fieldEnergyActive.
     let availableEnergy = 19;
-    // Keyed by HandEntry so duplicate-cardId copies don't share counters/meshes.
-    const placedCardEnergy = new Map<HandEntry, number>();
+    // 카드에 붙은 에너지를 **종족별로** 보관한다. 스킬 비용이 종족별 3개 열
+    // (스킬N 언데드/휴먼/트런트필요에너지)로 정의되어 있고, 앞으로 여러 종족을 동시에
+    // 요구하는 스킬이 추가될 예정이라 총량만으로는 판정할 수 없다.
+    // 바깥 Map은 HandEntry 키 — 중복 cardId 사본이 카운터/메쉬를 공유하지 않게 한다.
+    const placedCardEnergy = new Map<HandEntry, Map<CardRace, number>>();
     const cardEnergyMeshes = new Map<HandEntry, { iconMesh: THREE.Mesh; textMesh: THREE.Mesh }>();
+
+    // Race HUD에서 선택 중인 종족. 필드 에너지를 카드에 붙일 때 이 값이 그대로 기록되므로
+    // 부착 로직(attachEnergyToCard)보다 앞에 선언한다. prev/next 클릭 존이 갱신한다.
+    let currentRaceId = 1;
+    const MAX_RACE_ID = 3;
+
+    // 카드 UI(아이콘 위 숫자)와 Count HUD는 종족 구분 없이 총합 하나만 보여준다.
+    function totalCardEnergy(entry: HandEntry): number {
+        const byRace = placedCardEnergy.get(entry);
+        if (!byRace) return 0;
+        let sum = 0;
+        for (const v of byRace.values()) sum += v;
+        return sum;
+    }
+
+    function cardEnergyOfRace(entry: HandEntry, race: CardRace): number {
+        return placedCardEnergy.get(entry)?.get(race) ?? 0;
+    }
+
+    // 에너지 부착의 유일한 기록 지점. 갱신된 총합을 돌려주므로 호출부는 그대로
+    // updateCardEnergyVisual에 넘기면 된다.
+    function addCardEnergy(entry: HandEntry, race: CardRace, amount: number): number {
+        let byRace = placedCardEnergy.get(entry);
+        if (!byRace) {
+            byRace = new Map<CardRace, number>();
+            placedCardEnergy.set(entry, byRace);
+        }
+        byRace.set(race, (byRace.get(race) ?? 0) + amount);
+        return totalCardEnergy(entry);
+    }
+
+    // cardData의 "종족" 열은 문자열("1"~"3")이다. 알 수 없는 값이면 null.
+    function cardRaceOf(cardId: number): CardRace | null {
+        const raw = Number((getCardById(cardId) as any)?.['종족']);
+        return raw === CardRace.HUMAN || raw === CardRace.UNDEAD || raw === CardRace.TRENT
+            ? (raw as CardRace)
+            : null;
+    }
+
+    const RACE_LABEL: Record<number, string> = {
+        [CardRace.HUMAN]: '휴먼',
+        [CardRace.UNDEAD]: '언데드',
+        [CardRace.TRENT]: '트런트',
+    };
 
     function loadTexturePromise(src: string): Promise<THREE.Texture> {
         return new Promise((resolve, reject) => {
@@ -1697,8 +1794,7 @@ async function main(container: HTMLElement): Promise<void> {
     // Used by attachEnergyToCard (field-energy → card) AND by the overflow-morale flow
     // (deck-energy → card). Source-of-energy tracking is the CALLER's responsibility.
     async function updateCardEnergyVisual(entry: HandEntry, newCount: number): Promise<void> {
-        placedCardEnergy.set(entry, newCount);
-
+        // 저장은 addCardEnergy가 담당한다 — 여기서는 아이콘/숫자/HUD만 갱신.
         countRenderer.setCount(newCount);
         countRenderer.update(countFrame, countElement, window.innerWidth, window.innerHeight);
 
@@ -1743,14 +1839,16 @@ async function main(container: HTMLElement): Promise<void> {
         if (!placedOrder.includes(entry)) return;
 
         availableEnergy--;
-        const cardEnergy = (placedCardEnergy.get(entry) ?? 0) + 1;
+        // 붙는 에너지의 종족 = Race HUD에서 선택 중인 종족.
+        const race = currentRaceId as CardRace;
+        const cardEnergy = addCardEnergy(entry, race, 1);
 
         energyRenderer.setEnergy(availableEnergy);
         energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
         await updateCardEnergyVisual(entry, cardEnergy);
 
         setFieldEnergyNeon(false);
-        console.log(`Energy attached to card ${entry.card.cardId}: ${cardEnergy} total. Available: ${availableEnergy}`);
+        console.log(`Energy attached to card ${entry.card.cardId}: ${RACE_LABEL[race]} +1 → ${cardEnergy} total. Available: ${availableEnergy}`);
     }
 
     function createEnergyCanvasText(value: number, x: number, y: number, baseScale: number): THREE.Mesh {
@@ -2247,8 +2345,10 @@ async function main(container: HTMLElement): Promise<void> {
         // Each mote's arrival bumps the target's energy count by 1 so the icon + HUD
         // tick in sync with the visible absorption. If attached === 0 the effect still
         // plays the gather aura (deck "searched", nothing found) and fades — no motes.
+        // 덱에서 뽑은 에너지 카드(죽음의 에너지)의 종족이 그대로 부착된다.
+        const pulledRace = cardRaceOf(DEATH_ENERGY_CARD_ID) ?? CardRace.UNDEAD;
         await overflowMoraleEffect.play(deckPos, targetPos, attached, () => {
-            const newCount = (placedCardEnergy.get(target) ?? 0) + 1;
+            const newCount = addCardEnergy(target, pulledRace, 1);
             void updateCardEnergyVisual(target, newCount);
         });
 
@@ -3117,10 +3217,12 @@ async function main(container: HTMLElement): Promise<void> {
                             allyTarget.group.position.y,
                             5,
                         );
+                        // 손패에서 직접 떨군 에너지 카드 자신의 종족이 부착된다.
+                        const droppedRace = cardRaceOf(cardId) ?? CardRace.UNDEAD;
                         void overflowMoraleEffect.playDirectAttach(targetWorld, () => {
-                            const newCount = (placedCardEnergy.get(allyTarget) ?? 0) + 1;
+                            const newCount = addCardEnergy(allyTarget, droppedRace, 1);
                             void updateCardEnergyVisual(allyTarget, newCount);
-                            console.log(`[death-energy] attached 1 energy → placed cardId=${allyTarget.card.cardId} total=${newCount}`);
+                            console.log(`[death-energy] attached ${RACE_LABEL[droppedRace]} 1 → placed cardId=${allyTarget.card.cardId} total=${newCount}`);
                         });
                     }
                 }
@@ -3199,8 +3301,6 @@ async function main(container: HTMLElement): Promise<void> {
     document.body.appendChild(countElement);
 
     let fieldEnergyChargeCount = 1;
-    let currentRaceId = 1;
-    const MAX_RACE_ID = 3;
 
     // Invisible click zones for count prev/next + race prev/next.
     // Coordinates from legacy MouseCursorDetectAreaMap (screen viewport percentages).
