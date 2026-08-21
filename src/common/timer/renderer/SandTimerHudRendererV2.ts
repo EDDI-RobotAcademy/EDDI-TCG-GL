@@ -20,6 +20,9 @@ interface BuildResult {
     lastTime: number;
     grains: Grain[];
     rafHandle: number | null;
+    // Fired once each time the hourglass runs out. Stored per-element (not on the renderer)
+    // so the renderer itself stays stateless.
+    onExpire: (() => void) | null;
 }
 
 const BASE_CANVAS_WIDTH = 30;
@@ -74,6 +77,7 @@ export class SandTimerHudRendererV2 implements DomFrameRenderer<SandTimerHudFram
             lastTime: performance.now(),
             grains: [],
             rafHandle: null,
+            onExpire: null,
         };
         (container as HTMLElement & { __buildResult?: BuildResult }).__buildResult = build;
 
@@ -107,6 +111,14 @@ export class SandTimerHudRendererV2 implements DomFrameRenderer<SandTimerHudFram
             this.startLoop(build.frame, build);
         }
         this.draw(build.frame, build);  // immediate repaint so the "60" flashes on screen now
+    }
+
+    // Register the hourglass-expiry callback. Fires every time the timer reaches 0, so a
+    // reset() from inside the callback re-arms it for the next turn.
+    public setOnExpire(element: HTMLElement, callback: (() => void) | null): void {
+        const build = (element as HTMLElement & { __buildResult?: BuildResult }).__buildResult;
+        if (!build) return;
+        build.onExpire = callback;
     }
 
     public dispose(element: HTMLElement): void {
@@ -148,7 +160,10 @@ export class SandTimerHudRendererV2 implements DomFrameRenderer<SandTimerHudFram
             } else {
                 build.grains.length = 0;
                 this.draw(frame, build);
+                // Clear the handle BEFORE notifying: a callback that calls reset() must see
+                // a stopped loop so reset() restarts it instead of rewinding a dead one.
                 build.rafHandle = null;
+                build.onExpire?.();
             }
         };
         build.rafHandle = requestAnimationFrame(step);

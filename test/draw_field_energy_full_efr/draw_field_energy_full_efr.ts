@@ -717,6 +717,64 @@ async function main(container: HTMLElement): Promise<void> {
         interactionState = 'idle';
     }
 
+    // ── 모래시계 만료 시의 턴 넘김 조정 ──────────────────────────────────────────
+    // 만료 시점의 상태를 두 가지로 구분한다.
+    //   · 타겟팅 중(선택 미완료) — 아무것도 하지 못한 상태로 즉시 턴을 넘긴다.
+    //   · 선택 완료 후 동작 진행 중 — 동작이 전부 끝난 뒤에 넘기고, 그 시점부터 타이머를
+    //     다시 돌린다 (endYourTurn/beginYourTurn이 각자 reset을 호출하므로 자동).
+    let resolvingDepth = 0;           // >0 이면 되돌릴 수 없는 동작이 진행 중
+    let turnPassDeferred = false;     // 만료됐지만 동작 종료를 기다리는 중
+    let passiveChainAborted = false;  // 턴이 넘어가 네더 블레이드 체인을 중단해야 함
+
+    // 선택 완료 이후의 비가역 동작을 감싼다. 진행 중 만료가 걸리면 끝난 직후 턴을 넘긴다.
+    async function runResolving<T>(work: () => Promise<T>): Promise<T> {
+        resolvingDepth += 1;
+        try {
+            return await work();
+        } finally {
+            resolvingDepth -= 1;
+            if (resolvingDepth === 0 && turnPassDeferred) {
+                turnPassDeferred = false;
+                console.log('[turn-state] 동작 완료 — 보류했던 턴 넘김 실행');
+                passTurnOnExpiry('timer expired (deferred)');
+            }
+        }
+    }
+
+    // 리스너 전체를 한 단위로 묶어 "선택 완료 → 동작 실행 → 뒷정리"가 중간에 끊기지 않게
+    // 한다. 리스너가 끝나기 전에는 보류된 턴 넘김이 실행되지 않는다.
+    const withResolving = (handler: (e: MouseEvent) => Promise<void>) =>
+        (e: MouseEvent): void => { void runResolving(() => handler(e)); };
+
+    // 아직 선택이 끝나지 않은 타겟팅을 전부 취소한다. 되돌릴 상태만 정리하므로 희생 유닛은
+    // 필드에, 시전 카드는 손패에 그대로 남는다 — 말 그대로 아무것도 하지 못한 상태.
+    function cancelPendingTargeting(): void {
+        if (netherBladePassive2State !== null) {
+            const state = netherBladePassive2State;
+            netherBladePassive2State = null;
+            // await 중인 체인이 영원히 멈추지 않도록 반드시 resolve하되, 중단 플래그를 세워
+            // 다음 네더 블레이드의 AoE로 넘어가지 않게 한다.
+            passiveChainAborted = true;
+            state.onResolve();
+            console.log('[nether-blade] passive 2 픽 미완료 — 취소하고 턴 넘김');
+        }
+        if (corpseExplosionState !== null) {
+            corpseExplosionState = null;
+            console.log('[corpse-explosion] 타겟 선택 미완료 — 취소 (희생 유닛·시전 카드 유지)');
+        }
+        // 패널 / attackMode 타겟팅 + 선택 네온까지 한 번에 정리.
+        clearAllSelection();
+    }
+
+    function passTurnOnExpiry(reason: string): void {
+        cancelPendingTargeting();
+        if (turnStateRepo.getOwner() === 'your') {
+            endYourTurn(reason);
+        } else {
+            void beginYourTurn(reason);
+        }
+    }
+
     const animationLoop = new AnimationLoop(rendererManager, sceneManager, cameraManager);
     const attackAnimation = new AttackAnimationV2(scene);
     const scytheCutEffect = new ScytheCutEffect(scene);
@@ -835,7 +893,7 @@ async function main(container: HTMLElement): Promise<void> {
                     // away the instant the corpse starts flying (not after the effect
                     // resolves) — keeps the visual focus on the corpse + projectiles.
                     enemyNeonEffect.detachAll();
-                    void resolveCorpseExplosion();
+                    void runResolving(() => resolveCorpseExplosion());
                 }
             };
 
@@ -880,7 +938,7 @@ async function main(container: HTMLElement): Promise<void> {
             if (opponentMasterHp > 0) {
                 const masterHits = sharedRaycaster.intersectObjects(masterGroup.children, true);
                 if (masterHits.length > 0) {
-                    void resolveNetherBladePassive2({ kind: 'master' });
+                    void runResolving(() => resolveNetherBladePassive2({ kind: 'master' }));
                     return;
                 }
             }
@@ -894,7 +952,7 @@ async function main(container: HTMLElement): Promise<void> {
                 if (!(walkGroup instanceof THREE.Group) || !walkGroup.visible) continue;
                 const target = opponentEntries.find((oe) => oe.group === walkGroup);
                 if (!target) continue;
-                void resolveNetherBladePassive2({ kind: 'opponent', cardIndex: target.cardIndex });
+                void runResolving(() => resolveNetherBladePassive2({ kind: 'opponent', cardIndex: target.cardIndex }));
                 return;
             }
             // Click off any valid target — absorb, no-op.
@@ -907,15 +965,12 @@ async function main(container: HTMLElement): Promise<void> {
         // point-in-hexagon check, not a bounding rect — clicks just outside the hex corners
         // don't register. On a real transfer, the 60-second hourglass restarts from the top
         // so the new turn owner (the opponent) gets a fresh budget, and the guide banner
-        // announces the handover the same way the drag hint greets you on entry.
+        // announces the handover the same way the drag hint greets you on entry — all of
+        // which lives in endYourTurn(), shared with the hourglass-expiry trigger.
         if (!lostZonePopupGroup && !opponentLostZonePopupGroup) {
             if (isPointInsideTurnEndButton(worldX, worldY, turnEndButtonFrame, w, h)) {
                 e.stopImmediatePropagation();
-                if (turnStateRepo.getOwner() === 'your') {
-                    turnStateRepo.setOwner('opponent');
-                    timerRenderer.reset(timerElement);
-                    guideRenderer.show(guideElement, '상대방의 턴입니다.', 3000);
-                }
+                endYourTurn('turn-end button');
                 return;
             }
         }
@@ -1326,13 +1381,15 @@ async function main(container: HTMLElement): Promise<void> {
     // Same chain runs every turn-start while the unit is alive; this wrapper is shared
     // so deploy and turn-start use identical logic.
     const triggerNetherBladePassive = async (deployedEntry: HandEntry): Promise<void> => {
-        await triggerNetherBladeAoEPassive(deployedEntry);
+        await runResolving(() => triggerNetherBladeAoEPassive(deployedEntry));
+        // 만료로 턴이 넘어갔으면 픽 단계로 들어가지 않는다.
+        if (passiveChainAborted) return;
         await enterNetherBladePassive2(deployedEntry);
     };
 
     // Active panel button click + opponent card click (attack targeting).
     // stopImmediatePropagation prevents HandInteractionBridge from stealing the same click.
-    rendererManager.getDomElement().addEventListener('mousedown', async (e: MouseEvent) => {
+    rendererManager.getDomElement().addEventListener('mousedown', withResolving(async (e: MouseEvent) => {
         if (e.button !== 0) return;
         sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
 
@@ -1556,7 +1613,7 @@ async function main(container: HTMLElement): Promise<void> {
                 return;
             }
         }
-    });
+    }));
 
     // Right-click: toggle active panel if a placed card is selected
     rendererManager.getDomElement().addEventListener('contextmenu', (e: Event) => {
@@ -3009,7 +3066,12 @@ async function main(container: HTMLElement): Promise<void> {
                     if (cardId === NETHER_BLADE_CARD_ID) {
                         const entry = droppedEntry;
                         void (async () => {
-                            await netherBladeEntranceEffect.play(rendererManager.getDomElement());
+                            // 새 체인의 시작 — 이전 턴에 중단됐던 플래그를 여기서 푼다.
+                            passiveChainAborted = false;
+                            await runResolving(() =>
+                                netherBladeEntranceEffect.play(rendererManager.getDomElement()),
+                            );
+                            if (passiveChainAborted) return;
                             await triggerNetherBladePassive(entry);
                         })();
                     }
@@ -3298,16 +3360,28 @@ async function main(container: HTMLElement): Promise<void> {
     const turnElement = await turnRenderer.build(turnFrame);
     document.body.appendChild(turnElement);
 
-    // ── 'f' key: opponent → your turn. Each full opponent→your cycle counts as one turn,
-    // so we (a) increment TURN, (b) bump the main FIELD ENERGY by 1, (c) restart the 60 s
-    // hourglass, and (d) DRAW one card from your deck into your hand (standard turn-start
-    // draw), plus (e) announce the handback on the guide banner, mirroring the
-    // '상대방의 턴입니다.' banner the turn-end button raises. No-op if it's already your
-    // turn (idempotent).
-    document.addEventListener('keydown', async (e: KeyboardEvent) => {
-        if (e.key !== 'f' && e.key !== 'F') return;
+    // ── 턴 전환 단일 진입점 ───────────────────────────────────────────────────────
+    // Both transitions have two triggers now (button/hourglass, 'f' key/hourglass), so the
+    // side effects live in one function each instead of being duplicated per trigger.
+
+    // your → opponent. Triggers: 턴 종료 버튼 클릭, 모래시계 만료.
+    // No-op unless it's currently your turn (idempotent).
+    function endYourTurn(reason: string): void {
+        if (turnStateRepo.getOwner() !== 'your') return;
+        turnStateRepo.setOwner('opponent');
+        timerRenderer.reset(timerElement);
+        guideRenderer.show(guideElement, '상대방의 턴입니다.', 3000);
+        console.log(`[turn-state] your → opponent (${reason}) · TURN ${currentTurn}`);
+    }
+
+    // opponent → your. Triggers: 'f' 키, 모래시계 만료. Each full opponent→your cycle counts
+    // as one turn, so we (a) increment TURN, (b) bump the main FIELD ENERGY by 1, (c) restart
+    // the 60 s hourglass, and (d) DRAW one card from your deck into your hand (standard
+    // turn-start draw), plus (e) announce the handback on the guide banner. No-op unless it's
+    // currently the opponent's turn (idempotent).
+    async function beginYourTurn(reason: string): Promise<void> {
         if (turnStateRepo.getOwner() !== 'opponent') {
-            console.log(`[turn-state] 'f' ignored — already your turn`);
+            console.log(`[turn-state] ${reason} ignored — already your turn`);
             return;
         }
         turnStateRepo.setOwner('your');
@@ -3340,7 +3414,7 @@ async function main(container: HTMLElement): Promise<void> {
             console.log(`[deck] empty — no turn-start draw`);
         }
 
-        console.log(`[turn-state] opponent → your · TURN ${currentTurn} · field energy ${availableEnergy}`);
+        console.log(`[turn-state] opponent → your (${reason}) · TURN ${currentTurn} · field energy ${availableEnergy}`);
 
         // ── 네더 블레이드 매 턴 패시브 풀체인 발동 ─────────────────────────
         // Each placed + alive Nether Blade re-fires passive 1 (AoE) → passive 2 (single
@@ -3350,10 +3424,34 @@ async function main(container: HTMLElement): Promise<void> {
         const netherBladesOnField = placedOrder.filter(
             (e) => e.card.cardId === NETHER_BLADE_CARD_ID && e.group.visible,
         );
+        passiveChainAborted = false;
         for (const entry of netherBladesOnField) {
+            if (passiveChainAborted) {
+                console.log('[nether-blade] 턴이 넘어가 남은 패시브 체인 중단');
+                break;
+            }
             console.log(`[nether-blade] turn-start passive chain · TURN ${currentTurn}`);
             await triggerNetherBladePassive(entry);
         }
+    }
+
+    document.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key !== 'f' && e.key !== 'F') return;
+        void beginYourTurn(`'f' key`);
+    });
+
+    // ── 모래시계 만료 → 자동 턴 넘김 ──────────────────────────────────────────────
+    // 만료 시점에 턴을 쥔 쪽이 턴을 잃는다. 단, 선택이 완료되어 되돌릴 수 없는 동작이
+    // 진행 중이면 즉시 넘기지 않고 보류한다 — runResolving의 finally가 동작 종료 직후
+    // passTurnOnExpiry를 호출하고, 거기서 타이머가 새로 시작된다. 타겟팅 중(선택 미완료)
+    // 이라면 cancelPendingTargeting이 아무 일도 없던 상태로 되돌린 뒤 그대로 넘어간다.
+    timerRenderer.setOnExpire(timerElement, () => {
+        if (resolvingDepth > 0) {
+            turnPassDeferred = true;
+            console.log('[turn-state] 모래시계 만료 — 진행 중인 동작 완료 후 턴 넘김 예약');
+            return;  // 여기서 타이머를 재시작하지 않는다. 동작이 끝난 시점부터 다시 돈다.
+        }
+        passTurnOnExpiry('timer expired');
     });
 
     window.addEventListener('resize', () => {
