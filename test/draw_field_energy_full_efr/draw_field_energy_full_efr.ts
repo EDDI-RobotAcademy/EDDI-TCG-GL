@@ -1276,27 +1276,13 @@ async function main(container: HTMLElement): Promise<void> {
                 await new Promise<void>((r) => setTimeout(r, 300));
                 return;
             }
-            // Wave 2 + shatter cover the ENTIRE upper portion of the battle
-            // screen — from the opponent battlefield's bottom edge up to the
-            // very top of the viewport, full width — so the cuts visibly tear
-            // the actual battle background, not just the opponent's row.
-            const vw = window.innerWidth;
-            const vh = window.innerHeight;
-            const oppCenterY = opponentFieldAreaFrame.yPercent      * vh;
-            const oppHeight  = opponentFieldAreaFrame.heightPercent * vh;
-            const oppBottomY = oppCenterY - oppHeight * 0.5;
-            const screenTopY = vh * 0.5;
-            const upperRect = {
-                x: 0,
-                y: (oppBottomY + screenTopY) * 0.5,
-                width: vw,
-                height: screenTopY - oppBottomY,
-            };
+            // Wave 2 + shatter run FULLSCREEN over the entire battle screen
+            // — same scale as wave 1 — so the cuts tear across the whole
+            // field, not just the opponent's row.
             const effect = new NetherBladeFirstPassiveEffect(scene);
             await effect.play(
                 panelPos, aoeTargets, canvasEl, () => { /* per-strike SFX hook */ },
                 rendererManager.getRenderer(), camera,
-                upperRect,
             );
         });
 
