@@ -23,3 +23,6 @@ node_modules
 
 # exclude *.webp
 *.webp
+
+# exclude *.zip
+*.zip

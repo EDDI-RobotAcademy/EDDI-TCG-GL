@@ -898,13 +898,15 @@ async function main(container: HTMLElement): Promise<void> {
         // Only effective while it's YOUR turn — idempotent otherwise. Hit-test is a true
         // point-in-hexagon check, not a bounding rect — clicks just outside the hex corners
         // don't register. On a real transfer, the 60-second hourglass restarts from the top
-        // so the new turn owner (the opponent) gets a fresh budget.
+        // so the new turn owner (the opponent) gets a fresh budget, and the guide banner
+        // announces the handover the same way the drag hint greets you on entry.
         if (!lostZonePopupGroup && !opponentLostZonePopupGroup) {
             if (isPointInsideTurnEndButton(worldX, worldY, turnEndButtonFrame, w, h)) {
                 e.stopImmediatePropagation();
                 if (turnStateRepo.getOwner() === 'your') {
                     turnStateRepo.setOwner('opponent');
                     timerRenderer.reset(timerElement);
+                    guideRenderer.show(guideElement, '상대방의 턴입니다.', 3000);
                 }
                 return;
             }
@@ -1276,27 +1278,13 @@ async function main(container: HTMLElement): Promise<void> {
                 await new Promise<void>((r) => setTimeout(r, 300));
                 return;
             }
-            // Wave 2 + shatter cover the ENTIRE upper portion of the battle
-            // screen — from the opponent battlefield's bottom edge up to the
-            // very top of the viewport, full width — so the cuts visibly tear
-            // the actual battle background, not just the opponent's row.
-            const vw = window.innerWidth;
-            const vh = window.innerHeight;
-            const oppCenterY = opponentFieldAreaFrame.yPercent      * vh;
-            const oppHeight  = opponentFieldAreaFrame.heightPercent * vh;
-            const oppBottomY = oppCenterY - oppHeight * 0.5;
-            const screenTopY = vh * 0.5;
-            const upperRect = {
-                x: 0,
-                y: (oppBottomY + screenTopY) * 0.5,
-                width: vw,
-                height: screenTopY - oppBottomY,
-            };
+            // Wave 2 + shatter run FULLSCREEN over the entire battle screen
+            // — same scale as wave 1 — so the cuts tear across the whole
+            // field, not just the opponent's row.
             const effect = new NetherBladeFirstPassiveEffect(scene);
             await effect.play(
                 panelPos, aoeTargets, canvasEl, () => { /* per-strike SFX hook */ },
                 rendererManager.getRenderer(), camera,
-                upperRect,
             );
         });
 
@@ -3295,7 +3283,9 @@ async function main(container: HTMLElement): Promise<void> {
     // ── 'f' key: opponent → your turn. Each full opponent→your cycle counts as one turn,
     // so we (a) increment TURN, (b) bump the main FIELD ENERGY by 1, (c) restart the 60 s
     // hourglass, and (d) DRAW one card from your deck into your hand (standard turn-start
-    // draw). No-op if it's already your turn (idempotent).
+    // draw), plus (e) announce the handback on the guide banner, mirroring the
+    // '상대방의 턴입니다.' banner the turn-end button raises. No-op if it's already your
+    // turn (idempotent).
     let currentTurn = 1;  // matches TurnHudRendererV2's initial
     document.addEventListener('keydown', async (e: KeyboardEvent) => {
         if (e.key !== 'f' && e.key !== 'F') return;
@@ -3304,6 +3294,7 @@ async function main(container: HTMLElement): Promise<void> {
             return;
         }
         turnStateRepo.setOwner('your');
+        guideRenderer.show(guideElement, '당신의 턴입니다.', 3000);
 
         currentTurn += 1;
         turnRenderer.setTurn(currentTurn);
