@@ -311,6 +311,10 @@ async function main(container: HTMLElement): Promise<void> {
     // duplicate cardIds (e.g., 8×3, 93×4), so cardId-keyed lookups would collapse them together.
     const handOrder: HandEntry[] = [...entries];
     const placedOrder: HandEntry[] = [];
+    // 출격 멀미(summoning sickness) — 유닛이 필드에 나온 턴 번호. 같은 턴에는 공격/스킬을
+    // 쓸 수 없다. HandEntry로 키잉해 중복 cardId 사본이 서로의 상태를 공유하지 않게 한다
+    // (placedCardEnergy와 동일한 이유).
+    const deployedTurn = new Map<HandEntry, number>();
     const MAX_PER_PAGE = 4;
     let currentPage = 1;
 
@@ -397,6 +401,10 @@ async function main(container: HTMLElement): Promise<void> {
     const turnEndButtonGroup = await turnEndButtonRenderer.build(turnEndButtonFrame);
     scene.add(turnEndButtonGroup);
     const turnStateRepo = TurnStateRepositoryImpl.getInstance();
+    // Declared here (not next to the 'f' handler that increments it) because the drop
+    // handler stamps deployedTurn with it and the right-click handler compares against it —
+    // both run earlier in the file.
+    let currentTurn = 1;  // matches TurnHudRendererV2's initial
 
     // Hover → show the red blinking neon border around the hex. Cheap per-mousemove
     // point-in-hex test + a uniform flip on the shader material.
@@ -1569,6 +1577,14 @@ async function main(container: HTMLElement): Promise<void> {
         if (!selectedEntry) return;
         const isPlaced = placedOrder.includes(selectedEntry);
         if (!isPlaced) return;
+
+        // 출격 멀미 — 이번 턴에 출격한 유닛은 공격도 스킬도 쓸 수 없으므로 액티브 패널
+        // 자체를 열지 않는다. 이유를 알 수 없으면 무반응처럼 보이므로 배너로 알린다.
+        if (deployedTurn.get(selectedEntry) === currentTurn) {
+            guideRenderer.show(guideElement, '이번 턴에 출격한 유닛으로 공격할 수 없습니다.', 3000);
+            console.log(`[summoning-sickness] cardId=${selectedEntry.card.cardId} deployed on TURN ${currentTurn} — panel blocked`);
+            return;
+        }
 
         // Panel spawns at mouse right-click world position (legacy: activePanelAreaRepository.create(clickPoint.x, clickPoint.y, cardId))
         const clickNdc = ndcFromEvent(e);
@@ -2985,6 +3001,8 @@ async function main(container: HTMLElement): Promise<void> {
                 if (inside && isUnit) {
                     handOrder.splice(handIndex, 1);
                     placedOrder.push(droppedEntry);
+                    // 출격한 턴을 기록 — 이번 턴에는 공격/스킬 패널이 열리지 않는다.
+                    deployedTurn.set(droppedEntry, currentTurn);
                     // 출격 시 — entrance scene → passive chain. Fire-and-forget; the
                     // placement reflow at the bottom of onDrop runs synchronously first.
                     // The entrance is deploy-ONLY (no replay on turn-start).
@@ -3286,7 +3304,6 @@ async function main(container: HTMLElement): Promise<void> {
     // draw), plus (e) announce the handback on the guide banner, mirroring the
     // '상대방의 턴입니다.' banner the turn-end button raises. No-op if it's already your
     // turn (idempotent).
-    let currentTurn = 1;  // matches TurnHudRendererV2's initial
     document.addEventListener('keydown', async (e: KeyboardEvent) => {
         if (e.key !== 'f' && e.key !== 'F') return;
         if (turnStateRepo.getOwner() !== 'opponent') {
