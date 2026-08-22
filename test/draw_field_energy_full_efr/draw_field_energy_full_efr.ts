@@ -1007,14 +1007,21 @@ async function main(container: HTMLElement): Promise<void> {
         }
 
         // ── 1) Your Lost Zone panel ────────────────────────────────────────────────
+        // 네 패널(내/상대 × 로스트 존/무덤)은 아이콘만으로 구분이 어려워, 팝업을 여는
+        // 순간 어느 영역인지 배너로 알린다. 닫을 때는 띄우지 않는다 — 사라지는 팝업의
+        // 이름을 알리는 건 노이즈다.
         const yourPanelBounds = computeYourLostZonePanelBounds(lostZonePanelFrame, w, h);
         const onYourPanel =
             worldX >= yourPanelBounds.minX && worldX <= yourPanelBounds.maxX &&
             worldY >= yourPanelBounds.minY && worldY <= yourPanelBounds.maxY;
         if (onYourPanel) {
             e.stopImmediatePropagation();
-            if (lostZonePopupGroup) closeLostZonePopup();
-            else void openLostZonePopup();
+            if (lostZonePopupGroup) {
+                closeLostZonePopup();
+            } else {
+                guideRenderer.show(guideElement, '당신의 로스트 존입니다.', 3000);
+                void openLostZonePopup();
+            }
             return;
         }
 
@@ -1025,24 +1032,36 @@ async function main(container: HTMLElement): Promise<void> {
             worldY >= oppPanelBounds.minY && worldY <= oppPanelBounds.maxY;
         if (onOppPanel) {
             e.stopImmediatePropagation();
-            if (opponentLostZonePopupGroup) closeOpponentLostZonePopup();
-            else void openOpponentLostZonePopup();
+            if (opponentLostZonePopupGroup) {
+                closeOpponentLostZonePopup();
+            } else {
+                guideRenderer.show(guideElement, '상대방의 로스트 존입니다.', 3000);
+                void openOpponentLostZonePopup();
+            }
             return;
         }
 
         // ── 2b) Your Tomb panel (tombstone-shaped) ────────────────────────────────
         if (isPointInsideYourTomb(worldX, worldY, tombPanelFrame, w, h)) {
             e.stopImmediatePropagation();
-            if (tombPopupGroup) closeTombPopup();
-            else void openTombPopup();
+            if (tombPopupGroup) {
+                closeTombPopup();
+            } else {
+                guideRenderer.show(guideElement, '당신의 무덤입니다.', 3000);
+                void openTombPopup();
+            }
             return;
         }
 
         // ── 2c) Opponent Tomb panel (inverted tombstone) ──────────────────────────
         if (isPointInsideOpponentTomb(worldX, worldY, opponentTombPanelFrame, w, h)) {
             e.stopImmediatePropagation();
-            if (opponentTombPopupGroup) closeOpponentTombPopup();
-            else void openOpponentTombPopup();
+            if (opponentTombPopupGroup) {
+                closeOpponentTombPopup();
+            } else {
+                guideRenderer.show(guideElement, '상대방의 무덤입니다.', 3000);
+                void openOpponentTombPopup();
+            }
             return;
         }
 
