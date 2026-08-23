@@ -65,6 +65,8 @@ import { NeonBorderEffect } from "../../src/neon_border/effect/NeonBorderEffect"
 import { createDefaultActivePanelFrame, ActivePanelButtonSpec } from "../../src/active_panel_area/frame/ActivePanelFrame";
 import { ActivePanelRendererV2 } from "../../src/active_panel_area/renderer/ActivePanelRendererV2";
 import { AttackAnimationV2 } from "../../src/general_attack/animation/AttackAnimationV2";
+import { FrozenBurningOverlayEffect } from "../../src/animation/cold_dark_energy/FrozenBurningOverlayEffect";
+import { ColdDarkTraitMarkEffect } from "../../src/animation/cold_dark_energy/ColdDarkTraitMarkEffect";
 import { ScytheCutEffect } from "../../src/animation/scythe/ScytheCutEffect";
 import { EnergyBurnEffect } from "../../src/animation/energy_burn/EnergyBurnEffect";
 import { DoomContractEffect } from "../../src/animation/doom_contract/DoomContractEffect";
@@ -826,13 +828,19 @@ async function main(container: HTMLElement): Promise<void> {
     const moraleConvertEffect = new MoraleConvertEffect(scene);
     const overflowMoraleEffect = new OverflowMoraleEffect(scene);
     const swampEffect = new SwampEffect(scene);
+    // 빙결 / 암흑 화염 지속 오버레이 — 상대 유닛 카드 그룹에 직접 얹힌다.
+    const frozenBurningEffect = new FrozenBurningOverlayEffect();
+    // 보유 유닛에 붙는 두 상태 마크 — 셰이더 배지라 매 프레임 갱신이 필요하다.
+    const traitMarkEffect = new ColdDarkTraitMarkEffect();
 
-    animationLoop.setCustomUpdate(() => {
+    animationLoop.setCustomUpdate((delta, elapsed) => {
         if (typeof TWEEN !== 'undefined') TWEEN.update();
         neonEffect.updateAnimation();
         enemyNeonEffect.updateAnimation();
         allyTargetNeonEffect.updateAnimation();
         turnEndButtonRenderer.updateAnimation(turnEndButtonGroup, turnEndButtonFrame);
+        frozenBurningEffect.updateAnimation(elapsed, delta);
+        traitMarkEffect.updateAnimation(elapsed);
     });
     animationLoop.start();
 
@@ -1513,10 +1521,15 @@ async function main(container: HTMLElement): Promise<void> {
                             const newHp = currentHp - damage;
                             opponentHpState.set(idx, newHp);
 
+                            // 차갑게 불타는 암흑 에너지 보유자의 광역기 — 맞은 전원에게 부여.
+                            if (newHp > 0) applyColdDarkTraits(atkEntry, idx);
+
                             // Red flash + shake on all hit targets
                             entry.group.traverse((child) => {
                                 if (child instanceof THREE.Mesh && child.material && !child.userData.__neonBorderLine) {
                                     const mat = child.material as THREE.MeshBasicMaterial;
+                                    // ShaderMaterial (빙결/암흑 화염 오버레이 등)에는 `.color`가 없다 — 건너뛴다.
+                                    if (!mat.color) return;
                                     const origColor = mat.color.clone();
                                     mat.color.set(0xff4444);
                                     setTimeout(() => { mat.color.copy(origColor); }, 200);
@@ -1654,12 +1667,17 @@ async function main(container: HTMLElement): Promise<void> {
                 const newHp = currentHp - attackPower;
                 opponentHpState.set(targetIdx, newHp);
 
+                // 차갑게 불타는 암흑 에너지 보유자의 공격/단일기 — 맞은 대상에게 부여.
+                if (newHp > 0) applyColdDarkTraits(attackerEntry, targetIdx);
+
                 console.log(`Single-target attack: attacker=${attackerId} (ATK=${attackPower}) → opponent idx=${targetIdx} cardId=${targetEntry.card.cardId} (HP: ${currentHp} → ${newHp})`);
 
                 const flashGroup = targetEntry.group;
                 flashGroup.traverse((child) => {
                     if (child instanceof THREE.Mesh && child.material && !child.userData.__neonBorderLine) {
                         const mat = child.material as THREE.MeshBasicMaterial;
+                        // ShaderMaterial (빙결/암흑 화염 오버레이 등)에는 `.color`가 없다 — 건너뛴다.
+                        if (!mat.color) return;
                         const origColor = mat.color.clone();
                         mat.color.set(0xff4444);
                         setTimeout(() => { mat.color.copy(origColor); }, 200);
@@ -1853,6 +1871,126 @@ async function main(container: HTMLElement): Promise<void> {
         }
     }
 
+    // ── 차갑게 불타는 암흑 에너지 마크 ───────────────────────────────────────────
+    // 에너지 아이콘은 카드 좌상단(offsetY +0.5)에 있으므로, 두 마크는 그 **아래로**
+    // 세로로 쌓는다. 정지 이미지가 아니라 셰이더 배지라 매 프레임 살아 움직인다 —
+    // 불꽃은 화르륵 치솟고, 눈 결정은 빛줄기가 스치며 반짝인다.
+    function attachColdDarkTraitMarks(entry: HandEntry): void {
+        if (traitMarkEffect.isAttached(entry.cardIndex)) return;
+
+        const userData = entry.group.userData as { baseCardWidth?: number; baseCardHeight?: number };
+        const cardW = userData.baseCardWidth ?? 100;
+        const cardH = userData.baseCardHeight ?? 160;
+        const eSlot = handCardFrame.slots.energy;
+        const slotW = eSlot.widthRatio * cardW;
+        const slotH = slotW * eSlot.aspect;
+        const size = slotW * 0.82;
+
+        traitMarkEffect.attach(entry.cardIndex, entry.group, {
+            x: eSlot.offsetXRatio * cardW,
+            // 에너지 아이콘 하단에서 한 칸 띄우고 시작.
+            y: eSlot.offsetYRatio * cardH - slotH * 0.62 - size * 0.5,
+            size,
+            gap: size * 1.08,
+        });
+        console.log(`[cold-dark-energy] 마크 부착 → cardId=${entry.card.cardId} (암흑 화염 + 빙결)`);
+    }
+
+    // ── 빙결 / 암흑 화염 상태 관리 ───────────────────────────────────────────────
+
+    // 상대 카드에 지속 오버레이를 올린다(이미 있으면 크기만 맞춘다).
+    // 불길·서리는 셰이더가 카드 정중앙 타원으로 마스킹하므로, 테두리에 붙은
+    // 무기 / HP / 종족 / 에너지 표기는 건드리지 않는다.
+    function ensureFrozenBurningOverlay(cardIndex: number): boolean {
+        const target = opponentEntries.find((oe) => oe.cardIndex === cardIndex);
+        if (!target) return false;
+        const ud = target.group.userData as { baseCardWidth?: number; baseCardHeight?: number };
+        frozenBurningEffect.attach(
+            cardIndex, target.group, ud.baseCardWidth ?? 100, ud.baseCardHeight ?? 160,
+        );
+        return true;
+    }
+
+    // 유닛이 죽거나 필드를 떠날 때 상태·오버레이를 모두 걷어낸다.
+    function clearColdDarkStatus(cardIndex: number): void {
+        darkFlameTargets.delete(cardIndex);
+        frozenTargets.delete(cardIndex);
+        freezeImmuneTargets.delete(cardIndex);
+        frozenBurningEffect.detach(cardIndex);
+    }
+
+    // 공격이 명중한 뒤 호출. 공격자가 보유자가 아니면 아무 일도 하지 않는다.
+    // 암흑 화염은 매번 갱신(지속), 빙결은 면역이 아닐 때만 새로 건다.
+    function applyColdDarkTraits(attacker: HandEntry | null, targetIdx: number): void {
+        if (!attacker || !coldDarkEnergyHolders.has(attacker)) return;
+        const target = opponentEntries.find((oe) => oe.cardIndex === targetIdx);
+        if (!target || !target.group.visible) return;
+        if (!ensureFrozenBurningOverlay(targetIdx)) return;
+
+        darkFlameTargets.add(targetIdx);
+
+        // 연속 빙결 불가 — 직전 턴에 빙결이 풀린 대상은 이번 턴엔 걸리지 않는다.
+        const immune = freezeImmuneTargets.has(targetIdx);
+        if (!immune) frozenTargets.add(targetIdx);
+
+        frozenBurningEffect.setState(targetIdx, {
+            flame: true,
+            freeze: frozenTargets.has(targetIdx),
+        });
+        console.log(
+            `[cold-dark-energy] idx=${targetIdx} 암흑 화염 부여` +
+            (immune ? ' · 빙결 면역(연속 빙결 불가)' : ' · 빙결 부여'),
+        );
+    }
+
+    // 상대 유닛이 지금 행동할 수 있는지. 빙결 중이면 불가.
+    // (상대 행동 로직이 아직 없어 호출부가 없다 — 상태의 단일 판정 지점으로 먼저 둔다.)
+    function isOpponentFrozen(cardIndex: number): boolean {
+        return frozenTargets.has(cardIndex);
+    }
+
+    // 내 턴 시작 훅 — 빙결 해제 + 재빙결 면역 갱신.
+    // 빙결은 상대 유닛의 행동을 막는 것이므로 상대 턴 내내 유지되어야 한다. 따라서
+    // 상대 턴이 끝나고 내 턴이 시작될 때 녹는다 (화상 정산과는 시점이 다르다).
+    function tickFreezeExpiry(): void {
+        // 지난 턴의 면역은 만료되고, 이번에 녹은 대상이 새 면역을 얻는다.
+        // 그래야 "다음 턴에 공격 받더라도 빙결 당하지 않음"이 정확히 1턴만 유지된다.
+        freezeImmuneTargets.clear();
+        for (const idx of frozenTargets) {
+            freezeImmuneTargets.add(idx);
+            frozenBurningEffect.setState(idx, { freeze: false });
+            console.log(`[cold-dark-energy] idx=${idx} 빙결 해제 — 이번 턴 재빙결 불가`);
+        }
+        frozenTargets.clear();
+    }
+
+    // 상대 턴 시작 훅 — 암흑 화염 화상 피해. 화염에 휩싸인 상대 유닛은 자기 턴을
+    // 시작하는 순간 5의 피해를 받는다.
+    function tickDarkFlameDamage(): void {
+        if (darkFlameTargets.size === 0) return;
+        const dead: number[] = [];
+        for (const idx of [...darkFlameTargets]) {
+            const target = opponentEntries.find((oe) => oe.cardIndex === idx);
+            if (!target || !target.group.visible) { clearColdDarkStatus(idx); continue; }
+            const prev = opponentHpState.get(idx) ?? 0;
+            const newHp = Math.max(0, prev - DARK_FLAME_TURN_DAMAGE);
+            opponentHpState.set(idx, newHp);
+            console.log(`[cold-dark-energy] 암흑 화염 → idx=${idx} HP ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
+            if (newHp <= 0) dead.push(idx);
+        }
+        for (const idx of dead) {
+            const aliveIdx = opponentAliveOrder.indexOf(idx);
+            if (aliveIdx >= 0) {
+                buryOpponentUnit(idx);
+                opponentAliveOrder.splice(aliveIdx, 1);
+            }
+            const target = opponentEntries.find((oe) => oe.cardIndex === idx);
+            if (target) target.group.visible = false;
+            clearColdDarkStatus(idx);
+        }
+        if (dead.length > 0) reflowOpponentField();
+    }
+
     async function attachEnergyToCard(entry: HandEntry): Promise<void> {
         if (availableEnergy <= 0) return;
         if (!placedOrder.includes(entry)) return;
@@ -1942,12 +2080,26 @@ async function main(container: HTMLElement): Promise<void> {
     const DEATH_ENERGY_CARD_ID = 93;
     const OVERFLOW_MORALE_MAX = 2;
 
+    // 차갑게 불타는 암흑 에너지 (151, ENERGY) — 유닛에게 해당 종족 에너지 1을 주고,
+    // 그 유닛의 모든 공격과 스킬에 '암흑 화염'과 '빙결'을 부여한다.
+    const COLD_DARK_ENERGY_CARD_ID = 151;
+    const DARK_FLAME_TURN_DAMAGE = 5;
+
+    // 이 에너지를 보유한 아군 유닛. 보유 개수가 아니라 보유 여부만 의미가 있다.
+    const coldDarkEnergyHolders = new Set<HandEntry>();
+
+    // 상대 유닛의 상태이상 — 키는 opponentEntries와 같은 cardIndex.
+    const darkFlameTargets = new Set<number>();     // 암흑 화염: 매 턴 5 데미지 (지속)
+    const frozenTargets = new Set<number>();        // 빙결: 이번 1회만 행동 불가
+    const freezeImmuneTargets = new Set<number>();  // 빙결이 풀린 직후 1턴간 재빙결 불가
+
     // Death-energy (ENERGY kind) also targets placed allies when picked up — same
     // green-neon highlight + hitAllyAt drop test, just with its own ENERGY branch below.
     const ALLY_TARGETING_ITEM_IDS: readonly number[] = [
         MORALE_CONVERT_CARD_ID,
         OVERFLOW_MORALE_CARD_ID,
         DEATH_ENERGY_CARD_ID,
+        COLD_DARK_ENERGY_CARD_ID,
     ];
 
     // 망자의 늪 (Swamp of the Dead, cardId 20) — SUPPORT card. Pickup puts a green neon
@@ -3215,8 +3367,12 @@ async function main(container: HTMLElement): Promise<void> {
                         void applyOverflowMoraleEffect(allyTarget);
                         consumeHandCard(droppedEntry, handIndex);
                     }
-                } else if (kind === CardKind.ENERGY && cardId === DEATH_ENERGY_CARD_ID) {
-                    // 죽음의 에너지 — drop onto a placed ally to attach 1 energy. The card
+                } else if (
+                    kind === CardKind.ENERGY &&
+                    (cardId === DEATH_ENERGY_CARD_ID || cardId === COLD_DARK_ENERGY_CARD_ID)
+                ) {
+                    // 죽음의 에너지 / 차갑게 불타는 암흑 에너지 —
+                    // drop onto a placed ally to attach 1 energy. The card
                     // itself is consumed (handled by consumeHandCard → tomb). No field
                     // energy is spent; this is a hand-to-unit direct attach.
                     //
@@ -3238,10 +3394,17 @@ async function main(container: HTMLElement): Promise<void> {
                         );
                         // 손패에서 직접 떨군 에너지 카드 자신의 종족이 부착된다.
                         const droppedRace = cardRaceOf(cardId) ?? CardRace.UNDEAD;
+                        const isColdDark = cardId === COLD_DARK_ENERGY_CARD_ID;
                         void overflowMoraleEffect.playDirectAttach(targetWorld, () => {
                             const newCount = addCardEnergy(allyTarget, droppedRace, 1);
                             void updateCardEnergyVisual(allyTarget, newCount);
-                            console.log(`[death-energy] attached ${RACE_LABEL[droppedRace]} 1 → placed cardId=${allyTarget.card.cardId} total=${newCount}`);
+                            if (isColdDark) {
+                                // 종족 에너지 부여에 더해 암흑 화염 + 빙결 부여 능력이 붙는다.
+                                // 부여 사실은 카드에 붙는 두 마크가 알리므로 배너는 띄우지 않는다.
+                                coldDarkEnergyHolders.add(allyTarget);
+                                attachColdDarkTraitMarks(allyTarget);
+                            }
+                            console.log(`[${isColdDark ? 'cold-dark-energy' : 'death-energy'}] attached ${RACE_LABEL[droppedRace]} 1 → placed cardId=${allyTarget.card.cardId} total=${newCount}`);
                         });
                     }
                 }
@@ -3491,6 +3654,8 @@ async function main(container: HTMLElement): Promise<void> {
         timerRenderer.reset(timerElement);
         guideRenderer.show(guideElement, '상대방의 턴입니다.', 3000);
         console.log(`[turn-state] your → opponent (${reason}) · TURN ${currentTurn}`);
+        // 상대 턴 시작 시점 — 암흑 화염 화상 피해를 여기서 정산한다.
+        tickDarkFlameDamage();
     }
 
     // opponent → your. Triggers: 'f' 키, 모래시계 만료. Each full opponent→your cycle counts
@@ -3532,6 +3697,10 @@ async function main(container: HTMLElement): Promise<void> {
         } else {
             console.log(`[deck] empty — no turn-start draw`);
         }
+
+        // 빙결 해제 — 상대 턴 내내 얼어 있던 유닛이 이 시점에 녹는다.
+        // 화상 피해는 여기가 아니라 상대 턴 시작(endYourTurn)에서 정산한다.
+        tickFreezeExpiry();
 
         console.log(`[turn-state] opponent → your (${reason}) · TURN ${currentTurn} · field energy ${availableEnergy}`);
 
