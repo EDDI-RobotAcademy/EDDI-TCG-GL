@@ -127,6 +127,8 @@ import {
 } from "../../src/turn_end_button/frame/TurnEndButtonFrame";
 import { TurnEndButtonRendererV2 } from "../../src/turn_end_button/renderer/TurnEndButtonRendererV2";
 import { TurnStateRepositoryImpl } from "../../src/turn_state/repository/TurnStateRepositoryImpl";
+import { createDefaultMasterHpFrame } from "../../src/master_hp/frame/MasterHpFrame";
+import { MasterHpRendererV2 } from "../../src/master_hp/renderer/MasterHpRendererV2";
 
 import { createDefaultGuideMessageHudFrame } from "../../src/common/guide_message/frame/GuideMessageHudFrame";
 
@@ -262,6 +264,24 @@ async function main(container: HTMLElement): Promise<void> {
     scene.add(masterGroup);
 
     let opponentMasterHp = 40;
+
+    // ── 메인 캐릭터(본체) HP ──────────────────────────────────────────────────
+    // 수치는 hp/{n}.png 이미지에 새겨져 있고, 렌더러가 HP가 바뀔 때마다 텍스처를
+    // 갈아 끼운다. 100에서 시작한다.
+    const masterHpFrame = createDefaultMasterHpFrame();
+    const masterHpRenderer = new MasterHpRendererV2();
+    const masterHpGroup = await masterHpRenderer.build(masterHpFrame);
+    scene.add(masterHpGroup);
+    let yourMasterHp = masterHpFrame.maxHp;
+
+    // 메인 캐릭터가 피해를 입는 유일한 지점. 표기 갱신까지 여기서 함께 한다.
+    function damageYourMaster(amount: number, reason: string): void {
+        if (amount <= 0 || yourMasterHp <= 0) return;
+        const prev = yourMasterHp;
+        yourMasterHp = Math.max(0, prev - amount);
+        void masterHpRenderer.setHp(masterHpGroup, masterHpFrame, yourMasterHp);
+        console.log(`[master-hp] ${reason} → ${prev} → ${yourMasterHp}${yourMasterHp <= 0 ? ' (defeated)' : ''}`);
+    }
 
     // Pilot B — hand row (6장으로 확장해 페이지네이션 검증)
     const placementFrame = createDefaultPlacedCardPlacementFrame();
@@ -3774,6 +3794,7 @@ async function main(container: HTMLElement): Promise<void> {
         guideRenderer.update(guideFrame, guideElement, width, height);
         timerRenderer.update(timerFrame, timerElement, width, height);
         turnRenderer.update(turnFrame, turnElement, width, height);
+        masterHpRenderer.resize(masterHpFrame, masterHpGroup, width, height);
     });
 }
 
