@@ -127,7 +127,10 @@ import {
 } from "../../src/turn_end_button/frame/TurnEndButtonFrame";
 import { TurnEndButtonRendererV2 } from "../../src/turn_end_button/renderer/TurnEndButtonRendererV2";
 import { TurnStateRepositoryImpl } from "../../src/turn_state/repository/TurnStateRepositoryImpl";
-import { createDefaultMasterHpFrame } from "../../src/master_hp/frame/MasterHpFrame";
+import {
+    createDefaultMasterHpFrame,
+    createOpponentMasterHpFrame,
+} from "../../src/master_hp/frame/MasterHpFrame";
 import { MasterHpRendererV2 } from "../../src/master_hp/renderer/MasterHpRendererV2";
 
 import { createDefaultGuideMessageHudFrame } from "../../src/common/guide_message/frame/GuideMessageHudFrame";
@@ -263,7 +266,28 @@ async function main(container: HTMLElement): Promise<void> {
     masterGroup.userData = { baseCardWidth: masterW, baseCardHeight: masterH };
     scene.add(masterGroup);
 
-    let opponentMasterHp = 40;
+    // 상대 본체 HP. 내 본체와 대칭이 되도록 100에서 시작한다.
+    let opponentMasterHp = 100;
+
+    const opponentMasterHpFrame = createOpponentMasterHpFrame();
+    const opponentMasterHpRenderer = new MasterHpRendererV2();
+    const opponentMasterHpGroup = await opponentMasterHpRenderer.build(opponentMasterHpFrame);
+    scene.add(opponentMasterHpGroup);
+
+    // 상대 본체 HP를 바꾸는 **유일한** 지점. 여러 카드 효과가 제각기 값을 건드리면
+    // 표기 갱신을 빠뜨리기 쉬우므로 여기로 모은다. 반환값은 갱신 후 HP.
+    function setOpponentMasterHp(next: number, reason: string): number {
+        const clamped = Math.max(0, next);
+        if (clamped !== opponentMasterHp) {
+            const prev = opponentMasterHp;
+            opponentMasterHp = clamped;
+            void opponentMasterHpRenderer.setHp(
+                opponentMasterHpGroup, opponentMasterHpFrame, clamped,
+            );
+            console.log(`[opponent-master-hp] ${reason} → ${prev} → ${clamped}${clamped <= 0 ? ' (defeated)' : ''}`);
+        }
+        return opponentMasterHp;
+    }
 
     // ── 메인 캐릭터(본체) HP ──────────────────────────────────────────────────
     // 수치는 hp/{n}.png 이미지에 새겨져 있고, 렌더러가 HP가 바뀔 때마다 텍스처를
@@ -1354,9 +1378,7 @@ async function main(container: HTMLElement): Promise<void> {
         const dmg = NETHER_BLADE_PASSIVE2_DAMAGE;
         if (pick.kind === 'master') {
             if (opponentMasterHp > 0) {
-                const prev = opponentMasterHp;
-                opponentMasterHp = Math.max(0, prev - dmg);
-                console.log(`[nether-blade] passive 2 → MASTER ${prev} → ${opponentMasterHp}${opponentMasterHp <= 0 ? ' (defeated)' : ''}`);
+                setOpponentMasterHp(opponentMasterHp - dmg, 'nether-blade passive 2');
                 if (opponentMasterHp <= 0) {
                     masterGroup.visible = false;
                     console.log('[nether-blade] opponent MASTER defeated by passive 2!');
@@ -1591,14 +1613,11 @@ async function main(container: HTMLElement): Promise<void> {
 
                         // EveryField also hits master
                         if (skillType === SkillType.EveryField && opponentMasterHp > 0) {
-                            const prevMasterHp = opponentMasterHp;
-                            opponentMasterHp -= damage;
+                            setOpponentMasterHp(opponentMasterHp - damage, `${btnType} (AoE EveryField)`);
                             // 본체 피격 표현 없음 (투명 유지)
                             if (opponentMasterHp <= 0) {
-                                opponentMasterHp = 0;
                                 setTimeout(() => { masterGroup.visible = false; }, 300);
                             }
-                            console.log(`  MASTER HP: ${prevMasterHp} → ${opponentMasterHp}${opponentMasterHp <= 0 ? ' (defeated)' : ''}`);
                         }
 
                         clearAllSelection();
@@ -1639,12 +1658,9 @@ async function main(container: HTMLElement): Promise<void> {
                     await attackAnimation.playAttack(attackerEntry.group, masterGroup, pendingAttackType);
                 }
 
-                const prevHp = opponentMasterHp;
-                opponentMasterHp -= atkPower;
-                console.log(`Attack on MASTER: ATK=${atkPower} → HP: ${prevHp} → ${opponentMasterHp}`);
+                setOpponentMasterHp(opponentMasterHp - atkPower, `attack on MASTER (ATK=${atkPower})`);
 
                 if (opponentMasterHp <= 0) {
-                    opponentMasterHp = 0;
                     setTimeout(() => { masterGroup.visible = false; console.log('Opponent MASTER defeated!'); }, 300);
                 }
                 return;
@@ -2347,9 +2363,7 @@ async function main(container: HTMLElement): Promise<void> {
         }
         reflowOpponentField();
 
-        const masterBefore = opponentMasterHp;
-        opponentMasterHp = Math.max(0, opponentMasterHp - DOOM_CONTRACT_DAMAGE);
-        console.log(`  opponent master HP: ${masterBefore} → ${opponentMasterHp}`);
+        setOpponentMasterHp(opponentMasterHp - DOOM_CONTRACT_DAMAGE, 'doom contract');
 
         const oppDeck = OpponentDeckRepositoryImpl.getInstance();
         const drawn = oppDeck.drawCard();
@@ -2633,9 +2647,7 @@ async function main(container: HTMLElement): Promise<void> {
             const pick = state.picks[idx];
             if (pick.kind === 'master') {
                 if (opponentMasterHp > 0) {
-                    const prev = opponentMasterHp;
-                    opponentMasterHp = Math.max(0, prev - CORPSE_EXPLOSION_DAMAGE);
-                    console.log(`[corpse-explosion] projectile → MASTER ${prev} → ${opponentMasterHp}${opponentMasterHp <= 0 ? ' (defeated)' : ''}`);
+                    setOpponentMasterHp(opponentMasterHp - CORPSE_EXPLOSION_DAMAGE, 'corpse explosion');
                 }
             } else {
                 const prev = opponentHpState.get(pick.cardIndex) ?? 0;
@@ -3795,6 +3807,7 @@ async function main(container: HTMLElement): Promise<void> {
         timerRenderer.update(timerFrame, timerElement, width, height);
         turnRenderer.update(turnFrame, turnElement, width, height);
         masterHpRenderer.resize(masterHpFrame, masterHpGroup, width, height);
+        opponentMasterHpRenderer.resize(opponentMasterHpFrame, opponentMasterHpGroup, width, height);
     });
 }
 

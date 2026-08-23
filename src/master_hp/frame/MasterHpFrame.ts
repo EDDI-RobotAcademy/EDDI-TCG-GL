@@ -4,10 +4,10 @@ import { createDefaultHandCardFrame } from "../../battle_field_hand/frame/HandCa
 // 수치는 이미지에 새겨져 있고(resource/battle_field_unit/hp/{hp}.png), 프레임은
 // 그 이미지를 놓을 화면 위치와 크기만 값으로 들고 있다.
 //
-// 위치는 1244 × 903 기준 좌표에서 뽑은 사각형의 중심이다:
-//   x 중심 (665 + 710) / 2 / 1244 = 0.552653 에서 왼쪽으로 0.008 이동 → 0.544653
-//   y 중심 (710 + 760) / 2 /  903 = 0.813954 에서 위로 0.005 이동 → 0.808954
-//   (화면 위에서부터 재므로 값이 작을수록 위쪽)
+// 위치·크기는 **전부 화면 비율**로만 표현한다. 픽셀 값을 들고 있으면 창 크기가
+// 바뀔 때 배치가 따라오지 않는다.
+//   x 중심 0.544653   (지정값 0.552653 에서 왼쪽으로 0.008)
+//   y 중심 0.808954   (지정값 0.813954 에서 위로 0.005 — 위에서부터 재므로 작을수록 위)
 //
 // **크기는 지정하지 않는다.** 카드의 HP 핏방울을 기준으로 삼아 배수로만 정한다.
 //   폭   = (카드 폭 × hp 슬롯 widthRatio) × sizeMultiplier
@@ -29,6 +29,19 @@ export interface MasterHpFrame {
     readonly imageSrcTemplate: string;
     readonly renderOrder: number;
     readonly maxHp: number;
+}
+
+// 상대 본체 HP. 지정된 사각형의 중심을 쓴다 (전부 화면 비율).
+//   x  0.526527 ~ 0.562701  → 중심 0.544614 에서 왼쪽으로 0.008 이동 → 0.536614
+//   y  0.177187 ~ 0.232558  → 중심 0.204873 에서 위로 0.061 이동 → 0.143873
+//      (화면 위에서부터 재므로 값이 작을수록 위쪽)
+// 크기·비율·에셋은 내 본체와 완전히 공유한다 — 한쪽만 커지는 일이 없어야 한다.
+export function createOpponentMasterHpFrame(): MasterHpFrame {
+    return {
+        ...createDefaultMasterHpFrame(),
+        centerXRatio: 0.536614,
+        centerYRatio: 0.143873,
+    };
 }
 
 export function createDefaultMasterHpFrame(): MasterHpFrame {
