@@ -1391,6 +1391,8 @@ async function main(container: HTMLElement): Promise<void> {
                 const prev = opponentHpState.get(pick.cardIndex) ?? 0;
                 const newHp = Math.max(0, prev - dmg);
                 opponentHpState.set(pick.cardIndex, newHp);
+                // 패시브도 이 유닛의 공격이다 — 보유자면 암흑 화염 + 빙결이 실린다.
+                if (newHp > 0) applyColdDarkTraits(state.deployedEntry, pick.cardIndex);
                 console.log(`[nether-blade] passive 2 → opponent idx=${pick.cardIndex} cardId=${target.card.cardId} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
                 if (newHp <= 0) {
                     buryOpponentUnit(pick.cardIndex);
@@ -1459,6 +1461,8 @@ async function main(container: HTMLElement): Promise<void> {
             const prev = opponentHpState.get(idx) ?? 0;
             const newHp = Math.max(0, prev - dmg);
             opponentHpState.set(idx, newHp);
+            // 패시브도 이 유닛의 공격이다 — 보유자면 암흑 화염 + 빙결이 실린다.
+            if (newHp > 0) applyColdDarkTraits(deployedEntry, idx);
             console.log(`[nether-blade] AoE → opponent idx=${idx} cardId=${target.card.cardId} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
             if (newHp <= 0) {
                 buryOpponentUnit(idx);
