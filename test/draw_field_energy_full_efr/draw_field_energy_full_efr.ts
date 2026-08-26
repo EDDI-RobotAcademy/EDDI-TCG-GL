@@ -75,6 +75,7 @@ import { DeadLandsEffect } from "../../src/animation/dead_lands/DeadLandsEffect"
 import { LeonikSummonEffect } from "../../src/animation/leonik_summon/LeonikSummonEffect";
 import { NetherBladeEntranceEffect } from "../../src/animation/nether_blade_entrance/NetherBladeEntranceEffect";
 import { NetherBladeFirstPassiveEffect } from "../../src/animation/nether_blade/NetherBladeFirstPassiveEffect";
+import { NetherBladeSecondPassiveEffect } from "../../src/animation/nether_blade/NetherBladeSecondPassiveEffect";
 import { MoraleConvertEffect } from "../../src/animation/morale_convert/MoraleConvertEffect";
 import { OverflowMoraleEffect } from "../../src/animation/overflow_morale/OverflowMoraleEffect";
 import { SwampEffect } from "../../src/animation/swamp/SwampEffect";
@@ -1362,16 +1363,33 @@ async function main(container: HTMLElement): Promise<void> {
             }
         }
         const canvasEl = document.querySelector('canvas') as HTMLElement | null;
+        // 조각낼 대상. 본체는 투명 히트박스라 찢을 아트가 없으므로 null로 넘긴다.
+        const ripTarget = pick.kind === 'opponent'
+            ? opponentEntries.find((oe) => oe.cardIndex === pick.cardIndex) ?? null
+            : null;
 
-        await playSkillPanelMoveOnly(state.deployedEntry.group, async (panelPos) => {
+        // 치명타 여부를 **연출 전에** 계산한다. 죽는 일격이면 갈라진 카드를 되돌리지
+        // 않아, 조각이 흩어진 자리가 그대로 사망이 된다. 연출이 끝난 뒤 되살아났다가
+        // 아래 데미지 처리로 사라지면 카드가 깜빡이는 것처럼 보인다.
+        const lethal = pick.kind === 'opponent'
+            && (opponentHpState.get(pick.cardIndex) ?? 0) - NETHER_BLADE_PASSIVE2_DAMAGE <= 0;
+
+        await playSkillPanelMoveOnly(state.deployedEntry.group, async (_panelPos) => {
             if (!canvasEl || !singleTarget) {
                 await new Promise<void>((r) => setTimeout(r, 300));
                 return;
             }
-            const effect = new NetherBladeFirstPassiveEffect(scene);
+            // 단일기 — gather/hold는 광역기와 공유하고, 그 뒤로 화면 전체를 가로지르는
+            // 검풍이 날아간 다음 지정한 카드로 모여들어 그 카드를 조각낸다.
+            const effect = new NetherBladeSecondPassiveEffect(scene);
             await effect.play(
-                panelPos, [singleTarget], canvasEl, () => { /* per-strike SFX hook */ },
-                rendererManager.getRenderer(), camera,
+                singleTarget,
+                ripTarget ? ripTarget.group : null,
+                canvasEl,
+                rendererManager.getRenderer(),
+                camera,
+                undefined,
+                lethal,
             );
         });
 

@@ -1,5 +1,7 @@
 import * as THREE from "three";
 
+import { NetherBladeChargeVisual } from "./NetherBladeChargeVisual";
+
 // 마검의 지배자 네더 블레이드 — first passive: AoE 광역기. Two-layer fullscreen
 // cinematic in the style of the user's reference (Sword Wind / 망령의 바다 vibe):
 //
@@ -333,64 +335,9 @@ export class NetherBladeFirstPassiveEffect {
         const RECT_SLASH_DURATION = 50; // ~0.83 s — slashes traverse the screen
         const SHATTER_DURATION = 70;   // ~1.17 s — captured texture pieces drift apart along the slash lines
 
-        // ─── Particles — purple sparks spiralling INTO screen centre ────────
-        type Particle = {
-            x: number; y: number;
-            angle: number; dist: number;
-            speed: number; size: number;
-            alpha: number; life: number; maxLife: number;
-            hue: number; spiral: number;
-            tail: { x: number; y: number }[];
-        };
-        const resetParticle = (p: Particle, initial: boolean): void => {
-            const angle = Math.random() * Math.PI * 2;
-            const dist = 200 + Math.random() * Math.max(vw, vh) * 0.55;
-            p.x = CX + Math.cos(angle) * dist;
-            p.y = CY + Math.sin(angle) * dist;
-            p.angle = angle;
-            p.dist = dist;
-            p.speed = 1.5 + Math.random() * 2.5;
-            p.size = 1.5 + Math.random() * 3;
-            p.alpha = initial ? Math.random() : 0;
-            p.life = 0;
-            p.maxLife = 60 + Math.random() * 60;
-            p.hue = 260 + Math.random() * 40;
-            p.spiral = 0.03 + Math.random() * 0.04;
-            p.tail = [];
-        };
-        const newParticle = (initial: boolean): Particle => {
-            const p: Particle = {
-                x: 0, y: 0, angle: 0, dist: 0, speed: 0, size: 0,
-                alpha: 0, life: 0, maxLife: 0, hue: 0, spiral: 0, tail: [],
-            };
-            resetParticle(p, initial);
-            return p;
-        };
-        const PARTICLE_COUNT = 160;
-        const particles: Particle[] = Array.from({ length: PARTICLE_COUNT }, () => newParticle(true));
-
-        // ─── Wisps — ambient energy specks orbiting the core ────────────────
-        type Wisp = {
-            angle: number; dist: number; speed: number;
-            size: number; alpha: number; hue: number; phase: number;
-            x: number; y: number;
-        };
-        const resetWisp = (w: Wisp): void => {
-            w.angle = Math.random() * Math.PI * 2;
-            w.dist = 60 + Math.random() * 100;
-            w.speed = 0.012 + Math.random() * 0.02;
-            w.size = 2 + Math.random() * 4;
-            w.alpha = 0.3 + Math.random() * 0.5;
-            w.hue = 255 + Math.random() * 50;
-            w.phase = Math.random() * Math.PI * 2;
-            w.x = 0; w.y = 0;
-        };
-        const newWisp = (): Wisp => {
-            const w: Wisp = { angle: 0, dist: 0, speed: 0, size: 0, alpha: 0, hue: 0, phase: 0, x: 0, y: 0 };
-            resetWisp(w);
-            return w;
-        };
-        const wisps: Wisp[] = Array.from({ length: 10 }, () => newWisp());
+        // ─── 충전 비주얼 (입자 / 위습 / 코어 오브 / 배경 / 안개) ─────────────
+        // 단일기와 공유하는 도입부. 상태와 그리기가 전부 모듈 안에 있다.
+        const charge = new NetherBladeChargeVisual(vw, vh, CX, CY);
 
         // ─── Phase state ────────────────────────────────────────────────────
         let phase: 'gather' | 'hold' | 'release' | 'decay' | 'pause' | 'rectSlash' | 'shatter' | 'done' = 'gather';
@@ -468,7 +415,6 @@ export class NetherBladeFirstPassiveEffect {
         let screenScale = 1;
         let coreRadius = 0;
         let coreAlpha = 0;
-        let ringAngle = 0;
 
         // ─── Canvas shake ───────────────────────────────────────────────────
         const origTransform = canvasElement.style.transform;
@@ -817,34 +763,8 @@ export class NetherBladeFirstPassiveEffect {
                 }
             }
 
-            // ── Update particles ────────────────────────────────────────────
-            const activeIntensity = phase === 'decay' ? 0.05 : intensity;
-            const partI = activeIntensity * 0.4 + 0.6;
-            for (const p of particles) {
-                p.life += dt;
-                if (p.life < 10) p.alpha += 0.08 * dt;
-                if (p.life > p.maxLife - 10) p.alpha -= 0.10 * dt;
-                if (p.alpha < 0) p.alpha = 0;
-                p.angle += p.spiral * partI * dt;
-                const pull = Math.max(0.05, 1 - p.dist / 400);
-                p.dist -= p.speed * partI * (1.2 + pull * 4.0) * dt;
-                p.x = CX + Math.cos(p.angle) * p.dist;
-                p.y = CY + Math.sin(p.angle) * p.dist;
-                p.tail.unshift({ x: p.x, y: p.y });
-                if (p.tail.length > 12) p.tail.pop();
-                if (p.dist < 8 || p.life > p.maxLife) resetParticle(p, false);
-            }
-
-            // ── Update wisps ────────────────────────────────────────────────
-            const wispI = Math.min(intensity * 0.3, 1);
-            for (const w of wisps) {
-                w.angle += w.speed * dt;
-                w.phase += 0.04 * dt;
-                w.dist -= 0.3 * wispI * dt;
-                if (w.dist < 20) resetWisp(w);
-                w.x = CX + Math.cos(w.angle) * w.dist + Math.cos(w.phase * 2.1) * 12;
-                w.y = CY + Math.sin(w.angle) * w.dist + Math.sin(w.phase * 1.7) * 12;
-            }
+            // ── 충전 비주얼 갱신 ────────────────────────────────────────────
+            charge.update(dt, phase === 'decay' ? 0.05 : intensity);
 
             // ── Draw Canvas-2D overlay ──────────────────────────────────────
             ctx.clearRect(0, 0, vw, vh);
@@ -853,134 +773,34 @@ export class NetherBladeFirstPassiveEffect {
             ctx.scale(screenScale, screenScale);
             ctx.translate(-CX, -CY);
 
-            // Backdrop — held through gather/hold/release so the wave-1 slashes
-            // fly over the SAME dark violet energy-gather background instead of
-            // suddenly playing over the bare game screen. Fades out during the
-            // decay phase. Wave 2 (pause/rectSlash/shatter) gets bgAlpha = 0
-            // → original game scene shows through.
+            // 배경 / 안개 / 입자 / 코어 오브 / 플래시 / 비네트 — 전부 공유 모듈이 그린다.
+            // 페이즈별 가시성만 여기서 정한다. wave 2(pause 이후)는 bgAlpha를 0으로 둬
+            // 원래 게임 화면이 그대로 비치게 한다.
             let bgAlpha = 0;
             if (phase === 'gather') bgAlpha = Math.min(phaseTimer / GATHER_DURATION, 1) * 0.92;
-            else if (phase === 'hold') bgAlpha = 0.92;
-            else if (phase === 'release') bgAlpha = 0.92;
-            else if (phase === 'decay') {
-                const decayT = Math.min(phaseTimer / DECAY_DURATION, 1);
-                bgAlpha = 0.92 * (1 - decayT);
-            }
-            if (bgAlpha > 0) {
-                ctx.fillStyle = `rgba(5, 3, 8, ${bgAlpha})`;
-                ctx.fillRect(0, 0, vw, vh);
-            }
+            else if (phase === 'hold' || phase === 'release') bgAlpha = 0.92;
+            else if (phase === 'decay') bgAlpha = 0.92 * (1 - Math.min(phaseTimer / DECAY_DURATION, 1));
 
-            // Ambient purple fog — held through gather/hold/release; fades
-            // during decay alongside the backdrop.
-            {
-                let fogT = 0;
-                if (phase === 'gather') fogT = Math.min(phaseTimer / GATHER_DURATION, 1);
-                else if (phase === 'hold' || phase === 'release') fogT = 1;
-                else if (phase === 'decay') fogT = Math.max(1 - phaseTimer / DECAY_DURATION, 0);
-                if (fogT > 0) {
-                    const fog = ctx.createRadialGradient(CX, CY, 0, CX, CY, Math.max(vw, vh) * 0.50);
-                    fog.addColorStop(0,   `rgba(60, 10, 120, ${0.35 * fogT})`);
-                    fog.addColorStop(0.6, `rgba(30,  5,  80, ${0.18 * fogT})`);
-                    fog.addColorStop(1,   'rgba(0,0,0,0)');
-                    ctx.fillStyle = fog;
-                    ctx.fillRect(0, 0, vw, vh);
-                }
-            }
+            let fogT = 0;
+            if (phase === 'gather') fogT = Math.min(phaseTimer / GATHER_DURATION, 1);
+            else if (phase === 'hold' || phase === 'release') fogT = 1;
+            else if (phase === 'decay') fogT = Math.max(1 - phaseTimer / DECAY_DURATION, 0);
 
-            // Particles — visible through gather/hold/release; fade during decay.
             let particleVis = 0;
             if (phase === 'gather' || phase === 'hold' || phase === 'release') particleVis = 1;
             else if (phase === 'decay') particleVis = Math.max(1 - phaseTimer / DECAY_DURATION, 0);
-            if (particleVis > 0) {
-                for (const p of particles) {
-                    if (p.alpha <= 0) continue;
-                    const pa = p.alpha * particleVis;
-                    for (let i = 0; i < p.tail.length; i++) {
-                        const tt = p.tail[i];
-                        const a = (1 - i / p.tail.length) * pa * 0.5;
-                        ctx.beginPath();
-                        ctx.arc(tt.x, tt.y, p.size * (1 - i / p.tail.length), 0, Math.PI * 2);
-                        ctx.fillStyle = `hsla(${p.hue}, 80%, 65%, ${a})`;
-                        ctx.fill();
-                    }
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                    ctx.fillStyle = `hsla(${p.hue}, 90%, 80%, ${pa})`;
-                    ctx.fill();
-                }
-                for (const w of wisps) {
-                    ctx.beginPath();
-                    ctx.arc(w.x, w.y, w.size * wispI, 0, Math.PI * 2);
-                    ctx.fillStyle = `hsla(${w.hue}, 80%, 70%, ${w.alpha * wispI * particleVis})`;
-                    ctx.fill();
-                }
-            }
 
-            // Core orb (gather/hold/early release).
-            if (coreAlpha > 0) {
-                const jitter = (Math.random() - 0.5) * intensity * 2;
-                ctx.save();
-                ctx.translate(jitter, jitter);
-
-                for (let i = 4; i >= 1; i--) {
-                    const gr = ctx.createRadialGradient(CX, CY, 0, CX, CY, coreRadius * (i * 1.8));
-                    gr.addColorStop(0,   `rgba(200, 160, 255, ${coreAlpha * 0.15 / i})`);
-                    gr.addColorStop(0.5, `rgba(130,  70, 230, ${coreAlpha * 0.08 / i})`);
-                    gr.addColorStop(1,   `rgba( 80,  20, 180, 0)`);
-                    ctx.beginPath();
-                    ctx.arc(CX, CY, coreRadius * (i * 1.8), 0, Math.PI * 2);
-                    ctx.fillStyle = gr;
-                    ctx.fill();
-                }
-
-                const flicker = 0.85 + Math.random() * 0.3;
-                const gr = ctx.createRadialGradient(CX, CY, 0, CX, CY, coreRadius);
-                gr.addColorStop(0,   `rgba(255, 255, 255, ${coreAlpha * flicker})`);
-                gr.addColorStop(0.2, `rgba(230, 210, 255, ${coreAlpha * 0.95})`);
-                gr.addColorStop(0.5, `rgba(160,  90, 255, ${coreAlpha * 0.7})`);
-                gr.addColorStop(0.8, `rgba( 80,  30, 200, ${coreAlpha * 0.4})`);
-                gr.addColorStop(1,   `rgba( 40,   0, 120, 0)`);
-                ctx.beginPath();
-                ctx.arc(CX, CY, coreRadius, 0, Math.PI * 2);
-                ctx.fillStyle = gr;
-                ctx.fill();
-
-                ringAngle += 0.06 * intensity * (phase === 'hold' ? 2.5 : 1) * dt;
-                ctx.save();
-                ctx.translate(CX, CY);
-                ctx.rotate(ringAngle);
-                for (let i = 0; i < 3; i++) {
-                    ctx.rotate((Math.PI * 2) / 3);
-                    ctx.beginPath();
-                    ctx.arc(0, 0, coreRadius * 1.6, 0, Math.PI * 0.6);
-                    ctx.strokeStyle = `rgba(180, 120, 255, ${coreAlpha * 0.5})`;
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                }
-                ctx.restore();
-
-                ctx.restore();
-            }
-
-            // Bright white screen flash — punches into release.
-            if (flashAlpha > 0) {
-                const fc = ctx.createRadialGradient(CX, CY, 0, CX, CY, Math.max(vw, vh));
-                fc.addColorStop(0,   `rgba(255, 250, 255, ${flashAlpha * 0.95})`);
-                fc.addColorStop(0.3, `rgba(220, 180, 255, ${flashAlpha * 0.6})`);
-                fc.addColorStop(1,   `rgba(100,  60, 200, 0)`);
-                ctx.fillStyle = fc;
-                ctx.fillRect(0, 0, vw, vh);
-            }
-
-            // Vignette.
-            if (bgAlpha > 0) {
-                const vig = ctx.createRadialGradient(CX, CY, vh * 0.25, CX, CY, vh * 0.8);
-                vig.addColorStop(0, 'rgba(0, 0, 0, 0)');
-                vig.addColorStop(1, `rgba(0, 0, 8, ${0.75 * bgAlpha / 0.92})`);
-                ctx.fillStyle = vig;
-                ctx.fillRect(0, 0, vw, vh);
-            }
+            charge.draw(ctx, {
+                bgAlpha,
+                fogT,
+                particleVis,
+                coreAlpha,
+                coreRadius,
+                intensity,
+                ringSpin: phase === 'hold' ? 2.5 : 1,
+                flashAlpha,
+                dt,
+            });
 
             ctx.restore();
             tex.needsUpdate = true;
