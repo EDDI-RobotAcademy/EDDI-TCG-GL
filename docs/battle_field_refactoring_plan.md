@@ -19,7 +19,7 @@ DDD 계층은 유지하되, **도메인을 THREE로부터 분리해 `main()` 밖
 
 **작업은 티켓 단위로 진행한다.**
 [티켓 목록 (R2-3~9)](refactoring/INDEX.md), [백로그 작성 규칙](refactoring/RULES.md),
-[회귀 체크리스트](refactoring/REGRESSION.md)
+[동작 확인 목록](refactoring/BEHAVIOR_CHECK.md)
 
 ---
 
@@ -168,7 +168,7 @@ Persistence, Domain State, UI State, Runtime Resource, Cache, Singleton
 추상화할 persistence가 아직 없기 때문이다.
 
 폴더만 재배치하면 이 186개가 컨텍스트 아래로 그대로 따라간다. 책임을 분리하지
-않으면 `Battle` 애그리게이트 도입이 상태 집을 줄이는 게 아니라 하나 더 늘린다.
+않으면 `Battle` 애그리관문 도입이 상태 집을 줄이는 게 아니라 하나 더 늘린다.
 
 ### 7. 상태 전이가 연출과 뒤엉켜 재접속 복원이 불가능하다
 
@@ -244,7 +244,7 @@ src/
 │       └── CardId.ts         식별자 타입
 │
 ├── battle/            ★ 컨텍스트 1 — 전투
-│   ├── domain/        Battle(애그리게이트 루트), EntityId, BattleUnit
+│   ├── domain/        Battle(애그리관문 루트), EntityId, BattleUnit
 │   │   ├── system/    DamageSystem, TurnSystem, StatusTickSystem
 │   │   └── ability/   CardAbility + registry + 카드별 예외 규칙
 │   │   ※ BattleRepository는 만들지 않는다 — 자리만 주석 표시
@@ -252,11 +252,11 @@ src/
 │   └─ ※ 하위 feature는 store/, cache/ 만 가짐 (repository 금지)
 │
 ├── deck/              ★ 컨텍스트 2 — 덱 편성 (현 122폴더)
-│   ├── domain/        Deck (애그리게이트), DeckEntry (매수, 슬롯 제한)
+│   ├── domain/        Deck (애그리관문), DeckEntry (매수, 슬롯 제한)
 │   └── list/ editor/ filter/ counter/ popup/
 │
 ├── collection/        ★ 컨텍스트 3 — 내 카드 (현 19폴더)
-│   ├── domain/        Collection (애그리게이트), OwnedCard (보유 수량)
+│   ├── domain/        Collection (애그리관문), OwnedCard (보유 수량)
 │   └── grid/ detail/ filter/
 │
 ├── shop/              ★ 컨텍스트 4
@@ -279,8 +279,8 @@ id: number; mesh: THREE.Mesh; position: Vector2d;
 cardId; weaponId; hpId; energyId; raceId; harmfulEffectInfo; attachedEnergyInfo;
 ```
 
-**`shared/card/`로 통합하지 않는다.** 세 컨텍스트를 모두 만족시키려는 공유 커널은
-빈혈 모델이 되고, 위 두 모델이 이미 `THREE.Mesh`를 들고 있어 통합 시 모든
+**`shared/card/`로 통합하지 않는다.** 세 컨텍스트를 모두 만족시키려는 공유 조각은
+속이 빈 모델이 되고, 위 두 모델이 이미 `THREE.Mesh`를 들고 있어 통합 시 모든
 컨텍스트가 THREE에 묶인다. 공유하는 것은 **데이터(카탈로그)이지 모델이 아니다.**
 각 컨텍스트는 `CardId`로 카탈로그를 조회해 자기 모델을 스스로 구성한다.
 
@@ -354,7 +354,7 @@ Q3. 삭제해도 다시 만들 수 있는 Runtime Resource인가?
 
 3분류는 **이름과 규칙으로** 구분하는 것이지 최상위 폴더로 가르는 것이 아니다.
 최상위 `stores/`를 두면 배틀의 `TargetingSession`과 덱 편집의 `SelectionState`가
-아무 관련 없이 같은 폴더에 놓여, **레이어 우선 배치로 회귀**한다. 지금 240개
+아무 관련 없이 같은 폴더에 놓여, **레이어 우선 배치로 되돌아간다**한다. 지금 240개
 flat 구조를 만든 힘과 같다.
 
 ```
@@ -389,8 +389,8 @@ Repository                        Domain      └ Aggregate ─ (Repository) ─
 ```
 
 `TurnStateRepository` → `TurnStateStore`로 개명하는 것만으로는 부족하다.
-턴 소유자는 유닛 HP, 빙결과 같은 불변조건을 공유하므로 **`Battle` 애그리게이트의
-필드로 흡수**되어야 한다. 전투 규칙도 함께 애그리게이트가 책임진다.
+턴 소유자는 유닛 HP, 빙결과 같은 불변조건을 공유하므로 **`Battle` 애그리관문의
+필드로 흡수**되어야 한다. 전투 규칙도 함께 애그리관문가 책임진다.
 
 ```ts
 battle.startTurn();
@@ -504,7 +504,7 @@ authoritative인지 local-first인지에 따라 Infrastructure에서 갈리는 �
 
 ### 스냅샷 명세
 
-Domain 모델과 Persistence DTO를 분리한다. 애그리게이트의 내부 형태가 저장
+Domain 모델과 Persistence DTO를 분리한다. 애그리관문의 내부 형태가 저장
 포맷에 의해 동결되지 않도록 한다.
 
 ```ts
@@ -582,7 +582,7 @@ TCG는 매 프레임 시뮬레이션이 없다 — 피해는 클릭 시점에 �
 - [x] 규칙 3 — 컨텍스트 간 직접 import 금지 (`battle/**` → `deck/**` 등)
 - [x] 규칙 4 — `Math.random()`, `Date.now()` 금지 (결정론).
       **dependency-cruiser로는 구현 불가**하여 `scripts/check-domain-purity.js`로 분리
-- [x] 규칙을 추가할 때는 **위반 프로브로 발화를 확인한다** —
+- [x] 규칙을 추가할 때는 **일부러 규칙을 어긴 파일을 만들어 걸리는지 확인한다** —
       경로 미생성으로 인한 "통과"와 규칙 동작으로 인한 "통과"는 구분되지 않는다
       (R2-3에서 `domain-no-three`가 조용히 통과하던 결함을 이 방법으로 발견)
 - [x] 테스트가 없는 상태에서 구조 위반을 잡을 **유일한 자동 수단**이므로
@@ -601,10 +601,10 @@ TCG는 매 프레임 시뮬레이션이 없다 — 피해는 클릭 시점에 �
 
 - [ ] **0-3-a. 현재 `battle/` 구조 분석** — 하위 `repository/` 전수 목록화,
       각각이 담는 것을 Q1/Q2/Q3로 판정
-- [ ] **0-3-b. `Battle` 애그리게이트 경계 확정** — 어떤 값들이 실제로 같은
+- [ ] **0-3-b. `Battle` 애그리관문 경계 확정** — 어떤 값들이 실제로 같은
       불변조건을 공유하는지 검증한다. "전투니까 하나"로 전제하지 않는다.
       예) `placedOrder`와 `opponentHpState`가 같은 경계인지 근거를 남긴다
-- [ ] **0-3-c. 도메인 상태를 애그리게이트로 통합** — `TurnStateRepository`,
+- [ ] **0-3-c. 도메인 상태를 애그리관문로 통합** — `TurnStateRepository`,
       상대 HP, 에너지, 상태이상을 `Battle`의 필드로 흡수 (1단계와 합류)
 - [ ] **0-3-d. 가짜 repository를 Store / Cache로 분류** —
       `THREE.Mesh`, `Texture` 보관 → `cache/`, UI, 선택 상태 → `store/`
@@ -625,7 +625,7 @@ TCG는 매 프레임 시뮬레이션이 없다 — 피해는 클릭 시점에 �
 
 ---
 
-### 1. `Battle` 애그리게이트 추출 — 가장 큰 레버
+### 1. `Battle` 애그리관문 추출 — 가장 큰 레버
 
 #### 1-1. 저장소 이관
 - [ ] 14개 Map/Set 중 도메인 저장소를 `src/battle/domain/Battle.ts`로 이동
@@ -782,7 +782,7 @@ TCG는 매 프레임 시뮬레이션이 없다 — 피해는 클릭 시점에 �
 
 ## 하지 않을 것
 
-- **`src/animation/` 13,542라인 분할** — 리프 노드이고 상호 의존이 없어 복잡도의
+- **`src/animation/` 13,542라인 분할** — 다른 곳이 참조하지 않는 끝단이고 상호 의존이 없어 복잡도의
   원인이 아니다. `NetherBladeChargeVisual` 추출처럼 **중복이 실제로 발생했을 때만**
   쪼갠다.
 - **ECS 전면 도입** — 1, 2, 3단계가 Component + System의 실질을 이미 가져온다.
@@ -805,7 +805,7 @@ TCG는 매 프레임 시뮬레이션이 없다 — 피해는 클릭 시점에 �
   *"Do not add new singletons"*이지 기존 제거를 요구하지 않는다.
   **신규 코드에만 DI 적용**, 기존은 touch-migrate.
 - **최상위 `stores/`, `cache/` 폴더 신설** — Store, Cache를 컨텍스트에서 떼어내면
-  레이어 우선 배치로 회귀한다. 전역 공유 Cache(`platform/resource/`)만 예외.
+  레이어 우선 배치로 되돌아간다. 전역 공유 Cache(`platform/resource/`)만 예외.
 
 ---
 
@@ -836,7 +836,7 @@ TCG는 매 프레임 시뮬레이션이 없다 — 피해는 클릭 시점에 �
    - [ ] `src/battle/` 신설, 31개 폴더 이동, `domain/` 빈 자리 확보
    - [ ] `battle/` 하위 `repository/`를 Q0~Q3로 판정해 `store/`, `cache/`로 분류
 
-2. **1→2단계 — `Battle` 애그리게이트 + `EntityId`** (연속 수행)
+2. **1→2단계 — `Battle` 애그리관문 + `EntityId`** (연속 수행)
    - [ ] `let` 53개를 5분류(Reference / User / Battle / Runtime State / Resource)로 판정
    - [ ] `battle/domain/Battle.ts`에 Battle State 이관 —
          0-3-b에서 확정한 불변조건 경계를 근거로

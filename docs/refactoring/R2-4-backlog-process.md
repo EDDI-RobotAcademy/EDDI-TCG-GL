@@ -1,6 +1,6 @@
 # [ETWGL-R2-4] 새 작업을 시작하고 끝낼 때 무엇을 보고 판단할지 정하는 프로세스 구축
 
-선행: R2-2 │ 후행: R2-5 │ 산출물: _TEMPLATE.md, INDEX.md, REGRESSION.md, RULES.md, 노션 작업 공간
+선행: R2-2 │ 후행: R2-5 │ 산출물: _TEMPLATE.md, INDEX.md, BEHAVIOR_CHECK.md, RULES.md, 노션 작업 공간
 
 # Success criteria
 
@@ -21,7 +21,7 @@
     - 건드리는 것
         - _TEMPLATE.md - 새 작업을 시작할 때 복사하는 틀
         - INDEX.md - 남은 작업과 순서를 보는 곳
-        - REGRESSION.md - 작업이 끝났는지 확인하는 곳
+        - BEHAVIOR_CHECK.md - 작업이 끝났는지 확인하는 곳
         - RULES.md - 백로그를 쓰다 막혔을 때 여는 곳
         - 노션 작업 공간 구성
     - 건드리지 않는 것
