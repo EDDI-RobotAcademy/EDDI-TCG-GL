@@ -80,46 +80,46 @@ import { MoraleConvertEffect } from "../../src/animation/morale_convert/MoraleCo
 import { OverflowMoraleEffect } from "../../src/animation/overflow_morale/OverflowMoraleEffect";
 import { SwampEffect } from "../../src/animation/swamp/SwampEffect";
 
-import { YourLostZoneRepositoryImpl } from "../../src/your_lost_zone/repository/YourLostZoneRepositoryImpl";
+import { YourLostZoneRepositoryImpl } from "../../src/battle/zone/your_lost_zone/repository/YourLostZoneRepositoryImpl";
 import {
     createDefaultYourLostZonePanelFrame,
     computeYourLostZonePanelBounds,
-} from "../../src/your_lost_zone/frame/YourLostZonePanelFrame";
+} from "../../src/battle/zone/your_lost_zone/frame/YourLostZonePanelFrame";
 import {
     createDefaultYourLostZonePopupFrame,
     computeYourLostZonePopupBounds,
-} from "../../src/your_lost_zone/frame/YourLostZonePopupFrame";
-import { YourLostZonePanelRendererV2 } from "../../src/your_lost_zone/renderer/YourLostZonePanelRendererV2";
-import { YourLostZonePopupRendererV2 } from "../../src/your_lost_zone/renderer/YourLostZonePopupRendererV2";
+} from "../../src/battle/zone/your_lost_zone/frame/YourLostZonePopupFrame";
+import { YourLostZonePanelRendererV2 } from "../../src/battle/zone/your_lost_zone/renderer/YourLostZonePanelRendererV2";
+import { YourLostZonePopupRendererV2 } from "../../src/battle/zone/your_lost_zone/renderer/YourLostZonePopupRendererV2";
 
 import {
     createDefaultOpponentLostZonePanelFrame,
     computeOpponentLostZonePanelBounds,
-} from "../../src/opponent_lost_zone/frame/OpponentLostZonePanelFrame";
+} from "../../src/battle/zone/opponent_lost_zone/frame/OpponentLostZonePanelFrame";
 
 import {
     createDefaultYourTombPanelFrame,
     isPointInsideYourTomb,
-} from "../../src/your_tomb/frame/YourTombPanelFrame";
-import { createDefaultYourTombPopupFrame } from "../../src/your_tomb/frame/YourTombPopupFrame";
-import { YourTombPanelRendererV2 } from "../../src/your_tomb/renderer/YourTombPanelRendererV2";
-import { YourTombRepositoryImpl } from "../../src/your_tomb/repository/YourTombRepositoryImpl";
+} from "../../src/battle/zone/your_tomb/frame/YourTombPanelFrame";
+import { createDefaultYourTombPopupFrame } from "../../src/battle/zone/your_tomb/frame/YourTombPopupFrame";
+import { YourTombPanelRendererV2 } from "../../src/battle/zone/your_tomb/renderer/YourTombPanelRendererV2";
+import { YourTombRepositoryImpl } from "../../src/battle/zone/your_tomb/repository/YourTombRepositoryImpl";
 
 import {
     createDefaultOpponentTombPanelFrame,
     isPointInsideOpponentTomb,
-} from "../../src/opponent_tomb/frame/OpponentTombPanelFrame";
-import { createDefaultOpponentTombPopupFrame } from "../../src/opponent_tomb/frame/OpponentTombPopupFrame";
-import { OpponentTombPanelRendererV2 } from "../../src/opponent_tomb/renderer/OpponentTombPanelRendererV2";
+} from "../../src/battle/zone/opponent_tomb/frame/OpponentTombPanelFrame";
+import { createDefaultOpponentTombPopupFrame } from "../../src/battle/zone/opponent_tomb/frame/OpponentTombPopupFrame";
+import { OpponentTombPanelRendererV2 } from "../../src/battle/zone/opponent_tomb/renderer/OpponentTombPanelRendererV2";
 import {
     computeOpponentFieldEnergyBounds,
     createDefaultOpponentFieldEnergyAreaFrame,
 } from "../../src/opponent_field_energy/frame/OpponentFieldEnergyAreaFrame";
 import { OpponentFieldEnergyAreaRendererV2 } from "../../src/opponent_field_energy/renderer/OpponentFieldEnergyAreaRendererV2";
-import { OpponentTombRepositoryImpl } from "../../src/opponent_tomb/repository/OpponentTombRepositoryImpl";
-import { createDefaultOpponentLostZonePopupFrame } from "../../src/opponent_lost_zone/frame/OpponentLostZonePopupFrame";
-import { OpponentLostZonePanelRendererV2 } from "../../src/opponent_lost_zone/renderer/OpponentLostZonePanelRendererV2";
-import { OpponentLostZoneRepositoryImpl } from "../../src/opponent_lost_zone/repository/OpponentLostZoneRepositoryImpl";
+import { OpponentTombRepositoryImpl } from "../../src/battle/zone/opponent_tomb/repository/OpponentTombRepositoryImpl";
+import { createDefaultOpponentLostZonePopupFrame } from "../../src/battle/zone/opponent_lost_zone/frame/OpponentLostZonePopupFrame";
+import { OpponentLostZonePanelRendererV2 } from "../../src/battle/zone/opponent_lost_zone/renderer/OpponentLostZonePanelRendererV2";
+import { OpponentLostZoneRepositoryImpl } from "../../src/battle/zone/opponent_lost_zone/repository/OpponentLostZoneRepositoryImpl";
 import { OpponentDeckRepositoryImpl } from "../../src/opponent_deck/repository/OpponentDeckRepositoryImpl";
 
 import {

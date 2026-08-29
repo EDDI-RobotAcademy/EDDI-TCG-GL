@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { FrameRenderer } from "../../core/renderer/FrameRenderer";
+import { FrameRenderer } from "../../../../core/renderer/FrameRenderer";
 import {
     YourLostZonePanelFrame,
     computeYourLostZonePanelBounds,

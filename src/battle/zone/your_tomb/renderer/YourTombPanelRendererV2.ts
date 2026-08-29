@@ -1,22 +1,22 @@
 import * as THREE from "three";
 
-import { FrameRenderer } from "../../core/renderer/FrameRenderer";
+import { FrameRenderer } from "../../../../core/renderer/FrameRenderer";
 import {
-    OpponentTombPanelFrame,
-    computeOpponentTombGeometry,
-} from "../frame/OpponentTombPanelFrame";
+    YourTombPanelFrame,
+    computeYourTombGeometry,
+} from "../frame/YourTombPanelFrame";
 
-// Renders the opponent tombstone as a right-side-up tomb (rect + UPWARD arc), mirroring
-// YourTombPanelRendererV2's path. The 180°-around-own-centroid rotation applied to the
-// frame values means the shape sits at the top-right of the screen with the arc pointing
-// UP, so the drawing path is identical to Your Tomb's.
+// Renders the tombstone-shaped click panel — a rectangle body with a half-ellipse arch on
+// top. Built from THREE.Shape:
+//   bottom-left → bottom-right → top-right → absellipse arc (top-right → apex → top-left)
+//     → bottom-left
 //
-// CCW path in world y-up:
-//   bottom-left → bottom-right → top-right (arc springline, right) →
-//   absellipse(0 → π, CCW) upper half-ellipse through apex →
-//   top-left (arc springline, left) → close to bottom-left.
-export class OpponentTombPanelRendererV2 implements FrameRenderer<OpponentTombPanelFrame> {
-    public async build(frame: OpponentTombPanelFrame): Promise<THREE.Group> {
+// Vertices are world-space (derived from computeYourTombGeometry). Mesh sits at origin.
+//
+// Click detection is done in the pilot via isPointInsideYourTomb — this renderer is
+// visual-only.
+export class YourTombPanelRendererV2 implements FrameRenderer<YourTombPanelFrame> {
+    public async build(frame: YourTombPanelFrame): Promise<THREE.Group> {
         const geometry = this.buildTombGeometry(frame, window.innerWidth, window.innerHeight);
 
         const material = new THREE.MeshBasicMaterial({
@@ -34,13 +34,15 @@ export class OpponentTombPanelRendererV2 implements FrameRenderer<OpponentTombPa
     }
 
     public resize(
-        frame: OpponentTombPanelFrame,
+        frame: YourTombPanelFrame,
         group: THREE.Group,
         viewportWidth: number,
         viewportHeight: number,
     ): void {
         const mesh = group.children[0] as THREE.Mesh | undefined;
         if (!mesh) return;
+        // Rebuild geometry — tomb vertices depend on both viewport width AND height (arc
+        // stretches vertically), so uniform scaling would distort the arch.
         mesh.geometry?.dispose();
         mesh.geometry = this.buildTombGeometry(frame, viewportWidth, viewportHeight);
     }
@@ -58,17 +60,21 @@ export class OpponentTombPanelRendererV2 implements FrameRenderer<OpponentTombPa
     }
 
     private buildTombGeometry(
-        frame: OpponentTombPanelFrame,
+        frame: YourTombPanelFrame,
         viewportWidth: number,
         viewportHeight: number,
     ): THREE.ShapeGeometry {
-        const g = computeOpponentTombGeometry(frame, viewportWidth, viewportHeight);
+        const g = computeYourTombGeometry(frame, viewportWidth, viewportHeight);
 
         const shape = new THREE.Shape();
+        // Start at rectangle bottom-left; walk counter-clockwise in world y-up so the
+        // ShapeGeometry triangulator produces front-facing triangles.
         shape.moveTo(g.rectMinX, g.rectMinY);                       // bottom-left
         shape.lineTo(g.rectMaxX, g.rectMinY);                       // bottom-right
-        shape.lineTo(g.rectMaxX, g.rectMaxY);                       // up to arc springline, right
-        // Upper half-ellipse from right (angle 0) CCW through apex (π/2) to left (π).
+        shape.lineTo(g.rectMaxX, g.rectMaxY);                       // up to arc springline, right side
+        // Arc from right-spring (angle 0 at arcCenter) CCW through apex (π/2) to
+        // left-spring (π). absellipse signature: (cx, cy, xRadius, yRadius, startAng,
+        // endAng, clockwise, rotation). CCW wanted → clockwise = false.
         shape.absellipse(
             g.arcCenterX, g.rectMaxY,
             g.arcSemiA,   g.arcSemiB,
@@ -76,7 +82,7 @@ export class OpponentTombPanelRendererV2 implements FrameRenderer<OpponentTombPa
             false,
             0,
         );
-        shape.lineTo(g.rectMinX, g.rectMinY);                       // down to bottom-left
+        shape.lineTo(g.rectMinX, g.rectMinY);                       // down the left side back to start
         shape.closePath();
 
         return new THREE.ShapeGeometry(shape);

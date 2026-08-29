@@ -494,7 +494,7 @@ finally {
 | 상태이상 부여를 2곳 빠뜨림 | 위와 같음 | `DamageService` |
 | 모달 가드가 분기마다 중복 | 타겟팅 세션 개념 없음 | `TargetingSession` |
 | 카드 10종이 시나리오에 인라인 | 능력(Ability) 추상 없음 | `CardAbility` + 레지스트리 |
-| 뒤에서 선언된 값을 앞 핸들러가 참조 | 애그리게이트 없음 | `BattleField` |
+| 뒤에서 선언된 값을 앞 핸들러가 참조 | 애그리관문 없음 | `BattleField` |
 | 턴 소유권과 턴 수가 다른 곳에 | 위와 같음 | `BattleField` |
 | 연출과 도메인이 상호 호출 | 프레젠터 포트 없음 | `BattlePresenter` |
 | 이펙트 파일 최대 2,281줄 | 페이즈 머신과 그리기가 한 파일 | 분리 (`NetherBladeChargeVisual` 선례) |
