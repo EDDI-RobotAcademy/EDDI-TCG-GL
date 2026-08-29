@@ -8,6 +8,7 @@
   "devDependencies": {
     "@types/node": "^20.14.11",
     "@types/three": "^0.164.0",
+    "dependency-cruiser": "^18.2.0",
     "file-loader": "^6.2.0",
     "ts-loader": "^9.5.1",
     "typescript": "^5.5.4",
@@ -19,6 +20,9 @@
   "scripts": {
     "dev": "webpack serve --config ./src/client/webpack.dev.js",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "depcruise": "npm run depcruise:deps && npm run depcruise:purity",
+    "depcruise:deps": "depcruise src --config .dependency-cruiser.js",
+    "depcruise:purity": "node scripts/check-domain-purity.js",
     "cube-test": "webpack serve --config ./test/cube/config/webpack.dev.js",
     "rectangle-test": "webpack serve --config ./test/rectangle/config/webpack.dev.js",
     "rectangle-image-test": "webpack serve --config ./test/rectangle_image/config/webpack.dev.js",
