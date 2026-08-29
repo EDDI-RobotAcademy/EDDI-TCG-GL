@@ -122,8 +122,40 @@ Click/hover detection is usually its own sibling feature (e.g. `deck_card_add_bu
 
 `resource/image-paths.json` is the manifest consumed by `TextureManager.preloadTextures(...)`. `python/useful_tool/image_resource_to_json_convert.py` generates it. `resource.zip` is the bundled asset archive — everything under `resource/` is gitignored (png/jpg/mp3/ttf/otf/webp/csv/xlsx/json), so expect to unzip `resource.zip` in a fresh checkout.
 
+## Before merging code that looks similar
+
+**Do not merge two things because they look the same today. Ask whether they change
+for the same reason.** If they will change for different reasons, keep them separate
+even when the code is currently identical.
+
+Only 12 of the 100 cards in `src/common/every_card_info.js` are implemented. Code that
+looks duplicated is often duplicated *because the differentiating cards are not built
+yet*. Look for the eventual requirement in the card descriptions, not in the code.
+
+Worked example — `src/battle/zone/`:
+
+- `YourTombPanelRendererV2` and `OpponentTombPanelRendererV2` differ by 7–28 lines once
+  names are normalized. Tempting to merge.
+- But card #33 (시체 폭발) sends **allied** units to **your** tomb, and card #17
+  (해골 군주 레오닉) sends the **opponent's** hand to the **opponent's** lost zone.
+  Six cards touch tomb/lost zone and they distinguish the two sides.
+- Merging now means adding conditionals or re-splitting when those cards land.
+
+Cost asymmetry: keeping two copies costs two edits. Merging wrongly costs a conditional
+branch plus every future change to one side dragging the other along. **The wrong merge
+is more expensive than the duplication.**
+
+The same principle governs how work is split. See `docs/refactoring/RULES.md` (규칙 14).
+
+---
+
 ## Conventions
 
 - Korean inline comments are common and expected; don't translate or strip them during unrelated edits.
 - Views and most services are singletons via `getInstance(...)` — don't `new` them from outside their module. (New Renderer/Frame code is an exception; keep those stateless.)
 - Prefer editing an existing feature folder over creating a new one when a concept already has a slice.
+- Write docs and backlogs in words a non-developer can read. Avoid jargon that reads as
+  something else (회귀 reads as "roll back"; use 동작 확인). Attach a referent to every
+  number — `저장소 8개` is unusable, `저장소 파일 8개 (네 폴더가 각각 인터페이스와 구현체를 하나씩)`
+  is. List the items instead of counting them when there are more than two.
+  See `docs/refactoring/RULES.md` (규칙 10~12).
