@@ -1,13 +1,25 @@
+// 카드를 격자로 늘어놓고 페이지를 넘기는 팝업을 그린다.
+//
+// 여러 화면이 쓰는 부품이다. 특정 화면의 것이 아니다.
+//   내 로스트존, 상대 로스트존, 내 무덤, 상대 무덤, 레오닉의 부름(내 덱에서 고르기)
+//   해골 군주 레오닉(#17)을 구현하면 상대 핸드 보기가 더해진다
+//
+// 도메인을 모른다. 배치 값과 카드 목록만 받아 그린다.
+// 카드를 고르는 동작은 이 파일 밖에 있다.
+//
+// 화면마다 다르게 그려야 할 것이 생기면 이 부품을 나누지 말고,
+// 그 화면의 팝업을 따로 만들어 이 부품을 쓰게 한다.
+
 import * as THREE from "three";
 
-import { HandCard } from "../../../../battle_field_hand/entity/HandCard";
-import { HandCardFrame, createDefaultHandCardFrame } from "../../../../battle_field_hand/frame/HandCardFrame";
-import { HandCardRendererV2 } from "../../../../battle_field_hand/renderer/HandCardRendererV2";
+import { HandCard } from "../../../battle_field_hand/entity/HandCard";
+import { HandCardFrame, createDefaultHandCardFrame } from "../../../battle_field_hand/frame/HandCardFrame";
+import { HandCardRendererV2 } from "../../../battle_field_hand/renderer/HandCardRendererV2";
 
 import {
-    YourLostZonePopupFrame,
-    computeYourLostZonePopupBounds,
-} from "../frame/YourLostZonePopupFrame";
+    CardGridPopupFrame,
+    computeCardGridPopupBounds,
+} from "../frame/CardGridPopupFrame";
 
 interface PopupUserData {
     baseWidth: number;
@@ -18,17 +30,17 @@ interface PopupUserData {
 // Reuses HandCardRendererV2 so each card shows its weapon/staff, HP, race, and energy
 // slots — not a flat image. Rebuilt from scratch on every open so the card set stays
 // in sync with the repository.
-export class YourLostZonePopupRendererV2 {
+export class CardGridPopupRenderer {
     constructor(
         private readonly cardRenderer: HandCardRendererV2 = new HandCardRendererV2(),
         private readonly handCardFrame: HandCardFrame = createDefaultHandCardFrame(),
     ) {}
 
     public async build(
-        frame: YourLostZonePopupFrame,
+        frame: CardGridPopupFrame,
         cards: readonly HandCard[],
     ): Promise<THREE.Group> {
-        const bounds = computeYourLostZonePopupBounds(frame, window.innerWidth, window.innerHeight);
+        const bounds = computeCardGridPopupBounds(frame, window.innerWidth, window.innerHeight);
         const baseWidth = bounds.width;
         const baseHeight = bounds.height;
 
