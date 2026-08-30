@@ -25,7 +25,7 @@ import { OpponentFieldRendererV2 } from "../../src/opponent_field/renderer/Oppon
 import { OpponentFieldMapRepositoryImpl } from "../../src/opponent_field_map/repository/OpponentFieldMapRepositoryImpl";
 
 import { BattleFieldHandMapRepositoryImpl } from "../../src/battle_field_hand/repository/BattleFieldHandMapRepositoryImpl";
-import { YourDeckRepositoryImpl } from "../../src/your_deck/repository/YourDeckRepositoryImpl";
+import { YourDeckRepositoryImpl } from "../../src/battle/zone/your_deck/repository/YourDeckRepositoryImpl";
 import { HandCard } from "../../src/battle_field_hand/entity/HandCard";
 import { HandEntry } from "../../src/battle_field_hand/renderer/BattleFieldHandRendererV2";
 import { createDefaultHandCardFrame } from "../../src/battle_field_hand/frame/HandCardFrame";
@@ -120,7 +120,7 @@ import { OpponentTombRepositoryImpl } from "../../src/battle/zone/opponent_tomb/
 import { createDefaultOpponentLostZonePopupFrame } from "../../src/battle/zone/opponent_lost_zone/frame/OpponentLostZonePopupFrame";
 import { OpponentLostZonePanelRendererV2 } from "../../src/battle/zone/opponent_lost_zone/renderer/OpponentLostZonePanelRendererV2";
 import { OpponentLostZoneRepositoryImpl } from "../../src/battle/zone/opponent_lost_zone/repository/OpponentLostZoneRepositoryImpl";
-import { OpponentDeckRepositoryImpl } from "../../src/opponent_deck/repository/OpponentDeckRepositoryImpl";
+import { OpponentDeckRepositoryImpl } from "../../src/battle/zone/opponent_deck/repository/OpponentDeckRepositoryImpl";
 
 import {
     createDefaultTurnEndButtonFrame,
