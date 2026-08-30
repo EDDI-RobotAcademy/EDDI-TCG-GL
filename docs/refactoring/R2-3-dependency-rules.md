@@ -1,6 +1,6 @@
 # [ETWGL-R2-3] 폴더 구조를 바꿔도 잘못된 의존이 자동으로 발견되도록 의존성 검사 도입
 
-선행: R2-2 │ 후행: R2-5 │ 산출물: .dependency-cruiser.js, scripts/check-domain-purity.js
+선행: R2-2 │ 후행: R2-5 │ 산출물: .dependency-cruiser.js, scripts/check-domain-purity.js │ Type: Tooling │ Domain: —
 
 # Success criteria
 

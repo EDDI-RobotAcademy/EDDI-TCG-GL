@@ -1,6 +1,6 @@
 # [ETWGL-R2-4] 새 작업을 시작하고 끝낼 때 무엇을 보고 판단할지 정하는 프로세스 구축
 
-선행: R2-2 │ 후행: R2-5 │ 산출물: _TEMPLATE.md, INDEX.md, BEHAVIOR_CHECK.md, RULES.md, 노션 작업 공간
+선행: R2-2 │ 후행: R2-5 │ 산출물: _TEMPLATE.md, INDEX.md, BEHAVIOR_CHECK.md, RULES.md, 노션 작업 공간 │ Type: Documentation │ Domain: —
 
 # Success criteria
 

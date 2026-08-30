@@ -1,6 +1,6 @@
 # [ETWGL-R2-5] battle 폴더와 하위 구획을 만들어 리팩토링 시 이동할 장소 결정 전략 수립
 
-선행: R2-3 │ 후행: R2-6 │ 산출물: docs/battle_migration_map.md
+선행: R2-3 │ 후행: R2-6 │ 산출물: docs/battle_migration_map.md │ Type: Strategy │ Domain: Battle
 
 # Success criteria
 
