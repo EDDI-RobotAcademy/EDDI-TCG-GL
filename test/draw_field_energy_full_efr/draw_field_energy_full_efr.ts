@@ -87,10 +87,10 @@ import {
 } from "../../src/battle/zone/your_lost_zone/frame/YourLostZonePanelFrame";
 import {
     createDefaultYourLostZonePopupFrame,
-    computeYourLostZonePopupBounds,
 } from "../../src/battle/zone/your_lost_zone/frame/YourLostZonePopupFrame";
+import { computeCardGridPopupBounds } from "../../src/battle/card_grid_popup/frame/CardGridPopupFrame";
 import { YourLostZonePanelRendererV2 } from "../../src/battle/zone/your_lost_zone/renderer/YourLostZonePanelRendererV2";
-import { YourLostZonePopupRendererV2 } from "../../src/battle/zone/your_lost_zone/renderer/YourLostZonePopupRendererV2";
+import { CardGridPopupRenderer } from "../../src/battle/card_grid_popup/renderer/CardGridPopupRenderer";
 
 import {
     createDefaultOpponentLostZonePanelFrame,
@@ -424,7 +424,7 @@ async function main(container: HTMLElement): Promise<void> {
     const lostZonePanelFrame = createDefaultYourLostZonePanelFrame();
     const lostZonePopupFrame = createDefaultYourLostZonePopupFrame();
     const lostZonePanelRenderer = new YourLostZonePanelRendererV2();
-    const lostZonePopupRenderer = new YourLostZonePopupRendererV2();
+    const lostZonePopupRenderer = new CardGridPopupRenderer();
     const lostZonePanelGroup = await lostZonePanelRenderer.build(lostZonePanelFrame);
     scene.add(lostZonePanelGroup);
 
@@ -432,9 +432,9 @@ async function main(container: HTMLElement): Promise<void> {
     const opponentLostZonePanelFrame = createDefaultOpponentLostZonePanelFrame();
     const opponentLostZonePopupFrame = createDefaultOpponentLostZonePopupFrame();
     const opponentLostZonePanelRenderer = new OpponentLostZonePanelRendererV2();
-    // Popup reuses YourLostZonePopupRendererV2 — popup rendering is generic (takes frame +
+    // Popup reuses CardGridPopupRenderer — popup rendering is generic (takes frame +
     // cards), so both lost zones share the same renderer. Keeps card layout identical.
-    const opponentLostZonePopupRenderer = new YourLostZonePopupRendererV2();
+    const opponentLostZonePopupRenderer = new CardGridPopupRenderer();
     const opponentLostZonePanelGroup = await opponentLostZonePanelRenderer.build(opponentLostZonePanelFrame);
     scene.add(opponentLostZonePanelGroup);
 
@@ -531,7 +531,7 @@ async function main(container: HTMLElement): Promise<void> {
     const tombPopupFrame = createDefaultYourTombPopupFrame();
     const tombPanelRenderer = new YourTombPanelRendererV2();
     // Reuses the generic lost-zone popup renderer — popup rendering is stateless.
-    const tombPopupRenderer = new YourLostZonePopupRendererV2();
+    const tombPopupRenderer = new CardGridPopupRenderer();
     const tombPanelGroup = await tombPanelRenderer.build(tombPanelFrame);
     scene.add(tombPanelGroup);
 
@@ -584,7 +584,7 @@ async function main(container: HTMLElement): Promise<void> {
     const opponentTombPanelFrame = createDefaultOpponentTombPanelFrame();
     const opponentTombPopupFrame = createDefaultOpponentTombPopupFrame();
     const opponentTombPanelRenderer = new OpponentTombPanelRendererV2();
-    const opponentTombPopupRenderer = new YourLostZonePopupRendererV2();
+    const opponentTombPopupRenderer = new CardGridPopupRenderer();
     const opponentTombPanelGroup = await opponentTombPanelRenderer.build(opponentTombPanelFrame);
     scene.add(opponentTombPanelGroup);
 
@@ -1138,7 +1138,7 @@ async function main(container: HTMLElement): Promise<void> {
                 }
             }
 
-            const popupBounds = computeYourLostZonePopupBounds(lostZonePopupFrame, w, h);
+            const popupBounds = computeCardGridPopupBounds(lostZonePopupFrame, w, h);
             const onPopup =
                 worldX >= popupBounds.minX && worldX <= popupBounds.maxX &&
                 worldY >= popupBounds.minY && worldY <= popupBounds.maxY;
@@ -1166,7 +1166,7 @@ async function main(container: HTMLElement): Promise<void> {
             }
 
             // Opponent popup uses the SAME world bounds as Your popup (both centered, same size).
-            const popupBounds = computeYourLostZonePopupBounds(opponentLostZonePopupFrame, w, h);
+            const popupBounds = computeCardGridPopupBounds(opponentLostZonePopupFrame, w, h);
             const onPopup =
                 worldX >= popupBounds.minX && worldX <= popupBounds.maxX &&
                 worldY >= popupBounds.minY && worldY <= popupBounds.maxY;
@@ -1192,7 +1192,7 @@ async function main(container: HTMLElement): Promise<void> {
             }
 
             // Tomb popup shares the lost-zone popup's world bounds (centred, same size).
-            const popupBounds = computeYourLostZonePopupBounds(tombPopupFrame, w, h);
+            const popupBounds = computeCardGridPopupBounds(tombPopupFrame, w, h);
             const onPopup =
                 worldX >= popupBounds.minX && worldX <= popupBounds.maxX &&
                 worldY >= popupBounds.minY && worldY <= popupBounds.maxY;
@@ -1219,7 +1219,7 @@ async function main(container: HTMLElement): Promise<void> {
                 }
             }
 
-            const popupBounds = computeYourLostZonePopupBounds(opponentTombPopupFrame, w, h);
+            const popupBounds = computeCardGridPopupBounds(opponentTombPopupFrame, w, h);
             const onPopup =
                 worldX >= popupBounds.minX && worldX <= popupBounds.maxX &&
                 worldY >= popupBounds.minY && worldY <= popupBounds.maxY;
@@ -2755,7 +2755,7 @@ async function main(container: HTMLElement): Promise<void> {
         bottomRatio:   0.90,
         cardGapYRatio: 1.0,
     };
-    const leonikPopupRenderer = new YourLostZonePopupRendererV2();
+    const leonikPopupRenderer = new CardGridPopupRenderer();
     const leonikCardsPerPage = leonikPopupFrame.cardColumns * leonikPopupFrame.rowsPerPage;
 
     let leonikPopupGroup: THREE.Group | null = null;
@@ -2853,7 +2853,7 @@ async function main(container: HTMLElement): Promise<void> {
         const end = start + leonikCardsPerPage;
         if (absIdx < start || absIdx >= end) return null;
         const i = absIdx - start;
-        const bounds = computeYourLostZonePopupBounds(leonikPopupFrame, window.innerWidth, window.innerHeight);
+        const bounds = computeCardGridPopupBounds(leonikPopupFrame, window.innerWidth, window.innerHeight);
         const cw = window.innerWidth * createDefaultHandCardFrame().cardWidthRatio;
         const ch = cw * createDefaultHandCardFrame().cardAspect;
         const stepX = cw * (1 + leonikPopupFrame.cardGapXRatio);
@@ -2969,7 +2969,7 @@ async function main(container: HTMLElement): Promise<void> {
         const resolved = resolveCards(pageCardIds, 'leonik');
         const group = await leonikPopupRenderer.build(leonikPopupFrame, resolved);
 
-        const bounds = computeYourLostZonePopupBounds(leonikPopupFrame, window.innerWidth, window.innerHeight);
+        const bounds = computeCardGridPopupBounds(leonikPopupFrame, window.innerWidth, window.innerHeight);
 
         // Confirm button — centred at popup centre, between prev/next pagination buttons.
         // Material handle stashed so selection-change handlers can re-tint without
@@ -3065,7 +3065,7 @@ async function main(container: HTMLElement): Promise<void> {
     // Hit-test: which popup-local index sits under (worldX, worldY)? Returns the
     // ABSOLUTE eligibleDeckIndices index (not page-relative). Returns -1 if no card.
     const hitLeonikPopupCard = (worldX: number, worldY: number): number => {
-        const bounds = computeYourLostZonePopupBounds(leonikPopupFrame, window.innerWidth, window.innerHeight);
+        const bounds = computeCardGridPopupBounds(leonikPopupFrame, window.innerWidth, window.innerHeight);
         const cw = window.innerWidth * createDefaultHandCardFrame().cardWidthRatio;
         const ch = cw * createDefaultHandCardFrame().cardAspect;
         const stepX = cw * (1 + leonikPopupFrame.cardGapXRatio);
