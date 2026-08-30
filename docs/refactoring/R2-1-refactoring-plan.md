@@ -1,6 +1,6 @@
 # [ETWGL-R2-1] 리팩토링을 왜 어떻게 할지 판단할 수 있도록 현황 분석과 계획 문서화
 
-선행: 없음 (R2 최초 작업) │ 후행: R2-2 │ 산출물: docs/battle_field_refactoring_plan.md
+선행: 없음 (R2 최초 작업) │ 후행: R2-2 │ 산출물: docs/battle_field_refactoring_plan.md │ Type: Strategy │ Domain: Battle
 
 # Success criteria
 
