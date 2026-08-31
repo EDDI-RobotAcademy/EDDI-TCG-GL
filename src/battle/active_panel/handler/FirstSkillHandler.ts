@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { FirstSkillType } from "../../ability/entity/FirstSkillType";
-import {FirstSkillAnimation} from "../../../first_skill/animation/FirstSkillAnimation";
+import {FirstSkillAnimation} from "../effect/FirstSkillAnimation";
 import {YourFieldCardScene} from "../../../your_field_card_scene/entity/YourFieldCardScene";
 import {BattleFieldCardAttributeMark} from "../../../battle_field_card_attribute_mark/entity/BattleFieldCardAttributeMark";
 import {DragMoveRepositoryImpl} from "../../../drag_move/repository/DragMoveRepositoryImpl";
