@@ -64,7 +64,7 @@ import {LeftClickOpponentMasterDetectRepository} from "../repository/LeftClickOp
 import {LeftClickOpponentMasterDetectRepositoryImpl} from "../repository/LeftClickOpponentMasterDetectRepositoryImpl";
 
 import {ActivePanelButtonType} from "../../active_panel_area/entity/ActivePanelButtonType";
-import {GeneralAttackType} from "../../general_attack/entity/GeneralAttackType";
+import {GeneralAttackType} from "../../battle/ability/entity/GeneralAttackType";
 import {ActivePanelButtonHandler} from "../../active_panel_area/handler/ActivePanelButtonHandler";
 import {BattleFieldCommonAreaType} from "../../common/type/BattleFieldCommonAreaType";
 import {NeonBorderHandler} from "../../neon_border/handler/NeonBorderHandler";
