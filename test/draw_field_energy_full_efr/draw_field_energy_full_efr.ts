@@ -62,8 +62,8 @@ import {
 } from "../../src/neon_border/frame/NeonBorderFrame";
 import { NeonBorderEffect } from "../../src/neon_border/effect/NeonBorderEffect";
 
-import { createDefaultActivePanelFrame, ActivePanelButtonSpec } from "../../src/active_panel_area/frame/ActivePanelFrame";
-import { ActivePanelRendererV2 } from "../../src/active_panel_area/renderer/ActivePanelRendererV2";
+import { createDefaultActivePanelFrame, ActivePanelButtonSpec } from "../../src/battle/active_panel/frame/ActivePanelFrame";
+import { ActivePanelRendererV2 } from "../../src/battle/active_panel/renderer/ActivePanelRendererV2";
 import { AttackAnimationV2 } from "../../src/general_attack/animation/AttackAnimationV2";
 import { FrozenBurningOverlayEffect } from "../../src/animation/cold_dark_energy/FrozenBurningOverlayEffect";
 import { ColdDarkTraitMarkEffect } from "../../src/animation/cold_dark_energy/ColdDarkTraitMarkEffect";

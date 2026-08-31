@@ -39,7 +39,7 @@
 | **R2-12** | Structure | Battle Active Panel | [스킬 슬롯이 어느 효과를 부를지 고르는 배선 패키지 조정](R2-12-move-skill-effect-dispatch.md) | R2-11 | **완료** |
 | **R2-13** | Structure | Battle Animation | [쓰지 않는 스킬 애니메이션 세 개를 옮길지 지울지 판단](R2-13-discarded-dead-animations.md) | R2-11 | **폐기** |
 | **R2-14** | Structure | Battle Active Panel | [액티브 패널 영역과 패널 움직임 패키지 조정](R2-14-move-active-panel.md) | R2-12 | **완료** |
-| **R2-15** | Structure | Battle Active Panel | [스킬 사용의 순서와 카드 이동을 갈라낸다](R2-15-split-skill-sequence.md) | R2-14 | **완료** |
+| **R2-15** | Structure | Battle Animation | [스킬 연출 패키지 조정](R2-15-move-skill-playback.md) | R2-14 | **완료** |
 | **R2-16** | Structure | Battle Turn | 턴 소유와 턴 종료 버튼 패키지 조정 | R2-15 | 예정 |
 | **R2-17** | Structure | Battle Field Energy | 상대 필드 에너지 표시 패키지 조정 | R2-16 | 예정 |
 | **R2-18** | Structure | Battle Animation | 카드 연출을 옮긴다. src/animation/ 15개 + 공격 연출 2개 | R2-17 | 예정 |
