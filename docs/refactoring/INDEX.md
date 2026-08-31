@@ -38,19 +38,22 @@
 | **R2-11** | Structure | Battle Active Panel | [액티브 패널의 공격 / 스킬1 / 스킬2 버튼 동작 패키지 조정](R2-11-move-card-actions.md) | R2-10 | **완료** |
 | **R2-12** | Structure | Battle Active Panel | [스킬 슬롯이 어느 효과를 부를지 고르는 배선 패키지 조정](R2-12-move-skill-effect-dispatch.md) | R2-11 | **완료** |
 | **R2-13** | Structure | Battle Animation | [쓰지 않는 스킬 애니메이션 세 개를 옮길지 지울지 판단](R2-13-discarded-dead-animations.md) | R2-11 | **폐기** |
-| **R2-14** | Structure | Battle | 화면 위 정보와 조작 다섯 폴더를 옮긴다 (14개) | R2-13 | 예정 |
-| **R2-15** | Structure | Battle Animation | 카드 연출을 옮긴다. src/animation/ 15개 + 공격 연출 2개 | R2-14 | 예정 |
-| **R2-16** | Structure | Battle | 화면 조립 세 폴더를 옮긴다 (22개) | R2-15 | 예정 |
-| **R2-17** | Structure | Battle | 손패 다섯 폴더를 옮긴다 (55개) | R2-16 | 예정 |
-| **R2-18** | Structure | Battle | 유닛과 상태 표시 여덟 폴더를 옮긴다 (74개) | R2-17 | 예정 |
-| **R2-19** | Structure | Battle | 필드 열 폴더를 옮긴다 (75개) | R2-18 | 예정 |
-| **R2-20** | Structure | Battle | 새 데이터를 어디에 둘지 일관되게 판단할 수 있도록 저장소 책임 분류 | R2-19 | 예정 |
-| **R2-21** | Rule | Battle | 전투 상태를 하나의 일관된 단위로 관리하도록 Battle 애그리게이트 추출 | R2-20 | 예정 |
-| **R2-22** | Rule | Battle | 재접속 시 어떤 유닛의 상태를 복원할지 식별할 수 있도록 식별자 통합 | R2-21 | 예정 |
-| **R2-23** | Rule | Battle | 연출 도중 종료되어도 전투 상태가 일관되도록 처리 순서 분리 | R2-22 | 예정 |
-| **R2-24** | Rule | Battle | 카드를 추가할 때 코드 수정 없이 데이터로 정의할 수 있도록 능력 정의 구조 도입 | R2-23 | 예정 |
-| **R2-25** | Rule | Battle | 턴 진행 규칙을 한 곳에서 읽을 수 있도록 TurnSystem 추출 | R2-21 | 예정 |
-| **R2-26** | Rendering | Battle | 화면이 상태를 직접 관리하지 않고 표시만 하도록 HUD 렌더러 정리 | R2-21 | 예정 |
+| **R2-14** | Structure | Battle Active Panel | [액티브 패널 영역과 패널 움직임 패키지 조정](R2-14-move-active-panel.md) | R2-12 | **완료** |
+| **R2-15** | Structure | Battle Active Panel | [스킬 사용의 순서와 카드 이동을 갈라낸다](R2-15-split-skill-sequence.md) | R2-14 | **완료** |
+| **R2-16** | Structure | Battle Turn | 턴 소유와 턴 종료 버튼 패키지 조정 | R2-15 | 예정 |
+| **R2-17** | Structure | Battle Field Energy | 상대 필드 에너지 표시 패키지 조정 | R2-16 | 예정 |
+| **R2-18** | Structure | Battle Animation | 카드 연출을 옮긴다. src/animation/ 15개 + 공격 연출 2개 | R2-17 | 예정 |
+| **R2-19** | Structure | Battle | 화면 조립 세 폴더를 옮긴다 (22개) | R2-18 | 예정 |
+| **R2-20** | Structure | Battle | 손패 다섯 폴더를 옮긴다 (55개) | R2-19 | 예정 |
+| **R2-21** | Structure | Battle | 유닛과 상태 표시 여덟 폴더를 옮긴다 (74개) | R2-20 | 예정 |
+| **R2-22** | Structure | Battle | 필드 열 폴더를 옮긴다 (75개) | R2-21 | 예정 |
+| **R2-23** | Structure | Battle | 새 데이터를 어디에 둘지 일관되게 판단할 수 있도록 저장소 책임 분류 | R2-22 | 예정 |
+| **R2-24** | Rule | Battle | 전투 상태를 하나의 일관된 단위로 관리하도록 Battle 애그리게이트 추출 | R2-23 | 예정 |
+| **R2-25** | Rule | Battle | 재접속 시 어떤 유닛의 상태를 복원할지 식별할 수 있도록 식별자 통합 | R2-24 | 예정 |
+| **R2-26** | Rule | Battle | 연출 도중 종료되어도 전투 상태가 일관되도록 처리 순서 분리 | R2-25 | 예정 |
+| **R2-27** | Rule | Battle | 카드를 추가할 때 코드 수정 없이 데이터로 정의할 수 있도록 능력 정의 구조 도입 | R2-26 | 예정 |
+| **R2-28** | Rule | Battle | 턴 진행 규칙을 한 곳에서 읽을 수 있도록 TurnSystem 추출 | R2-24 | 예정 |
+| **R2-29** | Rendering | Battle | 화면이 상태를 직접 관리하지 않고 표시만 하도록 HUD 렌더러 정리 | R2-24 | 예정 |
 
 ### Type — 무엇을 바꾸는 작업인가
 
@@ -86,7 +89,7 @@
 > 과거에는 폴더 240개가 각각 도메인처럼 최상위에 나란히 있었다.
 > 지금 하는 일은 그것들을 카테고리로 묶는 것이다.
 
-> Battle 의 도메인 객체는 R2-21 에서 처음 만들어진다. 지금 `entity/` 190개 중
+> Battle 의 도메인 객체는 R2-24 에서 처음 만들어진다. 지금 `entity/` 190개 중
 > 대부분이 화면 객체와 좌표를 담고 있다.
 
 > Type 과 Domain 을 한 칸에 두면 설계가 흐려진다.

@@ -1,11 +1,11 @@
 import * as THREE from "three";
 import {ActivePanelAreaRepository} from "./ActivePanelAreaRepository";
-import {TextureManager} from "../../texture_manager/TextureManager";
-import {MeshGenerator} from "../../mesh/generator";
-import {Vector2d} from "../../common/math/Vector2d";
-import {getCardById} from "../../card/utility";
+import {TextureManager} from "../../../texture_manager/TextureManager";
+import {MeshGenerator} from "../../../mesh/generator";
+import {Vector2d} from "../../../common/math/Vector2d";
+import {getCardById} from "../../../card/utility";
 import {ActivePanelButtonType} from "../entity/ActivePanelButtonType";
-import {BattleFieldConstants} from "../../common/BattleFieldConstants";
+import {BattleFieldConstants} from "../../../common/BattleFieldConstants";
 
 export class ActivePanelAreaRepositoryImpl implements ActivePanelAreaRepository {
     private static instance: ActivePanelAreaRepositoryImpl | null = null;

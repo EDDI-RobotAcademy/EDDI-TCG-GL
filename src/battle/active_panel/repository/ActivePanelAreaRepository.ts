@@ -1,4 +1,4 @@
-import {Card} from "../../card/types";
+import {Card} from "../../../card/types";
 import * as THREE from "three";
 import {ActivePanelButtonType} from "../entity/ActivePanelButtonType";
 

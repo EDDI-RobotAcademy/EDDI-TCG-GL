@@ -34,6 +34,11 @@ npm run draw-field-energy-full-efr
 3. 옮긴 뒤 빈 폴더가 남았는지 본다
      find src -type d -empty
      git 은 빈 폴더를 추적하지 않아 git status 에 안 나온다
+4. 나갔다 들어오는 경로가 생겼는지 본다
+     grep -rn 'from "\.\./\.\./\.\./battle/' src/battle
+     자기 폴더를 밖으로 나갔다 돌아오는 경로다. 타입 검사에 안 걸린다
+5. 여러 번에 걸쳐 옮기는 폴더는 이미 고쳐진 경로가 섞여 있다
+     일괄 치환 전에 대상이 무엇인지 확인한다
 ```
 
 이름으로 판단했다가 두 번 틀렸다.

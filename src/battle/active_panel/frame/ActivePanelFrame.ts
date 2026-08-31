@@ -1,4 +1,4 @@
-import { BattleFieldConstants } from "../../common/BattleFieldConstants";
+import { BattleFieldConstants } from "../../../common/BattleFieldConstants";
 
 export interface ActivePanelButtonSpec {
     readonly type: string;
