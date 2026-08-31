@@ -31,7 +31,7 @@ import {NeonBorderLineSceneRepository} from "../../../neon_border_line_scene/rep
 import {MarkSceneType} from "../../../battle_field_card_attribute_mark_scene/entity/MarkSceneType";
 import {NeonBorderHandler} from "../../../neon_border/handler/NeonBorderHandler";
 import {SecondSkillType} from "../../ability/entity/SecondSkillType";
-import {SecondSkillAnimation} from "../../../second_skill/animation/SecondSkillAnimation";
+import {SecondSkillAnimation} from "../effect/SecondSkillAnimation";
 
 export class SecondSkillHandler {
     private static instance: SecondSkillHandler;

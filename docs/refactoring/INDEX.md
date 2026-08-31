@@ -36,10 +36,10 @@
 | **R2-9** | Structure | Battle 공용 | [Popup 노출 시 카드 배치 격자의 사용 용도를 파악할 수 있도록 재배치](R2-9-card-grid-popup.md) | R2-7 | **완료** |
 | **R2-10** | Structure | Battle Deck | [Your / Opponent Deck 패키지 조정](R2-10-move-deck-folders.md) | R2-9 | **완료** |
 | **R2-11** | Structure | Battle Active Panel | [액티브 패널의 공격 / 스킬1 / 스킬2 버튼 동작 패키지 조정](R2-11-move-card-actions.md) | R2-10 | **완료** |
-| **R2-12** | Structure | Battle Animation | 스킬 연출과 공격 연출 패키지 조정 (4파일 2,840줄) | R2-11 | 예정 |
+| **R2-12** | Structure | Battle Active Panel | [스킬 슬롯이 어느 효과를 부를지 고르는 배선 패키지 조정](R2-12-move-skill-effect-dispatch.md) | R2-11 | **완료** |
 | **R2-13** | Structure | Battle Animation | [쓰지 않는 스킬 애니메이션 세 개를 옮길지 지울지 판단](R2-13-discarded-dead-animations.md) | R2-11 | **폐기** |
 | **R2-14** | Structure | Battle | 화면 위 정보와 조작 다섯 폴더를 옮긴다 (14개) | R2-13 | 예정 |
-| **R2-15** | Structure | Battle | 카드 연출 폴더를 옮긴다 (16개) | R2-14 | 예정 |
+| **R2-15** | Structure | Battle Animation | 카드 연출을 옮긴다. src/animation/ 15개 + 공격 연출 2개 | R2-14 | 예정 |
 | **R2-16** | Structure | Battle | 화면 조립 세 폴더를 옮긴다 (22개) | R2-15 | 예정 |
 | **R2-17** | Structure | Battle | 손패 다섯 폴더를 옮긴다 (55개) | R2-16 | 예정 |
 | **R2-18** | Structure | Battle | 유닛과 상태 표시 여덟 폴더를 옮긴다 (74개) | R2-17 | 예정 |
