@@ -1,13 +1,13 @@
 import {ActivePanelButtonType} from "../entity/ActivePanelButtonType";
-import {GeneralAttackHandler} from "../../battle/active_panel/handler/GeneralAttackHandler";
+import {GeneralAttackHandler} from "./GeneralAttackHandler";
 
 import * as THREE from "three";
 
-import {FirstSkillHandler} from "../../battle/active_panel/handler/FirstSkillHandler";
-import {SecondSkillType} from "../../battle/ability/entity/SecondSkillType";
-import {SecondSkillHandler} from "../../battle/active_panel/handler/SecondSkillHandler";
-import {CardDetailsType} from "../../card_details/entity/CardDetailsType";
-import {CardDetailsHandler} from "../../card_details/handler/CardDetailsHandler";
+import {FirstSkillHandler} from "./FirstSkillHandler";
+import {SecondSkillType} from "../../ability/entity/SecondSkillType";
+import {SecondSkillHandler} from "./SecondSkillHandler";
+import {CardDetailsType} from "../../../card_details/entity/CardDetailsType";
+import {CardDetailsHandler} from "../../../card_details/handler/CardDetailsHandler";
 
 export class ActivePanelButtonHandler {
     private static instance: ActivePanelButtonHandler;

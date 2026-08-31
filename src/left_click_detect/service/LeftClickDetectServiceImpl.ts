@@ -45,8 +45,8 @@ import {YourFieldAttributeMarkManager} from "../handler/your_field/YourFieldAttr
 import {YourFieldRepository} from "../../your_field/repository/YourFieldRepository";
 import {YourFieldRepositoryImpl} from "../../your_field/repository/YourFieldRepositoryImpl";
 import {YourFieldCardScene} from "../../your_field_card_scene/entity/YourFieldCardScene";
-import {ActivePanelAreaRepository} from "../../active_panel_area/repository/ActivePanelAreaRepository";
-import {ActivePanelAreaRepositoryImpl} from "../../active_panel_area/repository/ActivePanelAreaRepositoryImpl";
+import {ActivePanelAreaRepository} from "../../battle/active_panel/repository/ActivePanelAreaRepository";
+import {ActivePanelAreaRepositoryImpl} from "../../battle/active_panel/repository/ActivePanelAreaRepositoryImpl";
 import {getCardById} from "../../card/utility";
 import {getSkillType, SkillType} from "../../card/SkillType";
 import {OpponentFieldCardSceneRepository} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepository";
@@ -63,9 +63,9 @@ import {NeonBorderType} from "../../neon_border/entity/NeonBorderType";
 import {LeftClickOpponentMasterDetectRepository} from "../repository/LeftClickOpponentMasterDetectRepository";
 import {LeftClickOpponentMasterDetectRepositoryImpl} from "../repository/LeftClickOpponentMasterDetectRepositoryImpl";
 
-import {ActivePanelButtonType} from "../../active_panel_area/entity/ActivePanelButtonType";
+import {ActivePanelButtonType} from "../../battle/active_panel/entity/ActivePanelButtonType";
 import {GeneralAttackType} from "../../battle/ability/entity/GeneralAttackType";
-import {ActivePanelButtonHandler} from "../../active_panel_area/handler/ActivePanelButtonHandler";
+import {ActivePanelButtonHandler} from "../../battle/active_panel/handler/ActivePanelButtonHandler";
 import {BattleFieldCommonAreaType} from "../../common/type/BattleFieldCommonAreaType";
 import {NeonBorderHandler} from "../../neon_border/handler/NeonBorderHandler";
 import {OpponentFieldCardScene} from "../../opponent_field_card_scene/entity/OpponentFieldCardScene";

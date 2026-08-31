@@ -13,7 +13,7 @@ import {OpponentFieldRepositoryImpl} from "../../../opponent_field/repository/Op
 import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
 import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
 import {LeftClickHandDetectRepositoryImpl} from "../../../left_click_detect/repository/LeftClickHandDetectRepositoryImpl";
-import {ActivePanelAreaRepositoryImpl} from "../../../active_panel_area/repository/ActivePanelAreaRepositoryImpl";
+import {ActivePanelAreaRepositoryImpl} from "../repository/ActivePanelAreaRepositoryImpl";
 import {NeonBorderRepositoryImpl} from "../../../neon_border/repository/NeonBorderRepositoryImpl";
 import {NeonBorderLineSceneRepositoryImpl} from "../../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
 import {DragMoveRepository} from "../../../drag_move/repository/DragMoveRepository";
@@ -26,7 +26,7 @@ import {OpponentFieldRepository} from "../../../opponent_field/repository/Oppone
 import {OpponentFieldCardAttributeMarkRepository} from "../../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
 import {OpponentFieldCardAttributeMarkSceneRepository} from "../../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
 import {LeftClickHandDetectRepository} from "../../../left_click_detect/repository/LeftClickHandDetectRepository";
-import {ActivePanelAreaRepository} from "../../../active_panel_area/repository/ActivePanelAreaRepository";
+import {ActivePanelAreaRepository} from "../repository/ActivePanelAreaRepository";
 import {NeonBorderRepository} from "../../../neon_border/repository/NeonBorderRepository";
 import {NeonBorderLineSceneRepository} from "../../../neon_border_line_scene/repository/NeonBorderLineSceneRepository";
 import {MarkSceneType} from "../../../battle_field_card_attribute_mark_scene/entity/MarkSceneType";

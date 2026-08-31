@@ -10,8 +10,8 @@ import {
 } from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
 import {YourFieldCardScene} from "../../your_field_card_scene/entity/YourFieldCardScene";
 import {ClickableCard} from "../../left_click_detect/service/ClickableCard";
-import { ActivePanelAreaRepository } from "src/active_panel_area/repository/ActivePanelAreaRepository";
-import {ActivePanelAreaRepositoryImpl} from "../../active_panel_area/repository/ActivePanelAreaRepositoryImpl";
+import { ActivePanelAreaRepository } from "src/battle/active_panel/repository/ActivePanelAreaRepository";
+import {ActivePanelAreaRepositoryImpl} from "../../battle/active_panel/repository/ActivePanelAreaRepositoryImpl";
 import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository";
 import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
 import {YourFieldRepository} from "../../your_field/repository/YourFieldRepository";

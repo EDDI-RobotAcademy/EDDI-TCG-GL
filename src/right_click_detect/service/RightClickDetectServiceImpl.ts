@@ -9,8 +9,8 @@ import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveReposit
 import {MouseCursorDetectRepositoryImpl} from "../../mouse_cursor_detect/repository/MouseCursorDetectRepositoryImpl";
 import {MouseCursorDetectRepository} from "../../mouse_cursor_detect/repository/MouseCursorDetectRepository";
 import {LeftClickedArea} from "../../left_click_detect/entity/LeftClickedArea";
-import {ActivePanelAreaRepository} from "../../active_panel_area/repository/ActivePanelAreaRepository";
-import {ActivePanelAreaRepositoryImpl} from "../../active_panel_area/repository/ActivePanelAreaRepositoryImpl";
+import {ActivePanelAreaRepository} from "../../battle/active_panel/repository/ActivePanelAreaRepository";
+import {ActivePanelAreaRepositoryImpl} from "../../battle/active_panel/repository/ActivePanelAreaRepositoryImpl";
 import {BattleFieldCardScene} from "../../battle_field_card_scene/entity/BattleFieldCardScene";
 import {getCardById} from "../../card/utility";
 import {YourFieldRepository} from "../../your_field/repository/YourFieldRepository";
