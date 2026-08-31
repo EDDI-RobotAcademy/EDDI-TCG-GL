@@ -1,6 +1,6 @@
 # [ETWGL-R2-9] Popup 노출 시 카드 배치 격자의 사용 용도를 파악할 수 있도록 재배치
 
-선행: R2-7 │ 후행: R2-10 │ 산출물: src/battle/card_grid_popup/ │ Type: Structure │ Domain: Battle
+선행: R2-7 │ 후행: R2-10 │ 산출물: src/battle/card_grid_popup/ │ Type: Structure │ Domain: Battle 공용
 
 # Success criteria
 

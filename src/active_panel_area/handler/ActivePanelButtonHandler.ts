@@ -1,11 +1,11 @@
 import {ActivePanelButtonType} from "../entity/ActivePanelButtonType";
-import {GeneralAttackHandler} from "../../general_attack/handler/GeneralAttackHandler";
+import {GeneralAttackHandler} from "../../battle/active_panel/handler/GeneralAttackHandler";
 
 import * as THREE from "three";
 
-import {FirstSkillHandler} from "../../first_skill/handler/FirstSkillHandler";
-import {SecondSkillType} from "../../second_skill/entity/SecondSkillType";
-import {SecondSkillHandler} from "../../second_skill/handler/SecondSkillHandler";
+import {FirstSkillHandler} from "../../battle/active_panel/handler/FirstSkillHandler";
+import {SecondSkillType} from "../../battle/ability/entity/SecondSkillType";
+import {SecondSkillHandler} from "../../battle/active_panel/handler/SecondSkillHandler";
 import {CardDetailsType} from "../../card_details/entity/CardDetailsType";
 import {CardDetailsHandler} from "../../card_details/handler/CardDetailsHandler";
 

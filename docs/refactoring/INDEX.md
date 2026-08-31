@@ -29,26 +29,28 @@
 | **R2-2** | Documentation | — | [작업의 목적과 범위를 나중에도 확인할 수 있도록 백로그 규칙과 템플릿 수립](R2-2-backlog-rules.md) | R2-1 | **완료** |
 | **R2-3** | Tooling | — | [폴더 구조를 바꿔도 잘못된 의존이 자동으로 발견되도록 의존성 검사 도입](R2-3-dependency-rules.md) | R2-2 | **완료** |
 | **R2-4** | Documentation | — | [새 작업을 시작하고 끝낼 때 무엇을 보고 판단할지 정하는 프로세스 구축](R2-4-backlog-process.md) | R2-2 | 예정 |
-| **R2-5** | Strategy | Battle | [battle 폴더와 하위 구획을 만들어 리팩토링 시 이동할 장소 결정 전략 수립](R2-5-battle-migration-map.md) | R2-3 | **완료** |
-| **R2-6** | Structure | Battle | [무덤과 로스트존 네 폴더를 옮겨 리팩토링 효과가 존재하는지 검증](R2-6-move-zone-folders.md) | R2-5 | **완료** |
+| **R2-5** | Strategy | Battle | [battle 폴더와 하위 카테고리를 만들어 리팩토링 시 이동할 장소 결정 전략 수립](R2-5-battle-migration-map.md) | R2-3 | **완료** |
+| **R2-6** | Structure | Battle Tomb, LostZone | [무덤과 로스트존 네 폴더를 옮겨 리팩토링 효과가 존재하는지 검증](R2-6-move-zone-folders.md) | R2-5 | **완료** |
 | **R2-7** | Strategy | Battle | [비슷해 보이는 코드를 합칠지 나눌지 판단하는 기준 수립](R2-7-merge-or-split.md) | R2-6 | **완료** |
-| **R2-8** | Structure | Battle | [무덤과 로스트존 화면을 바꿀 때 한 곳만 고치도록 두 개의 그리는 작업을 하나로 통합한다](R2-8-merge-zone-renderers.md) | R2-7 | **폐기** |
-| **R2-9** | Structure | Battle | [Popup 노출 시 카드 배치 격자의 사용 용도를 파악할 수 있도록 재배치](R2-9-card-grid-popup.md) | R2-7 | **완료** |
-| **R2-10** | Structure | Battle | [Your / Opponent Deck 패키지 조정](R2-10-move-deck-folders.md) | R2-9 | **완료** |
-| **R2-11** | Structure | Battle | 카드 능력 세 폴더를 옮긴다 (6개) | R2-10 | 예정 |
-| **R2-12** | Structure | Battle | 화면 위 정보와 조작 다섯 폴더를 옮긴다 (14개) | R2-11 | 예정 |
-| **R2-13** | Structure | Battle | 카드 연출 폴더를 옮긴다 (16개) | R2-12 | 예정 |
-| **R2-14** | Structure | Battle | 화면 조립 세 폴더를 옮긴다 (22개) | R2-13 | 예정 |
-| **R2-15** | Structure | Battle | 손패 다섯 폴더를 옮긴다 (55개) | R2-14 | 예정 |
-| **R2-16** | Structure | Battle | 유닛과 상태 표시 여덟 폴더를 옮긴다 (74개) | R2-15 | 예정 |
-| **R2-17** | Structure | Battle | 필드 열 폴더를 옮긴다 (75개) | R2-16 | 예정 |
-| **R2-18** | Structure | Battle | 새 데이터를 어디에 둘지 일관되게 판단할 수 있도록 저장소 책임 분류 | R2-17 | 예정 |
-| **R2-19** | Rule | Battle | 전투 상태를 하나의 일관된 단위로 관리하도록 Battle 애그리게이트 추출 | R2-18 | 예정 |
-| **R2-20** | Rule | Battle | 재접속 시 어떤 유닛의 상태를 복원할지 식별할 수 있도록 식별자 통합 | R2-19 | 예정 |
-| **R2-21** | Rule | Battle | 연출 도중 종료되어도 전투 상태가 일관되도록 처리 순서 분리 | R2-20 | 예정 |
-| **R2-22** | Rule | Battle | 카드를 추가할 때 코드 수정 없이 데이터로 정의할 수 있도록 능력 정의 구조 도입 | R2-21 | 예정 |
-| **R2-23** | Rule | Battle | 턴 진행 규칙을 한 곳에서 읽을 수 있도록 TurnSystem 추출 | R2-19 | 예정 |
-| **R2-24** | Rendering | Battle | 화면이 상태를 직접 관리하지 않고 표시만 하도록 HUD 렌더러 정리 | R2-19 | 예정 |
+| **R2-8** | Structure | Battle Tomb, LostZone | [무덤과 로스트존 화면을 바꿀 때 한 곳만 고치도록 두 개의 그리는 작업을 하나로 통합한다](R2-8-merge-zone-renderers.md) | R2-7 | **폐기** |
+| **R2-9** | Structure | Battle 공용 | [Popup 노출 시 카드 배치 격자의 사용 용도를 파악할 수 있도록 재배치](R2-9-card-grid-popup.md) | R2-7 | **완료** |
+| **R2-10** | Structure | Battle Deck | [Your / Opponent Deck 패키지 조정](R2-10-move-deck-folders.md) | R2-9 | **완료** |
+| **R2-11** | Structure | Battle Active Panel | [액티브 패널의 공격 / 스킬1 / 스킬2 버튼 동작 패키지 조정](R2-11-move-card-actions.md) | R2-10 | **완료** |
+| **R2-12** | Structure | Battle Animation | 스킬 연출과 공격 연출 패키지 조정 (4파일 2,840줄) | R2-11 | 예정 |
+| **R2-13** | Structure | Battle Animation | [쓰지 않는 스킬 애니메이션 세 개를 옮길지 지울지 판단](R2-13-discarded-dead-animations.md) | R2-11 | **폐기** |
+| **R2-14** | Structure | Battle | 화면 위 정보와 조작 다섯 폴더를 옮긴다 (14개) | R2-13 | 예정 |
+| **R2-15** | Structure | Battle | 카드 연출 폴더를 옮긴다 (16개) | R2-14 | 예정 |
+| **R2-16** | Structure | Battle | 화면 조립 세 폴더를 옮긴다 (22개) | R2-15 | 예정 |
+| **R2-17** | Structure | Battle | 손패 다섯 폴더를 옮긴다 (55개) | R2-16 | 예정 |
+| **R2-18** | Structure | Battle | 유닛과 상태 표시 여덟 폴더를 옮긴다 (74개) | R2-17 | 예정 |
+| **R2-19** | Structure | Battle | 필드 열 폴더를 옮긴다 (75개) | R2-18 | 예정 |
+| **R2-20** | Structure | Battle | 새 데이터를 어디에 둘지 일관되게 판단할 수 있도록 저장소 책임 분류 | R2-19 | 예정 |
+| **R2-21** | Rule | Battle | 전투 상태를 하나의 일관된 단위로 관리하도록 Battle 애그리게이트 추출 | R2-20 | 예정 |
+| **R2-22** | Rule | Battle | 재접속 시 어떤 유닛의 상태를 복원할지 식별할 수 있도록 식별자 통합 | R2-21 | 예정 |
+| **R2-23** | Rule | Battle | 연출 도중 종료되어도 전투 상태가 일관되도록 처리 순서 분리 | R2-22 | 예정 |
+| **R2-24** | Rule | Battle | 카드를 추가할 때 코드 수정 없이 데이터로 정의할 수 있도록 능력 정의 구조 도입 | R2-23 | 예정 |
+| **R2-25** | Rule | Battle | 턴 진행 규칙을 한 곳에서 읽을 수 있도록 TurnSystem 추출 | R2-21 | 예정 |
+| **R2-26** | Rendering | Battle | 화면이 상태를 직접 관리하지 않고 표시만 하도록 HUD 렌더러 정리 | R2-21 | 예정 |
 
 ### Type — 무엇을 바꾸는 작업인가
 
@@ -61,21 +63,31 @@
 | Rule | 전투 규칙과 상태. 계산과 판정 | 로직 | 전 항목 |
 | Rendering | 화면에 무엇을 어떻게 그리는가 | 표시 방식 | 전 항목 |
 
-### Domain — 어느 영역을 건드리는 작업인가
+### Domain — 무엇을 건드리는 작업인가
+
+**Domain 은 규칙이 다른 단위다.** 무엇이 다른 이유로 바뀌는가로 나눈다.
 
 | Domain | 무엇 |
 |---|---|
-| Battle | 전투. 필드, 손패, 유닛, 무덤, 로스트존, 턴, 카드 능력 |
-| Deck | 덱 편성 |
+| Battle Deck | 전투 중 뽑는 더미. 순서가 있고 내가 순서를 못 정한다 |
+| Battle Tomb | 쌓이는 곳. **부활할 수 있다** |
+| Battle LostZone | 쌓이는 곳. **부활할 수 없다.** 특수 수단으로만 회수 |
+| Battle 〈나머지〉 | field, unit, hand, hud, ability, animation, view 안의 도메인은 그 카테고리를 옮길 때 정한다 |
+| Battle 공용 | 여러 도메인이 함께 쓰는 것 |
+| Deck | 덱을 짜는 화면. 전투 중의 덱과 제어 방식이 정반대다 |
 | Collection | 보유 카드 |
-| Shop | 상점 |
-| Lobby | 로비 |
-| — | 특정 영역에 속하지 않는다. 문서, 도구, 작업 방식 |
+| Shop, Lobby | |
+| — | 특정 도메인에 속하지 않는다. 문서, 도구, 작업 방식 |
 
-> **Domain 은 DDD 의 도메인이다.** 지금 이 저장소에는 도메인 객체가 사실상 없다.
-> `entity/` 폴더 190개 중 77개가 화면 객체를, 70개가 화면 좌표를 담고 있고,
-> 카드 목록을 담는 14개만이 그나마 도메인에 가깝다.
-> Battle 의 도메인 객체는 R2-19 에서 처음 만들어진다.
+> **카테고리와 도메인은 다르다.** 카테고리는 `battle/` 아래 폴더로 찾기 위한 묶음이고,
+> 도메인은 규칙이 다른 단위다. 한 카테고리 안에 도메인이 여럿일 수 있다.
+> `zone/` 안에 Deck, Tomb, LostZone 셋이 있다.
+
+> 과거에는 폴더 240개가 각각 도메인처럼 최상위에 나란히 있었다.
+> 지금 하는 일은 그것들을 카테고리로 묶는 것이다.
+
+> Battle 의 도메인 객체는 R2-21 에서 처음 만들어진다. 지금 `entity/` 190개 중
+> 대부분이 화면 객체와 좌표를 담고 있다.
 
 > Type 과 Domain 을 한 칸에 두면 설계가 흐려진다.
 > [무엇을 바꾸는 작업인가] 와 [어느 영역인가] 는 서로 다른 질문이다.

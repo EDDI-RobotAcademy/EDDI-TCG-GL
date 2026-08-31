@@ -1,6 +1,6 @@
 # [ETWGL-R2-10] Your / Opponent Deck 패키지 조정
 
-선행: R2-9 │ 후행: R2-11 │ 산출물: src/battle/zone/{your_deck, opponent_deck} │ Type: Structure │ Domain: Battle
+선행: R2-9 │ 후행: R2-11 │ 산출물: src/battle/zone/{your_deck, opponent_deck} │ Type: Structure │ Domain: Battle Deck
 
 # Success criteria
 
