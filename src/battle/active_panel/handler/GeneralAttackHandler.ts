@@ -3,24 +3,24 @@ import * as THREE from "three";
 import { GeneralAttackType } from "../../ability/entity/GeneralAttackType";
 import { MarkSceneType } from "../../../battle_field_card_attribute_mark_scene/entity/MarkSceneType";
 
-import { YourFieldCardScene } from "../../../your_field_card_scene/entity/YourFieldCardScene";
+import { YourFieldCardScene } from "../../field/your/card_scene/entity/YourFieldCardScene";
 import { DragMoveRepository } from "../../../drag_move/repository/DragMoveRepository";
 import { DragMoveRepositoryImpl } from "../../../drag_move/repository/DragMoveRepositoryImpl";
-import { YourFieldRepository } from "../../../your_field/repository/YourFieldRepository";
-import { YourFieldRepositoryImpl } from "../../../your_field/repository/YourFieldRepositoryImpl";
-import { YourFieldCardSceneRepository } from "../../../your_field_card_scene/repository/YourFieldCardSceneRepository";
-import { YourFieldCardSceneRepositoryImpl } from "../../../your_field_card_scene/repository/YourFieldCardSceneRepositoryImpl";
+import { YourFieldRepository } from "../../field/your/repository/YourFieldRepository";
+import { YourFieldRepositoryImpl } from "../../field/your/repository/YourFieldRepositoryImpl";
+import { YourFieldCardSceneRepository } from "../../field/your/card_scene/repository/YourFieldCardSceneRepository";
+import { YourFieldCardSceneRepositoryImpl } from "../../field/your/card_scene/repository/YourFieldCardSceneRepositoryImpl";
 import { BattleFieldCardAttributeMarkScene } from "../../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
 import { BattleFieldCardAttributeMarkRepository } from "../../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
 import { BattleFieldCardAttributeMarkRepositoryImpl } from "../../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
 import { BattleFieldCardAttributeMarkSceneRepository } from "../../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
 import { BattleFieldCardAttributeMarkSceneRepositoryImpl } from "../../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
-import { OpponentFieldCardSceneRepository } from "../../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepository";
-import { OpponentFieldCardSceneRepositoryImpl } from "../../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepositoryImpl";
+import { OpponentFieldCardSceneRepository } from "../../field/opponent/card_scene/repository/OpponentFieldCardSceneRepository";
+import { OpponentFieldCardSceneRepositoryImpl } from "../../field/opponent/card_scene/repository/OpponentFieldCardSceneRepositoryImpl";
 import { LeftClickHandDetectRepository } from "../../../left_click_detect/repository/LeftClickHandDetectRepository";
 import { LeftClickHandDetectRepositoryImpl } from "../../../left_click_detect/repository/LeftClickHandDetectRepositoryImpl";
-import { OpponentFieldRepository } from "../../../opponent_field/repository/OpponentFieldRepository";
-import { OpponentFieldRepositoryImpl } from "../../../opponent_field/repository/OpponentFieldRepositoryImpl";
+import { OpponentFieldRepository } from "../../field/opponent/repository/OpponentFieldRepository";
+import { OpponentFieldRepositoryImpl } from "../../field/opponent/repository/OpponentFieldRepositoryImpl";
 import { OpponentFieldCardAttributeMarkRepository } from "../../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
 import { OpponentFieldCardAttributeMarkRepositoryImpl } from "../../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
 import { OpponentFieldCardAttributeMarkSceneRepository } from "../../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
@@ -36,7 +36,7 @@ import { NeonBorderLineSceneRepository } from "../../../neon_border_line_scene/r
 import { NeonBorderLineSceneRepositoryImpl } from "../../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
 import { BattleFieldCardAttributeMark } from "../../../battle_field_card_attribute_mark/entity/BattleFieldCardAttributeMark";
 import {GeneralAttackAnimation} from "../../animation/attack/GeneralAttackAnimation";
-import {OpponentFieldCardScene} from "../../../opponent_field_card_scene/entity/OpponentFieldCardScene";
+import {OpponentFieldCardScene} from "../../field/opponent/card_scene/entity/OpponentFieldCardScene";
 import {NeonBorderHandler} from "../../../neon_border/handler/NeonBorderHandler";
 
 export class GeneralAttackHandler {

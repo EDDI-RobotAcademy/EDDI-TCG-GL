@@ -19,7 +19,7 @@ import {BattleFieldHandServiceImpl} from "../../src/battle/hand/service/BattleFi
 import {LeftClickDetectService} from "../../src/left_click_detect/service/LeftClickDetectService";
 import {DragMoveService} from "../../src/drag_move/service/DragMoveService";
 import {MouseDropService} from "../../src/mouse_drop/service/MouseDropService";
-import {YourFieldAreaServiceImpl} from "../../src/your_field_area/service/YourFieldAreaServiceImpl";
+import {YourFieldAreaServiceImpl} from "../../src/battle/field/your/area/service/YourFieldAreaServiceImpl";
 import {WindowSceneRepositoryImpl} from "../../src/window_scene/repository/WindowSceneRepositoryImpl";
 import {WindowSceneServiceImpl} from "../../src/window_scene/service/WindowSceneServiceImpl";
 import {CameraRepositoryImpl} from "../../src/camera/repository/CameraRepositoryImpl";
@@ -28,11 +28,11 @@ import {LeftClickDetectServiceImpl} from "../../src/left_click_detect/service/Le
 import {DragMoveServiceImpl} from "../../src/drag_move/service/DragMoveServiceImpl";
 import {MouseDropServiceImpl} from "../../src/mouse_drop/service/MouseDropServiceImpl";
 import {NeonShape} from "../../src/neon/NeonShape";
-import {OpponentFieldAreaServiceImpl} from "../../src/opponent_field_area/service/OpponentFieldAreaServiceImpl";
+import {OpponentFieldAreaServiceImpl} from "../../src/battle/field/opponent/area/service/OpponentFieldAreaServiceImpl";
 import {KeyboardService} from "../../src/keyboard/service/KeyboardService";
 import {KeyboardServiceImpl} from "../../src/keyboard/service/KeyboardServiceImpl";
-import {OpponentFieldMapRepositoryImpl} from "../../src/opponent_field_map/repository/OpponentFieldMapRepositoryImpl";
-import {OpponentFieldServiceImpl} from "../../src/opponent_field/service/OpponentFieldServiceImpl";
+import {OpponentFieldMapRepositoryImpl} from "../../src/battle/field/opponent/map/repository/OpponentFieldMapRepositoryImpl";
+import {OpponentFieldServiceImpl} from "../../src/battle/field/opponent/service/OpponentFieldServiceImpl";
 import {RightClickDetectServiceImpl} from "../../src/right_click_detect/service/RightClickDetectServiceImpl";
 import {RightClickDetectService} from "../../src/right_click_detect/service/RightClickDetectService";
 import {LeftClickedArea} from "../../src/left_click_detect/entity/LeftClickedArea";

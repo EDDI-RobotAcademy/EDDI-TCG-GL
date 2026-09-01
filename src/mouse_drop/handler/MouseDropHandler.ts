@@ -9,13 +9,13 @@ import {BattleFieldCardSceneRepository} from "../../battle_field_card_scene/repo
 import {
     BattleFieldCardSceneRepositoryImpl
 } from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepositoryImpl";
-import {YourFieldCardSceneRepository} from "../../your_field_card_scene/repository/YourFieldCardSceneRepository";
+import {YourFieldCardSceneRepository} from "../../battle/field/your/card_scene/repository/YourFieldCardSceneRepository";
 import {
     YourFieldCardSceneRepositoryImpl
-} from "../../your_field_card_scene/repository/YourFieldCardSceneRepositoryImpl";
-import {YourFieldRepository} from "../../your_field/repository/YourFieldRepository";
-import {YourFieldRepositoryImpl} from "../../your_field/repository/YourFieldRepositoryImpl";
-import {YourField} from "../../your_field/entity/YourField";
+} from "../../battle/field/your/card_scene/repository/YourFieldCardSceneRepositoryImpl";
+import {YourFieldRepository} from "../../battle/field/your/repository/YourFieldRepository";
+import {YourFieldRepositoryImpl} from "../../battle/field/your/repository/YourFieldRepositoryImpl";
+import {YourField} from "../../battle/field/your/entity/YourField";
 
 export class MouseDropHandler {
     private static instance: MouseDropHandler;

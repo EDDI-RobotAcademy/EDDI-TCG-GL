@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 import {LeftClickYourFieldDetectRepository} from "./LeftClickYourFieldDetectRepository";
-import {YourFieldCardScene} from "../../your_field_card_scene/entity/YourFieldCardScene";
+import {YourFieldCardScene} from "../../battle/field/your/card_scene/entity/YourFieldCardScene";
 
 export class LeftClickYourFieldDetectRepositoryImpl implements LeftClickYourFieldDetectRepository {
     private static instance: LeftClickYourFieldDetectRepositoryImpl;

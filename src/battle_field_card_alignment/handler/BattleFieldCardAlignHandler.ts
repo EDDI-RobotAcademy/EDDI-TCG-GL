@@ -1,12 +1,12 @@
 import * as THREE from "three";
 
 import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
-import {YourFieldRepositoryImpl} from "../../your_field/repository/YourFieldRepositoryImpl";
-import {YourFieldCardSceneRepositoryImpl} from "../../your_field_card_scene/repository/YourFieldCardSceneRepositoryImpl";
+import {YourFieldRepositoryImpl} from "../../battle/field/your/repository/YourFieldRepositoryImpl";
+import {YourFieldCardSceneRepositoryImpl} from "../../battle/field/your/card_scene/repository/YourFieldCardSceneRepositoryImpl";
 import {BattleFieldCardAttributeMarkRepositoryImpl} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
 import {BattleFieldCardAttributeMarkSceneRepositoryImpl} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
-import {OpponentFieldCardSceneRepositoryImpl} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepositoryImpl";
-import {OpponentFieldRepositoryImpl} from "../../opponent_field/repository/OpponentFieldRepositoryImpl";
+import {OpponentFieldCardSceneRepositoryImpl} from "../../battle/field/opponent/card_scene/repository/OpponentFieldCardSceneRepositoryImpl";
+import {OpponentFieldRepositoryImpl} from "../../battle/field/opponent/repository/OpponentFieldRepositoryImpl";
 import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
 import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
 import {LeftClickHandDetectRepositoryImpl} from "../../left_click_detect/repository/LeftClickHandDetectRepositoryImpl";
@@ -14,12 +14,12 @@ import {ActivePanelAreaRepositoryImpl} from "../../battle/active_panel/repositor
 import {NeonBorderRepositoryImpl} from "../../neon_border/repository/NeonBorderRepositoryImpl";
 import {NeonBorderLineSceneRepositoryImpl} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
 import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository";
-import {YourFieldRepository} from "../../your_field/repository/YourFieldRepository";
-import {YourFieldCardSceneRepository} from "../../your_field_card_scene/repository/YourFieldCardSceneRepository";
+import {YourFieldRepository} from "../../battle/field/your/repository/YourFieldRepository";
+import {YourFieldCardSceneRepository} from "../../battle/field/your/card_scene/repository/YourFieldCardSceneRepository";
 import {BattleFieldCardAttributeMarkRepository} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
 import {BattleFieldCardAttributeMarkSceneRepository} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
-import {OpponentFieldCardSceneRepository} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepository";
-import {OpponentFieldRepository} from "../../opponent_field/repository/OpponentFieldRepository";
+import {OpponentFieldCardSceneRepository} from "../../battle/field/opponent/card_scene/repository/OpponentFieldCardSceneRepository";
+import {OpponentFieldRepository} from "../../battle/field/opponent/repository/OpponentFieldRepository";
 import {OpponentFieldCardAttributeMarkRepository} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
 import {OpponentFieldCardAttributeMarkSceneRepository} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
 import {LeftClickHandDetectRepository} from "../../left_click_detect/repository/LeftClickHandDetectRepository";
@@ -59,7 +59,7 @@ import {
 import {
     NeonBorderLinePositionRepositoryImpl
 } from "../../neon_border_line_position/repository/NeonBorderLinePositionRepositoryImpl";
-import {YourField} from "../../your_field/entity/YourField";
+import {YourField} from "../../battle/field/your/entity/YourField";
 import {BattleFieldHandPageRepository} from "../../battle/hand/page/repository/BattleFieldHandPageRepository";
 import {BattleFieldHandPageRepositoryImpl} from "../../battle/hand/page/repository/BattleFieldHandPageRepositoryImpl";
 import {BattleFieldCardPosition} from "../../battle_field_card_position/entity/BattleFieldCardPosition";

@@ -10,8 +10,8 @@ import { BackgroundRendererV2 } from "../../src/background/renderer/BackgroundRe
 import {
     YourFieldAreaFrame,
     createDefaultYourFieldAreaFrame,
-} from "../../src/your_field_area/frame/YourFieldAreaFrame";
-import { YourFieldAreaRendererV2 } from "../../src/your_field_area/renderer/YourFieldAreaRendererV2";
+} from "../../src/battle/field/your/area/frame/YourFieldAreaFrame";
+import { YourFieldAreaRendererV2 } from "../../src/battle/field/your/area/renderer/YourFieldAreaRendererV2";
 
 const rootElement = document.getElementById('app');
 if (!rootElement) {

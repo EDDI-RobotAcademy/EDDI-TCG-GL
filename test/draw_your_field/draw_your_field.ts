@@ -35,7 +35,7 @@ import {LeftClickDetectServiceImpl} from "../../src/left_click_detect/service/Le
 import {LeftClickDetectService} from "../../src/left_click_detect/service/LeftClickDetectService";
 import {DragMoveServiceImpl} from "../../src/drag_move/service/DragMoveServiceImpl";
 import {DragMoveService} from "../../src/drag_move/service/DragMoveService";
-import {YourFieldAreaServiceImpl} from "../../src/your_field_area/service/YourFieldAreaServiceImpl";
+import {YourFieldAreaServiceImpl} from "../../src/battle/field/your/area/service/YourFieldAreaServiceImpl";
 import {CardState} from "../../src/card/state";
 import {MouseDropService} from "../../src/mouse_drop/service/MouseDropService";
 import {MouseDropServiceImpl} from "../../src/mouse_drop/service/MouseDropServiceImpl";

@@ -1,13 +1,13 @@
 import * as THREE from 'three';
 
 import { BackgroundServiceImpl } from "../../background/service/BackgroundServiceImpl";
-import { YourFieldAreaServiceImpl } from "../../your_field_area/service/YourFieldAreaServiceImpl";
-import { OpponentFieldAreaServiceImpl } from "../../opponent_field_area/service/OpponentFieldAreaServiceImpl";
+import { YourFieldAreaServiceImpl } from "../../battle/field/your/area/service/YourFieldAreaServiceImpl";
+import { OpponentFieldAreaServiceImpl } from "../../battle/field/opponent/area/service/OpponentFieldAreaServiceImpl";
 import { BattleFieldHandServiceImpl } from "../../battle/hand/service/BattleFieldHandServiceImpl";
-import { OpponentFieldServiceImpl } from "../../opponent_field/service/OpponentFieldServiceImpl";
+import { OpponentFieldServiceImpl } from "../../battle/field/opponent/service/OpponentFieldServiceImpl";
 import { BattleFieldHandMapRepositoryImpl } from "../../battle/hand/repository/BattleFieldHandMapRepositoryImpl";
 import { BattleFieldHandSceneRepository } from "../../battle_field_hand/deprecated_repository/BattleFieldHandSceneRepository";
-import { OpponentFieldMapRepositoryImpl } from "../../opponent_field_map/repository/OpponentFieldMapRepositoryImpl";
+import { OpponentFieldMapRepositoryImpl } from "../../battle/field/opponent/map/repository/OpponentFieldMapRepositoryImpl";
 import { BattleFieldHandPageServiceImpl } from "../../battle/hand/page/service/BattleFieldHandPageServiceImpl";
 import { NonBackgroundImage } from "../../shape/image/NonBackgroundImage";
 import { UnitCardGenerator } from "../../card/unit/generate";

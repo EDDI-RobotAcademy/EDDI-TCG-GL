@@ -40,7 +40,7 @@ import {BattleFieldHandServiceImpl} from "../../src/battle/hand/service/BattleFi
 import {LeftClickDetectService} from "../../src/left_click_detect/service/LeftClickDetectService";
 import {DragMoveService} from "../../src/drag_move/service/DragMoveService";
 import {MouseDropService} from "../../src/mouse_drop/service/MouseDropService";
-import {YourFieldAreaServiceImpl} from "../../src/your_field_area/service/YourFieldAreaServiceImpl";
+import {YourFieldAreaServiceImpl} from "../../src/battle/field/your/area/service/YourFieldAreaServiceImpl";
 import {WindowSceneRepositoryImpl} from "../../src/window_scene/repository/WindowSceneRepositoryImpl";
 import {WindowSceneServiceImpl} from "../../src/window_scene/service/WindowSceneServiceImpl";
 import {CameraRepositoryImpl} from "../../src/camera/repository/CameraRepositoryImpl";
