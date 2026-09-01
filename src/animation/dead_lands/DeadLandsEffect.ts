@@ -16,19 +16,30 @@ import * as THREE from "three";
 //      + bright impact flash + 12 dark shards explode outward. Maximum canvas shake.
 //   5) SETTLE (~280 ms) — shake stops, filter/transforms restored, vignette fades.
 //
-// Signature: play(targetPos, targetBounds, hudElement, canvasElement, onDrain).
+// Signature: play(targetPos, targetBounds, target, canvasElement, onDrain).
 //   - targetPos:     world-space centre of the opponent field energy area
 //   - targetBounds:  world width/height (orb + shards are sized off this, not the viewport)
-//   - hudElement:    the DOM <div> being destroyed (receives high-freq shake + filter)
+//   - target:        부서지는 대상. 떨림과 손상 정도를 받는다
 //   - canvasElement: the Three.js renderer canvas — receives the AMBIENT screen shake
 //   - onDrain:       fired at SHATTER peak so the count ticks exactly on impact
+// 부서지는 대상에게 연출이 주는 되먹임.
+//
+// 예전에는 화면 위에 얹힌 조각(DOM)만 대상이라 style 을 직접 만졌다. 지금은 캔버스 안
+// 메시도 대상이 될 수 있어서, 무엇을 하느냐만 정하고 어떻게 하는지는 대상 쪽에 맡긴다.
+export interface DeadLandsTarget {
+    // 떨림. 그 자리에서 조금씩 어긋나게 한다.
+    setOffset(dx: number, dy: number): void;
+    // 0 은 멀쩡한 상태, 1 은 균열이 열릴 때, 2 는 부서지는 순간이다.
+    setDamageLevel(level: 0 | 1 | 2): void;
+}
+
 export class DeadLandsEffect {
     constructor(private readonly scene: THREE.Scene) {}
 
     public async play(
         targetPos: THREE.Vector3,
         targetBounds: { width: number; height: number },
-        hudElement: HTMLElement,
+        target: DeadLandsTarget,
         canvasElement: HTMLElement,
         onDrain: () => void,
     ): Promise<void> {
@@ -39,10 +50,6 @@ export class DeadLandsEffect {
         // ring need to sweep across much of the screen, not just the HUD's neighbourhood.
         const diagonal = Math.sqrt(vw * vw + vh * vh);
 
-        // Save the HUD's initial transform/filter so we can restore them on cleanup.
-        const origTransform = hudElement.style.transform;
-        const origFilter    = hudElement.style.filter;
-        const origTransition = hudElement.style.transition;
 
         // Canvas shake — starts gentle in GATHER, intensifies through TEAR/SHATTER.
         // Amplitude is mutated in-place by each phase transition; a single RAF loop
@@ -119,9 +126,8 @@ export class DeadLandsEffect {
 
         // ─── TEAR: orb bursts + 4 rifts radiate + HUD shake + red filter ────────
         // Apply the DOM feedback up-front; let it run through TEAR + SHATTER.
-        hudElement.style.transition = 'filter 120ms ease-out';
-        hudElement.style.filter = 'brightness(0.55) contrast(1.2) saturate(0.6) hue-rotate(-20deg)';
-        const stopShake = this.startHudShake(hudElement, targetSize * 0.065);
+        target.setDamageLevel(1);
+        const stopShake = this.startHudShake(target, targetSize * 0.065);
         canvasShakeAmp.value = 10.0;  // big jolt as the rifts open
 
         // Spawn the 4 rifts — offset by a slight random rotation so they don't look
@@ -142,7 +148,7 @@ export class DeadLandsEffect {
         // ─── SHATTER: drain fires + shockwave + shards + bright flash ───────────
         onDrain();
         // Stronger red flash on the HUD for the peak moment.
-        hudElement.style.filter = 'brightness(0.45) contrast(1.35) saturate(0.3) hue-rotate(-30deg)';
+        target.setDamageLevel(2);
         canvasShakeAmp.value = 14.0;  // peak screen shake on shatter
         this.spawnImpactFlash(targetPos, targetSize * 2.8, 260);
         this.spawnShockwaveRing(targetPos, targetSize * 3.2, 520);
@@ -171,12 +177,10 @@ export class DeadLandsEffect {
         };
         requestAnimationFrame(settleShakeStep);
 
-        hudElement.style.filter = '';
-        hudElement.style.transform = origTransform;
+        target.setDamageLevel(0);
+        target.setOffset(0, 0);
         void this.tween(vignetteMat.uniforms.u_alpha, 0.0, 360, 'easeInQuad');
         await this.delay(280);
-        hudElement.style.transition = origTransition;
-        hudElement.style.filter = origFilter;
 
         stopCanvasShake();
         canvasElement.style.transform = '';
@@ -376,13 +380,13 @@ export class DeadLandsEffect {
     // HUD shake — high-frequency random translate on the DOM element. Returns a
     // stop function the caller invokes to halt the shake.
     // ═══════════════════════════════════════════════════════════════════════════════
-    private startHudShake(element: HTMLElement, ampPx: number): () => void {
+    private startHudShake(target: DeadLandsTarget, ampPx: number): () => void {
         let running = true;
         const step = () => {
             if (!running) return;
             const dx = (Math.random() - 0.5) * ampPx * 2;
             const dy = (Math.random() - 0.5) * ampPx * 2;
-            element.style.transform = `translate(${dx.toFixed(2)}px, ${dy.toFixed(2)}px)`;
+            target.setOffset(dx, dy);
             requestAnimationFrame(step);
         };
         requestAnimationFrame(step);
