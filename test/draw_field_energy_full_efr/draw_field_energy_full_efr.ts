@@ -125,9 +125,9 @@ import { OpponentDeckRepositoryImpl } from "../../src/battle/zone/opponent_deck/
 import {
     createDefaultTurnEndButtonFrame,
     isPointInsideTurnEndButton,
-} from "../../src/turn_end_button/frame/TurnEndButtonFrame";
-import { TurnEndButtonRendererV2 } from "../../src/turn_end_button/renderer/TurnEndButtonRendererV2";
-import { TurnStateRepositoryImpl } from "../../src/turn_state/repository/TurnStateRepositoryImpl";
+} from "../../src/battle/turn/end_button/frame/TurnEndButtonFrame";
+import { TurnEndButtonRendererV2 } from "../../src/battle/turn/end_button/renderer/TurnEndButtonRendererV2";
+import { TurnStateRepositoryImpl } from "../../src/battle/turn/state/repository/TurnStateRepositoryImpl";
 import {
     createDefaultMasterHpFrame,
     createOpponentMasterHpFrame,
@@ -140,8 +140,8 @@ declare const TWEEN: { Tween: any; Easing: any; update: (time?: number) => void 
 import { GuideMessageHudRendererV2 } from "../../src/common/guide_message/renderer/GuideMessageHudRendererV2";
 import { createDefaultSandTimerHudFrame } from "../../src/common/timer/frame/SandTimerHudFrame";
 import { SandTimerHudRendererV2 } from "../../src/common/timer/renderer/SandTimerHudRendererV2";
-import { createDefaultTurnHudFrame } from "../../src/common/turn/frame/TurnHudFrame";
-import { TurnHudRendererV2 } from "../../src/common/turn/renderer/TurnHudRendererV2";
+import { createDefaultTurnHudFrame } from "../../src/battle/turn/hud/frame/TurnHudFrame";
+import { TurnHudRendererV2 } from "../../src/battle/turn/hud/renderer/TurnHudRendererV2";
 
 const rootElement = document.getElementById('app');
 if (!rootElement) {

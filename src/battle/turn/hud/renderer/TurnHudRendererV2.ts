@@ -1,4 +1,4 @@
-import { DomFrameRenderer } from "../../../core/renderer/DomFrameRenderer";
+import { DomFrameRenderer } from "../../../../core/renderer/DomFrameRenderer";
 import { TurnHudFrame } from "../frame/TurnHudFrame";
 
 interface BuildResult {

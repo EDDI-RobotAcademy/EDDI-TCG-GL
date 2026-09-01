@@ -29,7 +29,7 @@ import {showFieldEnergyRace} from "../../../common/card_race/CardRace";
 import {showFieldEnergyCount} from "../../../common/field_energy/FieldEnergyCount";
 import {showGuideMessage} from "../../../common/guide_message/GuideMessage";
 import {showSandTimer} from "../../../common/timer/Timer";
-import {showTurn} from "../../../common/turn/Turn";
+import {showTurn} from "../../../battle/turn/hud/Turn";
 
 declare const TWEEN: {
     Tween: any;

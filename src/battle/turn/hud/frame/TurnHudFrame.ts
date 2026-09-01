@@ -1,5 +1,5 @@
 // Static "TURN N" box in the upper-right area. Values match showTurn() in
-// src/common/turn/Turn.ts (baseHeight 1080 / baseFontSize 32 for font scaling).
+// src/battle/turn/hud/Turn.ts (baseHeight 1080 / baseFontSize 32 for font scaling).
 
 export interface TurnHudFrame {
     readonly topPercent: string;
