@@ -75,7 +75,7 @@ import {
     BattleFieldHandPageRepositoryImpl
 } from "../../battle_field_hand_page/repository/BattleFieldHandPageRepositoryImpl";
 import {BattleFieldCardAlignHandler} from "../../battle_field_card_alignment/handler/BattleFieldCardAlignHandler";
-import {updateFieldEnergyCount} from "../../common/field_energy/FieldEnergyCount";
+import {updateFieldEnergyCount} from "../../battle/field_energy/your/FieldEnergyCount";
 
 export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private static instance: LeftClickDetectServiceImpl | null = null;

@@ -48,12 +48,12 @@ import { CardRace } from "../../src/card/race";
 import { CardGrade } from "../../src/card/grade";
 import { getSkillType, SkillType } from "../../src/card/SkillType";
 
-import { createDefaultFieldEnergyHudFrame } from "../../src/common/field_energy/frame/FieldEnergyHudFrame";
-import { FieldEnergyHudRendererV2 } from "../../src/common/field_energy/renderer/FieldEnergyHudRendererV2";
-import { createDefaultFieldEnergyRaceHudFrame } from "../../src/common/field_energy/frame/FieldEnergyRaceHudFrame";
-import { FieldEnergyRaceHudRendererV2 } from "../../src/common/field_energy/renderer/FieldEnergyRaceHudRendererV2";
-import { createDefaultFieldEnergyCountHudFrame } from "../../src/common/field_energy/frame/FieldEnergyCountHudFrame";
-import { FieldEnergyCountHudRendererV2 } from "../../src/common/field_energy/renderer/FieldEnergyCountHudRendererV2";
+import { createDefaultFieldEnergyHudFrame } from "../../src/battle/field_energy/your/frame/FieldEnergyHudFrame";
+import { FieldEnergyHudRendererV2 } from "../../src/battle/field_energy/your/renderer/FieldEnergyHudRendererV2";
+import { createDefaultFieldEnergyRaceHudFrame } from "../../src/battle/field_energy/your/frame/FieldEnergyRaceHudFrame";
+import { FieldEnergyRaceHudRendererV2 } from "../../src/battle/field_energy/your/renderer/FieldEnergyRaceHudRendererV2";
+import { createDefaultFieldEnergyCountHudFrame } from "../../src/battle/field_energy/your/frame/FieldEnergyCountHudFrame";
+import { FieldEnergyCountHudRendererV2 } from "../../src/battle/field_energy/your/renderer/FieldEnergyCountHudRendererV2";
 
 import {
     createAllyNeonBorderFrame,
@@ -114,8 +114,8 @@ import { OpponentTombPanelRendererV2 } from "../../src/battle/zone/opponent_tomb
 import {
     computeOpponentFieldEnergyBounds,
     createDefaultOpponentFieldEnergyAreaFrame,
-} from "../../src/opponent_field_energy/frame/OpponentFieldEnergyAreaFrame";
-import { OpponentFieldEnergyAreaRendererV2 } from "../../src/opponent_field_energy/renderer/OpponentFieldEnergyAreaRendererV2";
+} from "../../src/battle/field_energy/opponent/frame/OpponentFieldEnergyAreaFrame";
+import { OpponentFieldEnergyAreaRendererV2 } from "../../src/battle/field_energy/opponent/renderer/OpponentFieldEnergyAreaRendererV2";
 import { OpponentTombRepositoryImpl } from "../../src/battle/zone/opponent_tomb/repository/OpponentTombRepositoryImpl";
 import { createDefaultOpponentLostZonePopupFrame } from "../../src/battle/zone/opponent_lost_zone/frame/OpponentLostZonePopupFrame";
 import { OpponentLostZonePanelRendererV2 } from "../../src/battle/zone/opponent_lost_zone/renderer/OpponentLostZonePanelRendererV2";

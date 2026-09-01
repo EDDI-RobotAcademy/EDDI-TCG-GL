@@ -1,4 +1,4 @@
-import { DomFrameRenderer } from "../../../core/renderer/DomFrameRenderer";
+import { DomFrameRenderer } from "../../../../core/renderer/DomFrameRenderer";
 import { FieldEnergyCountHudFrame } from "../frame/FieldEnergyCountHudFrame";
 
 export class FieldEnergyCountHudRendererV2 implements DomFrameRenderer<FieldEnergyCountHudFrame> {

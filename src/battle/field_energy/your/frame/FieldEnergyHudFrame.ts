@@ -1,5 +1,5 @@
 // Frame for the field-energy HUD element — a fixed-position container holding a background
-// image and a centered numeric label. Mirrors showFieldEnergy() in src/common/field_energy/FieldEnergy.ts:
+// image and a centered numeric label. Mirrors showFieldEnergy() in src/battle/field_energy/your/FieldEnergy.ts:
 //   container: top 82.4%, left 90.4%, width 7.2%
 //   label:     baseFont 48 at baseViewportHeight 1080, verticalOffsetRatio 0.1
 //   image:     resource/battle_field/field_energy/field_energy_button.png

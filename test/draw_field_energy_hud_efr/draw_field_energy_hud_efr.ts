@@ -30,12 +30,12 @@ import { getCardById } from "../../src/card/utility";
 import { CardJob } from "../../src/card/job";
 import { CardKind } from "../../src/card/kind";
 
-import { createDefaultFieldEnergyHudFrame } from "../../src/common/field_energy/frame/FieldEnergyHudFrame";
-import { FieldEnergyHudRendererV2 } from "../../src/common/field_energy/renderer/FieldEnergyHudRendererV2";
-import { createDefaultFieldEnergyRaceHudFrame } from "../../src/common/field_energy/frame/FieldEnergyRaceHudFrame";
-import { FieldEnergyRaceHudRendererV2 } from "../../src/common/field_energy/renderer/FieldEnergyRaceHudRendererV2";
-import { createDefaultFieldEnergyCountHudFrame } from "../../src/common/field_energy/frame/FieldEnergyCountHudFrame";
-import { FieldEnergyCountHudRendererV2 } from "../../src/common/field_energy/renderer/FieldEnergyCountHudRendererV2";
+import { createDefaultFieldEnergyHudFrame } from "../../src/battle/field_energy/your/frame/FieldEnergyHudFrame";
+import { FieldEnergyHudRendererV2 } from "../../src/battle/field_energy/your/renderer/FieldEnergyHudRendererV2";
+import { createDefaultFieldEnergyRaceHudFrame } from "../../src/battle/field_energy/your/frame/FieldEnergyRaceHudFrame";
+import { FieldEnergyRaceHudRendererV2 } from "../../src/battle/field_energy/your/renderer/FieldEnergyRaceHudRendererV2";
+import { createDefaultFieldEnergyCountHudFrame } from "../../src/battle/field_energy/your/frame/FieldEnergyCountHudFrame";
+import { FieldEnergyCountHudRendererV2 } from "../../src/battle/field_energy/your/renderer/FieldEnergyCountHudRendererV2";
 
 const rootElement = document.getElementById('app');
 if (!rootElement) {
