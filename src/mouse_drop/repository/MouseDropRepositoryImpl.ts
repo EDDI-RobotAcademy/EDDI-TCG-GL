@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {MouseDropFieldRepository} from "./MouseDropRepository";
-import {YourFieldAreaRepository} from "../../your_field_area/repository/YourFieldAreaRepository";
-import {YourFieldAreaRepositoryImpl} from "../../your_field_area/repository/YourFieldAreaRepositoryImpl";
+import {YourFieldAreaRepository} from "../../battle/field/your/area/repository/YourFieldAreaRepository";
+import {YourFieldAreaRepositoryImpl} from "../../battle/field/your/area/repository/YourFieldAreaRepositoryImpl";
 import {BattleFieldCardScene} from "../../battle_field_card_scene/entity/BattleFieldCardScene";
 
 export class MouseDropFieldRepositoryImpl implements MouseDropFieldRepository {

@@ -13,14 +13,14 @@ import {ActivePanelAreaRepository} from "../../battle/active_panel/repository/Ac
 import {ActivePanelAreaRepositoryImpl} from "../../battle/active_panel/repository/ActivePanelAreaRepositoryImpl";
 import {BattleFieldCardScene} from "../../battle_field_card_scene/entity/BattleFieldCardScene";
 import {getCardById} from "../../card/utility";
-import {YourFieldRepository} from "../../your_field/repository/YourFieldRepository";
-import {YourFieldRepositoryImpl} from "../../your_field/repository/YourFieldRepositoryImpl";
-import {YourFieldMapRepository} from "../../your_field_map/repository/YourFieldMapRepository";
-import {YourFieldMapRepositoryImpl} from "../../your_field_map/repository/YourFieldMapRepositoryImpl";
+import {YourFieldRepository} from "../../battle/field/your/repository/YourFieldRepository";
+import {YourFieldRepositoryImpl} from "../../battle/field/your/repository/YourFieldRepositoryImpl";
+import {YourFieldMapRepository} from "../../battle/field/your/map/repository/YourFieldMapRepository";
+import {YourFieldMapRepositoryImpl} from "../../battle/field/your/map/repository/YourFieldMapRepositoryImpl";
 import {
     YourFieldCardSceneRepositoryImpl
-} from "../../your_field_card_scene/repository/YourFieldCardSceneRepositoryImpl";
-import {YourFieldCardSceneRepository} from "../../your_field_card_scene/repository/YourFieldCardSceneRepository";
+} from "../../battle/field/your/card_scene/repository/YourFieldCardSceneRepositoryImpl";
+import {YourFieldCardSceneRepository} from "../../battle/field/your/card_scene/repository/YourFieldCardSceneRepository";
 
 export class RightClickDetectServiceImpl implements RightClickDetectService {
     private static instance: RightClickDetectServiceImpl | null = null;

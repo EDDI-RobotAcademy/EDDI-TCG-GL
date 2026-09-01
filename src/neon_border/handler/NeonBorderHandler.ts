@@ -8,26 +8,26 @@ import {NeonBorderRepositoryImpl} from "../repository/NeonBorderRepositoryImpl";
 import {
     NeonBorderLineSceneRepositoryImpl
 } from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
-import {YourFieldCardScene} from "../../your_field_card_scene/entity/YourFieldCardScene";
+import {YourFieldCardScene} from "../../battle/field/your/card_scene/entity/YourFieldCardScene";
 import {ClickableCard} from "../../left_click_detect/service/ClickableCard";
 import { ActivePanelAreaRepository } from "src/battle/active_panel/repository/ActivePanelAreaRepository";
 import {ActivePanelAreaRepositoryImpl} from "../../battle/active_panel/repository/ActivePanelAreaRepositoryImpl";
 import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository";
 import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
-import {YourFieldRepository} from "../../your_field/repository/YourFieldRepository";
-import {YourFieldRepositoryImpl} from "../../your_field/repository/YourFieldRepositoryImpl";
+import {YourFieldRepository} from "../../battle/field/your/repository/YourFieldRepository";
+import {YourFieldRepositoryImpl} from "../../battle/field/your/repository/YourFieldRepositoryImpl";
 import {NeonBorder} from "../entity/NeonBorder";
 import {NeonBorderLineScene} from "../../neon_border_line_scene/entity/NeonBorderLineScene";
 import {NeonBorderLinePosition} from "../../neon_border_line_position/entity/NeonBorderLinePosition";
 import {Vector2d} from "../../common/math/Vector2d";
-import {OpponentFieldRepository} from "../../opponent_field/repository/OpponentFieldRepository";
-import {OpponentFieldRepositoryImpl} from "../../opponent_field/repository/OpponentFieldRepositoryImpl";
+import {OpponentFieldRepository} from "../../battle/field/opponent/repository/OpponentFieldRepository";
+import {OpponentFieldRepositoryImpl} from "../../battle/field/opponent/repository/OpponentFieldRepositoryImpl";
 import {
     OpponentFieldCardSceneRepository
-} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepository";
+} from "../../battle/field/opponent/card_scene/repository/OpponentFieldCardSceneRepository";
 import {
     OpponentFieldCardSceneRepositoryImpl
-} from "../../opponent_field_card_scene/repository/OpponentFieldCradSceneRepositoryImpl";
+} from "../../battle/field/opponent/card_scene/repository/OpponentFieldCardSceneRepositoryImpl";
 import {NeonShape} from "../../neon/NeonShape";
 import {
     NeonBorderLinePositionRepository

@@ -6,8 +6,8 @@ import { AnimationLoop } from "../../src/core/animation/AnimationLoop";
 import { createBattleFieldBackgroundFrame } from "../../src/background/frame/BackgroundFrame";
 import { BackgroundRendererV2 } from "../../src/background/renderer/BackgroundRendererV2";
 
-import { createDefaultYourFieldAreaFrame } from "../../src/your_field_area/frame/YourFieldAreaFrame";
-import { YourFieldAreaRendererV2 } from "../../src/your_field_area/renderer/YourFieldAreaRendererV2";
+import { createDefaultYourFieldAreaFrame } from "../../src/battle/field/your/area/frame/YourFieldAreaFrame";
+import { YourFieldAreaRendererV2 } from "../../src/battle/field/your/area/renderer/YourFieldAreaRendererV2";
 
 import { BattleFieldHandMapRepositoryImpl } from "../../src/battle/hand/repository/BattleFieldHandMapRepositoryImpl";
 import { HandCard } from "../../src/battle/hand/entity/HandCard";

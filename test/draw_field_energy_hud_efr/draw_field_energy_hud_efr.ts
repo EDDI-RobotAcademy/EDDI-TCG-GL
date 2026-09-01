@@ -9,12 +9,12 @@ import { BackgroundRendererV2 } from "../../src/background/renderer/BackgroundRe
 import {
     createDefaultYourFieldAreaFrame,
     computeYourFieldAreaBounds,
-} from "../../src/your_field_area/frame/YourFieldAreaFrame";
-import { YourFieldAreaRendererV2 } from "../../src/your_field_area/renderer/YourFieldAreaRendererV2";
+} from "../../src/battle/field/your/area/frame/YourFieldAreaFrame";
+import { YourFieldAreaRendererV2 } from "../../src/battle/field/your/area/renderer/YourFieldAreaRendererV2";
 import {
     createDefaultPlacedCardPlacementFrame,
     computePlacedCardPosition,
-} from "../../src/your_field_area/frame/PlacedCardPlacementFrame";
+} from "../../src/battle/field/your/area/frame/PlacedCardPlacementFrame";
 
 import { BattleFieldHandMapRepositoryImpl } from "../../src/battle/hand/repository/BattleFieldHandMapRepositoryImpl";
 import { HandCard } from "../../src/battle/hand/entity/HandCard";

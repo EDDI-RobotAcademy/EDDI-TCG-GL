@@ -11,18 +11,18 @@ import { BackgroundRendererV2 } from "../../src/background/renderer/BackgroundRe
 import {
     createDefaultYourFieldAreaFrame,
     computeYourFieldAreaBounds,
-} from "../../src/your_field_area/frame/YourFieldAreaFrame";
-import { YourFieldAreaRendererV2 } from "../../src/your_field_area/renderer/YourFieldAreaRendererV2";
+} from "../../src/battle/field/your/area/frame/YourFieldAreaFrame";
+import { YourFieldAreaRendererV2 } from "../../src/battle/field/your/area/renderer/YourFieldAreaRendererV2";
 import {
     createDefaultPlacedCardPlacementFrame,
     computePlacedCardPosition,
-} from "../../src/your_field_area/frame/PlacedCardPlacementFrame";
+} from "../../src/battle/field/your/area/frame/PlacedCardPlacementFrame";
 
-import { createDefaultOpponentFieldAreaFrame } from "../../src/opponent_field_area/frame/OpponentFieldAreaFrame";
-import { OpponentFieldAreaRendererV2 } from "../../src/opponent_field_area/renderer/OpponentFieldAreaRendererV2";
-import { createDefaultOpponentFieldLayoutFrame, computeOpponentFieldCardCenter } from "../../src/opponent_field/frame/OpponentFieldLayoutFrame";
-import { OpponentFieldRendererV2 } from "../../src/opponent_field/renderer/OpponentFieldRendererV2";
-import { OpponentFieldMapRepositoryImpl } from "../../src/opponent_field_map/repository/OpponentFieldMapRepositoryImpl";
+import { createDefaultOpponentFieldAreaFrame } from "../../src/battle/field/opponent/area/frame/OpponentFieldAreaFrame";
+import { OpponentFieldAreaRendererV2 } from "../../src/battle/field/opponent/area/renderer/OpponentFieldAreaRendererV2";
+import { createDefaultOpponentFieldLayoutFrame, computeOpponentFieldCardCenter } from "../../src/battle/field/opponent/frame/OpponentFieldLayoutFrame";
+import { OpponentFieldRendererV2 } from "../../src/battle/field/opponent/renderer/OpponentFieldRendererV2";
+import { OpponentFieldMapRepositoryImpl } from "../../src/battle/field/opponent/map/repository/OpponentFieldMapRepositoryImpl";
 
 import { BattleFieldHandMapRepositoryImpl } from "../../src/battle/hand/repository/BattleFieldHandMapRepositoryImpl";
 import { YourDeckRepositoryImpl } from "../../src/battle/zone/your_deck/repository/YourDeckRepositoryImpl";
@@ -117,6 +117,7 @@ import {
     createDefaultOpponentFieldEnergyAreaFrame,
 } from "../../src/battle/field_energy/opponent/frame/OpponentFieldEnergyAreaFrame";
 import { OpponentFieldEnergyAreaRendererV2 } from "../../src/battle/field_energy/opponent/renderer/OpponentFieldEnergyAreaRendererV2";
+import { OpponentFieldEnergyHudRendererV2 } from "../../src/battle/field_energy/opponent/renderer/OpponentFieldEnergyHudRendererV2";
 import { OpponentTombRepositoryImpl } from "../../src/battle/zone/opponent_tomb/repository/OpponentTombRepositoryImpl";
 import { createDefaultOpponentLostZonePopupFrame } from "../../src/battle/zone/opponent_lost_zone/frame/OpponentLostZonePopupFrame";
 import { OpponentLostZonePanelRendererV2 } from "../../src/battle/zone/opponent_lost_zone/renderer/OpponentLostZonePanelRendererV2";
@@ -3347,13 +3348,13 @@ async function main(container: HTMLElement): Promise<void> {
                             void deadLandsEffect.play(
                                 targetWorld,
                                 { width: bounds.width, height: bounds.height },
-                                opponentEnergyElement,
+                                opponentEnergyTarget,
                                 rendererManager.getDomElement(),
                                 () => {
                                     const prev = opponentAvailableEnergy;
                                     opponentAvailableEnergy = Math.max(0, prev - DEAD_LANDS_DRAIN);
                                     opponentEnergyRenderer.setEnergy(opponentAvailableEnergy);
-                                    opponentEnergyRenderer.update(opponentEnergyFrame, opponentEnergyElement, window.innerWidth, window.innerHeight);
+                                    opponentEnergyRenderer.refresh(opponentFieldEnergyAreaFrame, opponentEnergyGroup, window.innerWidth, window.innerHeight);
                                     console.log(`[dead-lands] opponent field energy ${prev} → ${opponentAvailableEnergy} (drained ${prev - opponentAvailableEnergy})`);
                                 },
                             );
@@ -3503,17 +3504,6 @@ async function main(container: HTMLElement): Promise<void> {
     // static TOP edge at 82.4% vh. This matches the opponent shaded-area mesh whose
     // stable anchor is also bottomEdgeYRatio = 0.176.
     let opponentAvailableEnergy = 15;
-    const opponentEnergyFrame = {
-        ...createDefaultFieldEnergyHudFrame(),
-        // topPercent is left as-is; the style override below replaces it with a
-        // bottom-edge anchor (topPercent becomes irrelevant post-override).
-        leftPercent: '2.4%',
-    };
-    const opponentEnergyRenderer = new FieldEnergyHudRendererV2(opponentAvailableEnergy);
-    const opponentEnergyElement = await opponentEnergyRenderer.build(opponentEnergyFrame);
-    opponentEnergyElement.style.top = 'auto';
-    opponentEnergyElement.style.bottom = '82.4%';
-    document.body.appendChild(opponentEnergyElement);
 
     // Opponent field-energy SHADED AREA — a Three.js mesh at the 180°-mirror of the
     // player's Field Energy HUD. This is the visual target for the upcoming 죽음의 대지
@@ -3524,6 +3514,21 @@ async function main(container: HTMLElement): Promise<void> {
     const opponentFieldEnergyAreaGroup =
         await opponentFieldEnergyAreaRenderer.build(opponentFieldEnergyAreaFrame);
     scene.add(opponentFieldEnergyAreaGroup);
+
+    // 상대 패널과 숫자는 캔버스 안에 그린다. 화면 위에 얹는 조각(DOM)으로 두면 죽음의
+    // 대지 연출이 그 뒤에서 돌아 무엇이 부서지는지 보이지 않는다.
+    // 자리와 크기는 위 영역 프레임이 이미 재고 있어 그대로 쓴다.
+    const opponentEnergyRenderer = new OpponentFieldEnergyHudRendererV2(opponentAvailableEnergy);
+    const opponentEnergyGroup = await opponentEnergyRenderer.build(opponentFieldEnergyAreaFrame);
+    scene.add(opponentEnergyGroup);
+
+    // 죽음의 대지가 부서지는 대상에게 주는 되먹임을 캔버스 안 패널로 넘긴다.
+    const opponentEnergyTarget = {
+        setOffset: (dx: number, dy: number) =>
+            opponentEnergyRenderer.setOffset(opponentEnergyGroup, dx, dy),
+        setDamageLevel: (level: 0 | 1 | 2) =>
+            opponentEnergyRenderer.setDamageLevel(opponentEnergyGroup, level),
+    };
 
     const raceFrame = createDefaultFieldEnergyRaceHudFrame(1);
     const raceRenderer = new FieldEnergyRaceHudRendererV2();
@@ -3820,7 +3825,7 @@ async function main(container: HTMLElement): Promise<void> {
         handPageButtonsRenderer.resize(handPageButtonsFrame, handPageButtonsGroup, width, height);
 
         energyRenderer.update(energyFrame, energyElement, width, height);
-        opponentEnergyRenderer.update(opponentEnergyFrame, opponentEnergyElement, width, height);
+        opponentEnergyRenderer.resize(opponentFieldEnergyAreaFrame, opponentEnergyGroup, width, height);
         opponentFieldEnergyAreaRenderer.resize(opponentFieldEnergyAreaFrame, opponentFieldEnergyAreaGroup, width, height);
         raceRenderer.update(raceFrame, raceElement, width, height);
         countRenderer.update(countFrame, countElement, width, height);
