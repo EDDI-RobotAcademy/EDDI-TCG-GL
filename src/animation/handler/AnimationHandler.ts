@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 import {AnimationType} from "../entity/AnimationType";
-import {SlashCutEffect} from "../sword/SlashCutEffect";
+import {SlashCutEffect} from "../../battle/animation/attack/weapon/SlashCutEffect";
 
 export class AnimationHandler {
     private static instance: AnimationHandler;

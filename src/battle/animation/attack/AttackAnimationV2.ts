@@ -1,5 +1,6 @@
 import * as THREE from "three";
-import { BattleFieldConstants } from "../../common/BattleFieldConstants";
+import { BattleFieldConstants } from "../../../common/BattleFieldConstants";
+import { createSkillSlotFrame } from "../../../animation/skill/frame/SkillSlotFrame";
 
 declare const TWEEN: {
     Tween: any;
@@ -46,8 +47,7 @@ export class AttackAnimationV2 {
         const w = window.innerWidth;
         const h = window.innerHeight;
 
-        const skillPanelX = 0;
-        const skillPanelY = (0.5 - 0.78221649) * h;
+        const { x: skillPanelX, y: skillPanelY } = createSkillSlotFrame(h);
         const origPos = attackerGroup.position.clone();
 
         // Phase 1: Card moves to skill panel
@@ -1696,9 +1696,7 @@ export class AttackAnimationV2 {
         const cardW = CWR * window.innerWidth;
 
         // Legacy: card moves to skill panel position (center-bottom, near ally base)
-        // CardSkillMotion.SKILL_POSITION_X = 0, SKILL_POSITION_Y = (0.5 - 0.78221649) * h
-        const skillPanelX = 0;
-        const skillPanelY = (0.5 - 0.78221649) * window.innerHeight;
+        const { x: skillPanelX, y: skillPanelY } = createSkillSlotFrame(window.innerHeight);
 
         const origPos = attackerGroup.position.clone();
 

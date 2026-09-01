@@ -1,5 +1,7 @@
 import * as THREE from "three";
 
+import { createSkillSlotFrame } from "../skill/frame/SkillSlotFrame";
+
 declare const TWEEN: {
     Tween: any;
     Easing: any;
@@ -11,8 +13,10 @@ declare const TWEEN: {
 // 효과가 무엇인지, 언제 도는지 모른다. 그것은 SkillPlayback 이 정한다.
 // 이 파일이 바뀌는 이유는 카드가 어디로 얼마나 빨리 가는지가 달라질 때뿐이다.
 export class CardSkillMotion {
-    private static readonly SKILL_POSITION_X = 0;
-    private static readonly SKILL_POSITION_Y = (0.5 - 0.78221649) * window.innerHeight;
+    // 파일을 읽을 때 한 번 잰다. 창 크기를 바꿔도 다시 재지 않는다.
+    private static readonly SLOT = createSkillSlotFrame(window.innerHeight);
+    private static readonly SKILL_POSITION_X = CardSkillMotion.SLOT.x;
+    private static readonly SKILL_POSITION_Y = CardSkillMotion.SLOT.y;
 
     // 카드를 스킬 자리로 옮긴다. 원위치는 userData.originPos 에 남긴다.
     public static async moveToSkillPosition(cardGroup: THREE.Group, duration: number): Promise<void> {
