@@ -78,8 +78,15 @@ battle_field_card_attribute_mark_position opponent_field_card_attribute_mark_pos
 battle_field_card_attribute_mark_scene    opponent_field_card_attribute_mark_scene
 ```
 
-속성 마크를 손패가 아니라 유닛에 넣은 이유는, 필드에 나온 카드의 상태를 표시하는 것이기
-때문이다. 손패 카드에는 속성 마크가 붙지 않는다.
+처음에는 속성 마크를 유닛에 넣고 [필드에 나온 카드의 상태를 표시하는 것이라 손패에는
+붙지 않는다] 고 적었다. **틀렸다.** 손패 카드에도 붙는다. 상태 값에 HAND 가 있고,
+손패 전용 관리자가 따로 있고, 손패 서비스가 부른다.
+
+속성 마크는 카드에 붙어 손패든 필드든 무덤이든 따라다니는 것이다. 그래서 유닛이 아니라
+[카드에 붙어 따라다니는 것] 묶음으로 옮겼다. R2-40, R2-44 다.
+
+이 절에서 실제로 유닛인 것은 battle_field_unit 한 폴더 11파일뿐이다. master_hp 는
+본체 체력이라 필드 위 유닛과 다르다.
 
 ### hand — 손패 (폴더 5개, 파일 30개, 2,425줄)
 

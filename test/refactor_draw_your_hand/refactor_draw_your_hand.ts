@@ -5,11 +5,11 @@ import {TextureManager} from "../../src/texture_manager/TextureManager";
 import {NonBackgroundImage} from "../../src/shape/image/NonBackgroundImage";
 import {AudioController} from "../../src/audio/AudioController";
 import {MouseController} from "../../src/mouse/MouseController";
-import {BattleFieldUnitRepository} from "../../src/battle_field_unit/repository/BattleFieldUnitRepository";
+import {BattleFieldUnitRepository} from "../../src/battle/unit/repository/BattleFieldUnitRepository";
 
-import {BattleFieldUnitScene} from "../../src/battle_field_unit/scene/BattleFieldUnitScene";
+import {BattleFieldUnitScene} from "../../src/battle/unit/scene/BattleFieldUnitScene";
 import {ResourceManager} from "../../src/resouce_manager/ResourceManager";
-import {BattleFieldUnitRenderer} from "../../src/battle_field_unit/renderer/BattleFieldUnitRenderer";
+import {BattleFieldUnitRenderer} from "../../src/battle/unit/renderer/BattleFieldUnitRenderer";
 
 import {BattleFieldHandSceneRepository} from "../../src/battle_field_hand/deprecated_repository/BattleFieldHandSceneRepository";
 import {BattleFieldHandPositionRepository} from "../../src/battle_field_hand/deprecated_repository/BattleFieldHandPositionRepository";

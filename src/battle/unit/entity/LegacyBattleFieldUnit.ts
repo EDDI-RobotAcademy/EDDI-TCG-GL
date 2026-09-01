@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { ResourceManager } from "../../resouce_manager/ResourceManager";
-import { LegacyNonBackgroundImage } from "../../shape/image/LegacyNonBackgroundImage";
+import { ResourceManager } from "../../../resouce_manager/ResourceManager";
+import { LegacyNonBackgroundImage } from "../../../shape/image/LegacyNonBackgroundImage";
 
 interface PlacedLocation {
     card: THREE.Vector2;

@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import {NonBackgroundImage} from "../shape/image/NonBackgroundImage";
 import {CardState} from "../card/state";
-import {BattleFieldUnit} from "../battle_field_unit/entity/BattleFieldUnit";
-import {BattleFieldUnitRepository} from "../battle_field_unit/repository/BattleFieldUnitRepository";
+import {BattleFieldUnit} from "../battle/unit/entity/BattleFieldUnit";
+import {BattleFieldUnitRepository} from "../battle/unit/repository/BattleFieldUnitRepository";
 import {getCardById} from "../card/utility";
 import {Vector2d} from "../common/math/Vector2d";
 import {UnitCardGenerator} from "../card/unit/generate";

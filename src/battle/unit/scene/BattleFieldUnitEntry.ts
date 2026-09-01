@@ -1,5 +1,5 @@
 import { BattleFieldUnit } from "../entity/BattleFieldUnit";
-import { LegacyNonBackgroundImage } from "../../shape/image/LegacyNonBackgroundImage";
+import { LegacyNonBackgroundImage } from "../../../shape/image/LegacyNonBackgroundImage";
 
 export interface BattleFieldUnitEntry {
     unit: BattleFieldUnit;

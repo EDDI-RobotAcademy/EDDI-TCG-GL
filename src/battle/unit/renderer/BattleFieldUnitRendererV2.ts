@@ -1,10 +1,10 @@
 import * as THREE from "three";
 
-import { Vector2d } from "../../common/math/Vector2d";
-import { EntityRenderer } from "../../core/renderer/EntityRenderer";
-import { resolveAnchorPoint } from "../../core/frame/Anchor";
-import { SlotSpec } from "../../core/frame/SlotSpec";
-import { ResourceManager } from "../../resouce_manager/ResourceManager";
+import { Vector2d } from "../../../common/math/Vector2d";
+import { EntityRenderer } from "../../../core/renderer/EntityRenderer";
+import { resolveAnchorPoint } from "../../../core/frame/Anchor";
+import { SlotSpec } from "../../../core/frame/SlotSpec";
+import { ResourceManager } from "../../../resouce_manager/ResourceManager";
 import { BattleFieldUnit } from "../entity/BattleFieldUnit";
 import { UnitFrame } from "../frame/UnitFrame";
 

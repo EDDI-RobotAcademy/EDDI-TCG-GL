@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import { BattleFieldUnitRenderer } from '../../battle_field_unit/renderer/BattleFieldUnitRenderer';
-import { BattleFieldUnitScene } from '../../battle_field_unit/scene/BattleFieldUnitScene';
+import { BattleFieldUnitRenderer } from '../../battle/unit/renderer/BattleFieldUnitRenderer';
+import { BattleFieldUnitScene } from '../../battle/unit/scene/BattleFieldUnitScene';
 import { ResourceManager } from '../../resouce_manager/ResourceManager';
 import { LegacyNonBackgroundImage } from '../../shape/image/LegacyNonBackgroundImage';
-import {BattleFieldUnitRepository} from "../../battle_field_unit/repository/BattleFieldUnitRepository";
+import {BattleFieldUnitRepository} from "../../battle/unit/repository/BattleFieldUnitRepository";
 import {BattleFieldBackgroundService} from "../../battle_field/service/BattleFieldBackgroundService";
 import {BattleFieldBackgroundScene} from "../../battle_field/scene/BattleFieldBackgroundScene";
 import {BattleFieldBackgroundRenderer} from "../../battle_field/renderer/BattleFieldBackgroundRenderer";

@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import {MainRenderer} from "../../src/main/renderer/MainRenderer";
-import {BattleFieldUnitRepository} from "../../src/battle_field_unit/repository/BattleFieldUnitRepository";
+import {BattleFieldUnitRepository} from "../../src/battle/unit/repository/BattleFieldUnitRepository";
 import {Vector2d} from "../../src/common/math/Vector2d";
-import {BattleFieldUnit} from "../../src/battle_field_unit/entity/BattleFieldUnit";
+import {BattleFieldUnit} from "../../src/battle/unit/entity/BattleFieldUnit";
 
 // HTML 파일의 body 요소에 Three.js 캔버스를 렌더링
 const container = document.body;
