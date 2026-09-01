@@ -9,12 +9,12 @@ import {TextureManager} from "../../src/texture_manager/TextureManager";
 import {NonBackgroundImage} from "../../src/shape/image/NonBackgroundImage";
 import {AudioController} from "../../src/audio/AudioController";
 import {MouseController} from "../../src/mouse/MouseController";
-import {BattleFieldUnitRepository} from "../../src/battle_field_unit/repository/BattleFieldUnitRepository";
+import {BattleFieldUnitRepository} from "../../src/battle/unit/repository/BattleFieldUnitRepository";
 import {Vector2d} from "../../src/common/math/Vector2d";
-import {BattleFieldUnit} from "../../src/battle_field_unit/entity/BattleFieldUnit";
-import {BattleFieldUnitScene} from "../../src/battle_field_unit/scene/BattleFieldUnitScene";
+import {BattleFieldUnit} from "../../src/battle/unit/entity/BattleFieldUnit";
+import {BattleFieldUnitScene} from "../../src/battle/unit/scene/BattleFieldUnitScene";
 import {ResourceManager} from "../../src/resouce_manager/ResourceManager";
-import {BattleFieldUnitRenderer} from "../../src/battle_field_unit/renderer/BattleFieldUnitRenderer";
+import {BattleFieldUnitRenderer} from "../../src/battle/unit/renderer/BattleFieldUnitRenderer";
 
 export class TCGJustTestBattleFieldView {
     private static instance: TCGJustTestBattleFieldView | null = null;

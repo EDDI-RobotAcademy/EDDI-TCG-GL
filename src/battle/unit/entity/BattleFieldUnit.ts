@@ -1,4 +1,4 @@
-import {Vector2d} from "../../common/math/Vector2d";
+import {Vector2d} from "../../../common/math/Vector2d";
 import {ExtraUsefulEffectInfo} from "./ExtraUsefulEffectInfo";
 import {HarmfulEffectInfo} from "./HarmfulEffectInfo";
 import {AttachedEnergyInfo} from "./AttachedEnergyInfo";

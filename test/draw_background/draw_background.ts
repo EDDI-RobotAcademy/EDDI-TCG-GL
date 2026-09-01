@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { ResourceManager } from "../../src/resouce_manager/ResourceManager";
-import { LegacyBattleFieldUnit } from "../../src/battle_field_unit/entity/LegacyBattleFieldUnit";
+import { LegacyBattleFieldUnit } from "../../src/battle/unit/entity/LegacyBattleFieldUnit";
 import {LegacyNonBackgroundImage} from "../../src/shape/image/LegacyNonBackgroundImage";
 
 const container = document.body;

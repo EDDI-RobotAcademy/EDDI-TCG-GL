@@ -1,6 +1,6 @@
-import { Vector2d } from "../../common/math/Vector2d";
-import { Frame } from "../../core/frame/Frame";
-import { SlotSpec } from "../../core/frame/SlotSpec";
+import { Vector2d } from "../../../common/math/Vector2d";
+import { Frame } from "../../../core/frame/Frame";
+import { SlotSpec } from "../../../core/frame/SlotSpec";
 
 export const UNIT_SLOT_IDS = {
     WEAPON: 'weapon',

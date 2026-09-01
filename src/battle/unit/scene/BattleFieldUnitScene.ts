@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {BattleFieldUnit} from "../entity/BattleFieldUnit";
-import {ResourceManager} from "../../resouce_manager/ResourceManager";
-import {LegacyNonBackgroundImage} from "../../shape/image/LegacyNonBackgroundImage";
+import {ResourceManager} from "../../../resouce_manager/ResourceManager";
+import {LegacyNonBackgroundImage} from "../../../shape/image/LegacyNonBackgroundImage";
 import {BattleFieldUnitEntry} from "./BattleFieldUnitEntry";
 
 export class BattleFieldUnitScene {

@@ -1,9 +1,9 @@
 import * as THREE from 'three'
 import {BattleFieldUnitRepository} from "../repository/BattleFieldUnitRepository";
-import {ResourceManager} from "../../resouce_manager/ResourceManager";
+import {ResourceManager} from "../../../resouce_manager/ResourceManager";
 import {BattleFieldUnitScene} from "../scene/BattleFieldUnitScene";
 import {BattleFieldUnit} from "../entity/BattleFieldUnit";
-import {LegacyNonBackgroundImage} from "../../shape/image/LegacyNonBackgroundImage";
+import {LegacyNonBackgroundImage} from "../../../shape/image/LegacyNonBackgroundImage";
 
 export class BattleFieldUnitRenderer {
     private unitScene: BattleFieldUnitScene

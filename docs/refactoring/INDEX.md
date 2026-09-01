@@ -45,7 +45,7 @@
 | **R2-18** | Structure | Battle Animation | [일반 공격 연출 패키지 조정 (검, 지팡이)](R2-18-move-general-attack.md) | R2-30 | **완료** |
 | **R2-19** | Structure | Battle | [전투 화면 중 사용되지 않는 파일 삭제](R2-19-delete-unused-battle-view.md) | R2-18 | **완료** |
 | **R2-20** | Structure | Battle Hand | [손패 패키지 조정 (두 폴더, 20파일)](R2-20-move-hand.md) | R2-19 | **완료** |
-| **R2-21** | Structure | Battle | 유닛과 상태 표시 패키지 조정 (여덟 폴더, 35파일) | R2-20 | 예정 |
+| **R2-21** | Structure | Battle Unit | [유닛 패키지 조정 (11파일)](R2-21-move-unit.md) | R2-20 | **완료** |
 | **R2-22** | Structure | Battle | 카드를 놓는 자리와 좌표 패키지 조정 (열 폴더, 41파일) | R2-21 | 예정 |
 | **R2-23** | Structure | Battle | 새 데이터를 어디에 둘지 일관되게 판단할 수 있도록 저장소 책임 분류 | R2-22 | 예정 |
 | **R2-24** | Rule | Battle | 전투 상태를 하나의 일관된 단위로 관리하도록 Battle 애그리게이트 추출 | R2-23 | 예정 |
@@ -64,9 +64,11 @@
 | **R2-37** | Structure | Battle | 전투 화면 조립 패키지 조정 (실제로 도는 두 화면) | R2-19 | 예정 |
 | **R2-38** | Structure | Battle | 전투 배경 패키지 조정 (배경 다섯 파일) | R2-37 | 예정 |
 | **R2-39** | Rule | Lobby | 로비의 게임 입장 버튼이 눌리도록 등록되지 않은 경로 정리 | — | 예정 |
-| **R2-40** | Structure | Battle | 필드 카드 자리와 장면 패키지 조정 | R2-22 | 예정 |
+| **R2-40** | Structure | Battle | 카드에 붙어 따라다니는 것 패키지 조정 (여섯 폴더) | R2-22 | 예정 |
 | **R2-41** | Structure | Battle | 손패와 필드 정렬을 갈라 각자 자리로 보낸다 | R2-40 | 예정 |
 | **R2-42** | Strategy | Battle | 이름만 deprecated 인 저장소 세 개의 처지 결정 | — | 예정 |
+| **R2-43** | Structure | Battle | 본체 체력 패키지 조정 (2파일) | — | 예정 |
+| **R2-44** | Structure | Battle | 상대 필드 카드 표시 패키지 조정 (세 폴더, 11파일) | R2-22 | 예정 |
 
 ### Type — 무엇을 바꾸는 작업인가
 

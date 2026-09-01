@@ -6,7 +6,7 @@ import { CardJob } from "../job";
 import { UserWindowSize } from "../../window_size/WindowSize";
 import {CardState} from "../state";
 import {CardStateManager} from "../CardStateManager";
-import {BattleFieldUnitRepository} from "../../battle_field_unit/repository/BattleFieldUnitRepository";
+import {BattleFieldUnitRepository} from "../../battle/unit/repository/BattleFieldUnitRepository";
 import {LegacyDragAndDropManager} from "../../drag_and_drop/LegacyDragAndDropManager";
 
 // interface CardInitialInfo {

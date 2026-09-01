@@ -4,9 +4,9 @@ import { RendererManager } from "../../src/core/renderer/RendererManager";
 import { SceneManager } from "../../src/core/scene/SceneManager";
 import { AnimationLoop } from "../../src/core/animation/AnimationLoop";
 import { ResourceManager } from "../../src/resouce_manager/ResourceManager";
-import { BattleFieldUnit } from "../../src/battle_field_unit/entity/BattleFieldUnit";
-import { createDefaultUnitFrame } from "../../src/battle_field_unit/frame/UnitFrame";
-import { BattleFieldUnitRendererV2 } from "../../src/battle_field_unit/renderer/BattleFieldUnitRendererV2";
+import { BattleFieldUnit } from "../../src/battle/unit/entity/BattleFieldUnit";
+import { createDefaultUnitFrame } from "../../src/battle/unit/frame/UnitFrame";
+import { BattleFieldUnitRendererV2 } from "../../src/battle/unit/renderer/BattleFieldUnitRendererV2";
 
 const rootElement = document.getElementById('app');
 if (!rootElement) {

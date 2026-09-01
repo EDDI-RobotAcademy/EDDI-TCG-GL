@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import { ResourceManager } from "../../src/resouce_manager/ResourceManager";
 import {LegacyNonBackgroundImage} from "../../src/shape/image/LegacyNonBackgroundImage";
-import {BattleFieldUnitScene} from "../../src/battle_field_unit/scene/BattleFieldUnitScene";
-import {BattleFieldUnitRenderer} from "../../src/battle_field_unit/renderer/BattleFieldUnitRenderer";
-import {BattleFieldUnitRepository} from "../../src/battle_field_unit/repository/BattleFieldUnitRepository";
+import {BattleFieldUnitScene} from "../../src/battle/unit/scene/BattleFieldUnitScene";
+import {BattleFieldUnitRenderer} from "../../src/battle/unit/renderer/BattleFieldUnitRenderer";
+import {BattleFieldUnitRepository} from "../../src/battle/unit/repository/BattleFieldUnitRepository";
 import {Vector2d} from "../../src/common/math/Vector2d";
-import {BattleFieldUnit} from "../../src/battle_field_unit/entity/BattleFieldUnit";
+import {BattleFieldUnit} from "../../src/battle/unit/entity/BattleFieldUnit";
 import {MouseController} from "../../src/mouse/MouseController";
 
 const container = document.body;

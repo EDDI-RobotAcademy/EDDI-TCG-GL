@@ -111,7 +111,7 @@
 
 import * as THREE from 'three';
 import { ResourceManager } from "../../src/resouce_manager/ResourceManager";
-import { LegacyBattleFieldUnit } from "../../src/battle_field_unit/entity/LegacyBattleFieldUnit";
+import { LegacyBattleFieldUnit } from "../../src/battle/unit/entity/LegacyBattleFieldUnit";
 
 // HTML 파일의 body 요소에 Three.js 캔버스를 렌더링
 const container = document.body;
