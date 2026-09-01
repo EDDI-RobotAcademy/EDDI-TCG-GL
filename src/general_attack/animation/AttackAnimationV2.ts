@@ -1696,7 +1696,7 @@ export class AttackAnimationV2 {
         const cardW = CWR * window.innerWidth;
 
         // Legacy: card moves to skill panel position (center-bottom, near ally base)
-        // SkillPanelAnimator.SKILL_PANEL_X = 0, SKILL_PANEL_Y = (0.5 - 0.78221649) * h
+        // CardSkillMotion.SKILL_POSITION_X = 0, SKILL_POSITION_Y = (0.5 - 0.78221649) * h
         const skillPanelX = 0;
         const skillPanelY = (0.5 - 0.78221649) * window.innerHeight;
 

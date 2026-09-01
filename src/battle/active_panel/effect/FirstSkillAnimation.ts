@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import {SkillPanelAnimator} from "../../../skill_panel_animator/SkillPanelAnimator";
+import {SkillPlayback} from "../../../animation/skill/SkillPlayback";
 import {NetherBladeFirstPassiveEffect} from "../../../animation/nether_blade/NetherBladeFirstPassiveEffect";
 
 // Card-ID gate: 마검의 지배자 네더 블레이드. When this card is the attacker, the
@@ -34,7 +34,7 @@ export class FirstSkillAnimation {
         targetX?: number,
         targetY?: number,
     ): Promise<void> {
-        await SkillPanelAnimator.playSkillSequence(
+        await SkillPlayback.play(
             yourCardGroup,
             this.buildEffectCallback(yourCardGroup, attackerCardId, targetX, targetY),
             1000
@@ -60,7 +60,7 @@ export class FirstSkillAnimation {
         targetX?: number,
         targetY?: number,
     ): Promise<void> {
-        await SkillPanelAnimator.playSkillSequence(
+        await SkillPlayback.play(
             yourCardGroup,
             this.buildEffectCallback(yourCardGroup, attackerCardId, targetX, targetY),
             1000

@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import {SkillPanelAnimator} from "../../../skill_panel_animator/SkillPanelAnimator";
+import {SkillPlayback} from "../../../animation/skill/SkillPlayback";
 import {NetherBladeFirstPassiveEffect} from "../../../animation/nether_blade/NetherBladeFirstPassiveEffect";
 
 // Per-card hooks for the second-skill panel sequence. When the attacker's cardId
@@ -30,7 +30,7 @@ export class SecondSkillAnimation {
         targetX?: number,
         targetY?: number,
     ): Promise<void> {
-        await SkillPanelAnimator.playSkillSequence(
+        await SkillPlayback.play(
             yourCardGroup,
             this.buildSingleTargetCallback(yourCardGroup, attackerCardId, targetX, targetY),
             1000
@@ -44,7 +44,7 @@ export class SecondSkillAnimation {
         targetX?: number,
         targetY?: number,
     ): Promise<void> {
-        await SkillPanelAnimator.playSkillSequence(
+        await SkillPlayback.play(
             yourCardGroup,
             this.buildSingleTargetCallback(yourCardGroup, attackerCardId, targetX, targetY),
             1000
@@ -58,7 +58,7 @@ export class SecondSkillAnimation {
         targetWorldPositions?: readonly THREE.Vector3[],
     ): Promise<void> {
         console.log(`[SecondSkillAnimation] AOE entry — attackerCardId=${attackerCardId}, hasTargets=${!!targetWorldPositions?.length}`);
-        await SkillPanelAnimator.playSkillSequence(
+        await SkillPlayback.play(
             yourCardGroup,
             this.buildAoeCallback(yourCardGroup, attackerCardId, targetWorldPositions),
             1000
