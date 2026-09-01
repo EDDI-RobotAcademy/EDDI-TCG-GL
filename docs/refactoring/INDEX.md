@@ -42,7 +42,7 @@
 | **R2-15** | Structure | Battle Animation | [스킬 연출 패키지 조정](R2-15-move-skill-playback.md) | R2-14 | **완료** |
 | **R2-16** | Structure | Battle Turn | [턴 소유, 턴 표시, 턴 종료 버튼 패키지 조정](R2-16-move-turn.md) | R2-15 | **완료** |
 | **R2-17** | Structure | Battle Field Energy | [내 필드 에너지, 상대 필드 에너지 패키지 조정](R2-17-move-field-energy.md) | R2-16 | **완료** |
-| **R2-18** | Structure | Battle Animation | 카드 연출을 옮긴다. src/animation/ 15개 + 공격 연출 2개 | R2-17 | 예정 |
+| **R2-18** | Structure | Battle Animation | [일반 공격 연출 패키지 조정 (검, 지팡이)](R2-18-move-general-attack.md) | R2-30 | **완료** |
 | **R2-19** | Structure | Battle | 화면 조립 세 폴더를 옮긴다 (22개) | R2-18 | 예정 |
 | **R2-20** | Structure | Battle | 손패 다섯 폴더를 옮긴다 (55개) | R2-19 | 예정 |
 | **R2-21** | Structure | Battle | 유닛과 상태 표시 여덟 폴더를 옮긴다 (74개) | R2-20 | 예정 |
@@ -54,6 +54,13 @@
 | **R2-27** | Rule | Battle | 카드를 추가할 때 코드 수정 없이 데이터로 정의할 수 있도록 능력 정의 구조 도입 | R2-26 | 예정 |
 | **R2-28** | Rule | Battle | 턴 진행 규칙을 한 곳에서 읽을 수 있도록 TurnSystem 추출 | R2-24 | 예정 |
 | **R2-29** | Rendering | Battle | 화면이 상태를 직접 관리하지 않고 표시만 하도록 HUD 렌더러 정리 | R2-24 | 예정 |
+| **R2-30** | Structure | Battle Animation | [스킬 자리 좌표를 한 곳에서 읽게 한다](R2-30-share-skill-slot.md) | R2-17 | **완료** |
+| **R2-31** | Structure | Battle Animation | 유닛 카드 등장 연출 패키지 조정 (네더 블레이드) | R2-18 | 예정 |
+| **R2-32** | Structure | Battle Animation | 유닛 카드 스킬 연출 패키지 조정 (네더 블레이드) | R2-31 | 예정 |
+| **R2-33** | Structure | Battle Animation | 아이템 카드 연출 패키지 조정 (죽음의 낫 외 다섯 장) | R2-32 | 예정 |
+| **R2-34** | Structure | Battle Animation | 에너지 카드 연출 패키지 조정 (넘쳐흐르는 사기 외 세 장) | R2-33 | 예정 |
+| **R2-35** | Rendering | Battle Animation | 카드를 스킬 자리로 옮기는 네 벌의 코드를 한 벌로 모은다 | R2-34 | 예정 |
+| **R2-36** | Rule | Battle Animation | 덱 편성 화면이 전투 연출을 만들지 않도록 AnimationHandler 정리 | R2-35 | 예정 |
 
 ### Type — 무엇을 바꾸는 작업인가
 

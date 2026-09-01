@@ -35,7 +35,7 @@ import { NeonBorderRepository } from "../../../neon_border/repository/NeonBorder
 import { NeonBorderLineSceneRepository } from "../../../neon_border_line_scene/repository/NeonBorderLineSceneRepository";
 import { NeonBorderLineSceneRepositoryImpl } from "../../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
 import { BattleFieldCardAttributeMark } from "../../../battle_field_card_attribute_mark/entity/BattleFieldCardAttributeMark";
-import {GeneralAttackAnimation} from "../../../general_attack/animation/GeneralAttackAnimation";
+import {GeneralAttackAnimation} from "../../animation/attack/GeneralAttackAnimation";
 import {OpponentFieldCardScene} from "../../../opponent_field_card_scene/entity/OpponentFieldCardScene";
 import {NeonBorderHandler} from "../../../neon_border/handler/NeonBorderHandler";
 
