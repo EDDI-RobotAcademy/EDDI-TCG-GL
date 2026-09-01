@@ -1,4 +1,4 @@
-import {IdGenerator} from "../../common/id_generator/IdGenerator";
+import {IdGenerator} from "../../../common/id_generator/IdGenerator";
 
 export class BattleFieldHand {
     id: number;

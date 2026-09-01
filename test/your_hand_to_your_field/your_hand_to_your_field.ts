@@ -22,13 +22,13 @@ import { BattleFieldHandPositionRepository } from "../../src/battle_field_hand/d
 
 import { UserWindowSize } from "../../src/window_size/WindowSize";
 import { UnitCardGenerator } from "../../src/card/unit/generate";
-import { BattleFieldHandMapRepository } from "../../src/battle_field_hand/repository/BattleFieldHandMapRepository";
+import { BattleFieldHandMapRepository } from "../../src/battle/hand/repository/BattleFieldHandMapRepository";
 import { SupportCardGenerator } from "../../src/card/support/generate";
 import { ItemCardGenerator } from "../../src/card/item/generate";
 import { EnergyCardGenerator } from "../../src/card/energy/generate";
 import {LegacyDragAndDropManager} from "../../src/drag_and_drop/LegacyDragAndDropManager";
 import {CardState} from "../../src/card/state";
-import {BattleFieldHandMapRepositoryImpl} from "../../src/battle_field_hand/repository/BattleFieldHandMapRepositoryImpl";
+import {BattleFieldHandMapRepositoryImpl} from "../../src/battle/hand/repository/BattleFieldHandMapRepositoryImpl";
 
 let selectedGroup: THREE.Object3D[] = [];
 let selectedObject: NonBackgroundImage | null = null;

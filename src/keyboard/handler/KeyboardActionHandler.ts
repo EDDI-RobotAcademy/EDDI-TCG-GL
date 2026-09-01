@@ -1,8 +1,8 @@
 import { KeyboardAction } from "../entity/KeyboardAction";
-import {BattleFieldHandMapRepository} from "../../battle_field_hand/repository/BattleFieldHandMapRepository";
-import {BattleFieldHandMapRepositoryImpl} from "../../battle_field_hand/repository/BattleFieldHandMapRepositoryImpl";
-import {BattleFieldHandRepository} from "../../battle_field_hand/repository/BattleFieldHandRepository";
-import {BattleFieldHandRepositoryImpl} from "../../battle_field_hand/repository/BattleFieldHandRepositoryImpl";
+import {BattleFieldHandMapRepository} from "../../battle/hand/repository/BattleFieldHandMapRepository";
+import {BattleFieldHandMapRepositoryImpl} from "../../battle/hand/repository/BattleFieldHandMapRepositoryImpl";
+import {BattleFieldHandRepository} from "../../battle/hand/repository/BattleFieldHandRepository";
+import {BattleFieldHandRepositoryImpl} from "../../battle/hand/repository/BattleFieldHandRepositoryImpl";
 import * as THREE from "three";
 import {CardJob} from "../../card/job";
 import {CardKind} from "../../card/kind";
@@ -57,10 +57,10 @@ import {
     BattleFieldCardAttributeMarkSceneRepositoryImpl
 } from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
 import {BattleFieldCardAlignHandler} from "../../battle_field_card_alignment/handler/BattleFieldCardAlignHandler";
-import {BattleFieldHandPageRepository} from "../../battle_field_hand_page/repository/BattleFieldHandPageRepository";
+import {BattleFieldHandPageRepository} from "../../battle/hand/page/repository/BattleFieldHandPageRepository";
 import {
     BattleFieldHandPageRepositoryImpl
-} from "../../battle_field_hand_page/repository/BattleFieldHandPageRepositoryImpl";
+} from "../../battle/hand/page/repository/BattleFieldHandPageRepositoryImpl";
 
 
 export class KeyboardActionHandler {

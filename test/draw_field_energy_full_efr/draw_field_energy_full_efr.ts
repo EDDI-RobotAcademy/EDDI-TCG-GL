@@ -24,20 +24,20 @@ import { createDefaultOpponentFieldLayoutFrame, computeOpponentFieldCardCenter }
 import { OpponentFieldRendererV2 } from "../../src/opponent_field/renderer/OpponentFieldRendererV2";
 import { OpponentFieldMapRepositoryImpl } from "../../src/opponent_field_map/repository/OpponentFieldMapRepositoryImpl";
 
-import { BattleFieldHandMapRepositoryImpl } from "../../src/battle_field_hand/repository/BattleFieldHandMapRepositoryImpl";
+import { BattleFieldHandMapRepositoryImpl } from "../../src/battle/hand/repository/BattleFieldHandMapRepositoryImpl";
 import { YourDeckRepositoryImpl } from "../../src/battle/zone/your_deck/repository/YourDeckRepositoryImpl";
-import { HandCard } from "../../src/battle_field_hand/entity/HandCard";
-import { HandEntry } from "../../src/battle_field_hand/renderer/BattleFieldHandRendererV2";
-import { createDefaultHandCardFrame } from "../../src/battle_field_hand/frame/HandCardFrame";
+import { HandCard } from "../../src/battle/hand/entity/HandCard";
+import { HandEntry } from "../../src/battle/hand/renderer/BattleFieldHandRendererV2";
+import { createDefaultHandCardFrame } from "../../src/battle/hand/frame/HandCardFrame";
 import {
     createDefaultBattleFieldHandLayoutFrame,
     computeHandCardCenter,
-} from "../../src/battle_field_hand/frame/BattleFieldHandLayoutFrame";
-import { BattleFieldHandRendererV2 } from "../../src/battle_field_hand/renderer/BattleFieldHandRendererV2";
-import { HandInteractionBridge } from "../../src/battle_field_hand/interaction/HandInteractionBridge";
+} from "../../src/battle/hand/frame/BattleFieldHandLayoutFrame";
+import { BattleFieldHandRendererV2 } from "../../src/battle/hand/renderer/BattleFieldHandRendererV2";
+import { HandInteractionBridge } from "../../src/battle/hand/interaction/HandInteractionBridge";
 
-import { createDefaultHandPageButtonsFrame } from "../../src/battle_field_hand_page/frame/HandPageButtonsFrame";
-import { HandPageButtonsRendererV2 } from "../../src/battle_field_hand_page/renderer/HandPageButtonsRendererV2";
+import { createDefaultHandPageButtonsFrame } from "../../src/battle/hand/page/frame/HandPageButtonsFrame";
+import { HandPageButtonsRendererV2 } from "../../src/battle/hand/page/renderer/HandPageButtonsRendererV2";
 
 import * as THREE from "three";
 

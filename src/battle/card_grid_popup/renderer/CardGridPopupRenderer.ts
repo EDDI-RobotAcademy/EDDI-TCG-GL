@@ -12,9 +12,9 @@
 
 import * as THREE from "three";
 
-import { HandCard } from "../../../battle_field_hand/entity/HandCard";
-import { HandCardFrame, createDefaultHandCardFrame } from "../../../battle_field_hand/frame/HandCardFrame";
-import { HandCardRendererV2 } from "../../../battle_field_hand/renderer/HandCardRendererV2";
+import { HandCard } from "../../hand/entity/HandCard";
+import { HandCardFrame, createDefaultHandCardFrame } from "../../hand/frame/HandCardFrame";
+import { HandCardRendererV2 } from "../../hand/renderer/HandCardRendererV2";
 
 import {
     CardGridPopupFrame,

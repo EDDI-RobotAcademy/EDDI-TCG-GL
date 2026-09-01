@@ -12,10 +12,10 @@ import {UnitCardGenerator} from "../../src/card/unit/generate";
 import {SupportCardGenerator} from "../../src/card/support/generate";
 import {ItemCardGenerator} from "../../src/card/item/generate";
 import {EnergyCardGenerator} from "../../src/card/energy/generate";
-import {BattleFieldHandMapRepositoryImpl} from "../../src/battle_field_hand/repository/BattleFieldHandMapRepositoryImpl";
+import {BattleFieldHandMapRepositoryImpl} from "../../src/battle/hand/repository/BattleFieldHandMapRepositoryImpl";
 
 import {BackgroundServiceImpl} from "../../src/background/service/BackgroundServiceImpl";
-import {BattleFieldHandServiceImpl} from "../../src/battle_field_hand/service/BattleFieldHandServiceImpl";
+import {BattleFieldHandServiceImpl} from "../../src/battle/hand/service/BattleFieldHandServiceImpl";
 import {LeftClickDetectService} from "../../src/left_click_detect/service/LeftClickDetectService";
 import {DragMoveService} from "../../src/drag_move/service/DragMoveService";
 import {MouseDropService} from "../../src/mouse_drop/service/MouseDropService";
@@ -36,8 +36,8 @@ import {OpponentFieldServiceImpl} from "../../src/opponent_field/service/Opponen
 import {RightClickDetectServiceImpl} from "../../src/right_click_detect/service/RightClickDetectServiceImpl";
 import {RightClickDetectService} from "../../src/right_click_detect/service/RightClickDetectService";
 import {LeftClickedArea} from "../../src/left_click_detect/entity/LeftClickedArea";
-import {BattleFieldHandPageServiceImpl} from "../../src/battle_field_hand_page/service/BattleFieldHandPageServiceImpl";
-import {BattleFieldHandPageService} from "../../src/battle_field_hand_page/service/BattleFieldHandPageService";
+import {BattleFieldHandPageServiceImpl} from "../../src/battle/hand/page/service/BattleFieldHandPageServiceImpl";
+import {BattleFieldHandPageService} from "../../src/battle/hand/page/service/BattleFieldHandPageService";
 import {showGuideMessage} from "../../src/common/guide_message/GuideMessage";
 import {showSandTimer} from "../../src/common/timer/Timer";
 import {showTurn} from "../../src/battle/turn/hud/Turn";

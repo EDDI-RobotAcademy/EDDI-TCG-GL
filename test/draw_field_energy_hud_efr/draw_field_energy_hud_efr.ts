@@ -16,15 +16,15 @@ import {
     computePlacedCardPosition,
 } from "../../src/your_field_area/frame/PlacedCardPlacementFrame";
 
-import { BattleFieldHandMapRepositoryImpl } from "../../src/battle_field_hand/repository/BattleFieldHandMapRepositoryImpl";
-import { HandCard } from "../../src/battle_field_hand/entity/HandCard";
-import { createDefaultHandCardFrame } from "../../src/battle_field_hand/frame/HandCardFrame";
+import { BattleFieldHandMapRepositoryImpl } from "../../src/battle/hand/repository/BattleFieldHandMapRepositoryImpl";
+import { HandCard } from "../../src/battle/hand/entity/HandCard";
+import { createDefaultHandCardFrame } from "../../src/battle/hand/frame/HandCardFrame";
 import {
     createDefaultBattleFieldHandLayoutFrame,
     computeHandCardCenter,
-} from "../../src/battle_field_hand/frame/BattleFieldHandLayoutFrame";
-import { BattleFieldHandRendererV2 } from "../../src/battle_field_hand/renderer/BattleFieldHandRendererV2";
-import { HandInteractionBridge } from "../../src/battle_field_hand/interaction/HandInteractionBridge";
+} from "../../src/battle/hand/frame/BattleFieldHandLayoutFrame";
+import { BattleFieldHandRendererV2 } from "../../src/battle/hand/renderer/BattleFieldHandRendererV2";
+import { HandInteractionBridge } from "../../src/battle/hand/interaction/HandInteractionBridge";
 
 import { getCardById } from "../../src/card/utility";
 import { CardJob } from "../../src/card/job";

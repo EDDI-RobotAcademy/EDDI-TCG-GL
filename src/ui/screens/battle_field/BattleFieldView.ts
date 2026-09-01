@@ -15,7 +15,7 @@ import {UserWindowSize} from "../../../window_size/WindowSize";
 import {BackgroundServiceImpl} from "../../../background/service/BackgroundServiceImpl";
 import {YourFieldAreaServiceImpl} from "../../../your_field_area/service/YourFieldAreaServiceImpl";
 import {OpponentFieldAreaServiceImpl} from "../../../opponent_field_area/service/OpponentFieldAreaServiceImpl";
-import {BattleFieldHandServiceImpl} from "../../../battle_field_hand/service/BattleFieldHandServiceImpl";
+import {BattleFieldHandServiceImpl} from "../../../battle/hand/service/BattleFieldHandServiceImpl";
 import {OpponentFieldServiceImpl} from "../../../opponent_field/service/OpponentFieldServiceImpl";
 import {MouseInputHandler} from "../../../mouse/MouseInputHandler";
 import {LeftClickDetectServiceImpl} from "../../../left_click_detect/service/LeftClickDetectServiceImpl";

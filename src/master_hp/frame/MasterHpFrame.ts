@@ -1,4 +1,4 @@
-import { createDefaultHandCardFrame } from "../../battle_field_hand/frame/HandCardFrame";
+import { createDefaultHandCardFrame } from "../../battle/hand/frame/HandCardFrame";
 
 // 메인 캐릭터(본체) HP 표기의 배치 스펙.
 // 수치는 이미지에 새겨져 있고(resource/battle_field_unit/hp/{hp}.png), 프레임은
