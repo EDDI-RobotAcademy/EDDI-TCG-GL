@@ -40,7 +40,7 @@ import {BattleFieldHandPageServiceImpl} from "../../src/battle_field_hand_page/s
 import {BattleFieldHandPageService} from "../../src/battle_field_hand_page/service/BattleFieldHandPageService";
 import {showGuideMessage} from "../../src/common/guide_message/GuideMessage";
 import {showSandTimer} from "../../src/common/timer/Timer";
-import {showTurn} from "../../src/common/turn/Turn";
+import {showTurn} from "../../src/battle/turn/hud/Turn";
 import {showFieldEnergy} from "../../src/common/field_energy/FieldEnergy";
 import {showFieldEnergyRace} from "../../src/common/card_race/CardRace";
 import {showFieldEnergyCount} from "../../src/common/field_energy/FieldEnergyCount";
