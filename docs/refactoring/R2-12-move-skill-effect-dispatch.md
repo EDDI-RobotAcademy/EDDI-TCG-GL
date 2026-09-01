@@ -18,7 +18,7 @@
     - 옮기는 것
         - FirstSkillAnimation (109줄), SecondSkillAnimation (162줄)
     - 건드리지 않는 것
-        - 파일 이름 - 이동과 이름 변경을 섞으면 무엇 때문에 깨졌는지 가릴 수 없다. 어차피 R2-25 에서 CardAbility 의 effect 로 대체되며 사라진다
+        - 파일 이름 - 이동과 이름 변경을 섞으면 무엇 때문에 깨졌는지 가릴 수 없다. 어차피 R2-33 에서 CardAbility 의 effect 로 대체되며 사라진다
         - AttackAnimationV2 (2,301줄), GeneralAttackAnimation (268줄) - 진짜 연출이다. src/animation/ 으로 가야 하는데, 그 폴더 자체가 R2-15 에서 battle 로 옮겨진다. 먼저 옮기면 두 번 옮기게 된다. **R2-15 범위에 넣는다**
         - 파일 안의 코드 - 위치와 경로만 바꾼다
 
