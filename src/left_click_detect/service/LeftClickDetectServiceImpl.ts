@@ -10,8 +10,8 @@ import * as THREE from "three";
 
 import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository";
 import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
-import {BattleFieldHandRepository} from "../../battle_field_hand/repository/BattleFieldHandRepository";
-import {BattleFieldHandRepositoryImpl} from "../../battle_field_hand/repository/BattleFieldHandRepositoryImpl";
+import {BattleFieldHandRepository} from "../../battle/hand/repository/BattleFieldHandRepository";
+import {BattleFieldHandRepositoryImpl} from "../../battle/hand/repository/BattleFieldHandRepositoryImpl";
 import {BattleFieldCardAttributeMarkSceneRepository} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
 import {BattleFieldCardAttributeMarkSceneRepositoryImpl} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
 import {BattleFieldCardAttributeMarkScene} from "../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
@@ -70,10 +70,10 @@ import {BattleFieldCommonAreaType} from "../../common/type/BattleFieldCommonArea
 import {NeonBorderHandler} from "../../neon_border/handler/NeonBorderHandler";
 import {OpponentFieldCardScene} from "../../opponent_field_card_scene/entity/OpponentFieldCardScene";
 import {BattleFieldConstants} from "../../common/BattleFieldConstants";
-import {BattleFieldHandPageRepository} from "../../battle_field_hand_page/repository/BattleFieldHandPageRepository";
+import {BattleFieldHandPageRepository} from "../../battle/hand/page/repository/BattleFieldHandPageRepository";
 import {
     BattleFieldHandPageRepositoryImpl
-} from "../../battle_field_hand_page/repository/BattleFieldHandPageRepositoryImpl";
+} from "../../battle/hand/page/repository/BattleFieldHandPageRepositoryImpl";
 import {BattleFieldCardAlignHandler} from "../../battle_field_card_alignment/handler/BattleFieldCardAlignHandler";
 import {updateFieldEnergyCount} from "../../battle/field_energy/your/FieldEnergyCount";
 

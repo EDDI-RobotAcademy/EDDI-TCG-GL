@@ -3,8 +3,8 @@ import * as THREE from "three";
 import {CardKind} from "../../card/kind";
 import {BattleFieldCardScene} from "../../battle_field_card_scene/entity/BattleFieldCardScene";
 import {getCardById} from "../../card/utility";
-import {BattleFieldHandRepository} from "../../battle_field_hand/repository/BattleFieldHandRepository";
-import {BattleFieldHandRepositoryImpl} from "../../battle_field_hand/repository/BattleFieldHandRepositoryImpl";
+import {BattleFieldHandRepository} from "../../battle/hand/repository/BattleFieldHandRepository";
+import {BattleFieldHandRepositoryImpl} from "../../battle/hand/repository/BattleFieldHandRepositoryImpl";
 import {BattleFieldCardSceneRepository} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepository";
 import {
     BattleFieldCardSceneRepositoryImpl

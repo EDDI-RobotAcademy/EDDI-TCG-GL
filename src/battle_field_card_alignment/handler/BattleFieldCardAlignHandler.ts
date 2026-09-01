@@ -30,14 +30,14 @@ import {NeonBorderLineSceneRepository} from "../../neon_border_line_scene/reposi
 import {NeonBorderHandler} from "../../neon_border/handler/NeonBorderHandler";
 
 import {AttributeMarkPositionCalculator} from "../../common/attribute_mark/AttributeMarkPositionCalculator";
-import {BattleFieldHandRepositoryImpl} from "../../battle_field_hand/repository/BattleFieldHandRepositoryImpl";
+import {BattleFieldHandRepositoryImpl} from "../../battle/hand/repository/BattleFieldHandRepositoryImpl";
 import {
     BattleFieldHandCardPositionRepositoryImpl
 } from "../../battle_field_card_position/repository/BattleFieldHandCardPositionRepositoryImpl";
 import {
     BattleFieldCardSceneRepositoryImpl
 } from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepositoryImpl";
-import {BattleFieldHandRepository} from "../../battle_field_hand/repository/BattleFieldHandRepository";
+import {BattleFieldHandRepository} from "../../battle/hand/repository/BattleFieldHandRepository";
 import {
     BattleFieldHandCardPositionRepository
 } from "../../battle_field_card_position/repository/BattleFieldHandCardPositionRepository";
@@ -60,10 +60,10 @@ import {
     NeonBorderLinePositionRepositoryImpl
 } from "../../neon_border_line_position/repository/NeonBorderLinePositionRepositoryImpl";
 import {YourField} from "../../your_field/entity/YourField";
-import {BattleFieldHandPageRepository} from "../../battle_field_hand_page/repository/BattleFieldHandPageRepository";
-import {BattleFieldHandPageRepositoryImpl} from "../../battle_field_hand_page/repository/BattleFieldHandPageRepositoryImpl";
+import {BattleFieldHandPageRepository} from "../../battle/hand/page/repository/BattleFieldHandPageRepository";
+import {BattleFieldHandPageRepositoryImpl} from "../../battle/hand/page/repository/BattleFieldHandPageRepositoryImpl";
 import {BattleFieldCardPosition} from "../../battle_field_card_position/entity/BattleFieldCardPosition";
-import {BattleFieldHand} from "../../battle_field_hand/entity/BattleFieldHand";
+import {BattleFieldHand} from "../../battle/hand/entity/BattleFieldHand";
 
 export class BattleFieldCardAlignHandler {
     private static instance: BattleFieldCardAlignHandler;

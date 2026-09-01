@@ -1,9 +1,9 @@
 import { BattleFieldCardAttributeMark } from "../../../battle_field_card_attribute_mark/entity/BattleFieldCardAttributeMark";
 import { BattleFieldCardAttributeMarkScene } from "../../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
-import {BattleFieldHandRepository} from "../../../battle_field_hand/repository/BattleFieldHandRepository";
+import {BattleFieldHandRepository} from "../../../battle/hand/repository/BattleFieldHandRepository";
 import {BattleFieldCardAttributeMarkRepository} from "../../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
 import {BattleFieldCardAttributeMarkSceneRepository} from "../../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
-import {BattleFieldHandRepositoryImpl} from "../../../battle_field_hand/repository/BattleFieldHandRepositoryImpl";
+import {BattleFieldHandRepositoryImpl} from "../../../battle/hand/repository/BattleFieldHandRepositoryImpl";
 import {BattleFieldCardAttributeMarkRepositoryImpl} from "../../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
 import {BattleFieldCardAttributeMarkSceneRepositoryImpl} from "../../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
 

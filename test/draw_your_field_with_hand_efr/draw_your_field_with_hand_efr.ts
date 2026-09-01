@@ -9,11 +9,11 @@ import { BackgroundRendererV2 } from "../../src/background/renderer/BackgroundRe
 import { createDefaultYourFieldAreaFrame } from "../../src/your_field_area/frame/YourFieldAreaFrame";
 import { YourFieldAreaRendererV2 } from "../../src/your_field_area/renderer/YourFieldAreaRendererV2";
 
-import { BattleFieldHandMapRepositoryImpl } from "../../src/battle_field_hand/repository/BattleFieldHandMapRepositoryImpl";
-import { HandCard } from "../../src/battle_field_hand/entity/HandCard";
-import { createDefaultHandCardFrame } from "../../src/battle_field_hand/frame/HandCardFrame";
-import { createDefaultBattleFieldHandLayoutFrame } from "../../src/battle_field_hand/frame/BattleFieldHandLayoutFrame";
-import { BattleFieldHandRendererV2 } from "../../src/battle_field_hand/renderer/BattleFieldHandRendererV2";
+import { BattleFieldHandMapRepositoryImpl } from "../../src/battle/hand/repository/BattleFieldHandMapRepositoryImpl";
+import { HandCard } from "../../src/battle/hand/entity/HandCard";
+import { createDefaultHandCardFrame } from "../../src/battle/hand/frame/HandCardFrame";
+import { createDefaultBattleFieldHandLayoutFrame } from "../../src/battle/hand/frame/BattleFieldHandLayoutFrame";
+import { BattleFieldHandRendererV2 } from "../../src/battle/hand/renderer/BattleFieldHandRendererV2";
 
 import { getCardById } from "../../src/card/utility";
 import { CardJob } from "../../src/card/job";

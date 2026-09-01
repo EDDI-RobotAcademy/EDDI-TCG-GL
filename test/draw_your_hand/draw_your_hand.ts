@@ -22,11 +22,11 @@ import {BattleFieldHandPositionRepository} from "../../src/battle_field_hand/dep
 
 import {UserWindowSize} from "../../src/window_size/WindowSize"
 import {UnitCardGenerator} from "../../src/card/unit/generate";
-import {BattleFieldHandMapRepository} from "../../src/battle_field_hand/repository/BattleFieldHandMapRepository";
+import {BattleFieldHandMapRepository} from "../../src/battle/hand/repository/BattleFieldHandMapRepository";
 import {SupportCardGenerator} from "../../src/card/support/generate";
 import {ItemCardGenerator} from "../../src/card/item/generate";
 import {EnergyCardGenerator} from "../../src/card/energy/generate";
-import {BattleFieldHandMapRepositoryImpl} from "../../src/battle_field_hand/repository/BattleFieldHandMapRepositoryImpl";
+import {BattleFieldHandMapRepositoryImpl} from "../../src/battle/hand/repository/BattleFieldHandMapRepositoryImpl";
 
 export class TCGJustTestBattleFieldView {
     private static instance: TCGJustTestBattleFieldView | null = null;

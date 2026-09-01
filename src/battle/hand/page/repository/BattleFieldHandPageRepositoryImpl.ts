@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import {BattleFieldHandPageRepository} from "./BattleFieldHandPageRepository";
-import {TextureManager} from "../../texture_manager/TextureManager";
-import {BattleFieldConstants} from "../../common/BattleFieldConstants";
-import {MeshGenerator} from "../../mesh/generator";
-import {Vector2d} from "../../common/math/Vector2d";
+import {TextureManager} from "../../../../texture_manager/TextureManager";
+import {BattleFieldConstants} from "../../../../common/BattleFieldConstants";
+import {MeshGenerator} from "../../../../mesh/generator";
+import {Vector2d} from "../../../../common/math/Vector2d";
 
 export class BattleFieldHandPageRepositoryImpl implements BattleFieldHandPageRepository {
     private static instance: BattleFieldHandPageRepositoryImpl | null = null;

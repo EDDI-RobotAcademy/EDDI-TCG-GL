@@ -1,5 +1,5 @@
-import { CardKind } from "../../card/kind";
-import { CardJob } from "../../card/job";
+import { CardKind } from "../../../card/kind";
+import { CardJob } from "../../../card/job";
 
 // Pure-data view of one hand card. Resolved upfront from getCardById(cardId) so
 // the renderer never touches the card DB or texture manager directly.

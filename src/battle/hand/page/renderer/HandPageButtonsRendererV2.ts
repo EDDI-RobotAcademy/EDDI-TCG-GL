@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
-import { FrameRenderer } from "../../core/renderer/FrameRenderer";
-import { Vector2d } from "../../common/math/Vector2d";
+import { FrameRenderer } from "../../../../core/renderer/FrameRenderer";
+import { Vector2d } from "../../../../common/math/Vector2d";
 import {
     HandPageButtonSpec,
     HandPageButtonsFrame,

@@ -1,5 +1,5 @@
-import { CardJob } from "../../card/job";
-import { CardKind } from "../../card/kind";
+import { CardJob } from "../../../card/job";
+import { CardKind } from "../../../card/kind";
 
 // Pure data entity for an E+F+R-rendered hand card.
 // Populated by looking up getCardById(cardId) in the scenario wiring, so the Renderer stays

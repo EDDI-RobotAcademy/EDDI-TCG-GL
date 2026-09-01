@@ -1,8 +1,8 @@
 import * as THREE from "three";
 
-import { CardJob } from "../../card/job";
-import { CardKind } from "../../card/kind";
-import { Vector2d } from "../../common/math/Vector2d";
+import { CardJob } from "../../../card/job";
+import { CardKind } from "../../../card/kind";
+import { Vector2d } from "../../../common/math/Vector2d";
 import { HandCard } from "../entity/HandCard";
 import { HandCardFrame, HandCardSlot } from "../frame/HandCardFrame";
 
