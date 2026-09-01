@@ -41,7 +41,7 @@
 | **R2-14** | Structure | Battle Active Panel | [액티브 패널 영역과 패널 움직임 패키지 조정](R2-14-move-active-panel.md) | R2-12 | **완료** |
 | **R2-15** | Structure | Battle Animation | [스킬 연출 패키지 조정](R2-15-move-skill-playback.md) | R2-14 | **완료** |
 | **R2-16** | Structure | Battle Turn | [턴 소유, 턴 표시, 턴 종료 버튼 패키지 조정](R2-16-move-turn.md) | R2-15 | **완료** |
-| **R2-17** | Structure | Battle Field Energy | 상대 필드 에너지 표시 패키지 조정 | R2-16 | 예정 |
+| **R2-17** | Structure | Battle Field Energy | [내 필드 에너지, 상대 필드 에너지 패키지 조정](R2-17-move-field-energy.md) | R2-16 | **완료** |
 | **R2-18** | Structure | Battle Animation | 카드 연출을 옮긴다. src/animation/ 15개 + 공격 연출 2개 | R2-17 | 예정 |
 | **R2-19** | Structure | Battle | 화면 조립 세 폴더를 옮긴다 (22개) | R2-18 | 예정 |
 | **R2-20** | Structure | Battle | 손패 다섯 폴더를 옮긴다 (55개) | R2-19 | 예정 |

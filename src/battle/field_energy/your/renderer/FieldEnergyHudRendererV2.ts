@@ -1,4 +1,4 @@
-import { DomFrameRenderer } from "../../../core/renderer/DomFrameRenderer";
+import { DomFrameRenderer } from "../../../../core/renderer/DomFrameRenderer";
 import { FieldEnergyHudFrame } from "../frame/FieldEnergyHudFrame";
 
 interface BuildResult {
@@ -8,7 +8,7 @@ interface BuildResult {
     readonly label: HTMLDivElement;
 }
 
-// Mirrors showFieldEnergy() in src/common/field_energy/FieldEnergy.ts:
+// Mirrors showFieldEnergy() in src/battle/field_energy/your/FieldEnergy.ts:
 //   - fixed-position container + relative inner box + absolutely-positioned numeric label
 //   - label is appended to the box inside the image-load handler, so its top offset is
 //     calculated against the real image height (not 0 from a detached node)

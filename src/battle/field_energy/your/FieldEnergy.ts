@@ -1,4 +1,4 @@
-import {TextureManager} from "../../texture_manager/TextureManager";
+import {TextureManager} from "../../../texture_manager/TextureManager";
 
 function resolveTextureSrc(tex: any): string {
     const img = tex?.image;

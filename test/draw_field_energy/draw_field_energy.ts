@@ -41,9 +41,9 @@ import {BattleFieldHandPageService} from "../../src/battle_field_hand_page/servi
 import {showGuideMessage} from "../../src/common/guide_message/GuideMessage";
 import {showSandTimer} from "../../src/common/timer/Timer";
 import {showTurn} from "../../src/battle/turn/hud/Turn";
-import {showFieldEnergy} from "../../src/common/field_energy/FieldEnergy";
+import {showFieldEnergy} from "../../src/battle/field_energy/your/FieldEnergy";
 import {showFieldEnergyRace} from "../../src/common/card_race/CardRace";
-import {showFieldEnergyCount} from "../../src/common/field_energy/FieldEnergyCount";
+import {showFieldEnergyCount} from "../../src/battle/field_energy/your/FieldEnergyCount";
 import {AnimationHandler} from "../../src/animation/handler/AnimationHandler";
 
 declare const TWEEN: {

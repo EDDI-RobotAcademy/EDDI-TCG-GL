@@ -24,9 +24,9 @@ import {DragMoveServiceImpl} from "../../../drag_move/service/DragMoveServiceImp
 import {MouseDropServiceImpl} from "../../../mouse_drop/service/MouseDropServiceImpl";
 import {KeyboardInputHandler} from "../../../keyboard/KeyboardInputHandler";
 import {KeyboardServiceImpl} from "../../../keyboard/service/KeyboardServiceImpl";
-import {showFieldEnergy} from "../../../common/field_energy/FieldEnergy";
+import {showFieldEnergy} from "../../../battle/field_energy/your/FieldEnergy";
 import {showFieldEnergyRace} from "../../../common/card_race/CardRace";
-import {showFieldEnergyCount} from "../../../common/field_energy/FieldEnergyCount";
+import {showFieldEnergyCount} from "../../../battle/field_energy/your/FieldEnergyCount";
 import {showGuideMessage} from "../../../common/guide_message/GuideMessage";
 import {showSandTimer} from "../../../common/timer/Timer";
 import {showTurn} from "../../../battle/turn/hud/Turn";
