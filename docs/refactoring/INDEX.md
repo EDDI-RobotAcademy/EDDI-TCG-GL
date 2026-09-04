@@ -44,9 +44,9 @@
 | **R2-17** | Structure | Battle Field Energy | [내 필드 에너지, 상대 필드 에너지 패키지 조정](R2-17-move-field-energy.md) | R2-16 | **완료** |
 | **R2-18** | Structure | Battle Animation | [일반 공격 연출 패키지 조정 (검, 지팡이)](R2-18-move-general-attack.md) | R2-31 | **완료** |
 | **R2-19** | Structure | Battle | [전투 화면 중 사용되지 않는 파일 삭제](R2-19-delete-unused-battle-view.md) | R2-18 | **완료** |
-| **R2-20** | Structure | Battle Hand | [손패 패키지 조정 (두 폴더, 20파일)](R2-20-move-hand.md) | R2-19 | **완료** |
-| **R2-21** | Structure | Battle Unit | [유닛 패키지 조정 (11파일)](R2-21-move-unit.md) | R2-20 | **완료** |
-| **R2-22** | Structure | Battle Field | [카드 배치와 좌표 패키지 조정 (열 폴더, 41파일)](R2-22-move-field.md) | R2-21 | **완료** |
+| **R2-20** | Structure | Battle Hand | [손패 패키지 조정](R2-20-move-hand.md) | R2-19 | **완료** |
+| **R2-21** | Structure | Battle Unit | [유닛 패키지 조정](R2-21-move-unit.md) | R2-20 | **완료** |
+| **R2-22** | Structure | Battle Field | [카드 배치와 좌표 패키지 조정](R2-22-move-field.md) | R2-21 | **완료** |
 | **R2-23** | Rendering | Battle Field Energy | [죽음의 대지 연출이 상대 필드 에너지 앞에서 보이도록 패널을 캔버스 안으로 옮긴다](R2-23-opponent-energy-panel-into-canvas.md) | — | **완료** |
 | **R2-24** | Strategy | Battle | [전투 재접속 / 재시작 시 유지할 파트 판정](R2-24-repository-classification.md) | R2-22 | **완료** |
 | **R2-25** | Structure | Platform | [카드 메시의 폐기 및 재생성 시점 정의](R2-25-mesh-disposal-contract.md) | R2-24 | **완료** |
@@ -54,21 +54,21 @@
 | **R2-27** | Structure | Battle Hand | [손패 페이지 저장소 이름 정리](R2-27-rename-hand-page-store.md) | R2-25 | **완료** |
 | **R2-28** | Structure | Battle Active Panel | [액티브 패널 저장소 이름 정리](R2-28-rename-active-panel-cache.md) | R2-25 | **완료** |
 | **R2-29** | Structure | Battle | [전투 화면 조립 패키지 조정](R2-29-move-battle-view.md) | R2-19 | **완료** |
-| **R2-30** | Structure | Battle | 전투 배경 패키지 조정 (배경 다섯 파일) | R2-29 | 예정 |
+| **R2-30** | Strategy | Battle | [기존의 확인용 화면 구성 코드의 유지 기준 결정](R2-30-legacy-harness-policy.md) | R2-29 | **완료** |
 | **R2-31** | Structure | Battle Animation | [스킬 자리 좌표를 한 곳에서 읽게 한다](R2-31-share-skill-slot.md) | R2-17 | **완료** |
-| **R2-32** | Structure | Battle | 전투 배경 저장소 이름 정리 | R2-30 | 예정 |
-| **R2-33** | Structure | Battle | 상대 필드 카드 표시 패키지 조정 (세 폴더, 11파일) | R2-22 | 예정 |
+| **R2-32** | Structure | Battle | ~~전투 배경 저장소 이름 정리~~ | R2-30 | **폐기** |
+| **R2-33** | Structure | Battle | 상대 필드 카드 표시 패키지 조정 | R2-22 | 예정 |
 | **R2-34** | Structure | Battle | 카드에 붙어 따라다니는 것 패키지 조정 (여섯 폴더) | R2-22 | 예정 |
 | **R2-35** | Structure | Battle | 손패와 필드 정렬을 갈라 각자 자리로 보낸다 | R2-34 | 예정 |
 | **R2-36** | Structure | Battle 공용 | 손패와 필드 공용 저장소 이름 정리 | R2-35 | 예정 |
-| **R2-37** | Structure | Battle | 본체 체력 패키지 조정 (2파일) | — | 예정 |
-| **R2-38** | Strategy | Battle | 이름만 deprecated 인 저장소 세 개의 처지 결정 | — | 예정 |
-| **R2-39** | Structure | Battle Animation | 유닛 카드 등장 연출 패키지 조정 (19 네더 블레이드) | R2-18 | 예정 |
-| **R2-40** | Structure | Battle Animation | 유닛 카드 스킬 연출 패키지 조정 (19 네더 블레이드, 27 벨른) | R2-39 | 예정 |
-| **R2-41** | Structure | Battle Animation | 아이템 카드 연출 패키지 조정 (죽음의 낫 외 다섯 장) | R2-40 | 예정 |
-| **R2-42** | Structure | Battle Animation | 서포트, 에너지 카드 연출 패키지 조정 (넘쳐흐르는 사기 외 세 장) | R2-41 | 예정 |
-| **R2-43** | Rendering | Battle Animation | 카드를 스킬 자리로 옮기는 네 벌의 코드를 한 벌로 모은다 | R2-42 | 예정 |
-| **R2-44** | Rule | Battle Animation | 덱 편성 화면이 전투 연출을 만들지 않도록 AnimationHandler 정리 | R2-43 | 예정 |
+| **R2-37** | Structure | Battle | 본체 체력 패키지 조정 | — | 예정 |
+| **R2-38** | Strategy | Battle | 이름만 죽었다고 되어 있는 저장소의 처지 결정 | — | 예정 |
+| **R2-39** | Structure | Battle Animation | 유닛 카드 등장 연출 패키지 조정 | R2-18 | 예정 |
+| **R2-40** | Structure | Battle Animation | 유닛 카드 스킬 연출 패키지 조정 | R2-39 | 예정 |
+| **R2-41** | Structure | Battle Animation | 아이템 카드 연출 패키지 조정 | R2-40 | 예정 |
+| **R2-42** | Structure | Battle Animation | 서포트, 에너지 카드 연출 패키지 조정 | R2-41 | 예정 |
+| **R2-43** | Rendering | Battle Animation | 카드를 스킬 자리로 옮기는 코드를 한 곳으로 모은다 | R2-42 | 예정 |
+| **R2-44** | Rule | Battle Animation | 덱 편성 화면이 전투 연출을 만들지 않게 한다 | R2-43 | 예정 |
 | **R2-45** | Rendering | Battle 공용 | 화면 자원 정리 실제 적용 | R2-36 | 예정 |
 | **R2-46** | Rendering | Battle 공용 | 전투 중 만들어 쓰는 글자 그림의 정리 시점 정의 | R2-45 | 예정 |
 | **R2-47** | Rendering | Battle Hand | 손패 페이지 버튼을 만드는 일을 저장소에서 렌더러로 옮긴다 | R2-27 | 예정 |
@@ -77,12 +77,13 @@
 | **R2-50** | Rule | Battle | 재접속 시 어떤 유닛의 상태를 복원할지 식별할 수 있도록 식별자 통합 | R2-49 | 예정 |
 | **R2-51** | Rule | Battle | 연출 도중 종료되어도 전투 상태가 일관되도록 처리 순서 분리 | R2-50 | 예정 |
 | **R2-52** | Rule | Battle | 카드를 추가할 때 코드 수정 없이 데이터로 정의할 수 있도록 능력 정의 구조 도입 | R2-51 | 예정 |
-| **R2-53** | Rule | Battle | 턴 진행 규칙을 한 곳에서 읽을 수 있도록 TurnSystem 추출 | R2-49 | 예정 |
-| **R2-54** | Rendering | Battle | 화면이 상태를 직접 관리하지 않고 표시만 하도록 HUD 렌더러 정리 | R2-49 | 예정 |
+| **R2-53** | Rule | Battle | 턴 진행 규칙을 한 곳에서 읽을 수 있게 한다 | R2-49 | 예정 |
+| **R2-54** | Rendering | Battle | 화면 표시가 상태를 들고 있지 않게 한다 | R2-49 | 예정 |
 | **R2-55** | Rule | Battle Active Panel | 액티브 패널 저장소가 화면과 카메라를 들지 않게 한다 | R2-44 | 예정 |
 | **R2-56** | Rendering | Battle Active Panel | 액티브 패널 버튼을 만드는 일을 저장소에서 렌더러로 옮긴다 | R2-55 | 예정 |
 | **R2-57** | Rule | Lobby | 로비의 게임 입장 버튼이 눌리도록 등록되지 않은 경로 정리 | — | 예정 |
 | **R2-58** | Rendering | Battle | 라우터 진입점이 실제 전투 화면을 띄우게 잇는다 | R2-29 | 예정 |
+| **R2-59** | Structure | Battle | 확인용 화면만 쓰던 옛 화면 조립과 전투 배경 삭제 | R2-30 | 예정 |
 
 ### Type — 무엇을 바꾸는 작업인가
 
