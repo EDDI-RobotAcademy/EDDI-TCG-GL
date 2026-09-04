@@ -1,5 +1,5 @@
 import {UserWindowSize} from "../../src/window_size/WindowSize";
-import {BattleFieldView} from "../../src/ui/screens/battle_field/BattleFieldView";
+import {BattleFieldView} from "../../src/battle/view/BattleFieldView";
 
 
 const rootElement = document.getElementById('app');
