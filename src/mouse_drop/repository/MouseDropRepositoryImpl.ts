@@ -6,10 +6,10 @@ import {BattleFieldCardScene} from "../../battle_field_card_scene/entity/BattleF
 
 export class MouseDropFieldRepositoryImpl implements MouseDropFieldRepository {
     private static instance: MouseDropFieldRepositoryImpl | null = null;
-    private yourFieldAreaRepository;
+    private yourFieldAreaCache;
 
     constructor() {
-        this.yourFieldAreaRepository = YourFieldAreaCacheImpl.getInstance();
+        this.yourFieldAreaCache = YourFieldAreaCacheImpl.getInstance();
     }
 
     public static getInstance(): MouseDropFieldRepositoryImpl {
@@ -21,7 +21,7 @@ export class MouseDropFieldRepositoryImpl implements MouseDropFieldRepository {
 
     public isYourFieldAreaDropped(object: THREE.Object3D, raycaster: THREE.Raycaster): boolean {
         // YourFieldArea를 가져옵니다.
-        const yourFieldArea = this.yourFieldAreaRepository.getYourFieldArea();
+        const yourFieldArea = this.yourFieldAreaCache.getYourFieldArea();
         if (!yourFieldArea) {
             return false;  // YourFieldArea가 없으면 드롭된 곳이 아니라고 판단
         }

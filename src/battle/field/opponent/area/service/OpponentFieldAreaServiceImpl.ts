@@ -5,10 +5,10 @@ import {OpponentFieldAreaCacheImpl} from "../cache/OpponentFieldAreaCacheImpl";
 
 export class OpponentFieldAreaServiceImpl implements OpponentFieldAreaService {
     private static instance: OpponentFieldAreaServiceImpl;
-    private opponentFieldAreaRepository: OpponentFieldAreaCache;
+    private opponentFieldAreaCache: OpponentFieldAreaCache;
 
     constructor() {
-        this.opponentFieldAreaRepository = OpponentFieldAreaCacheImpl.getInstance();
+        this.opponentFieldAreaCache = OpponentFieldAreaCacheImpl.getInstance();
     }
 
     static getInstance(): OpponentFieldAreaServiceImpl {
@@ -20,7 +20,7 @@ export class OpponentFieldAreaServiceImpl implements OpponentFieldAreaService {
 
     createOpponentField(): OpponentFieldArea {
         const { xPos, yPos, width, height } = this.calculateFieldDimensions();
-        return this.opponentFieldAreaRepository.createOpponentFieldArea(xPos, yPos, width, height);
+        return this.opponentFieldAreaCache.createOpponentFieldArea(xPos, yPos, width, height);
     }
 
     // 화면 크기 계산 로직을 별도의 메서드로 분리

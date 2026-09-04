@@ -64,7 +64,7 @@ export class NeonBorderHandler {
     private yourFieldRepository: YourFieldRepository;
 
     private opponentFieldRepository: OpponentFieldRepository;
-    private opponentFieldCardSceneRepository: OpponentFieldCardSceneCache;
+    private opponentFieldCardSceneCache: OpponentFieldCardSceneCache;
     private opponentFieldCardAttributeMarkRepository: OpponentFieldCardAttributeMarkRepository;
     private opponentFieldCardAttributeMarkSceneRepository: OpponentFieldCardAttributeMarkSceneRepository;
 
@@ -81,7 +81,7 @@ export class NeonBorderHandler {
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance();
 
         this.opponentFieldRepository = OpponentFieldRepositoryImpl.getInstance();
-        this.opponentFieldCardSceneRepository = OpponentFieldCardSceneCacheImpl.getInstance();
+        this.opponentFieldCardSceneCache = OpponentFieldCardSceneCacheImpl.getInstance();
         this.opponentFieldCardAttributeMarkRepository = OpponentFieldCardAttributeMarkRepositoryImpl.getInstance();
         this.opponentFieldCardAttributeMarkSceneRepository = OpponentFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
 
@@ -239,7 +239,7 @@ export class NeonBorderHandler {
             return;
         }
 
-        const opponentCardSceneMesh = await this.opponentFieldCardSceneRepository.findById(opponentCardSceneId);
+        const opponentCardSceneMesh = await this.opponentFieldCardSceneCache.findById(opponentCardSceneId);
         if (!opponentCardSceneMesh) return;
 
         const opponentCardMesh = opponentCardSceneMesh.getMesh();

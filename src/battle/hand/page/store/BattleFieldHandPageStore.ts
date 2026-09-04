@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-export interface BattleFieldHandPageRepository {
+export interface BattleFieldHandPageStore {
     createPrevButton(): Promise<THREE.Mesh>;
     createNextButton(): Promise<THREE.Mesh>;
 

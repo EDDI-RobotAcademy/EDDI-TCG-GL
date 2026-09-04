@@ -1,12 +1,12 @@
 import * as THREE from 'three';
-import {BattleFieldHandPageRepository} from "./BattleFieldHandPageRepository";
+import {BattleFieldHandPageStore} from "./BattleFieldHandPageStore";
 import {TextureManager} from "../../../../texture_manager/TextureManager";
 import {BattleFieldConstants} from "../../../../common/BattleFieldConstants";
 import {MeshGenerator} from "../../../../mesh/generator";
 import {Vector2d} from "../../../../common/math/Vector2d";
 
-export class BattleFieldHandPageRepositoryImpl implements BattleFieldHandPageRepository {
-    private static instance: BattleFieldHandPageRepositoryImpl | null = null;
+export class BattleFieldHandPageStoreImpl implements BattleFieldHandPageStore {
+    private static instance: BattleFieldHandPageStoreImpl | null = null;
 
     private currentPage = 1;
     private readonly cardsPerPage = 4;
@@ -29,9 +29,9 @@ export class BattleFieldHandPageRepositoryImpl implements BattleFieldHandPageRep
         this.textureManager = TextureManager.getInstance();
     }
 
-    public static getInstance(): BattleFieldHandPageRepositoryImpl {
+    public static getInstance(): BattleFieldHandPageStoreImpl {
         if (!this.instance) {
-            this.instance = new BattleFieldHandPageRepositoryImpl();
+            this.instance = new BattleFieldHandPageStoreImpl();
         }
         return this.instance;
     }

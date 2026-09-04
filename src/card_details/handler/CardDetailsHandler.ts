@@ -38,10 +38,10 @@ export class CardDetailsHandler {
 
     private dragMoveRepository: DragMoveRepository;
     private yourFieldRepository: YourFieldRepository;
-    private yourFieldCardSceneRepository: YourFieldCardSceneCache;
+    private yourFieldCardSceneCache: YourFieldCardSceneCache;
     private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository;
     private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository;
-    private opponentFieldCardSceneRepository: OpponentFieldCardSceneCache;
+    private opponentFieldCardSceneCache: OpponentFieldCardSceneCache;
     private opponentFieldRepository: OpponentFieldRepository;
     private opponentFieldCardAttributeMarkRepository: OpponentFieldCardAttributeMarkRepository;
     private opponentFieldCardAttributeMarkSceneRepository: OpponentFieldCardAttributeMarkSceneRepository;
@@ -65,10 +65,10 @@ export class CardDetailsHandler {
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.dragMoveRepository = DragMoveRepositoryImpl.getInstance();
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance();
-        this.yourFieldCardSceneRepository = YourFieldCardSceneCacheImpl.getInstance();
+        this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance();
         this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance();
         this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
-        this.opponentFieldCardSceneRepository = OpponentFieldCardSceneCacheImpl.getInstance();
+        this.opponentFieldCardSceneCache = OpponentFieldCardSceneCacheImpl.getInstance();
         this.opponentFieldRepository = OpponentFieldRepositoryImpl.getInstance();
         this.opponentFieldCardAttributeMarkRepository = OpponentFieldCardAttributeMarkRepositoryImpl.getInstance();
         this.opponentFieldCardAttributeMarkSceneRepository = OpponentFieldCardAttributeMarkSceneRepositoryImpl.getInstance();

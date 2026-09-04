@@ -1,5 +1,5 @@
 // Prev/next button layout for the hand-pagination row. Values come from
-// BattleFieldHandPageRepositoryImpl (legacy): buttons are defined by a start/end CSS-style
+// BattleFieldHandPageStoreImpl (legacy): buttons are defined by a start/end CSS-style
 // percent corner pair (origin = top-left of viewport), which the Renderer converts to world
 // coords with (p - 0.5) for X and (0.5 - p) for Y. Width/height are the absolute difference
 // between the two corners.

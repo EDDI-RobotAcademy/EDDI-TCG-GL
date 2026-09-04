@@ -83,8 +83,8 @@ export class MouseDropServiceImpl implements MouseDropService {
     private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository
 
     private yourFieldRepository: YourFieldRepository
-    private yourFieldCardSceneRepository: YourFieldCardSceneCache
-    private yourFieldCardPositionRepository: YourFieldCardPositionStore
+    private yourFieldCardSceneCache: YourFieldCardSceneCache
+    private yourFieldCardPositionStore: YourFieldCardPositionStore
 
     private neonBorderRepository: NeonBorderRepository;
     private neonBorderLineSceneRepository: NeonBorderLineSceneRepository;
@@ -108,8 +108,8 @@ export class MouseDropServiceImpl implements MouseDropService {
         this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance()
 
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance()
-        this.yourFieldCardSceneRepository = YourFieldCardSceneCacheImpl.getInstance()
-        this.yourFieldCardPositionRepository = YourFieldCardPositionStoreImpl.getInstance()
+        this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance()
+        this.yourFieldCardPositionStore = YourFieldCardPositionStoreImpl.getInstance()
 
         this.neonBorderRepository = NeonBorderRepositoryImpl.getInstance()
         this.neonBorderLineSceneRepository = NeonBorderLineSceneRepositoryImpl.getInstance()
@@ -230,7 +230,7 @@ export class MouseDropServiceImpl implements MouseDropService {
         }
 
         const yourFieldSceneId = createdYourField.getCardSceneId()
-        const yourFieldScene = this.yourFieldCardSceneRepository.findById(yourFieldSceneId)
+        const yourFieldScene = this.yourFieldCardSceneCache.findById(yourFieldSceneId)
         console.log(chalk.red.bold(`alignYourField() yourFieldScene: ${yourFieldScene}`))
 
         if (!yourFieldScene) {
@@ -454,7 +454,7 @@ export class MouseDropServiceImpl implements MouseDropService {
         // const willBePlaceYourFieldCardSceneMesh = willBePlaceYourFieldCardScene?.getMesh()
         //
         // if (willBePlaceYourFieldCardSceneMesh) {
-        //     yourFieldCardScene = await this.yourFieldCardSceneRepository.create(willBePlaceYourFieldCardSceneMesh);
+        //     yourFieldCardScene = await this.yourFieldCardSceneCache.create(willBePlaceYourFieldCardSceneMesh);
         // }
         //
         // if (!yourFieldCardScene) {
@@ -474,7 +474,7 @@ export class MouseDropServiceImpl implements MouseDropService {
         // //     const positionX = willBePlaceYourFieldCardPosition.getX()
         // //     const positionY = willBePlaceYourFieldCardPosition.getY()
         // //     const yourFieldCardPosition = new YourFieldCardPosition(positionX, positionY)
-        // //     this.yourFieldCardPositionRepository.save(yourFieldCardPosition);
+        // //     this.yourFieldCardPositionStore.save(yourFieldCardPosition);
         // // }
         //
         // const handCardId = willBePlacedYourFieldHandCard?.getId()

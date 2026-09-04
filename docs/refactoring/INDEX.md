@@ -51,7 +51,7 @@
 | **R2-24** | Strategy | Battle | [전투 재접속 / 재시작 시 유지할 파트 판정](R2-24-repository-classification.md) | R2-22 | **완료** |
 | **R2-25** | Structure | Platform | [카드 메시의 폐기 및 재생성 시점 정의](R2-25-mesh-disposal-contract.md) | R2-24 | **완료** |
 | **R2-26** | Structure | Battle Field | [내 필드와 상대 필드 저장소 이름 정리](R2-26-rename-field-stores.md) | R2-25 | **완료** |
-| **R2-27** | Structure | Battle Hand | 손패 저장소 이름 정리 | R2-25 | 예정 |
+| **R2-27** | Structure | Battle Hand | [손패 페이지 저장소 이름 정리](R2-27-rename-hand-page-store.md) | R2-25 | **완료** |
 | **R2-28** | Structure | Battle Active Panel | 액티브 패널 저장소 이름 정리 | R2-25 | 예정 |
 | **R2-29** | Structure | Battle | 전투 배경 저장소 이름 정리 | R2-25 | 예정 |
 | **R2-30** | Structure | Battle 공용 | 손패와 필드 공용 저장소 이름 정리 | R2-49 | 예정 |
@@ -78,6 +78,7 @@
 | **R2-51** | Structure | Battle | 본체 체력 패키지 조정 (2파일) | — | 예정 |
 | **R2-52** | Structure | Battle | 상대 필드 카드 표시 패키지 조정 (세 폴더, 11파일) | R2-22 | 예정 |
 | **R2-53** | Rendering | Battle 공용 | 전투 중 만들어 쓰는 글자 그림의 정리 시점 정의 | R2-32 | 예정 |
+| **R2-54** | Rendering | Battle Hand | 손패 페이지 버튼을 만드는 일을 저장소에서 렌더러로 옮긴다 | R2-27 | 예정 |
 
 ### Type — 무엇을 바꾸는 작업인가
 

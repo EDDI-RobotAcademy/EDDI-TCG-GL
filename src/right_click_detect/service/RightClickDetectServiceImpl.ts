@@ -30,7 +30,7 @@ export class RightClickDetectServiceImpl implements RightClickDetectService {
     private mouseCursorDetectRepository: MouseCursorDetectRepository
     private activePanelAreaRepository: ActivePanelAreaRepository;
     private yourFieldRepository: YourFieldRepository;
-    private yourFieldCardSceneRepository: YourFieldCardSceneCache;
+    private yourFieldCardSceneCache: YourFieldCardSceneCache;
 
     private rightMouseDown: boolean = false;
 
@@ -38,7 +38,7 @@ export class RightClickDetectServiceImpl implements RightClickDetectService {
         this.cameraRepository = CameraRepositoryImpl.getInstance()
         this.dragMoveRepository = DragMoveRepositoryImpl.getInstance()
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance()
-        this.yourFieldCardSceneRepository = YourFieldCardSceneCacheImpl.getInstance()
+        this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance()
         this.mouseCursorDetectRepository = MouseCursorDetectRepositoryImpl.getInstance()
         this.activePanelAreaRepository = ActivePanelAreaRepositoryImpl.getInstance(camera, scene);
     }
@@ -83,7 +83,7 @@ export class RightClickDetectServiceImpl implements RightClickDetectService {
         // const meshId = mesh.id;
         // console.log(`meshId: ${meshId}`);
 
-        // const yourFieldCardScene = this.yourFieldCardSceneRepository.findIndexByCardMeshId(meshId)
+        // const yourFieldCardScene = this.yourFieldCardSceneCache.findIndexByCardMeshId(meshId)
 
         const yourFieldCard = this.yourFieldRepository.findByCardSceneId(cardScene.getId())
         // console.log(`yourFieldCard: ${JSON.stringify(yourFieldCard, null, 2)}`);

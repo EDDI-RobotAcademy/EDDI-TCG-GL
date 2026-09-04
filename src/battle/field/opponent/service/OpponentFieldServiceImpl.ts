@@ -32,8 +32,8 @@ import {BattleFieldConstants} from "../../../../common/BattleFieldConstants";
 export class OpponentFieldServiceImpl implements OpponentFieldService {
     private static instance: OpponentFieldServiceImpl;
 
-    private opponentFieldCardPositionRepository: OpponentFieldCardPositionStore
-    private opponentFieldCardSceneRepository: OpponentFieldCardSceneCache
+    private opponentFieldCardPositionStore: OpponentFieldCardPositionStore
+    private opponentFieldCardSceneCache: OpponentFieldCardSceneCache
     private opponentFieldRepository: OpponentFieldRepository
 
     private opponentFieldCardAttributeMarkPositionRepository: OpponentFieldCardAttributeMarkPositionRepository
@@ -60,8 +60,8 @@ export class OpponentFieldServiceImpl implements OpponentFieldService {
     };
 
     private constructor() {
-        this.opponentFieldCardPositionRepository = OpponentFieldCardPositionStoreImpl.getInstance()
-        this.opponentFieldCardSceneRepository = OpponentFieldCardSceneCacheImpl.getInstance()
+        this.opponentFieldCardPositionStore = OpponentFieldCardPositionStoreImpl.getInstance()
+        this.opponentFieldCardSceneCache = OpponentFieldCardSceneCacheImpl.getInstance()
         this.opponentFieldRepository = OpponentFieldRepositoryImpl.getInstance()
 
         this.opponentFieldCardAttributeMarkPositionRepository = OpponentFieldCardAttributeMarkPositionRepositoryImpl.getInstance()
@@ -106,7 +106,7 @@ export class OpponentFieldServiceImpl implements OpponentFieldService {
     }
 
     private calculateOpponentFieldPosition(): Vector2d {
-        const opponentFieldPositionCount = this.opponentFieldCardPositionRepository.count();
+        const opponentFieldPositionCount = this.opponentFieldCardPositionStore.count();
         const opponentFieldPositionX = (this.OPPONENT_FIELD_INITIAL_X + opponentFieldPositionCount * this.GAP_OF_EACH_CARD) * window.innerWidth;
         const opponentFieldPositionY = this.OPPONENT_FIELD_INITIAL_Y * window.innerHeight
             + (this.CARD_HEIGHT_RATIO * this.HALF * window.innerWidth);
@@ -115,11 +115,11 @@ export class OpponentFieldServiceImpl implements OpponentFieldService {
 
     private saveOpponentFieldPosition(position: Vector2d): OpponentFieldCardPosition {
         const cardPosition = new OpponentFieldCardPosition(position.getX(), position.getY());
-        return this.opponentFieldCardPositionRepository.save(cardPosition);
+        return this.opponentFieldCardPositionStore.save(cardPosition);
     }
 
     private async createMainCardScene(cardId: number, position: Vector2d): Promise<OpponentFieldCardScene> {
-        return await this.opponentFieldCardSceneRepository.create(cardId, position);
+        return await this.opponentFieldCardSceneCache.create(cardId, position);
     }
 
     private async loadCardTextures(card: any): Promise<(THREE.Texture | null)[]> {

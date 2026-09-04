@@ -57,10 +57,10 @@ import {
     BattleFieldCardAttributeMarkSceneRepositoryImpl
 } from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
 import {BattleFieldCardAlignHandler} from "../../battle_field_card_alignment/handler/BattleFieldCardAlignHandler";
-import {BattleFieldHandPageRepository} from "../../battle/hand/page/repository/BattleFieldHandPageRepository";
+import {BattleFieldHandPageStore} from "../../battle/hand/page/store/BattleFieldHandPageStore";
 import {
-    BattleFieldHandPageRepositoryImpl
-} from "../../battle/hand/page/repository/BattleFieldHandPageRepositoryImpl";
+    BattleFieldHandPageStoreImpl
+} from "../../battle/hand/page/store/BattleFieldHandPageStoreImpl";
 
 
 export class KeyboardActionHandler {
@@ -74,7 +74,7 @@ export class KeyboardActionHandler {
     private battleFieldHandCardPositionRepository: BattleFieldHandCardPositionRepository;
     private battleFieldHandSceneRepository: BattleFieldHandSceneRepository;
 
-    private battleFieldHandPageRepository: BattleFieldHandPageRepository ;
+    private battleFieldHandPageStore: BattleFieldHandPageStore ;
 
     private battleFieldCardSceneRepository: BattleFieldCardSceneRepository;
     private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository;
@@ -97,7 +97,7 @@ export class KeyboardActionHandler {
         this.battleFieldHandCardPositionRepository = BattleFieldHandCardPositionRepositoryImpl.getInstance();
         this.battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance();
 
-        this.battleFieldHandPageRepository = BattleFieldHandPageRepositoryImpl.getInstance();
+        this.battleFieldHandPageStore = BattleFieldHandPageStoreImpl.getInstance();
 
         this.battleFieldCardSceneRepository = BattleFieldCardSceneRepositoryImpl.getInstance();
         this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance();
@@ -158,7 +158,7 @@ export class KeyboardActionHandler {
         const remainder = currentActiveHandNumber % BattleFieldConstants.MAX_HAND_REPRESENTATION; // 나머지 (페이지 내 위치)
 
         const isNewPageStart = remainder === 0; // 5장 꽉 차서 새 페이지 시작 여부
-        const currentPage = this.battleFieldHandPageRepository.getCurrentPage();
+        const currentPage = this.battleFieldHandPageStore.getCurrentPage();
         console.log(`quotient: ${quotient}, currentPage: ${currentPage}`);
 
         const shouldBeVisible =

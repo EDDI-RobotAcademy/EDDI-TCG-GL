@@ -70,7 +70,7 @@ export class BattleFieldCardAlignHandler {
 
     private dragMoveRepository: DragMoveRepository;
 
-    private battleFieldHandPageRepository: BattleFieldHandPageStore;
+    private battleFieldHandPageStore: BattleFieldHandPageStore;
 
     private battleFieldHandRepository: BattleFieldHandRepository
     private battleFieldHandCardPositionRepository: BattleFieldHandCardPositionRepository
@@ -87,7 +87,7 @@ export class BattleFieldCardAlignHandler {
     private constructor() {
         this.dragMoveRepository = DragMoveRepositoryImpl.getInstance();
 
-        this.battleFieldHandPageRepository = BattleFieldHandPageStoreImpl.getInstance();
+        this.battleFieldHandPageStore = BattleFieldHandPageStoreImpl.getInstance();
 
         this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance()
         this.battleFieldHandCardPositionRepository = BattleFieldHandCardPositionRepositoryImpl.getInstance()
@@ -110,8 +110,8 @@ export class BattleFieldCardAlignHandler {
     }
 
     async alignHandCard(visible: boolean = true): Promise<void> {
-        const currentPage = this.battleFieldHandPageRepository.getCurrentPage();
-        const cardsPerPage = this.battleFieldHandPageRepository.getCardsPerPage();
+        const currentPage = this.battleFieldHandPageStore.getCurrentPage();
+        const cardsPerPage = this.battleFieldHandPageStore.getCardsPerPage();
 
         const currentHandCardList = this.battleFieldHandRepository.findAllWithPage(currentPage, cardsPerPage);
 
