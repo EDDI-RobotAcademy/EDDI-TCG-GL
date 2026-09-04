@@ -49,14 +49,14 @@
 | **R2-22** | Structure | Battle Field | [카드 배치와 좌표 패키지 조정 (열 폴더, 41파일)](R2-22-move-field.md) | R2-21 | **완료** |
 | **R2-23** | Rendering | Battle Field Energy | [죽음의 대지 연출이 상대 필드 에너지 앞에서 보이도록 패널을 캔버스 안으로 옮긴다](R2-23-opponent-energy-panel-into-canvas.md) | — | **완료** |
 | **R2-24** | Strategy | Battle | [전투 재접속 / 재시작 시 유지할 파트 판정](R2-24-repository-classification.md) | R2-22 | **완료** |
-| **R2-25** | Structure | Battle 공용 | 버리는 시점과 초기화 시점이 코드에 드러나도록 Cache, Store 약속 정의 | R2-24 | 예정 |
-| **R2-26** | Structure | Battle Field | 카드 배치와 좌표 저장소 열 개를 Cache, Store 로 개명 | R2-25 | 예정 |
-| **R2-27** | Structure | Battle Hand | 손패 저장소 두 개를 Cache, Store 로 개명 | R2-25 | 예정 |
-| **R2-28** | Structure | Battle Active Panel | 액티브 패널 저장소를 Cache 로 개명 | R2-25 | 예정 |
-| **R2-29** | Structure | Battle | 전투 배경 저장소를 Cache 로 개명 | R2-25 | 예정 |
-| **R2-30** | Structure | Battle 공용 | 손패와 필드가 함께 쓰는 저장소 열한 개를 Cache, Store 로 개명 | R2-49 | 예정 |
+| **R2-25** | Structure | Platform | [카드 메시의 폐기 및 재생성 시점 정의](R2-25-mesh-disposal-contract.md) | R2-24 | **완료** |
+| **R2-26** | Structure | Battle Field | 카드 배치와 좌표 저장소 이름 정리 | R2-25 | 예정 |
+| **R2-27** | Structure | Battle Hand | 손패 저장소 이름 정리 | R2-25 | 예정 |
+| **R2-28** | Structure | Battle Active Panel | 액티브 패널 저장소 이름 정리 | R2-25 | 예정 |
+| **R2-29** | Structure | Battle | 전투 배경 저장소 이름 정리 | R2-25 | 예정 |
+| **R2-30** | Structure | Battle 공용 | 손패와 필드 공용 저장소 이름 정리 | R2-49 | 예정 |
 | **R2-31** | Structure | Battle Animation | [스킬 자리 좌표를 한 곳에서 읽게 한다](R2-31-share-skill-slot.md) | R2-17 | **완료** |
-| **R2-32** | Rendering | Battle 공용 | 화면을 다시 그릴 때 실제로 버리도록 dispose 호출 연결 | R2-30 | 예정 |
+| **R2-32** | Rendering | Battle 공용 | 화면 자원 정리 실제 적용 | R2-30 | 예정 |
 | **R2-33** | Rule | Battle | 전투 상태를 하나의 일관된 단위로 관리하도록 Battle 애그리게이트 추출 | R2-24 | 예정 |
 | **R2-34** | Rule | Battle | 재접속 시 어떤 유닛의 상태를 복원할지 식별할 수 있도록 식별자 통합 | R2-33 | 예정 |
 | **R2-35** | Rule | Battle | 연출 도중 종료되어도 전투 상태가 일관되도록 처리 순서 분리 | R2-34 | 예정 |
@@ -77,6 +77,7 @@
 | **R2-50** | Strategy | Battle | 이름만 deprecated 인 저장소 세 개의 처지 결정 | — | 예정 |
 | **R2-51** | Structure | Battle | 본체 체력 패키지 조정 (2파일) | — | 예정 |
 | **R2-52** | Structure | Battle | 상대 필드 카드 표시 패키지 조정 (세 폴더, 11파일) | R2-22 | 예정 |
+| **R2-53** | Rendering | Battle 공용 | 전투 중 만들어 쓰는 글자 그림의 정리 시점 정의 | R2-32 | 예정 |
 
 ### Type — 무엇을 바꾸는 작업인가
 
@@ -103,7 +104,12 @@
 | Deck | 덱을 짜는 화면. 전투 중의 덱과 제어 방식이 정반대다 |
 | Collection | 보유 카드 |
 | Shop, Lobby | |
+| Platform | 화면 그리기, 자원 읽기처럼 어느 영역에서나 쓰는 공통 바탕. `core/`, TextureManager |
 | — | 특정 도메인에 속하지 않는다. 문서, 도구, 작업 방식 |
+
+> **Battle 공용 과 Platform 은 다르다.** Battle 공용 은 전투 안에서 여러 도메인이
+> 함께 쓰는 것이고, Platform 은 전투 밖에서도 쓰는 것이다. 전투에서 문제가 드러났더라도
+> 산출물이 `core/` 에 있고 덱 편성도 쓸 수 있으면 Platform 이다.
 
 > **카테고리와 도메인은 다르다.** 카테고리는 `battle/` 아래 폴더로 찾기 위한 묶음이고,
 > 도메인은 규칙이 다른 단위다. 한 카테고리 안에 도메인이 여럿일 수 있다.
