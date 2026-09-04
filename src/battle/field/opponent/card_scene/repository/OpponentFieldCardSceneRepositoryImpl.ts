@@ -1,4 +1,5 @@
 import {MeshGenerator} from "../../../../../mesh/generator";
+import { DisposableMeshStore, disposeMesh } from "../../../../../core/lifecycle/DisposableMeshStore";
 
 import {TextureManager} from "../../../../../texture_manager/TextureManager";
 import {getCardById} from "../../../../../card/utility";
@@ -7,7 +8,7 @@ import {OpponentFieldCardSceneRepository} from "./OpponentFieldCardSceneReposito
 import {OpponentFieldCardScene} from "../entity/OpponentFieldCardScene";
 import {BattleFieldConstants} from "../../../../../common/BattleFieldConstants";
 
-export class OpponentFieldCardSceneRepositoryImpl implements OpponentFieldCardSceneRepository {
+export class OpponentFieldCardSceneRepositoryImpl implements OpponentFieldCardSceneRepository, DisposableMeshStore {
     private static instance: OpponentFieldCardSceneRepositoryImpl;
     private cardSceneMap: Map<number, OpponentFieldCardScene> = new Map();
 
@@ -60,6 +61,14 @@ export class OpponentFieldCardSceneRepositoryImpl implements OpponentFieldCardSc
 
     deleteById(id: number): boolean {
         return this.cardSceneMap.delete(id);
+    }
+
+    // 담고 있는 메시를 화면에서 빼고 그래픽 카드 자원을 놓아준 뒤 비운다.
+    // 아직 아무도 부르지 않는다. 부르기 시작하는 것은 R2-32 다.
+    // deleteAll 은 지도만 비운다. 그래픽 카드에 올라간 것은 그대로 남는다.
+    dispose(): void {
+        this.cardSceneMap.forEach((scene) => disposeMesh(scene.getMesh()));
+        this.cardSceneMap.clear();
     }
 
     deleteAll(): void {
