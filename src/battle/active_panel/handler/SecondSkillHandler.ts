@@ -4,10 +4,10 @@ import {YourFieldCardScene} from "../../field/your/card_scene/entity/YourFieldCa
 import {BattleFieldCardAttributeMark} from "../../../battle_field_card_attribute_mark/entity/BattleFieldCardAttributeMark";
 import {DragMoveRepositoryImpl} from "../../../drag_move/repository/DragMoveRepositoryImpl";
 import {YourFieldRepositoryImpl} from "../../field/your/repository/YourFieldRepositoryImpl";
-import {YourFieldCardSceneRepositoryImpl} from "../../field/your/card_scene/repository/YourFieldCardSceneRepositoryImpl";
+import {YourFieldCardSceneCacheImpl} from "../../field/your/card_scene/cache/YourFieldCardSceneCacheImpl";
 import {BattleFieldCardAttributeMarkRepositoryImpl} from "../../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
 import {BattleFieldCardAttributeMarkSceneRepositoryImpl} from "../../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
-import {OpponentFieldCardSceneRepositoryImpl} from "../../field/opponent/card_scene/repository/OpponentFieldCardSceneRepositoryImpl";
+import {OpponentFieldCardSceneCacheImpl} from "../../field/opponent/card_scene/cache/OpponentFieldCardSceneCacheImpl";
 import {OpponentFieldRepositoryImpl} from "../../field/opponent/repository/OpponentFieldRepositoryImpl";
 import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
 import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
@@ -17,10 +17,10 @@ import {NeonBorderRepositoryImpl} from "../../../neon_border/repository/NeonBord
 import {NeonBorderLineSceneRepositoryImpl} from "../../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
 import {DragMoveRepository} from "../../../drag_move/repository/DragMoveRepository";
 import {YourFieldRepository} from "../../field/your/repository/YourFieldRepository";
-import {YourFieldCardSceneRepository} from "../../field/your/card_scene/repository/YourFieldCardSceneRepository";
+import {YourFieldCardSceneCache} from "../../field/your/card_scene/cache/YourFieldCardSceneCache";
 import {BattleFieldCardAttributeMarkRepository} from "../../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
 import {BattleFieldCardAttributeMarkSceneRepository} from "../../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
-import {OpponentFieldCardSceneRepository} from "../../field/opponent/card_scene/repository/OpponentFieldCardSceneRepository";
+import {OpponentFieldCardSceneCache} from "../../field/opponent/card_scene/cache/OpponentFieldCardSceneCache";
 import {OpponentFieldRepository} from "../../field/opponent/repository/OpponentFieldRepository";
 import {OpponentFieldCardAttributeMarkRepository} from "../../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
 import {OpponentFieldCardAttributeMarkSceneRepository} from "../../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
@@ -38,10 +38,10 @@ export class SecondSkillHandler {
 
     private dragMoveRepository: DragMoveRepository;
     private yourFieldRepository: YourFieldRepository;
-    private yourFieldCardSceneRepository: YourFieldCardSceneRepository;
+    private yourFieldCardSceneRepository: YourFieldCardSceneCache;
     private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository;
     private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository;
-    private opponentFieldCardSceneRepository: OpponentFieldCardSceneRepository;
+    private opponentFieldCardSceneRepository: OpponentFieldCardSceneCache;
     private opponentFieldRepository: OpponentFieldRepository;
     private opponentFieldCardAttributeMarkRepository: OpponentFieldCardAttributeMarkRepository;
     private opponentFieldCardAttributeMarkSceneRepository: OpponentFieldCardAttributeMarkSceneRepository;
@@ -65,10 +65,10 @@ export class SecondSkillHandler {
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.dragMoveRepository = DragMoveRepositoryImpl.getInstance();
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance();
-        this.yourFieldCardSceneRepository = YourFieldCardSceneRepositoryImpl.getInstance();
+        this.yourFieldCardSceneRepository = YourFieldCardSceneCacheImpl.getInstance();
         this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance();
         this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
-        this.opponentFieldCardSceneRepository = OpponentFieldCardSceneRepositoryImpl.getInstance();
+        this.opponentFieldCardSceneRepository = OpponentFieldCardSceneCacheImpl.getInstance();
         this.opponentFieldRepository = OpponentFieldRepositoryImpl.getInstance();
         this.opponentFieldCardAttributeMarkRepository = OpponentFieldCardAttributeMarkRepositoryImpl.getInstance();
         this.opponentFieldCardAttributeMarkSceneRepository = OpponentFieldCardAttributeMarkSceneRepositoryImpl.getInstance();

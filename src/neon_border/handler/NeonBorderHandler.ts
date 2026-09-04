@@ -23,11 +23,11 @@ import {Vector2d} from "../../common/math/Vector2d";
 import {OpponentFieldRepository} from "../../battle/field/opponent/repository/OpponentFieldRepository";
 import {OpponentFieldRepositoryImpl} from "../../battle/field/opponent/repository/OpponentFieldRepositoryImpl";
 import {
-    OpponentFieldCardSceneRepository
-} from "../../battle/field/opponent/card_scene/repository/OpponentFieldCardSceneRepository";
+    OpponentFieldCardSceneCache
+} from "../../battle/field/opponent/card_scene/cache/OpponentFieldCardSceneCache";
 import {
-    OpponentFieldCardSceneRepositoryImpl
-} from "../../battle/field/opponent/card_scene/repository/OpponentFieldCardSceneRepositoryImpl";
+    OpponentFieldCardSceneCacheImpl
+} from "../../battle/field/opponent/card_scene/cache/OpponentFieldCardSceneCacheImpl";
 import {NeonShape} from "../../neon/NeonShape";
 import {
     NeonBorderLinePositionRepository
@@ -64,7 +64,7 @@ export class NeonBorderHandler {
     private yourFieldRepository: YourFieldRepository;
 
     private opponentFieldRepository: OpponentFieldRepository;
-    private opponentFieldCardSceneRepository: OpponentFieldCardSceneRepository;
+    private opponentFieldCardSceneRepository: OpponentFieldCardSceneCache;
     private opponentFieldCardAttributeMarkRepository: OpponentFieldCardAttributeMarkRepository;
     private opponentFieldCardAttributeMarkSceneRepository: OpponentFieldCardAttributeMarkSceneRepository;
 
@@ -81,7 +81,7 @@ export class NeonBorderHandler {
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance();
 
         this.opponentFieldRepository = OpponentFieldRepositoryImpl.getInstance();
-        this.opponentFieldCardSceneRepository = OpponentFieldCardSceneRepositoryImpl.getInstance();
+        this.opponentFieldCardSceneRepository = OpponentFieldCardSceneCacheImpl.getInstance();
         this.opponentFieldCardAttributeMarkRepository = OpponentFieldCardAttributeMarkRepositoryImpl.getInstance();
         this.opponentFieldCardAttributeMarkSceneRepository = OpponentFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
 

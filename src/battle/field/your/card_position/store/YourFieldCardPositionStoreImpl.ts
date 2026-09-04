@@ -1,20 +1,20 @@
 
-import {YourFieldCardPositionRepository} from "./YourFieldCardPositionRepository";
+import {YourFieldCardPositionStore} from "./YourFieldCardPositionStore";
 import {YourFieldCardPosition} from "../entity/YourFieldCardPosition";
 
-export class YourFieldCardPositionRepositoryImpl implements YourFieldCardPositionRepository {
-    private static instance: YourFieldCardPositionRepositoryImpl;
+export class YourFieldCardPositionStoreImpl implements YourFieldCardPositionStore {
+    private static instance: YourFieldCardPositionStoreImpl;
     private positionMap: Map<number, YourFieldCardPosition>;
 
     private constructor() {
         this.positionMap = new Map<number, YourFieldCardPosition>();
     }
 
-    public static getInstance(): YourFieldCardPositionRepositoryImpl {
-        if (!YourFieldCardPositionRepositoryImpl.instance) {
-            YourFieldCardPositionRepositoryImpl.instance = new YourFieldCardPositionRepositoryImpl();
+    public static getInstance(): YourFieldCardPositionStoreImpl {
+        if (!YourFieldCardPositionStoreImpl.instance) {
+            YourFieldCardPositionStoreImpl.instance = new YourFieldCardPositionStoreImpl();
         }
-        return YourFieldCardPositionRepositoryImpl.instance;
+        return YourFieldCardPositionStoreImpl.instance;
     }
 
     save(position: YourFieldCardPosition): YourFieldCardPosition {

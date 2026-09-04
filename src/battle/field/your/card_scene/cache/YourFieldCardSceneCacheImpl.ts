@@ -1,22 +1,22 @@
 import * as THREE from 'three';
 import { DisposableMeshStore, disposeMesh } from "../../../../../core/lifecycle/DisposableMeshStore";
 
-import {YourFieldCardSceneRepository} from "./YourFieldCardSceneRepository";
+import {YourFieldCardSceneCache} from "./YourFieldCardSceneCache";
 import {YourFieldCardScene} from "../entity/YourFieldCardScene";
 
-export class YourFieldCardSceneRepositoryImpl implements YourFieldCardSceneRepository, DisposableMeshStore {
-    private static instance: YourFieldCardSceneRepositoryImpl;
+export class YourFieldCardSceneCacheImpl implements YourFieldCardSceneCache, DisposableMeshStore {
+    private static instance: YourFieldCardSceneCacheImpl;
     private cardSceneMap: Map<number, YourFieldCardScene> = new Map();
 
     private readonly CARD_WIDTH_RATIO: number = 0.06493506493
 
     private constructor() {}
 
-    public static getInstance(): YourFieldCardSceneRepositoryImpl {
-        if (!YourFieldCardSceneRepositoryImpl.instance) {
-            YourFieldCardSceneRepositoryImpl.instance = new YourFieldCardSceneRepositoryImpl();
+    public static getInstance(): YourFieldCardSceneCacheImpl {
+        if (!YourFieldCardSceneCacheImpl.instance) {
+            YourFieldCardSceneCacheImpl.instance = new YourFieldCardSceneCacheImpl();
         }
-        return YourFieldCardSceneRepositoryImpl.instance;
+        return YourFieldCardSceneCacheImpl.instance;
     }
 
     count(): number {
@@ -28,7 +28,7 @@ export class YourFieldCardSceneRepositoryImpl implements YourFieldCardSceneRepos
         const yourFieldCardScene = new YourFieldCardScene(cardMesh);
         this.cardSceneMap.set(index, yourFieldCardScene);
 
-        console.log(`YourFieldCardSceneRepositoryImpl index: ${index}, cardMeshId: ${cardMesh.id}`);
+        console.log(`YourFieldCardSceneCacheImpl index: ${index}, cardMeshId: ${cardMesh.id}`);
 
         return yourFieldCardScene;
     }

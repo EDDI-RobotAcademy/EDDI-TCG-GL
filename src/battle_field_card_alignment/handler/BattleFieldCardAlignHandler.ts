@@ -2,10 +2,10 @@ import * as THREE from "three";
 
 import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
 import {YourFieldRepositoryImpl} from "../../battle/field/your/repository/YourFieldRepositoryImpl";
-import {YourFieldCardSceneRepositoryImpl} from "../../battle/field/your/card_scene/repository/YourFieldCardSceneRepositoryImpl";
+import {YourFieldCardSceneCacheImpl} from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCacheImpl";
 import {BattleFieldCardAttributeMarkRepositoryImpl} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
 import {BattleFieldCardAttributeMarkSceneRepositoryImpl} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
-import {OpponentFieldCardSceneRepositoryImpl} from "../../battle/field/opponent/card_scene/repository/OpponentFieldCardSceneRepositoryImpl";
+import {OpponentFieldCardSceneCacheImpl} from "../../battle/field/opponent/card_scene/cache/OpponentFieldCardSceneCacheImpl";
 import {OpponentFieldRepositoryImpl} from "../../battle/field/opponent/repository/OpponentFieldRepositoryImpl";
 import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
 import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
@@ -15,10 +15,10 @@ import {NeonBorderRepositoryImpl} from "../../neon_border/repository/NeonBorderR
 import {NeonBorderLineSceneRepositoryImpl} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
 import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository";
 import {YourFieldRepository} from "../../battle/field/your/repository/YourFieldRepository";
-import {YourFieldCardSceneRepository} from "../../battle/field/your/card_scene/repository/YourFieldCardSceneRepository";
+import {YourFieldCardSceneCache} from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCache";
 import {BattleFieldCardAttributeMarkRepository} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
 import {BattleFieldCardAttributeMarkSceneRepository} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
-import {OpponentFieldCardSceneRepository} from "../../battle/field/opponent/card_scene/repository/OpponentFieldCardSceneRepository";
+import {OpponentFieldCardSceneCache} from "../../battle/field/opponent/card_scene/cache/OpponentFieldCardSceneCache";
 import {OpponentFieldRepository} from "../../battle/field/opponent/repository/OpponentFieldRepository";
 import {OpponentFieldCardAttributeMarkRepository} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
 import {OpponentFieldCardAttributeMarkSceneRepository} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
@@ -60,8 +60,8 @@ import {
     NeonBorderLinePositionRepositoryImpl
 } from "../../neon_border_line_position/repository/NeonBorderLinePositionRepositoryImpl";
 import {YourField} from "../../battle/field/your/entity/YourField";
-import {BattleFieldHandPageRepository} from "../../battle/hand/page/repository/BattleFieldHandPageRepository";
-import {BattleFieldHandPageRepositoryImpl} from "../../battle/hand/page/repository/BattleFieldHandPageRepositoryImpl";
+import {BattleFieldHandPageStore} from "../../battle/hand/page/store/BattleFieldHandPageStore";
+import {BattleFieldHandPageStoreImpl} from "../../battle/hand/page/store/BattleFieldHandPageStoreImpl";
 import {BattleFieldCardPosition} from "../../battle_field_card_position/entity/BattleFieldCardPosition";
 import {BattleFieldHand} from "../../battle/hand/entity/BattleFieldHand";
 
@@ -70,7 +70,7 @@ export class BattleFieldCardAlignHandler {
 
     private dragMoveRepository: DragMoveRepository;
 
-    private battleFieldHandPageRepository: BattleFieldHandPageRepository;
+    private battleFieldHandPageRepository: BattleFieldHandPageStore;
 
     private battleFieldHandRepository: BattleFieldHandRepository
     private battleFieldHandCardPositionRepository: BattleFieldHandCardPositionRepository
@@ -87,7 +87,7 @@ export class BattleFieldCardAlignHandler {
     private constructor() {
         this.dragMoveRepository = DragMoveRepositoryImpl.getInstance();
 
-        this.battleFieldHandPageRepository = BattleFieldHandPageRepositoryImpl.getInstance();
+        this.battleFieldHandPageRepository = BattleFieldHandPageStoreImpl.getInstance();
 
         this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance()
         this.battleFieldHandCardPositionRepository = BattleFieldHandCardPositionRepositoryImpl.getInstance()

@@ -18,9 +18,9 @@ import {YourFieldRepositoryImpl} from "../../battle/field/your/repository/YourFi
 import {YourFieldMapRepository} from "../../battle/field/your/map/repository/YourFieldMapRepository";
 import {YourFieldMapRepositoryImpl} from "../../battle/field/your/map/repository/YourFieldMapRepositoryImpl";
 import {
-    YourFieldCardSceneRepositoryImpl
-} from "../../battle/field/your/card_scene/repository/YourFieldCardSceneRepositoryImpl";
-import {YourFieldCardSceneRepository} from "../../battle/field/your/card_scene/repository/YourFieldCardSceneRepository";
+    YourFieldCardSceneCacheImpl
+} from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCacheImpl";
+import {YourFieldCardSceneCache} from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCache";
 
 export class RightClickDetectServiceImpl implements RightClickDetectService {
     private static instance: RightClickDetectServiceImpl | null = null;
@@ -30,7 +30,7 @@ export class RightClickDetectServiceImpl implements RightClickDetectService {
     private mouseCursorDetectRepository: MouseCursorDetectRepository
     private activePanelAreaRepository: ActivePanelAreaRepository;
     private yourFieldRepository: YourFieldRepository;
-    private yourFieldCardSceneRepository: YourFieldCardSceneRepository;
+    private yourFieldCardSceneRepository: YourFieldCardSceneCache;
 
     private rightMouseDown: boolean = false;
 
@@ -38,7 +38,7 @@ export class RightClickDetectServiceImpl implements RightClickDetectService {
         this.cameraRepository = CameraRepositoryImpl.getInstance()
         this.dragMoveRepository = DragMoveRepositoryImpl.getInstance()
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance()
-        this.yourFieldCardSceneRepository = YourFieldCardSceneRepositoryImpl.getInstance()
+        this.yourFieldCardSceneRepository = YourFieldCardSceneCacheImpl.getInstance()
         this.mouseCursorDetectRepository = MouseCursorDetectRepositoryImpl.getInstance()
         this.activePanelAreaRepository = ActivePanelAreaRepositoryImpl.getInstance(camera, scene);
     }

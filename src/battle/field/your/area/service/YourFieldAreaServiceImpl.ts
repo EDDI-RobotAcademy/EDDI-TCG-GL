@@ -1,14 +1,14 @@
 import { YourFieldAreaService } from './YourFieldAreaService';
 import { YourFieldArea } from "../entity/YourFieldArea";
-import { YourFieldAreaRepository } from "../repository/YourFieldAreaRepository";
-import {YourFieldAreaRepositoryImpl} from "../repository/YourFieldAreaRepositoryImpl";
+import { YourFieldAreaCache } from "../cache/YourFieldAreaCache";
+import {YourFieldAreaCacheImpl} from "../cache/YourFieldAreaCacheImpl";
 
 export class YourFieldAreaServiceImpl implements YourFieldAreaService {
     private static instance: YourFieldAreaServiceImpl;
-    private yourFieldAreaRepository: YourFieldAreaRepository;
+    private yourFieldAreaRepository: YourFieldAreaCache;
 
     constructor() {
-        this.yourFieldAreaRepository = YourFieldAreaRepositoryImpl.getInstance();
+        this.yourFieldAreaRepository = YourFieldAreaCacheImpl.getInstance();
     }
 
     static getInstance(): YourFieldAreaServiceImpl {

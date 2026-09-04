@@ -4,11 +4,11 @@ import * as THREE from "three";
 import {OpponentFieldService} from "./OpponentFieldService";
 import {getCardById} from "../../../../card/utility";
 import {Vector2d} from "../../../../common/math/Vector2d";
-import {OpponentFieldCardPositionRepositoryImpl} from "../card_position/repository/OpponentFieldCardPositionRepositoryImpl";
-import {OpponentFieldCardPositionRepository} from "../card_position/repository/OpponentFieldCardPositionRepository";
+import {OpponentFieldCardPositionStoreImpl} from "../card_position/store/OpponentFieldCardPositionStoreImpl";
+import {OpponentFieldCardPositionStore} from "../card_position/store/OpponentFieldCardPositionStore";
 import {OpponentFieldCardPosition} from "../card_position/entity/OpponentFieldCardPosition";
-import {OpponentFieldCardSceneRepositoryImpl} from "../card_scene/repository/OpponentFieldCardSceneRepositoryImpl";
-import {OpponentFieldCardSceneRepository} from "../card_scene/repository/OpponentFieldCardSceneRepository";
+import {OpponentFieldCardSceneCacheImpl} from "../card_scene/cache/OpponentFieldCardSceneCacheImpl";
+import {OpponentFieldCardSceneCache} from "../card_scene/cache/OpponentFieldCardSceneCache";
 import {OpponentFieldCardScene} from "../card_scene/entity/OpponentFieldCardScene";
 import {CardKind} from "../../../../card/kind";
 import {Texture} from "three";
@@ -32,8 +32,8 @@ import {BattleFieldConstants} from "../../../../common/BattleFieldConstants";
 export class OpponentFieldServiceImpl implements OpponentFieldService {
     private static instance: OpponentFieldServiceImpl;
 
-    private opponentFieldCardPositionRepository: OpponentFieldCardPositionRepository
-    private opponentFieldCardSceneRepository: OpponentFieldCardSceneRepository
+    private opponentFieldCardPositionRepository: OpponentFieldCardPositionStore
+    private opponentFieldCardSceneRepository: OpponentFieldCardSceneCache
     private opponentFieldRepository: OpponentFieldRepository
 
     private opponentFieldCardAttributeMarkPositionRepository: OpponentFieldCardAttributeMarkPositionRepository
@@ -60,8 +60,8 @@ export class OpponentFieldServiceImpl implements OpponentFieldService {
     };
 
     private constructor() {
-        this.opponentFieldCardPositionRepository = OpponentFieldCardPositionRepositoryImpl.getInstance()
-        this.opponentFieldCardSceneRepository = OpponentFieldCardSceneRepositoryImpl.getInstance()
+        this.opponentFieldCardPositionRepository = OpponentFieldCardPositionStoreImpl.getInstance()
+        this.opponentFieldCardSceneRepository = OpponentFieldCardSceneCacheImpl.getInstance()
         this.opponentFieldRepository = OpponentFieldRepositoryImpl.getInstance()
 
         this.opponentFieldCardAttributeMarkPositionRepository = OpponentFieldCardAttributeMarkPositionRepositoryImpl.getInstance()

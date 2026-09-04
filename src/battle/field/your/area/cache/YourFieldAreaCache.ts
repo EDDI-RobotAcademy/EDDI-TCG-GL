@@ -1,6 +1,6 @@
 import {YourFieldArea} from "../entity/YourFieldArea";
 
-export interface YourFieldAreaRepository {
+export interface YourFieldAreaCache {
     save(entity: YourFieldArea): void;
     findById(id: number): YourFieldArea | null;
     deleteById(id: number): void;

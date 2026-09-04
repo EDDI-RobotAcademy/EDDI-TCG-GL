@@ -1,18 +1,18 @@
 import * as THREE from 'three';
 
-import { YourFieldAreaRepository } from './YourFieldAreaRepository';
+import { YourFieldAreaCache } from './YourFieldAreaCache';
 import {YourFieldArea} from "../entity/YourFieldArea";
 
 
-export class YourFieldAreaRepositoryImpl implements YourFieldAreaRepository {
-    private static instance: YourFieldAreaRepositoryImpl;
+export class YourFieldAreaCacheImpl implements YourFieldAreaCache {
+    private static instance: YourFieldAreaCacheImpl;
     private yourFieldArea: YourFieldArea | null = null;  // 하나의 엔티티만 저장
 
     private constructor() {}
 
-    static getInstance(): YourFieldAreaRepositoryImpl {
+    static getInstance(): YourFieldAreaCacheImpl {
         if (!this.instance) {
-            this.instance = new YourFieldAreaRepositoryImpl();
+            this.instance = new YourFieldAreaCacheImpl();
         }
         return this.instance;
     }

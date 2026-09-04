@@ -1,18 +1,18 @@
 import * as THREE from 'three';
 
 import {OpponentFieldArea} from "../entity/OpponentFieldArea";
-import {OpponentFieldAreaRepository} from "./OpponentFieldAreaRepository";
+import {OpponentFieldAreaCache} from "./OpponentFieldAreaCache";
 
 
-export class OpponentFieldAreaRepositoryImpl implements OpponentFieldAreaRepository {
-    private static instance: OpponentFieldAreaRepositoryImpl;
+export class OpponentFieldAreaCacheImpl implements OpponentFieldAreaCache {
+    private static instance: OpponentFieldAreaCacheImpl;
     private opponentFieldArea: OpponentFieldArea | null = null;  // 하나의 엔티티만 저장
 
     private constructor() {}
 
-    static getInstance(): OpponentFieldAreaRepositoryImpl {
+    static getInstance(): OpponentFieldAreaCacheImpl {
         if (!this.instance) {
-            this.instance = new OpponentFieldAreaRepositoryImpl();
+            this.instance = new OpponentFieldAreaCacheImpl();
         }
         return this.instance;
     }

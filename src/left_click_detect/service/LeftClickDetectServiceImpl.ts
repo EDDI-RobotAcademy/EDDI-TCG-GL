@@ -31,8 +31,8 @@ import {NeonBorderLinePositionRepository} from "../../neon_border_line_position/
 import {NeonBorderLinePositionRepositoryImpl} from "../../neon_border_line_position/repository/NeonBorderLinePositionRepositoryImpl";
 import {NeonBorderSceneType} from "../../neon_border/entity/NeonBorderSceneType";
 import chalk from "chalk";
-import {YourFieldCardSceneRepository} from "../../battle/field/your/card_scene/repository/YourFieldCardSceneRepository";
-import {YourFieldCardSceneRepositoryImpl} from "../../battle/field/your/card_scene/repository/YourFieldCardSceneRepositoryImpl";
+import {YourFieldCardSceneCache} from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCache";
+import {YourFieldCardSceneCacheImpl} from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCacheImpl";
 import {LeftClickYourFieldDetectRepository} from "../repository/LeftClickYourFieldDetectRepository";
 import {LeftClickYourFieldDetectRepositoryImpl} from "../repository/LeftClickYourFieldDetectRepositoryImpl";
 import {LeftClickedArea} from "../entity/LeftClickedArea";
@@ -49,8 +49,8 @@ import {ActivePanelAreaRepository} from "../../battle/active_panel/repository/Ac
 import {ActivePanelAreaRepositoryImpl} from "../../battle/active_panel/repository/ActivePanelAreaRepositoryImpl";
 import {getCardById} from "../../card/utility";
 import {getSkillType, SkillType} from "../../card/SkillType";
-import {OpponentFieldCardSceneRepository} from "../../battle/field/opponent/card_scene/repository/OpponentFieldCardSceneRepository";
-import {OpponentFieldCardSceneRepositoryImpl} from "../../battle/field/opponent/card_scene/repository/OpponentFieldCardSceneRepositoryImpl";
+import {OpponentFieldCardSceneCache} from "../../battle/field/opponent/card_scene/cache/OpponentFieldCardSceneCache";
+import {OpponentFieldCardSceneCacheImpl} from "../../battle/field/opponent/card_scene/cache/OpponentFieldCardSceneCacheImpl";
 import {OpponentFieldRepositoryImpl} from "../../battle/field/opponent/repository/OpponentFieldRepositoryImpl";
 import {OpponentFieldRepository} from "../../battle/field/opponent/repository/OpponentFieldRepository";
 import {OpponentFieldCardAttributeMarkRepository} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
@@ -70,10 +70,10 @@ import {BattleFieldCommonAreaType} from "../../common/type/BattleFieldCommonArea
 import {NeonBorderHandler} from "../../neon_border/handler/NeonBorderHandler";
 import {OpponentFieldCardScene} from "../../battle/field/opponent/card_scene/entity/OpponentFieldCardScene";
 import {BattleFieldConstants} from "../../common/BattleFieldConstants";
-import {BattleFieldHandPageRepository} from "../../battle/hand/page/repository/BattleFieldHandPageRepository";
+import {BattleFieldHandPageStore} from "../../battle/hand/page/store/BattleFieldHandPageStore";
 import {
-    BattleFieldHandPageRepositoryImpl
-} from "../../battle/hand/page/repository/BattleFieldHandPageRepositoryImpl";
+    BattleFieldHandPageStoreImpl
+} from "../../battle/hand/page/store/BattleFieldHandPageStoreImpl";
 import {BattleFieldCardAlignHandler} from "../../battle_field_card_alignment/handler/BattleFieldCardAlignHandler";
 import {updateFieldEnergyCount} from "../../battle/field_energy/your/FieldEnergyCount";
 
@@ -109,17 +109,17 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private neonBorderHandler: NeonBorderHandler;
 
     private battleFieldCardAlignHandler: BattleFieldCardAlignHandler;
-    private battleFieldHandPageRepository: BattleFieldHandPageRepository;
+    private battleFieldHandPageRepository: BattleFieldHandPageStore;
 
     private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository
     private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository
     private battleFieldCardSceneRepository: BattleFieldCardSceneRepository;
     private battleFieldHandRepository: BattleFieldHandRepository;
 
-    private yourFieldCardSceneRepository: YourFieldCardSceneRepository
+    private yourFieldCardSceneRepository: YourFieldCardSceneCache
     private yourFieldRepository: YourFieldRepository
 
-    private opponentFieldCardSceneRepository: OpponentFieldCardSceneRepository
+    private opponentFieldCardSceneRepository: OpponentFieldCardSceneCache
     private opponentFieldRepository: OpponentFieldRepository
     private opponentFieldCardAttributeMarkRepository: OpponentFieldCardAttributeMarkRepository
     private opponentFieldCardAttributeMarkSceneRepository: OpponentFieldCardAttributeMarkSceneRepository
@@ -178,18 +178,18 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
         this.battleFieldCardAlignHandler = BattleFieldCardAlignHandler.getInstance()
 
-        this.battleFieldHandPageRepository = BattleFieldHandPageRepositoryImpl.getInstance();
+        this.battleFieldHandPageRepository = BattleFieldHandPageStoreImpl.getInstance();
 
         this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance()
         this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance()
         this.battleFieldCardSceneRepository = BattleFieldCardSceneRepositoryImpl.getInstance();
         this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance()
 
-        this.yourFieldCardSceneRepository = YourFieldCardSceneRepositoryImpl.getInstance()
+        this.yourFieldCardSceneRepository = YourFieldCardSceneCacheImpl.getInstance()
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance()
 
         this.opponentFieldRepository = OpponentFieldRepositoryImpl.getInstance()
-        this.opponentFieldCardSceneRepository = OpponentFieldCardSceneRepositoryImpl.getInstance()
+        this.opponentFieldCardSceneRepository = OpponentFieldCardSceneCacheImpl.getInstance()
         this.opponentFieldCardAttributeMarkRepository = OpponentFieldCardAttributeMarkRepositoryImpl.getInstance()
         this.opponentFieldCardAttributeMarkSceneRepository = OpponentFieldCardAttributeMarkSceneRepositoryImpl.getInstance()
 

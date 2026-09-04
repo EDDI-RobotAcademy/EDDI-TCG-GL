@@ -4,23 +4,23 @@ import { DisposableMeshStore, disposeMesh } from "../../../../../core/lifecycle/
 import {TextureManager} from "../../../../../texture_manager/TextureManager";
 import {getCardById} from "../../../../../card/utility";
 import {Vector2d} from "../../../../../common/math/Vector2d";
-import {OpponentFieldCardSceneRepository} from "./OpponentFieldCardSceneRepository";
+import {OpponentFieldCardSceneCache} from "./OpponentFieldCardSceneCache";
 import {OpponentFieldCardScene} from "../entity/OpponentFieldCardScene";
 import {BattleFieldConstants} from "../../../../../common/BattleFieldConstants";
 
-export class OpponentFieldCardSceneRepositoryImpl implements OpponentFieldCardSceneRepository, DisposableMeshStore {
-    private static instance: OpponentFieldCardSceneRepositoryImpl;
+export class OpponentFieldCardSceneCacheImpl implements OpponentFieldCardSceneCache, DisposableMeshStore {
+    private static instance: OpponentFieldCardSceneCacheImpl;
     private cardSceneMap: Map<number, OpponentFieldCardScene> = new Map();
 
     private readonly CARD_WIDTH_RATIO: number = BattleFieldConstants.CARD_WIDTH_RATIO;
 
     private constructor() {}
 
-    public static getInstance(): OpponentFieldCardSceneRepositoryImpl {
-        if (!OpponentFieldCardSceneRepositoryImpl.instance) {
-            OpponentFieldCardSceneRepositoryImpl.instance = new OpponentFieldCardSceneRepositoryImpl();
+    public static getInstance(): OpponentFieldCardSceneCacheImpl {
+        if (!OpponentFieldCardSceneCacheImpl.instance) {
+            OpponentFieldCardSceneCacheImpl.instance = new OpponentFieldCardSceneCacheImpl();
         }
-        return OpponentFieldCardSceneRepositoryImpl.instance;
+        return OpponentFieldCardSceneCacheImpl.instance;
     }
 
     count(): number {
