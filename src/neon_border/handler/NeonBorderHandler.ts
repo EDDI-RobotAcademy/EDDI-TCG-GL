@@ -10,8 +10,8 @@ import {
 } from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
 import {YourFieldCardScene} from "../../battle/field/your/card_scene/entity/YourFieldCardScene";
 import {ClickableCard} from "../../left_click_detect/service/ClickableCard";
-import { ActivePanelAreaRepository } from "src/battle/active_panel/repository/ActivePanelAreaRepository";
-import {ActivePanelAreaRepositoryImpl} from "../../battle/active_panel/repository/ActivePanelAreaRepositoryImpl";
+import { ActivePanelAreaCache } from "src/battle/active_panel/cache/ActivePanelAreaCache";
+import {ActivePanelAreaCacheImpl} from "../../battle/active_panel/cache/ActivePanelAreaCacheImpl";
 import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository";
 import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
 import {YourFieldRepository} from "../../battle/field/your/repository/YourFieldRepository";
@@ -73,7 +73,7 @@ export class NeonBorderHandler {
     private neonBorderLineSceneRepository: NeonBorderLineSceneRepository;
     private neonBorderLinePositionRepository: NeonBorderLinePositionRepository;
 
-    private activePanelAreaRepository: ActivePanelAreaRepository;
+    private activePanelAreaCache: ActivePanelAreaCache;
 
     private dragMoveRepository: DragMoveRepository;
 
@@ -90,7 +90,7 @@ export class NeonBorderHandler {
         this.neonBorderLineSceneRepository = NeonBorderLineSceneRepositoryImpl.getInstance();
         this.neonBorderLinePositionRepository = NeonBorderLinePositionRepositoryImpl.getInstance();
 
-        this.activePanelAreaRepository = ActivePanelAreaRepositoryImpl.getInstance(camera, scene);
+        this.activePanelAreaCache = ActivePanelAreaCacheImpl.getInstance(camera, scene);
 
         this.dragMoveRepository = DragMoveRepositoryImpl.getInstance();
     }
@@ -103,7 +103,7 @@ export class NeonBorderHandler {
     }
 
     public cleanupAfterAction(selectedYourFieldCard: YourFieldCardScene) {
-        this.activePanelAreaRepository.delete();
+        this.activePanelAreaCache.delete();
         this.deactivateExistNeonBorder(selectedYourFieldCard);
         this.deactivateEveryExistOpponentNeonBorder();
         this.deactivateOpponentMasterNeonBorder();

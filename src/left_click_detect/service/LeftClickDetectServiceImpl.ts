@@ -45,8 +45,8 @@ import {YourFieldAttributeMarkManager} from "../handler/your_field/YourFieldAttr
 import {YourFieldRepository} from "../../battle/field/your/repository/YourFieldRepository";
 import {YourFieldRepositoryImpl} from "../../battle/field/your/repository/YourFieldRepositoryImpl";
 import {YourFieldCardScene} from "../../battle/field/your/card_scene/entity/YourFieldCardScene";
-import {ActivePanelAreaRepository} from "../../battle/active_panel/repository/ActivePanelAreaRepository";
-import {ActivePanelAreaRepositoryImpl} from "../../battle/active_panel/repository/ActivePanelAreaRepositoryImpl";
+import {ActivePanelAreaCache} from "../../battle/active_panel/cache/ActivePanelAreaCache";
+import {ActivePanelAreaCacheImpl} from "../../battle/active_panel/cache/ActivePanelAreaCacheImpl";
 import {getCardById} from "../../card/utility";
 import {getSkillType, SkillType} from "../../card/SkillType";
 import {OpponentFieldCardSceneCache} from "../../battle/field/opponent/card_scene/cache/OpponentFieldCardSceneCache";
@@ -134,7 +134,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private yourHandAttributeMarkManager: YourHandAttributeMarkManager
     private yourFieldAttributeMarkManager: YourFieldAttributeMarkManager
 
-    private activePanelAreaRepository: ActivePanelAreaRepository
+    private activePanelAreaCache: ActivePanelAreaCache
     private activePanelButtonHandler: ActivePanelButtonHandler
 
     private leftMouseDown: boolean = false;
@@ -203,7 +203,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         this.yourHandAttributeMarkManager = YourHandAttributeMarkManager.getInstance();
         this.yourFieldAttributeMarkManager = YourFieldAttributeMarkManager.getInstance()
 
-        this.activePanelAreaRepository = ActivePanelAreaRepositoryImpl.getInstance(camera, scene)
+        this.activePanelAreaCache = ActivePanelAreaCacheImpl.getInstance(camera, scene)
         this.activePanelButtonHandler = ActivePanelButtonHandler.getInstance(camera, scene)
     }
 
@@ -244,7 +244,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     }
 
     private handleActivePanelClick(x: number, y: number): any | null {
-        const buttons = this.activePanelAreaRepository.getActiveButtons() ?? [];
+        const buttons = this.activePanelAreaCache.getActiveButtons() ?? [];
         if (buttons.length === 0) return null;
 
         const clickedButton = this.getIntersectedButton(x, y, buttons);
@@ -289,27 +289,27 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             case "general":
                 this.neonBorderHandler.createOpponentNeonBorderList()
                 this.neonBorderHandler.createOpponentMasterNeonBorder()
-                this.activePanelAreaRepository.setActivePanelButtonType(ActivePanelButtonType.GENERAL)
+                this.activePanelAreaCache.setActivePanelButtonType(ActivePanelButtonType.GENERAL)
                 break;
             case "firstSkill":
                 console.log("firstSkill type")
                 if (skill1Type === SkillType.Single) {
                     this.neonBorderHandler.createOpponentNeonBorderList()
                     this.neonBorderHandler.createOpponentMasterNeonBorder()
-                    this.activePanelAreaRepository.setActivePanelButtonType(ActivePanelButtonType.FIRST_SKILL)
+                    this.activePanelAreaCache.setActivePanelButtonType(ActivePanelButtonType.FIRST_SKILL)
                 }
                 break;
             case "secondSkill":
                 console.log("secondSkill type")
                 if (skill2Type === SkillType.EveryUnitField) {
                     console.log("유닛 필드 전체 공격")
-                    this.activePanelAreaRepository.setActivePanelButtonType(ActivePanelButtonType.SECOND_SKILL)
+                    this.activePanelAreaCache.setActivePanelButtonType(ActivePanelButtonType.SECOND_SKILL)
                     this.activePanelButtonHandler.execute(ActivePanelButtonType.SECOND_SKILL, BattleFieldCommonAreaType.EVERY_OPPONENT_FIELD_UNIT)
                 }
                 break;
             case "details":
                 console.log("details type")
-                this.activePanelAreaRepository.setActivePanelButtonType(ActivePanelButtonType.DETAILS)
+                this.activePanelAreaCache.setActivePanelButtonType(ActivePanelButtonType.DETAILS)
                 if (this.currentMouseCursorDetectArea === MouseCursorDetectArea.YOUR_FIELD) {
                     this.activePanelButtonHandler.execute(ActivePanelButtonType.DETAILS, BattleFieldCommonAreaType.YOUR_FIELD_UNIT)
                 }
@@ -322,7 +322,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     async handleLeftClick(clickPoint: { x: number; y: number }): Promise<any | null> {
         const { x, y } = clickPoint;
 
-        if (this.activePanelAreaRepository.exists()) {
+        if (this.activePanelAreaCache.exists()) {
             const activeResult = this.handleActivePanelClick(x, y);
             if (activeResult) return activeResult;
         }
@@ -365,7 +365,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             this.neonBorderHandler.deactivateEveryExistOpponentNeonBorder()
             this.neonBorderHandler.deactivateExistNeonBorder(prevYourFieldCard)
             this.neonBorderHandler.deactivateOpponentMasterNeonBorder()
-            this.activePanelAreaRepository.delete();
+            this.activePanelAreaCache.delete();
         }
 
         this.dragMoveRepository.setSelectedObject(clickedHandCard);
@@ -401,7 +401,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
         // this.activateExistNeonBorder(clickedYourFieldCard);
         this.neonBorderHandler.deactivateEveryExistNeonBorder()
-        this.activePanelAreaRepository.delete();
+        this.activePanelAreaCache.delete();
         this.neonBorderHandler.activateExistNeonBorder(clickedYourFieldCard);
 
         if (prevYourFieldCard && prevYourFieldCard.getId() === clickedYourFieldCard.getId()) {
@@ -413,7 +413,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             this.neonBorderHandler.deactivateEveryExistOpponentNeonBorder()
             this.neonBorderHandler.deactivateExistNeonBorder(prevYourFieldCard)
             this.neonBorderHandler.deactivateOpponentMasterNeonBorder()
-            this.activePanelAreaRepository.delete();
+            this.activePanelAreaCache.delete();
         }
 
         this.dragMoveRepository.setSelectedObject(clickedYourFieldCard);
@@ -433,12 +433,12 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     async handleOpponentFieldClick(x: number, y: number): Promise<void> {
         console.log(`handleOpponentFieldClick()`);
 
-        const currentActivePanelButtonType = this.activePanelAreaRepository.getActivePanelButtonType();
+        const currentActivePanelButtonType = this.activePanelAreaCache.getActivePanelButtonType();
 
         if (currentActivePanelButtonType === ActivePanelButtonType.NONE) {
             console.warn("현재 ActivePanelButtonType이 선택되지 않았습니다.");
 
-            // if (this.activePanelAreaRepository.exists()) {
+            // if (this.activePanelAreaCache.exists()) {
             //     return;
             // }
 
@@ -460,7 +460,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             console.log(`prevOpponentFieldCard: ${prevOpponentFieldCard}`)
 
             this.neonBorderHandler.deactivateEveryExistNeonBorder()
-            this.activePanelAreaRepository.delete();
+            this.activePanelAreaCache.delete();
             this.neonBorderHandler.activateExistOpponentNeonBorder(clickedOpponentFieldCard);
 
             if (prevOpponentFieldCard && prevOpponentFieldCard.getId() === clickedOpponentFieldCard.getId()) {
@@ -472,7 +472,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
                 this.neonBorderHandler.deactivateEveryExistOpponentNeonBorder()
                 this.neonBorderHandler.deactivateExistNeonBorder(prevOpponentFieldCard)
                 this.neonBorderHandler.deactivateOpponentMasterNeonBorder()
-                this.activePanelAreaRepository.delete();
+                this.activePanelAreaCache.delete();
             }
 
             this.dragMoveRepository.setSelectedObject(clickedOpponentFieldCard);
@@ -531,7 +531,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     }
 
     private async handleOpponentMasterClick(x: number, y: number): Promise<void> {
-        const currentActivePanelButtonType = this.activePanelAreaRepository.getActivePanelButtonType();
+        const currentActivePanelButtonType = this.activePanelAreaCache.getActivePanelButtonType();
 
         if (currentActivePanelButtonType === ActivePanelButtonType.NONE) {
             console.warn("현재 ActivePanelButtonType이 선택되지 않았습니다.");

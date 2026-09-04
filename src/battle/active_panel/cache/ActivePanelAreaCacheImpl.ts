@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import {ActivePanelAreaRepository} from "./ActivePanelAreaRepository";
+import {ActivePanelAreaCache} from "./ActivePanelAreaCache";
 import {TextureManager} from "../../../texture_manager/TextureManager";
 import {MeshGenerator} from "../../../mesh/generator";
 import {Vector2d} from "../../../common/math/Vector2d";
@@ -7,8 +7,8 @@ import {getCardById} from "../../../card/utility";
 import {ActivePanelButtonType} from "../entity/ActivePanelButtonType";
 import {BattleFieldConstants} from "../../../common/BattleFieldConstants";
 
-export class ActivePanelAreaRepositoryImpl implements ActivePanelAreaRepository {
-    private static instance: ActivePanelAreaRepositoryImpl | null = null;
+export class ActivePanelAreaCacheImpl implements ActivePanelAreaCache {
+    private static instance: ActivePanelAreaCacheImpl | null = null;
     private activePanel: THREE.Mesh | null = null;
     private scene: THREE.Scene;
     private camera: THREE.Camera;
@@ -33,11 +33,11 @@ export class ActivePanelAreaRepositoryImpl implements ActivePanelAreaRepository 
         this.scene = scene;
     }
 
-    static getInstance(camera: THREE.Camera, scene: THREE.Scene): ActivePanelAreaRepositoryImpl {
-        if (!ActivePanelAreaRepositoryImpl.instance) {
-            ActivePanelAreaRepositoryImpl.instance = new ActivePanelAreaRepositoryImpl(camera, scene);
+    static getInstance(camera: THREE.Camera, scene: THREE.Scene): ActivePanelAreaCacheImpl {
+        if (!ActivePanelAreaCacheImpl.instance) {
+            ActivePanelAreaCacheImpl.instance = new ActivePanelAreaCacheImpl(camera, scene);
         }
-        return ActivePanelAreaRepositoryImpl.instance;
+        return ActivePanelAreaCacheImpl.instance;
     }
 
     private async createButton(
