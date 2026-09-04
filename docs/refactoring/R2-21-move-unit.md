@@ -1,4 +1,4 @@
-# [ETWGL-R2-21] 유닛 패키지 조정 (11파일)
+# [ETWGL-R2-21] 유닛 패키지 조정
 
 선행: R2-20 │ 후행: R2-22 │ 산출물: src/battle/unit/ │ Type: Structure │ Domain: Battle Unit
 

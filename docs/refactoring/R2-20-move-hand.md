@@ -1,4 +1,4 @@
-# [ETWGL-R2-20] 손패 패키지 조정 (두 폴더, 20파일)
+# [ETWGL-R2-20] 손패 패키지 조정
 
 선행: R2-19 │ 후행: R2-21 │ 산출물: src/battle/hand/ │ Type: Structure │ Domain: Battle Hand
 

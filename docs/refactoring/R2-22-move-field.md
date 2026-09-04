@@ -1,4 +1,4 @@
-# [ETWGL-R2-22] 카드 배치와 좌표 패키지 조정 (열 폴더, 41파일)
+# [ETWGL-R2-22] 카드 배치와 좌표 패키지 조정
 
 선행: R2-21 │ 후행: R2-29 │ 산출물: src/battle/field/ │ Type: Structure │ Domain: Battle Field
 
