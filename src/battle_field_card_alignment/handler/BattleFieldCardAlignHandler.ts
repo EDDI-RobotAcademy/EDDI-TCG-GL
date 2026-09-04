@@ -10,7 +10,7 @@ import {OpponentFieldRepositoryImpl} from "../../battle/field/opponent/repositor
 import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
 import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
 import {LeftClickHandDetectRepositoryImpl} from "../../left_click_detect/repository/LeftClickHandDetectRepositoryImpl";
-import {ActivePanelAreaRepositoryImpl} from "../../battle/active_panel/repository/ActivePanelAreaRepositoryImpl";
+import {ActivePanelAreaCacheImpl} from "../../battle/active_panel/cache/ActivePanelAreaCacheImpl";
 import {NeonBorderRepositoryImpl} from "../../neon_border/repository/NeonBorderRepositoryImpl";
 import {NeonBorderLineSceneRepositoryImpl} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
 import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository";
@@ -23,7 +23,7 @@ import {OpponentFieldRepository} from "../../battle/field/opponent/repository/Op
 import {OpponentFieldCardAttributeMarkRepository} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
 import {OpponentFieldCardAttributeMarkSceneRepository} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
 import {LeftClickHandDetectRepository} from "../../left_click_detect/repository/LeftClickHandDetectRepository";
-import {ActivePanelAreaRepository} from "../../battle/active_panel/repository/ActivePanelAreaRepository";
+import {ActivePanelAreaCache} from "../../battle/active_panel/cache/ActivePanelAreaCache";
 import {NeonBorderRepository} from "../../neon_border/repository/NeonBorderRepository";
 import {NeonBorderLineSceneRepository} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepository";
 

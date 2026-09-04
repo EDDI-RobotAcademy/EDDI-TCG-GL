@@ -2,7 +2,7 @@ import {Card} from "../../../card/types";
 import * as THREE from "three";
 import {ActivePanelButtonType} from "../entity/ActivePanelButtonType";
 
-export interface ActivePanelAreaRepository {
+export interface ActivePanelAreaCache {
     create(x: number, y: number, cardId: number): void;
     delete(): void;
     exists(): boolean;

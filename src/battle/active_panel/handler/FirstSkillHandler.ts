@@ -13,7 +13,7 @@ import {OpponentFieldRepositoryImpl} from "../../field/opponent/repository/Oppon
 import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
 import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
 import {LeftClickHandDetectRepositoryImpl} from "../../../left_click_detect/repository/LeftClickHandDetectRepositoryImpl";
-import {ActivePanelAreaRepositoryImpl} from "../repository/ActivePanelAreaRepositoryImpl";
+import {ActivePanelAreaCacheImpl} from "../cache/ActivePanelAreaCacheImpl";
 import {NeonBorderRepositoryImpl} from "../../../neon_border/repository/NeonBorderRepositoryImpl";
 import {NeonBorderLineSceneRepositoryImpl} from "../../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
 import {DragMoveRepository} from "../../../drag_move/repository/DragMoveRepository";
@@ -26,7 +26,7 @@ import {OpponentFieldRepository} from "../../field/opponent/repository/OpponentF
 import {OpponentFieldCardAttributeMarkRepository} from "../../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
 import {OpponentFieldCardAttributeMarkSceneRepository} from "../../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
 import {LeftClickHandDetectRepository} from "../../../left_click_detect/repository/LeftClickHandDetectRepository";
-import {ActivePanelAreaRepository} from "../repository/ActivePanelAreaRepository";
+import {ActivePanelAreaCache} from "../cache/ActivePanelAreaCache";
 import {NeonBorderRepository} from "../../../neon_border/repository/NeonBorderRepository";
 import {NeonBorderLineSceneRepository} from "../../../neon_border_line_scene/repository/NeonBorderLineSceneRepository";
 import {MarkSceneType} from "../../../battle_field_card_attribute_mark_scene/entity/MarkSceneType";
@@ -46,7 +46,7 @@ export class FirstSkillHandler {
     private opponentFieldCardAttributeMarkSceneRepository: OpponentFieldCardAttributeMarkSceneRepository;
 
     private leftClickHandDetectRepository: LeftClickHandDetectRepository;
-    private activePanelAreaRepository: ActivePanelAreaRepository;
+    private activePanelAreaCache: ActivePanelAreaCache;
 
     private neonBorderRepository: NeonBorderRepository;
     private neonBorderLineSceneRepository: NeonBorderLineSceneRepository;
@@ -72,7 +72,7 @@ export class FirstSkillHandler {
         this.opponentFieldCardAttributeMarkSceneRepository = OpponentFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
 
         this.leftClickHandDetectRepository = LeftClickHandDetectRepositoryImpl.getInstance();
-        this.activePanelAreaRepository= ActivePanelAreaRepositoryImpl.getInstance(camera, scene);
+        this.activePanelAreaCache= ActivePanelAreaCacheImpl.getInstance(camera, scene);
 
         this.neonBorderRepository = NeonBorderRepositoryImpl.getInstance();
         this.neonBorderLineSceneRepository = NeonBorderLineSceneRepositoryImpl.getInstance();

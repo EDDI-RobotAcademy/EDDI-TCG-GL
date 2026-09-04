@@ -1788,7 +1788,7 @@ async function main(container: HTMLElement): Promise<void> {
             return;
         }
 
-        // Panel spawns at mouse right-click world position (legacy: activePanelAreaRepository.create(clickPoint.x, clickPoint.y, cardId))
+        // Panel spawns at mouse right-click world position (legacy: activePanelAreaCache.create(clickPoint.x, clickPoint.y, cardId))
         const clickNdc = ndcFromEvent(e);
         sharedRaycaster.setFromCamera(clickNdc, camera);
         const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);

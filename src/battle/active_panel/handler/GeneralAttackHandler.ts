@@ -25,8 +25,8 @@ import { OpponentFieldCardAttributeMarkRepository } from "../../../opponent_fiel
 import { OpponentFieldCardAttributeMarkRepositoryImpl } from "../../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
 import { OpponentFieldCardAttributeMarkSceneRepository } from "../../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
 import { OpponentFieldCardAttributeMarkSceneRepositoryImpl } from "../../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
-import { ActivePanelAreaRepository } from "../repository/ActivePanelAreaRepository";
-import { ActivePanelAreaRepositoryImpl } from "../repository/ActivePanelAreaRepositoryImpl";
+import { ActivePanelAreaCache } from "../cache/ActivePanelAreaCache";
+import { ActivePanelAreaCacheImpl } from "../cache/ActivePanelAreaCacheImpl";
 import { ClickableCard } from "../../../left_click_detect/service/ClickableCard";
 import { NeonBorderSceneType } from "../../../neon_border/entity/NeonBorderSceneType";
 import { NeonBorderType } from "../../../neon_border/entity/NeonBorderType";

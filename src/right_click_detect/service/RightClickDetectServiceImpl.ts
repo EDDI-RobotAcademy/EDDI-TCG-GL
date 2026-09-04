@@ -9,8 +9,8 @@ import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveReposit
 import {MouseCursorDetectRepositoryImpl} from "../../mouse_cursor_detect/repository/MouseCursorDetectRepositoryImpl";
 import {MouseCursorDetectRepository} from "../../mouse_cursor_detect/repository/MouseCursorDetectRepository";
 import {LeftClickedArea} from "../../left_click_detect/entity/LeftClickedArea";
-import {ActivePanelAreaRepository} from "../../battle/active_panel/repository/ActivePanelAreaRepository";
-import {ActivePanelAreaRepositoryImpl} from "../../battle/active_panel/repository/ActivePanelAreaRepositoryImpl";
+import {ActivePanelAreaCache} from "../../battle/active_panel/cache/ActivePanelAreaCache";
+import {ActivePanelAreaCacheImpl} from "../../battle/active_panel/cache/ActivePanelAreaCacheImpl";
 import {BattleFieldCardScene} from "../../battle_field_card_scene/entity/BattleFieldCardScene";
 import {getCardById} from "../../card/utility";
 import {YourFieldRepository} from "../../battle/field/your/repository/YourFieldRepository";
@@ -28,7 +28,7 @@ export class RightClickDetectServiceImpl implements RightClickDetectService {
     private cameraRepository: CameraRepository
     private dragMoveRepository: DragMoveRepository
     private mouseCursorDetectRepository: MouseCursorDetectRepository
-    private activePanelAreaRepository: ActivePanelAreaRepository;
+    private activePanelAreaCache: ActivePanelAreaCache;
     private yourFieldRepository: YourFieldRepository;
     private yourFieldCardSceneCache: YourFieldCardSceneCache;
 
@@ -40,7 +40,7 @@ export class RightClickDetectServiceImpl implements RightClickDetectService {
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance()
         this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance()
         this.mouseCursorDetectRepository = MouseCursorDetectRepositoryImpl.getInstance()
-        this.activePanelAreaRepository = ActivePanelAreaRepositoryImpl.getInstance(camera, scene);
+        this.activePanelAreaCache = ActivePanelAreaCacheImpl.getInstance(camera, scene);
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): RightClickDetectServiceImpl {
@@ -67,9 +67,9 @@ export class RightClickDetectServiceImpl implements RightClickDetectService {
 
         // console.log('Active Panel 생성 준비')
 
-        if (this.activePanelAreaRepository.exists()) {
+        if (this.activePanelAreaCache.exists()) {
             console.log("기존 Active Panel 삭제");
-            this.activePanelAreaRepository.delete();
+            this.activePanelAreaCache.delete();
             return;
         }
 
@@ -94,7 +94,7 @@ export class RightClickDetectServiceImpl implements RightClickDetectService {
 
         // 새 패널 생성
         // console.log("새로운 Active Panel 생성");
-        await this.activePanelAreaRepository.create(clickPoint.x, clickPoint.y, cardId);
+        await this.activePanelAreaCache.create(clickPoint.x, clickPoint.y, cardId);
     }
 
     setRightMouseDown(state: boolean): void {
