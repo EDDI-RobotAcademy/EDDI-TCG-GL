@@ -5,10 +5,10 @@ import {YourFieldAreaCacheImpl} from "../cache/YourFieldAreaCacheImpl";
 
 export class YourFieldAreaServiceImpl implements YourFieldAreaService {
     private static instance: YourFieldAreaServiceImpl;
-    private yourFieldAreaRepository: YourFieldAreaCache;
+    private yourFieldAreaCache: YourFieldAreaCache;
 
     constructor() {
-        this.yourFieldAreaRepository = YourFieldAreaCacheImpl.getInstance();
+        this.yourFieldAreaCache = YourFieldAreaCacheImpl.getInstance();
     }
 
     static getInstance(): YourFieldAreaServiceImpl {
@@ -20,7 +20,7 @@ export class YourFieldAreaServiceImpl implements YourFieldAreaService {
 
     createYourField(): YourFieldArea {
         const { xPos, yPos, width, height } = this.calculateFieldDimensions();
-        return this.yourFieldAreaRepository.createYourFieldArea(xPos, yPos, width, height);
+        return this.yourFieldAreaCache.createYourFieldArea(xPos, yPos, width, height);
     }
 
     // 화면 크기 계산 로직을 별도의 메서드로 분리

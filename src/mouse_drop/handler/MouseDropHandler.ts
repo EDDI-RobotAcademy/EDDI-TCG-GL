@@ -24,7 +24,7 @@ export class MouseDropHandler {
     private battleFieldCardSceneRepository: BattleFieldCardSceneRepository;
 
     private yourFieldRepository: YourFieldRepository;
-    private yourFieldCardSceneRepository: YourFieldCardSceneCache;
+    private yourFieldCardSceneCache: YourFieldCardSceneCache;
 
     private handlers: Record<CardKind,
         (selectedObject: BattleFieldCardScene) => Promise<YourField | null>> = {
@@ -43,7 +43,7 @@ export class MouseDropHandler {
         this.battleFieldCardSceneRepository = BattleFieldCardSceneRepositoryImpl.getInstance();
 
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance();
-        this.yourFieldCardSceneRepository = YourFieldCardSceneCacheImpl.getInstance();
+        this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance();
     }
 
     public static getInstance(): MouseDropHandler {
@@ -103,7 +103,7 @@ export class MouseDropHandler {
             throw new Error("yourFieldCardScene이 생성되지 않았습니다.");
         }
 
-        const yourFieldCardScene = await this.yourFieldCardSceneRepository.create(willBePlaceYourFieldCardSceneMesh);
+        const yourFieldCardScene = await this.yourFieldCardSceneCache.create(willBePlaceYourFieldCardSceneMesh);
 
         const createdYourField = this.yourFieldRepository.save(
             yourFieldCardScene.getId(),

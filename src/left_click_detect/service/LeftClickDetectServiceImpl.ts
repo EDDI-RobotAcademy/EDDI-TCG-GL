@@ -109,17 +109,17 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private neonBorderHandler: NeonBorderHandler;
 
     private battleFieldCardAlignHandler: BattleFieldCardAlignHandler;
-    private battleFieldHandPageRepository: BattleFieldHandPageStore;
+    private battleFieldHandPageStore: BattleFieldHandPageStore;
 
     private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository
     private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository
     private battleFieldCardSceneRepository: BattleFieldCardSceneRepository;
     private battleFieldHandRepository: BattleFieldHandRepository;
 
-    private yourFieldCardSceneRepository: YourFieldCardSceneCache
+    private yourFieldCardSceneCache: YourFieldCardSceneCache
     private yourFieldRepository: YourFieldRepository
 
-    private opponentFieldCardSceneRepository: OpponentFieldCardSceneCache
+    private opponentFieldCardSceneCache: OpponentFieldCardSceneCache
     private opponentFieldRepository: OpponentFieldRepository
     private opponentFieldCardAttributeMarkRepository: OpponentFieldCardAttributeMarkRepository
     private opponentFieldCardAttributeMarkSceneRepository: OpponentFieldCardAttributeMarkSceneRepository
@@ -178,18 +178,18 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
         this.battleFieldCardAlignHandler = BattleFieldCardAlignHandler.getInstance()
 
-        this.battleFieldHandPageRepository = BattleFieldHandPageStoreImpl.getInstance();
+        this.battleFieldHandPageStore = BattleFieldHandPageStoreImpl.getInstance();
 
         this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance()
         this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance()
         this.battleFieldCardSceneRepository = BattleFieldCardSceneRepositoryImpl.getInstance();
         this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance()
 
-        this.yourFieldCardSceneRepository = YourFieldCardSceneCacheImpl.getInstance()
+        this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance()
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance()
 
         this.opponentFieldRepository = OpponentFieldRepositoryImpl.getInstance()
-        this.opponentFieldCardSceneRepository = OpponentFieldCardSceneCacheImpl.getInstance()
+        this.opponentFieldCardSceneCache = OpponentFieldCardSceneCacheImpl.getInstance()
         this.opponentFieldCardAttributeMarkRepository = OpponentFieldCardAttributeMarkRepositoryImpl.getInstance()
         this.opponentFieldCardAttributeMarkSceneRepository = OpponentFieldCardAttributeMarkSceneRepositoryImpl.getInstance()
 
@@ -382,7 +382,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     }
 
     private async handleYourFieldClick(x: number, y: number): Promise<void> {
-        const yourFieldSceneList = this.yourFieldCardSceneRepository.findAll();
+        const yourFieldSceneList = this.yourFieldCardSceneCache.findAll();
         const clickedYourFieldCard = this.leftClickHandDetectRepository.isYourHandAreaClicked({ x, y }, yourFieldSceneList, this.camera);
         if (clickedYourFieldCard === null) {
             return;
@@ -442,7 +442,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             //     return;
             // }
 
-            const opponentFieldSceneList = this.opponentFieldCardSceneRepository.findAll();
+            const opponentFieldSceneList = this.opponentFieldCardSceneCache.findAll();
             const clickedOpponentFieldCard = this.leftClickHandDetectRepository.isYourHandAreaClicked({ x, y }, opponentFieldSceneList, this.camera);
             if (clickedOpponentFieldCard === null) {
                 return;
@@ -544,11 +544,11 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private async handleYourHandPrevButtonClick(x: number, y: number): Promise<void> {
         console.log('Your Hand 이전 버튼 클릭');
 
-        const currentPage = this.battleFieldHandPageRepository.getCurrentPage()
+        const currentPage = this.battleFieldHandPageStore.getCurrentPage()
         if (currentPage === 1) return;
 
         this.battleFieldCardAlignHandler.alignHandCard(false)
-        this.battleFieldHandPageRepository.setCurrentPage(currentPage - 1)
+        this.battleFieldHandPageStore.setCurrentPage(currentPage - 1)
         this.battleFieldCardAlignHandler.alignHandCard(true)
     }
 
@@ -558,11 +558,11 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         const activeCardNumber = this.battleFieldHandRepository.countActiveCards();
         const maxPageSize = activeCardNumber / BattleFieldConstants.MAX_HAND_REPRESENTATION;
 
-        const currentPage = this.battleFieldHandPageRepository.getCurrentPage()
+        const currentPage = this.battleFieldHandPageStore.getCurrentPage()
         if (currentPage === maxPageSize) return;
 
         this.battleFieldCardAlignHandler.alignHandCard(false)
-        this.battleFieldHandPageRepository.setCurrentPage(currentPage + 1)
+        this.battleFieldHandPageStore.setCurrentPage(currentPage + 1)
         this.battleFieldCardAlignHandler.alignHandCard(true)
     }
 

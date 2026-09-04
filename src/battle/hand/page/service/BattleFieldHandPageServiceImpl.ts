@@ -1,16 +1,16 @@
 import * as THREE from 'three';
 import {BattleFieldHandPageService} from "./BattleFieldHandPageService";
 
-import {BattleFieldHandPageRepository} from "../repository/BattleFieldHandPageRepository";
-import {BattleFieldHandPageRepositoryImpl} from "../repository/BattleFieldHandPageRepositoryImpl";
+import {BattleFieldHandPageStore} from "../store/BattleFieldHandPageStore";
+import {BattleFieldHandPageStoreImpl} from "../store/BattleFieldHandPageStoreImpl";
 
 export class BattleFieldHandPageServiceImpl implements BattleFieldHandPageService {
     private static instance: BattleFieldHandPageServiceImpl | null = null;
 
-    private battleFieldHandPageRepository: BattleFieldHandPageRepository;
+    private battleFieldHandPageStore: BattleFieldHandPageStore;
 
     private constructor() {
-        this.battleFieldHandPageRepository = BattleFieldHandPageRepositoryImpl.getInstance();
+        this.battleFieldHandPageStore = BattleFieldHandPageStoreImpl.getInstance();
     }
 
     public static getInstance(): BattleFieldHandPageServiceImpl {
@@ -21,10 +21,10 @@ export class BattleFieldHandPageServiceImpl implements BattleFieldHandPageServic
     }
 
     async createPrevButton(): Promise<THREE.Mesh> {
-        return await this.battleFieldHandPageRepository.createPrevButton();
+        return await this.battleFieldHandPageStore.createPrevButton();
     }
 
     async createNextButton(): Promise<THREE.Mesh> {
-        return await this.battleFieldHandPageRepository.createNextButton();
+        return await this.battleFieldHandPageStore.createNextButton();
     }
 }

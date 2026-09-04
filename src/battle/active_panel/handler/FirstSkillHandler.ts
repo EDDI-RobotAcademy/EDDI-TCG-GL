@@ -37,10 +37,10 @@ export class FirstSkillHandler {
 
     private dragMoveRepository: DragMoveRepository;
     private yourFieldRepository: YourFieldRepository;
-    private yourFieldCardSceneRepository: YourFieldCardSceneCache;
+    private yourFieldCardSceneCache: YourFieldCardSceneCache;
     private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository;
     private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository;
-    private opponentFieldCardSceneRepository: OpponentFieldCardSceneCache;
+    private opponentFieldCardSceneCache: OpponentFieldCardSceneCache;
     private opponentFieldRepository: OpponentFieldRepository;
     private opponentFieldCardAttributeMarkRepository: OpponentFieldCardAttributeMarkRepository;
     private opponentFieldCardAttributeMarkSceneRepository: OpponentFieldCardAttributeMarkSceneRepository;
@@ -63,10 +63,10 @@ export class FirstSkillHandler {
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.dragMoveRepository = DragMoveRepositoryImpl.getInstance();
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance();
-        this.yourFieldCardSceneRepository = YourFieldCardSceneCacheImpl.getInstance();
+        this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance();
         this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance();
         this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
-        this.opponentFieldCardSceneRepository = OpponentFieldCardSceneCacheImpl.getInstance();
+        this.opponentFieldCardSceneCache = OpponentFieldCardSceneCacheImpl.getInstance();
         this.opponentFieldRepository = OpponentFieldRepositoryImpl.getInstance();
         this.opponentFieldCardAttributeMarkRepository = OpponentFieldCardAttributeMarkRepositoryImpl.getInstance();
         this.opponentFieldCardAttributeMarkSceneRepository = OpponentFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
@@ -142,7 +142,7 @@ export class FirstSkillHandler {
         const cardSceneId = yourFieldCard.getCardSceneId();
         if (cardSceneId == null) throw new Error("공격자 SceneId 없음");
 
-        const yourFieldCardScene = this.yourFieldCardSceneRepository.findById(cardSceneId);
+        const yourFieldCardScene = this.yourFieldCardSceneCache.findById(cardSceneId);
         if (yourFieldCardScene == null) throw new Error("공격자 Scene 없음");
 
         // 카드 씬의 원래 위치 저장
