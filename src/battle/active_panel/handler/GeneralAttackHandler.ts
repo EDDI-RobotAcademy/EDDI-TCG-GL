@@ -8,15 +8,15 @@ import { DragMoveRepository } from "../../../drag_move/repository/DragMoveReposi
 import { DragMoveRepositoryImpl } from "../../../drag_move/repository/DragMoveRepositoryImpl";
 import { YourFieldRepository } from "../../field/your/repository/YourFieldRepository";
 import { YourFieldRepositoryImpl } from "../../field/your/repository/YourFieldRepositoryImpl";
-import { YourFieldCardSceneRepository } from "../../field/your/card_scene/repository/YourFieldCardSceneRepository";
-import { YourFieldCardSceneRepositoryImpl } from "../../field/your/card_scene/repository/YourFieldCardSceneRepositoryImpl";
+import { YourFieldCardSceneCache } from "../../field/your/card_scene/cache/YourFieldCardSceneCache";
+import { YourFieldCardSceneCacheImpl } from "../../field/your/card_scene/cache/YourFieldCardSceneCacheImpl";
 import { BattleFieldCardAttributeMarkScene } from "../../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
 import { BattleFieldCardAttributeMarkRepository } from "../../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
 import { BattleFieldCardAttributeMarkRepositoryImpl } from "../../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
 import { BattleFieldCardAttributeMarkSceneRepository } from "../../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
 import { BattleFieldCardAttributeMarkSceneRepositoryImpl } from "../../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
-import { OpponentFieldCardSceneRepository } from "../../field/opponent/card_scene/repository/OpponentFieldCardSceneRepository";
-import { OpponentFieldCardSceneRepositoryImpl } from "../../field/opponent/card_scene/repository/OpponentFieldCardSceneRepositoryImpl";
+import { OpponentFieldCardSceneCache } from "../../field/opponent/card_scene/cache/OpponentFieldCardSceneCache";
+import { OpponentFieldCardSceneCacheImpl } from "../../field/opponent/card_scene/cache/OpponentFieldCardSceneCacheImpl";
 import { LeftClickHandDetectRepository } from "../../../left_click_detect/repository/LeftClickHandDetectRepository";
 import { LeftClickHandDetectRepositoryImpl } from "../../../left_click_detect/repository/LeftClickHandDetectRepositoryImpl";
 import { OpponentFieldRepository } from "../../field/opponent/repository/OpponentFieldRepository";
@@ -44,10 +44,10 @@ export class GeneralAttackHandler {
 
     private dragMoveRepository: DragMoveRepository;
     private yourFieldRepository: YourFieldRepository;
-    private yourFieldCardSceneRepository: YourFieldCardSceneRepository;
+    private yourFieldCardSceneRepository: YourFieldCardSceneCache;
     private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository;
     private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository;
-    private opponentFieldCardSceneRepository: OpponentFieldCardSceneRepository;
+    private opponentFieldCardSceneRepository: OpponentFieldCardSceneCache;
     private opponentFieldRepository: OpponentFieldRepository;
     private opponentFieldCardAttributeMarkRepository: OpponentFieldCardAttributeMarkRepository;
     private opponentFieldCardAttributeMarkSceneRepository: OpponentFieldCardAttributeMarkSceneRepository;
@@ -69,10 +69,10 @@ export class GeneralAttackHandler {
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.dragMoveRepository = DragMoveRepositoryImpl.getInstance();
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance();
-        this.yourFieldCardSceneRepository = YourFieldCardSceneRepositoryImpl.getInstance();
+        this.yourFieldCardSceneRepository = YourFieldCardSceneCacheImpl.getInstance();
         this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance();
         this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
-        this.opponentFieldCardSceneRepository = OpponentFieldCardSceneRepositoryImpl.getInstance();
+        this.opponentFieldCardSceneRepository = OpponentFieldCardSceneCacheImpl.getInstance();
         this.opponentFieldRepository = OpponentFieldRepositoryImpl.getInstance();
         this.opponentFieldCardAttributeMarkRepository = OpponentFieldCardAttributeMarkRepositoryImpl.getInstance();
         this.opponentFieldCardAttributeMarkSceneRepository = OpponentFieldCardAttributeMarkSceneRepositoryImpl.getInstance();

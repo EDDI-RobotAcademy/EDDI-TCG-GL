@@ -1,6 +1,6 @@
 import {OpponentFieldCardPosition} from "../entity/OpponentFieldCardPosition";
 
-export interface OpponentFieldCardPositionRepository {
+export interface OpponentFieldCardPositionStore {
     save(position: OpponentFieldCardPosition): OpponentFieldCardPosition;
     findById(id: number): OpponentFieldCardPosition | undefined;
     findAll(): OpponentFieldCardPosition[];

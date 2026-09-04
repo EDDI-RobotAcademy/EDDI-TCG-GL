@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {MouseDropFieldRepository} from "./MouseDropRepository";
-import {YourFieldAreaRepository} from "../../battle/field/your/area/repository/YourFieldAreaRepository";
-import {YourFieldAreaRepositoryImpl} from "../../battle/field/your/area/repository/YourFieldAreaRepositoryImpl";
+import {YourFieldAreaCache} from "../../battle/field/your/area/cache/YourFieldAreaCache";
+import {YourFieldAreaCacheImpl} from "../../battle/field/your/area/cache/YourFieldAreaCacheImpl";
 import {BattleFieldCardScene} from "../../battle_field_card_scene/entity/BattleFieldCardScene";
 
 export class MouseDropFieldRepositoryImpl implements MouseDropFieldRepository {
@@ -9,7 +9,7 @@ export class MouseDropFieldRepositoryImpl implements MouseDropFieldRepository {
     private yourFieldAreaRepository;
 
     constructor() {
-        this.yourFieldAreaRepository = YourFieldAreaRepositoryImpl.getInstance();
+        this.yourFieldAreaRepository = YourFieldAreaCacheImpl.getInstance();
     }
 
     public static getInstance(): MouseDropFieldRepositoryImpl {

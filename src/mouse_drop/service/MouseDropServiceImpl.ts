@@ -23,10 +23,10 @@ import {getCardById} from "../../card/utility";
 import {CardKind} from "../../card/kind";
 import {BattleFieldCardSceneRepository} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepository";
 import {BattleFieldCardSceneRepositoryImpl} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepositoryImpl";
-import {YourFieldCardSceneRepository} from "../../battle/field/your/card_scene/repository/YourFieldCardSceneRepository";
-import {YourFieldCardSceneRepositoryImpl} from "../../battle/field/your/card_scene/repository/YourFieldCardSceneRepositoryImpl";
-import {YourFieldCardPositionRepository} from "../../battle/field/your/card_position/repository/YourFieldCardPositionRepository";
-import {YourFieldCardPositionRepositoryImpl} from "../../battle/field/your/card_position/repository/YourFieldCardPositionRepositoryImpl";
+import {YourFieldCardSceneCache} from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCache";
+import {YourFieldCardSceneCacheImpl} from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCacheImpl";
+import {YourFieldCardPositionStore} from "../../battle/field/your/card_position/store/YourFieldCardPositionStore";
+import {YourFieldCardPositionStoreImpl} from "../../battle/field/your/card_position/store/YourFieldCardPositionStoreImpl";
 import {Vector2d} from "../../common/math/Vector2d";
 import {AttributeMarkPositionCalculator} from "../../common/attribute_mark/AttributeMarkPositionCalculator";
 import {YourField} from "../../battle/field/your/entity/YourField";
@@ -83,8 +83,8 @@ export class MouseDropServiceImpl implements MouseDropService {
     private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository
 
     private yourFieldRepository: YourFieldRepository
-    private yourFieldCardSceneRepository: YourFieldCardSceneRepository
-    private yourFieldCardPositionRepository: YourFieldCardPositionRepository
+    private yourFieldCardSceneRepository: YourFieldCardSceneCache
+    private yourFieldCardPositionRepository: YourFieldCardPositionStore
 
     private neonBorderRepository: NeonBorderRepository;
     private neonBorderLineSceneRepository: NeonBorderLineSceneRepository;
@@ -108,8 +108,8 @@ export class MouseDropServiceImpl implements MouseDropService {
         this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance()
 
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance()
-        this.yourFieldCardSceneRepository = YourFieldCardSceneRepositoryImpl.getInstance()
-        this.yourFieldCardPositionRepository = YourFieldCardPositionRepositoryImpl.getInstance()
+        this.yourFieldCardSceneRepository = YourFieldCardSceneCacheImpl.getInstance()
+        this.yourFieldCardPositionRepository = YourFieldCardPositionStoreImpl.getInstance()
 
         this.neonBorderRepository = NeonBorderRepositoryImpl.getInstance()
         this.neonBorderLineSceneRepository = NeonBorderLineSceneRepositoryImpl.getInstance()

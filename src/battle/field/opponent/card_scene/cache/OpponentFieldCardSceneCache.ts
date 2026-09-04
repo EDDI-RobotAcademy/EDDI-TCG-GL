@@ -1,7 +1,7 @@
 import {Vector2d} from "../../../../../common/math/Vector2d";
 import {OpponentFieldCardScene} from "../entity/OpponentFieldCardScene";
 
-export interface OpponentFieldCardSceneRepository {
+export interface OpponentFieldCardSceneCache {
     count(): number
     create(cardId: number, position: Vector2d): Promise<OpponentFieldCardScene>;
     findById(id: number): OpponentFieldCardScene | undefined;

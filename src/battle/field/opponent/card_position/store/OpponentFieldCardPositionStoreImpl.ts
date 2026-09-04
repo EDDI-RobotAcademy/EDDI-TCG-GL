@@ -1,19 +1,19 @@
-import {OpponentFieldCardPositionRepository} from "./OpponentFieldCardPositionRepository";
+import {OpponentFieldCardPositionStore} from "./OpponentFieldCardPositionStore";
 import {OpponentFieldCardPosition} from "../entity/OpponentFieldCardPosition";
 
-export class OpponentFieldCardPositionRepositoryImpl implements OpponentFieldCardPositionRepository {
-    private static instance: OpponentFieldCardPositionRepositoryImpl;
+export class OpponentFieldCardPositionStoreImpl implements OpponentFieldCardPositionStore {
+    private static instance: OpponentFieldCardPositionStoreImpl;
     private positionMap: Map<number, OpponentFieldCardPosition>;
 
     private constructor() {
         this.positionMap = new Map<number, OpponentFieldCardPosition>();
     }
 
-    public static getInstance(): OpponentFieldCardPositionRepositoryImpl {
-        if (!OpponentFieldCardPositionRepositoryImpl.instance) {
-            OpponentFieldCardPositionRepositoryImpl.instance = new OpponentFieldCardPositionRepositoryImpl();
+    public static getInstance(): OpponentFieldCardPositionStoreImpl {
+        if (!OpponentFieldCardPositionStoreImpl.instance) {
+            OpponentFieldCardPositionStoreImpl.instance = new OpponentFieldCardPositionStoreImpl();
         }
-        return OpponentFieldCardPositionRepositoryImpl.instance;
+        return OpponentFieldCardPositionStoreImpl.instance;
     }
 
     save(position: OpponentFieldCardPosition): OpponentFieldCardPosition {

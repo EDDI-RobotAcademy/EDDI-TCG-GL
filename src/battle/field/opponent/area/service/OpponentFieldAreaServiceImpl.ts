@@ -1,14 +1,14 @@
 import { OpponentFieldAreaService } from './OpponentFieldAreaService';
 import { OpponentFieldArea } from "../entity/OpponentFieldArea";
-import { OpponentFieldAreaRepository } from "../repository/OpponentFieldAreaRepository";
-import {OpponentFieldAreaRepositoryImpl} from "../repository/OpponentFieldAreaRepositoryImpl";
+import { OpponentFieldAreaCache } from "../cache/OpponentFieldAreaCache";
+import {OpponentFieldAreaCacheImpl} from "../cache/OpponentFieldAreaCacheImpl";
 
 export class OpponentFieldAreaServiceImpl implements OpponentFieldAreaService {
     private static instance: OpponentFieldAreaServiceImpl;
-    private opponentFieldAreaRepository: OpponentFieldAreaRepository;
+    private opponentFieldAreaRepository: OpponentFieldAreaCache;
 
     constructor() {
-        this.opponentFieldAreaRepository = OpponentFieldAreaRepositoryImpl.getInstance();
+        this.opponentFieldAreaRepository = OpponentFieldAreaCacheImpl.getInstance();
     }
 
     static getInstance(): OpponentFieldAreaServiceImpl {

@@ -50,7 +50,7 @@
 | **R2-23** | Rendering | Battle Field Energy | [죽음의 대지 연출이 상대 필드 에너지 앞에서 보이도록 패널을 캔버스 안으로 옮긴다](R2-23-opponent-energy-panel-into-canvas.md) | — | **완료** |
 | **R2-24** | Strategy | Battle | [전투 재접속 / 재시작 시 유지할 파트 판정](R2-24-repository-classification.md) | R2-22 | **완료** |
 | **R2-25** | Structure | Platform | [카드 메시의 폐기 및 재생성 시점 정의](R2-25-mesh-disposal-contract.md) | R2-24 | **완료** |
-| **R2-26** | Structure | Battle Field | 카드 배치와 좌표 저장소 이름 정리 | R2-25 | 예정 |
+| **R2-26** | Structure | Battle Field | [내 필드와 상대 필드 저장소 이름 정리](R2-26-rename-field-stores.md) | R2-25 | **완료** |
 | **R2-27** | Structure | Battle Hand | 손패 저장소 이름 정리 | R2-25 | 예정 |
 | **R2-28** | Structure | Battle Active Panel | 액티브 패널 저장소 이름 정리 | R2-25 | 예정 |
 | **R2-29** | Structure | Battle | 전투 배경 저장소 이름 정리 | R2-25 | 예정 |

@@ -9,10 +9,10 @@ import {BattleFieldCardSceneRepository} from "../../battle_field_card_scene/repo
 import {
     BattleFieldCardSceneRepositoryImpl
 } from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepositoryImpl";
-import {YourFieldCardSceneRepository} from "../../battle/field/your/card_scene/repository/YourFieldCardSceneRepository";
+import {YourFieldCardSceneCache} from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCache";
 import {
-    YourFieldCardSceneRepositoryImpl
-} from "../../battle/field/your/card_scene/repository/YourFieldCardSceneRepositoryImpl";
+    YourFieldCardSceneCacheImpl
+} from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCacheImpl";
 import {YourFieldRepository} from "../../battle/field/your/repository/YourFieldRepository";
 import {YourFieldRepositoryImpl} from "../../battle/field/your/repository/YourFieldRepositoryImpl";
 import {YourField} from "../../battle/field/your/entity/YourField";
@@ -24,7 +24,7 @@ export class MouseDropHandler {
     private battleFieldCardSceneRepository: BattleFieldCardSceneRepository;
 
     private yourFieldRepository: YourFieldRepository;
-    private yourFieldCardSceneRepository: YourFieldCardSceneRepository;
+    private yourFieldCardSceneRepository: YourFieldCardSceneCache;
 
     private handlers: Record<CardKind,
         (selectedObject: BattleFieldCardScene) => Promise<YourField | null>> = {
@@ -43,7 +43,7 @@ export class MouseDropHandler {
         this.battleFieldCardSceneRepository = BattleFieldCardSceneRepositoryImpl.getInstance();
 
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance();
-        this.yourFieldCardSceneRepository = YourFieldCardSceneRepositoryImpl.getInstance();
+        this.yourFieldCardSceneRepository = YourFieldCardSceneCacheImpl.getInstance();
     }
 
     public static getInstance(): MouseDropHandler {
