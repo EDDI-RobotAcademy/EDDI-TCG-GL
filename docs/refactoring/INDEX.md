@@ -55,7 +55,7 @@
 | **R2-28** | Structure | Battle Active Panel | [액티브 패널 저장소 이름 정리](R2-28-rename-active-panel-cache.md) | R2-25 | **완료** |
 | **R2-29** | Structure | Battle | [전투 화면 조립 패키지 조정](R2-29-move-battle-view.md) | R2-19 | **완료** |
 | **R2-30** | Strategy | Battle | [기존의 확인용 화면 구성 코드의 유지 기준 결정](R2-30-legacy-harness-policy.md) | R2-29 | **완료** |
-| **R2-31** | Structure | Battle Animation | [스킬 자리 좌표를 한 곳에서 읽게 한다](R2-31-share-skill-slot.md) | R2-17 | **완료** |
+| **R2-31** | Structure | Battle Animation | [스킬 사용 시 카드가 이동하는 자리 좌표를 한 곳에서 읽게 한다](R2-31-share-skill-slot.md) | R2-17 | **완료** |
 | **R2-32** | Structure | Battle | ~~전투 배경 저장소 이름 정리~~ | R2-30 | **폐기** |
 | **R2-33** | Structure | Battle | 상대 필드 카드 표시 패키지 조정 | R2-22 | 예정 |
 | **R2-34** | Structure | Battle | 카드에 붙어 따라다니는 것 패키지 조정 (여섯 폴더) | R2-22 | 예정 |

@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { BattleFieldConstants } from "../../../common/BattleFieldConstants";
-import { createSkillSlotFrame } from "../../../animation/skill/frame/SkillSlotFrame";
+import { createCardSkillPositionFrame } from "../../../animation/skill/frame/CardSkillPositionFrame";
 
 declare const TWEEN: {
     Tween: any;
@@ -47,11 +47,11 @@ export class AttackAnimationV2 {
         const w = window.innerWidth;
         const h = window.innerHeight;
 
-        const { x: skillPanelX, y: skillPanelY } = createSkillSlotFrame(h);
+        const { x: skillPositionX, y: skillPositionY } = createCardSkillPositionFrame(h);
         const origPos = attackerGroup.position.clone();
 
         // Phase 1: Card moves to skill panel
-        await this.moveCardTo(attackerGroup, skillPanelX, skillPanelY, origPos.z + 1, 800);
+        await this.moveCardTo(attackerGroup, skillPositionX, skillPositionY, origPos.z + 1, 800);
 
         // Phase 2: Darkness gathering — the caster draws power from the abyss
         attackerGroup.updateMatrixWorld(true);
@@ -1696,7 +1696,7 @@ export class AttackAnimationV2 {
         const cardW = CWR * window.innerWidth;
 
         // Legacy: card moves to skill panel position (center-bottom, near ally base)
-        const { x: skillPanelX, y: skillPanelY } = createSkillSlotFrame(window.innerHeight);
+        const { x: skillPositionX, y: skillPositionY } = createCardSkillPositionFrame(window.innerHeight);
 
         const origPos = attackerGroup.position.clone();
 
@@ -1704,7 +1704,7 @@ export class AttackAnimationV2 {
         const targetWorld = targetGroup.getWorldPosition(new THREE.Vector3());
 
         // Phase 1: Card moves to skill panel position (1000ms)
-        await this.moveCardTo(attackerGroup, skillPanelX, skillPanelY, origPos.z + 1, 1000);
+        await this.moveCardTo(attackerGroup, skillPositionX, skillPositionY, origPos.z + 1, 1000);
 
         // Phase 2: Charge shadow ball at skill panel position
         attackerGroup.updateMatrixWorld(true);

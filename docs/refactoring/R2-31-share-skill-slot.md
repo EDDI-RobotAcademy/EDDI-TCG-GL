@@ -1,6 +1,18 @@
-# [ETWGL-R2-31] 스킬 자리 좌표를 한 곳에서 읽게 한다
+# [ETWGL-R2-31] 스킬 사용 시 카드가 이동하는 자리 좌표를 한 곳에서 읽게 한다
 
-선행: R2-17 │ 후행: R2-18 │ 산출물: src/animation/skill/frame/SkillSlotFrame.ts │ Type: Structure │ Domain: Battle Animation
+선행: R2-17 │ 후행: R2-18 │ 산출물: src/animation/skill/frame/CardSkillPositionFrame.ts │ Type: Structure │ Domain: Battle Animation
+
+이 작업이 손댄 파일
+
+| 파일 | 무엇을 했나 |
+| --- | --- |
+| src/animation/skill/frame/CardSkillPositionFrame.ts | 새로 만들었다. 카드가 서는 자리 값이 여기 하나만 있다 |
+| src/animation/motion/CardSkillMotion.ts | 여기서 읽게 했다. 파일 읽을 때 한 번 재는 것은 그대로 |
+| src/battle/animation/attack/AttackAnimationV2.ts | 두 곳에서 읽게 했다. 부를 때마다 재는 것은 그대로 |
+| test/draw_field_energy_full_efr/draw_field_energy_full_efr.ts | 여기서 읽게 했다 |
+
+커밋은 `bda0566` 이고 메시지는 `[ETWGL-R2-18]` 이다. R2-18 과 한 커밋에 함께 들어가서
+이 번호로는 이력에서 찾을 수 없다. 위 파일 목록으로 찾는다.
 
 # Success criteria
 
@@ -39,6 +51,11 @@
     - npm run draw-field-energy-full-efr 로 스킬 쓸 때 카드가 서는 자리를 확인한다
     - 본편에서 네더 블레이드 스킬을 확인한다
 
+6. 이름이 무엇을 가리키는지 한 가지로만 읽히게 한다
+    - 이 자리는 카드가 스킬을 쓸 때 앞으로 나와 서는 곳이다. 액티브 패널의 좌표가 아니다
+    - 슬롯, 패널 같은 말은 둘 다로 읽힌다. 카드가 간다는 것이 이름에 드러나야 한다
+    - 같은 폴더의 CardSkillMotion 과 짝이 맞는 이름을 쓴다
+
 # To-do
 
 1. 왜 하는지와 범위를 적는다
@@ -66,6 +83,12 @@
     - [x] draw-field-energy-full-efr 에서 스킬 쓸 때 카드가 서는 자리 확인
     - [x] 본편에서 네더 블레이드 스킬 확인
 
+6. 이름을 한 가지로만 읽히게 한다
+    - [x] SkillSlotFrame → CardSkillPositionFrame
+    - [x] SKILL_SLOT_HEIGHT_RATIO → CARD_SKILL_POSITION_HEIGHT_RATIO
+    - [x] 부르는 쪽 변수 skillPanelX/Y → skillPositionX/Y
+    - [x] 네더 블레이드 스킬 다시 확인
+
 # Issue
 
 1. 넷 중 하나만 재는 시점이 달랐다
@@ -88,6 +111,17 @@
     - 처리
         - 0.78221649 라는 숫자로 찾아 넷을 다 찾았다
         - **같은 값을 쓰는 곳은 값으로 찾는다.** 이름은 곳마다 다르다
+
+3. 이름이 두 가지로 읽혔다
+    - 증상
+        - 제목의 [스킬 자리] 가 액티브 패널의 좌표인지 카드가 가는 자리인지 알 수 없었다
+        - 코드에도 SkillSlotFrame 과 skillPanelX/Y 가 남아 같은 모호함이 있었다
+    - 원인
+        - 원래 이 코드의 이름이 SkillPanelAnimator 였다. R2-15 에서 패널을 안 건드리는데 패널이라 부른다고 고쳤는데, 이 두 줄과 새로 만든 파일 이름에 그 말이 남았다
+    - 처리
+        - CardSkillPositionFrame 으로 바꿨다. 같은 폴더의 CardSkillMotion 과 짝이 맞는다
+        - 완료된 작업이라 새 번호를 따지 않고 fix 로 처리하고, 놓쳤던 흐름을 SC 6번으로 되돌려 넣었다
+        - **한 번 고친 이름이 다른 곳에 남아 있는지 본다.** 고칠 때 그 말이 나오는 곳을 전부 센다
 
 # Review
 

@@ -65,7 +65,7 @@ import { NeonBorderEffect } from "../../src/neon_border/effect/NeonBorderEffect"
 import { createDefaultActivePanelFrame, ActivePanelButtonSpec } from "../../src/battle/active_panel/frame/ActivePanelFrame";
 import { ActivePanelRendererV2 } from "../../src/battle/active_panel/renderer/ActivePanelRendererV2";
 import { AttackAnimationV2 } from "../../src/battle/animation/attack/AttackAnimationV2";
-import { createSkillSlotFrame } from "../../src/animation/skill/frame/SkillSlotFrame";
+import { createCardSkillPositionFrame } from "../../src/animation/skill/frame/CardSkillPositionFrame";
 import { FrozenBurningOverlayEffect } from "../../src/animation/cold_dark_energy/FrozenBurningOverlayEffect";
 import { ColdDarkTraitMarkEffect } from "../../src/animation/cold_dark_energy/ColdDarkTraitMarkEffect";
 import { ScytheCutEffect } from "../../src/animation/scythe/ScytheCutEffect";
@@ -1251,14 +1251,14 @@ async function main(container: HTMLElement): Promise<void> {
     //   • run effectCallback (passed the panel-slot world pos so callers can
     //     spawn meshes there); if no callback is given, hold ~300 ms instead
     //   • ease back to the original slot
-    // 스킬 자리는 createSkillSlotFrame 에서 읽는다. AttackAnimationV2.playAoESkill 과
+    // 스킬 자리는 createCardSkillPositionFrame 에서 읽는다. AttackAnimationV2.playAoESkill 과
     // 같은 자리라 벨른의 전체 연출이 서는 곳과 맞는다.
     const playSkillPanelMoveOnly = async (
         group: THREE.Group,
         effectCallback?: (panelPos: THREE.Vector3) => Promise<void>,
     ): Promise<void> => {
         const h = window.innerHeight;
-        const { x: skillPanelX, y: skillPanelY } = createSkillSlotFrame(h);
+        const { x: skillPositionX, y: skillPositionY } = createCardSkillPositionFrame(h);
         const origPos = group.position.clone();
 
         const moveTo = (tx: number, ty: number, tz: number, durMs: number): Promise<void> => {
@@ -1283,10 +1283,10 @@ async function main(container: HTMLElement): Promise<void> {
         };
 
         // Forward: lift z by +1 so the card draws above other field meshes during travel.
-        await moveTo(skillPanelX, skillPanelY, origPos.z + 1, 700);
+        await moveTo(skillPositionX, skillPositionY, origPos.z + 1, 700);
         // Cast — run the effect at the panel slot, or just hold briefly.
         if (effectCallback) {
-            const panelPos = new THREE.Vector3(skillPanelX, skillPanelY, origPos.z + 1);
+            const panelPos = new THREE.Vector3(skillPositionX, skillPositionY, origPos.z + 1);
             try {
                 await effectCallback(panelPos);
             } catch (err) {
