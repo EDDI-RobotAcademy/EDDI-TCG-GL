@@ -56,7 +56,7 @@
 | **R2-29** | Structure | Battle | [전투 화면 조립 패키지 조정](R2-29-move-battle-view.md) | R2-19 | **완료** |
 | **R2-30** | Strategy | Battle | [기존의 확인용 화면 구성 코드의 유지 기준 결정](R2-30-legacy-harness-policy.md) | R2-29 | **완료** |
 | **R2-31** | Structure | Battle Animation | [스킬 사용 시 카드가 이동하는 자리 좌표를 한 곳에서 읽게 한다](R2-31-share-skill-slot.md) | R2-17 | **완료** |
-| **R2-32** | Structure | Battle | ~~전투 배경 저장소 이름 정리~~ | R2-30 | **폐기** |
+| **R2-32** | Structure | Battle | [확인용 화면만 쓰던 옛 화면 조립과 전투 배경 삭제](R2-32-delete-legacy-assembly.md) | R2-30 | **완료** |
 | **R2-33** | Structure | Battle | 상대 필드 카드 표시 패키지 조정 | R2-22 | 예정 |
 | **R2-34** | Structure | Battle | 카드에 붙어 따라다니는 것 패키지 조정 (여섯 폴더) | R2-22 | 예정 |
 | **R2-35** | Structure | Battle | 손패와 필드 정렬을 갈라 각자 자리로 보낸다 | R2-34 | 예정 |
@@ -83,7 +83,6 @@
 | **R2-56** | Rendering | Battle Active Panel | 액티브 패널 버튼을 만드는 일을 저장소에서 렌더러로 옮긴다 | R2-55 | 예정 |
 | **R2-57** | Rule | Lobby | 로비의 게임 입장 버튼이 눌리도록 등록되지 않은 경로 정리 | — | 예정 |
 | **R2-58** | Rendering | Battle | 라우터 진입점이 실제 전투 화면을 띄우게 잇는다 | R2-29 | 예정 |
-| **R2-59** | Structure | Battle | 확인용 화면만 쓰던 옛 화면 조립과 전투 배경 삭제 | R2-30 | 예정 |
 
 ### Type — 무엇을 바꾸는 작업인가
 
