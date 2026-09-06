@@ -1,4 +1,4 @@
-# [ETWGL-R2-27] 손패 페이지 저장소 이름 정리
+# [ETWGL-R2-27] 손패 페이지 상태의 이름 정리
 
 선행: R2-25 │ 후행: R2-28 │ 산출물: src/battle/hand/page/store/ │ Type: Structure │ Domain: Battle Hand
 

@@ -1,4 +1,4 @@
-# [ETWGL-R2-28] 액티브 패널 저장소 이름 정리
+# [ETWGL-R2-28] 액티브 패널이 담는 것들의 이름 정리
 
 선행: R2-25 │ 후행: R2-32 │ 산출물: src/battle/active_panel/cache/ │ Type: Structure │ Domain: Battle Active Panel
 
