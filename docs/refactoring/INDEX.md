@@ -62,7 +62,7 @@
 | **R2-35** | Structure | Battle Card | [카드 정렬 패키지 조정](R2-35-move-card-alignment.md) | R2-34 | **완료** |
 | **R2-36** | Structure | Battle Card | [카드에 붙는 속성들의 이름 정리](R2-36-rename-card-stores.md) | R2-35 | **완료** |
 | **R2-37** | Structure | Battle | [본체 체력 패키지 조정](R2-37-move-master-hp.md) | — | **완료** |
-| **R2-38** | Strategy | Battle | 이름만 죽었다고 되어 있는 코드의 처지 결정 | — | 예정 |
+| **R2-38** | Strategy | Battle Hand | [낡은 방식 표시를 언제 뗄 수 있는지 정한다](R2-38-deprecated-removal-policy.md) | — | **완료** |
 | **R2-39** | Structure | Battle Animation | 유닛 카드 등장 연출 패키지 조정 | R2-18 | 예정 |
 | **R2-40** | Structure | Battle Animation | 유닛 카드 스킬 연출 패키지 조정 | R2-39 | 예정 |
 | **R2-41** | Structure | Battle Animation | 아이템 카드 연출 패키지 조정 | R2-40 | 예정 |
@@ -83,6 +83,11 @@
 | **R2-56** | Rendering | Battle Active Panel | 액티브 패널 버튼을 만드는 일을 렌더러로 옮긴다 | R2-55 | 예정 |
 | **R2-57** | Rule | Lobby | 로비의 게임 입장 버튼이 눌리도록 등록되지 않은 경로 정리 | — | 예정 |
 | **R2-58** | Rendering | Battle | 라우터 진입점이 실제 전투 화면을 띄우게 잇는다 | R2-29 | 예정 |
+| **R2-59** | Structure | Battle Hand | 확인용 화면 다섯이 손패 카드 번호를 새 방식으로 읽게 한다 | R2-38 | 예정 |
+| **R2-60** | Structure | Battle Hand | 확인용 화면 일곱이 손패 카드 자리를 새 방식으로 읽게 한다 | R2-59 | 예정 |
+| **R2-61** | Structure | Battle Hand | 손패 화면 덩어리를 담을 새 자리를 만든다 | R2-60 | 예정 |
+| **R2-62** | Rendering | Battle Hand | 본편 두 곳이 손패 화면 덩어리를 새 자리에서 읽게 한다 | R2-61 | 예정 |
+| **R2-63** | Structure | Battle Hand | 확인용 화면 열둘이 손패 화면 덩어리를 새 자리에서 읽게 하고 낡은 방식을 지운다 | R2-62 | 예정 |
 
 ### Type — 무엇을 바꾸는 작업인가
 
