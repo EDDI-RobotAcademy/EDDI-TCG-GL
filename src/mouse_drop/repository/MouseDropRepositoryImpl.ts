@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import {MouseDropFieldRepository} from "./MouseDropRepository";
 import {YourFieldAreaCache} from "../../battle/field/your/area/cache/YourFieldAreaCache";
 import {YourFieldAreaCacheImpl} from "../../battle/field/your/area/cache/YourFieldAreaCacheImpl";
-import {BattleFieldCardScene} from "../../battle_field_card_scene/entity/BattleFieldCardScene";
+import {BattleFieldCardScene} from "../../battle/card/scene/entity/BattleFieldCardScene";
 
 export class MouseDropFieldRepositoryImpl implements MouseDropFieldRepository {
     private static instance: MouseDropFieldRepositoryImpl | null = null;

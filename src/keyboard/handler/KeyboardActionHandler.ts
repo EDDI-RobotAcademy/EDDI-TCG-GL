@@ -8,54 +8,54 @@ import {CardJob} from "../../card/job";
 import {CardKind} from "../../card/kind";
 import {getCardById} from "../../card/utility";
 import {Vector2d} from "../../common/math/Vector2d";
-import {BattleFieldCardPosition} from "../../battle_field_card_position/entity/BattleFieldCardPosition";
+import {BattleFieldCardPosition} from "../../battle/card/position/entity/BattleFieldCardPosition";
 import {
     BattleFieldHandCardPositionRepository
-} from "../../battle_field_card_position/repository/BattleFieldHandCardPositionRepository";
+} from "../../battle/card/position/repository/BattleFieldHandCardPositionRepository";
 import {
     BattleFieldHandCardPositionRepositoryImpl
-} from "../../battle_field_card_position/repository/BattleFieldHandCardPositionRepositoryImpl";
+} from "../../battle/card/position/repository/BattleFieldHandCardPositionRepositoryImpl";
 import {BattleFieldConstants} from "../../common/BattleFieldConstants";
-import {BattleFieldCardScene} from "../../battle_field_card_scene/entity/BattleFieldCardScene";
+import {BattleFieldCardScene} from "../../battle/card/scene/entity/BattleFieldCardScene";
 import {Texture} from "three";
-import {BattleFieldCardAttributeMark} from "../../battle_field_card_attribute_mark/entity/BattleFieldCardAttributeMark";
-import {MarkSceneType} from "../../battle_field_card_attribute_mark_scene/entity/MarkSceneType";
+import {BattleFieldCardAttributeMark} from "../../battle/card/attribute_mark/entity/BattleFieldCardAttributeMark";
+import {MarkSceneType} from "../../battle/card/attribute_mark_scene/entity/MarkSceneType";
 import {MeshGenerator} from "../../mesh/generator";
 import {
     BattleFieldCardAttributeMarkPosition
-} from "../../battle_field_card_attribute_mark_position/entity/BattleFieldCardAttributeMarkPosition";
+} from "../../battle/card/attribute_mark_position/entity/BattleFieldCardAttributeMarkPosition";
 import {
     BattleFieldCardAttributeMarkScene
-} from "../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
+} from "../../battle/card/attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
 import {
     BattleFieldCardAttributeMarkStatus
-} from "../../battle_field_card_attribute_mark/entity/BattleFieldCardAttributeMarkStatus";
+} from "../../battle/card/attribute_mark/entity/BattleFieldCardAttributeMarkStatus";
 import {
     BattleFieldHandSceneRepository
 } from "../../battle_field_hand/deprecated_repository/BattleFieldHandSceneRepository";
 import {
     BattleFieldCardAttributeMarkRepository
-} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
-import {BattleFieldCardSceneRepository} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepository";
+} from "../../battle/card/attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
+import {BattleFieldCardSceneRepository} from "../../battle/card/scene/repository/BattleFieldCardSceneRepository";
 import {
     BattleFieldCardSceneRepositoryImpl
-} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepositoryImpl";
+} from "../../battle/card/scene/repository/BattleFieldCardSceneRepositoryImpl";
 import {
     BattleFieldCardAttributeMarkRepositoryImpl
-} from "../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
+} from "../../battle/card/attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
 import {TextureManager} from "../../texture_manager/TextureManager";
 import {
     BattleFieldCardAttributeMarkPositionRepository
-} from "../../battle_field_card_attribute_mark_position/repository/BattleFieldCardAttributeMarkPositionRepository";
+} from "../../battle/card/attribute_mark_position/repository/BattleFieldCardAttributeMarkPositionRepository";
 import {
     BattleFieldCardAttributeMarkPositionRepositoryImpl
-} from "../../battle_field_card_attribute_mark_position/repository/BattleFieldCardAttributeMarkPositionRepositoryImpl";
+} from "../../battle/card/attribute_mark_position/repository/BattleFieldCardAttributeMarkPositionRepositoryImpl";
 import {
     BattleFieldCardAttributeMarkSceneRepository
-} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
+} from "../../battle/card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
 import {
     BattleFieldCardAttributeMarkSceneRepositoryImpl
-} from "../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
+} from "../../battle/card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
 import {BattleFieldCardAlignHandler} from "../../battle_field_card_alignment/handler/BattleFieldCardAlignHandler";
 import {BattleFieldHandPageStore} from "../../battle/hand/page/store/BattleFieldHandPageStore";
 import {

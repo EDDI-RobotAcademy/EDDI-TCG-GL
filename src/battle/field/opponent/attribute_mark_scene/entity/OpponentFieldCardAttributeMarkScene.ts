@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {IdGenerator} from "../../../../../common/id_generator/IdGenerator";
-import {MarkSceneType} from "./MarkSceneType";
+import {MarkSceneType} from "../../../../card/attribute_mark_scene/entity/MarkSceneType";
 
 export class OpponentFieldCardAttributeMarkScene {
     id: number;

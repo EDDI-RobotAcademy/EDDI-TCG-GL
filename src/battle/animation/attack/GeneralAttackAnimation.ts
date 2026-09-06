@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import {BattleFieldCardAttributeMarkScene} from "../../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
+import {BattleFieldCardAttributeMarkScene} from "../../card/attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
 import {OpponentFieldCardScene} from "../../field/opponent/card_scene/entity/OpponentFieldCardScene";
 import {BattleFieldConstants} from "../../../common/BattleFieldConstants";
 import {SlashCutEffect} from "./weapon/SlashCutEffect";

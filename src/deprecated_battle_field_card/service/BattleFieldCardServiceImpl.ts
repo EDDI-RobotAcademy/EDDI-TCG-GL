@@ -3,11 +3,11 @@ import {CardStatus} from "../entity/CardStatus";
 import {BattleFieldCardService} from "./BattleFieldCardService";
 import {BattleFieldCardRepository} from "../repository/BattleFieldCardRepository";
 import {BattleFieldCardRepositoryImpl} from "../repository/BattleFieldCardRepositoryImpl";
-import {BattleFieldCardSceneRepository} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepository";
-import {BattleFieldCardSceneRepositoryImpl} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepositoryImpl";
-import {BattleFieldHandCardPositionRepository} from "../../battle_field_card_position/repository/BattleFieldHandCardPositionRepository";
-import {BattleFieldHandCardPositionRepositoryImpl} from "../../battle_field_card_position/repository/BattleFieldHandCardPositionRepositoryImpl";
-import {BattleFieldCardPosition} from "../../battle_field_card_position/entity/BattleFieldCardPosition";
+import {BattleFieldCardSceneRepository} from "../../battle/card/scene/repository/BattleFieldCardSceneRepository";
+import {BattleFieldCardSceneRepositoryImpl} from "../../battle/card/scene/repository/BattleFieldCardSceneRepositoryImpl";
+import {BattleFieldHandCardPositionRepository} from "../../battle/card/position/repository/BattleFieldHandCardPositionRepository";
+import {BattleFieldHandCardPositionRepositoryImpl} from "../../battle/card/position/repository/BattleFieldHandCardPositionRepositoryImpl";
+import {BattleFieldCardPosition} from "../../battle/card/position/entity/BattleFieldCardPosition";
 import {Vector2d} from "../../common/math/Vector2d";
 
 export class BattleFieldCardServiceImpl implements BattleFieldCardService {
