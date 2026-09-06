@@ -21,7 +21,7 @@ export class OpponentFieldCardAttributeMarkSceneRepositoryImpl implements Oppone
     }
 
     async findById(id: number): Promise<OpponentFieldCardAttributeMarkScene | null> {
-        // console.log(`BattleFieldCardAttributeMarkSceneRepositoryImpl: Current scenes -> ${JSON.stringify(this.scenes, null, 2)}`);
+        // console.log(`BattleFieldCardAttributeMarkSceneCacheImpl: Current scenes -> ${JSON.stringify(this.scenes, null, 2)}`);
         return this.scenes.find(scene => scene.id === id) || null;
     }
 

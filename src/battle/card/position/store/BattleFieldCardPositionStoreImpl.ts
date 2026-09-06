@@ -1,19 +1,19 @@
 import { BattleFieldCardPosition } from "../entity/BattleFieldCardPosition";
-import { BattleFieldHandCardPositionRepository } from "./BattleFieldHandCardPositionRepository";
+import { BattleFieldCardPositionStore } from "./BattleFieldCardPositionStore";
 
-export class BattleFieldHandCardPositionRepositoryImpl implements BattleFieldHandCardPositionRepository {
-    private static instance: BattleFieldHandCardPositionRepositoryImpl;
+export class BattleFieldCardPositionStoreImpl implements BattleFieldCardPositionStore {
+    private static instance: BattleFieldCardPositionStoreImpl;
     private positionMap: Map<number, BattleFieldCardPosition>;
 
     private constructor() {
         this.positionMap = new Map<number, BattleFieldCardPosition>();
     }
 
-    public static getInstance(): BattleFieldHandCardPositionRepositoryImpl {
-        if (!BattleFieldHandCardPositionRepositoryImpl.instance) {
-            BattleFieldHandCardPositionRepositoryImpl.instance = new BattleFieldHandCardPositionRepositoryImpl();
+    public static getInstance(): BattleFieldCardPositionStoreImpl {
+        if (!BattleFieldCardPositionStoreImpl.instance) {
+            BattleFieldCardPositionStoreImpl.instance = new BattleFieldCardPositionStoreImpl();
         }
-        return BattleFieldHandCardPositionRepositoryImpl.instance;
+        return BattleFieldCardPositionStoreImpl.instance;
     }
 
     save(position: BattleFieldCardPosition): BattleFieldCardPosition {

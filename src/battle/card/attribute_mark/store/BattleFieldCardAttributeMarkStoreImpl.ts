@@ -1,17 +1,17 @@
-import {BattleFieldCardAttributeMarkRepository} from "./BattleFieldCardAttributeMarkRepository";
+import {BattleFieldCardAttributeMarkStore} from "./BattleFieldCardAttributeMarkStore";
 import {BattleFieldCardAttributeMark} from "../entity/BattleFieldCardAttributeMark";
 
-export class BattleFieldCardAttributeMarkRepositoryImpl implements BattleFieldCardAttributeMarkRepository {
-    private static instance: BattleFieldCardAttributeMarkRepositoryImpl;
+export class BattleFieldCardAttributeMarkStoreImpl implements BattleFieldCardAttributeMarkStore {
+    private static instance: BattleFieldCardAttributeMarkStoreImpl;
     private attributeMarks: BattleFieldCardAttributeMark[] = [];
 
     private constructor() {}
 
-    public static getInstance(): BattleFieldCardAttributeMarkRepositoryImpl {
-        if (!BattleFieldCardAttributeMarkRepositoryImpl.instance) {
-            BattleFieldCardAttributeMarkRepositoryImpl.instance = new BattleFieldCardAttributeMarkRepositoryImpl();
+    public static getInstance(): BattleFieldCardAttributeMarkStoreImpl {
+        if (!BattleFieldCardAttributeMarkStoreImpl.instance) {
+            BattleFieldCardAttributeMarkStoreImpl.instance = new BattleFieldCardAttributeMarkStoreImpl();
         }
-        return BattleFieldCardAttributeMarkRepositoryImpl.instance;
+        return BattleFieldCardAttributeMarkStoreImpl.instance;
     }
 
     async save(attributeMark: BattleFieldCardAttributeMark): Promise<BattleFieldCardAttributeMark> {

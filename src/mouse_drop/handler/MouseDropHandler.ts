@@ -5,10 +5,10 @@ import {BattleFieldCardScene} from "../../battle/card/scene/entity/BattleFieldCa
 import {getCardById} from "../../card/utility";
 import {BattleFieldHandRepository} from "../../battle/hand/repository/BattleFieldHandRepository";
 import {BattleFieldHandRepositoryImpl} from "../../battle/hand/repository/BattleFieldHandRepositoryImpl";
-import {BattleFieldCardSceneRepository} from "../../battle/card/scene/repository/BattleFieldCardSceneRepository";
+import {BattleFieldCardSceneCache} from "../../battle/card/scene/cache/BattleFieldCardSceneCache";
 import {
-    BattleFieldCardSceneRepositoryImpl
-} from "../../battle/card/scene/repository/BattleFieldCardSceneRepositoryImpl";
+    BattleFieldCardSceneCacheImpl
+} from "../../battle/card/scene/cache/BattleFieldCardSceneCacheImpl";
 import {YourFieldCardSceneCache} from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCache";
 import {
     YourFieldCardSceneCacheImpl
@@ -21,7 +21,7 @@ export class MouseDropHandler {
     private static instance: MouseDropHandler;
 
     private battleFieldHandRepository: BattleFieldHandRepository;
-    private battleFieldCardSceneRepository: BattleFieldCardSceneRepository;
+    private battleFieldCardSceneCache: BattleFieldCardSceneCache;
 
     private yourFieldRepository: YourFieldRepository;
     private yourFieldCardSceneCache: YourFieldCardSceneCache;
@@ -40,7 +40,7 @@ export class MouseDropHandler {
 
     private constructor() {
         this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance();
-        this.battleFieldCardSceneRepository = BattleFieldCardSceneRepositoryImpl.getInstance();
+        this.battleFieldCardSceneCache = BattleFieldCardSceneCacheImpl.getInstance();
 
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance();
         this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance();
@@ -96,7 +96,7 @@ export class MouseDropHandler {
         console.log(`handCardIndex: ${handCardIndex}`);
 
         // CardScene Mesh 가져오기
-        const willBePlaceYourFieldCardScene = this.battleFieldCardSceneRepository.extractByIndex(handCardIndex);
+        const willBePlaceYourFieldCardScene = this.battleFieldCardSceneCache.extractByIndex(handCardIndex);
         const willBePlaceYourFieldCardSceneMesh = willBePlaceYourFieldCardScene?.getMesh();
 
         if (!willBePlaceYourFieldCardSceneMesh) {

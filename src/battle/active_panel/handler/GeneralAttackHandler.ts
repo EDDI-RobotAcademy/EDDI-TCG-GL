@@ -11,10 +11,10 @@ import { YourFieldRepositoryImpl } from "../../field/your/repository/YourFieldRe
 import { YourFieldCardSceneCache } from "../../field/your/card_scene/cache/YourFieldCardSceneCache";
 import { YourFieldCardSceneCacheImpl } from "../../field/your/card_scene/cache/YourFieldCardSceneCacheImpl";
 import { BattleFieldCardAttributeMarkScene } from "../../card/attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
-import { BattleFieldCardAttributeMarkRepository } from "../../card/attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
-import { BattleFieldCardAttributeMarkRepositoryImpl } from "../../card/attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
-import { BattleFieldCardAttributeMarkSceneRepository } from "../../card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
-import { BattleFieldCardAttributeMarkSceneRepositoryImpl } from "../../card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
+import { BattleFieldCardAttributeMarkStore } from "../../card/attribute_mark/store/BattleFieldCardAttributeMarkStore";
+import { BattleFieldCardAttributeMarkStoreImpl } from "../../card/attribute_mark/store/BattleFieldCardAttributeMarkStoreImpl";
+import { BattleFieldCardAttributeMarkSceneCache } from "../../card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCache";
+import { BattleFieldCardAttributeMarkSceneCacheImpl } from "../../card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCacheImpl";
 import { OpponentFieldCardSceneCache } from "../../field/opponent/card_scene/cache/OpponentFieldCardSceneCache";
 import { OpponentFieldCardSceneCacheImpl } from "../../field/opponent/card_scene/cache/OpponentFieldCardSceneCacheImpl";
 import { LeftClickHandDetectRepository } from "../../../left_click_detect/repository/LeftClickHandDetectRepository";
@@ -45,8 +45,8 @@ export class GeneralAttackHandler {
     private dragMoveRepository: DragMoveRepository;
     private yourFieldRepository: YourFieldRepository;
     private yourFieldCardSceneCache: YourFieldCardSceneCache;
-    private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository;
-    private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository;
+    private battleFieldCardAttributeMarkStore: BattleFieldCardAttributeMarkStore;
+    private battleFieldCardAttributeMarkSceneCache: BattleFieldCardAttributeMarkSceneCache;
     private opponentFieldCardSceneCache: OpponentFieldCardSceneCache;
     private opponentFieldRepository: OpponentFieldRepository;
     private opponentFieldCardAttributeMarkRepository: OpponentFieldCardAttributeMarkRepository;
@@ -70,8 +70,8 @@ export class GeneralAttackHandler {
         this.dragMoveRepository = DragMoveRepositoryImpl.getInstance();
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance();
         this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance();
-        this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance();
-        this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
+        this.battleFieldCardAttributeMarkStore = BattleFieldCardAttributeMarkStoreImpl.getInstance();
+        this.battleFieldCardAttributeMarkSceneCache = BattleFieldCardAttributeMarkSceneCacheImpl.getInstance();
         this.opponentFieldCardSceneCache = OpponentFieldCardSceneCacheImpl.getInstance();
         this.opponentFieldRepository = OpponentFieldRepositoryImpl.getInstance();
         this.opponentFieldCardAttributeMarkRepository = OpponentFieldCardAttributeMarkRepositoryImpl.getInstance();
@@ -165,10 +165,10 @@ export class GeneralAttackHandler {
         let weaponScene: BattleFieldCardAttributeMarkScene | null = null;
 
         for (const id of attributeMarkIdList) {
-            const mark = await this.battleFieldCardAttributeMarkRepository.findById(id);
+            const mark = await this.battleFieldCardAttributeMarkStore.findById(id);
             if (!mark) continue;
 
-            const markScene = await this.battleFieldCardAttributeMarkSceneRepository.findById(mark.attributeMarkSceneId);
+            const markScene = await this.battleFieldCardAttributeMarkSceneCache.findById(mark.attributeMarkSceneId);
             if (!markScene) continue;
 
             // originPos 절대좌표로만 저장

@@ -1,6 +1,6 @@
 import {BattleFieldCardScene} from "../entity/BattleFieldCardScene";
 import { DisposableMeshStore, disposeMesh } from "../../../../core/lifecycle/DisposableMeshStore";
-import {BattleFieldCardSceneRepository} from "./BattleFieldCardSceneRepository";
+import {BattleFieldCardSceneCache} from "./BattleFieldCardSceneCache";
 import {MeshGenerator} from "../../../../mesh/generator";
 
 import {TextureManager} from "../../../../texture_manager/TextureManager";
@@ -8,17 +8,17 @@ import {getCardById} from "../../../../card/utility";
 import {Vector2d} from "../../../../common/math/Vector2d";
 import {BattleFieldConstants} from "../../../../common/BattleFieldConstants";
 
-export class BattleFieldCardSceneRepositoryImpl implements BattleFieldCardSceneRepository, DisposableMeshStore {
-    private static instance: BattleFieldCardSceneRepositoryImpl;
+export class BattleFieldCardSceneCacheImpl implements BattleFieldCardSceneCache, DisposableMeshStore {
+    private static instance: BattleFieldCardSceneCacheImpl;
     private cardSceneMap: Map<number, BattleFieldCardScene> = new Map();
 
     private constructor() {}
 
-    public static getInstance(): BattleFieldCardSceneRepositoryImpl {
-        if (!BattleFieldCardSceneRepositoryImpl.instance) {
-            BattleFieldCardSceneRepositoryImpl.instance = new BattleFieldCardSceneRepositoryImpl();
+    public static getInstance(): BattleFieldCardSceneCacheImpl {
+        if (!BattleFieldCardSceneCacheImpl.instance) {
+            BattleFieldCardSceneCacheImpl.instance = new BattleFieldCardSceneCacheImpl();
         }
-        return BattleFieldCardSceneRepositoryImpl.instance;
+        return BattleFieldCardSceneCacheImpl.instance;
     }
 
     count(): number {

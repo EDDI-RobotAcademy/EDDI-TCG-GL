@@ -1,69 +1,69 @@
 import * as THREE from "three";
 
-import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
-import {YourFieldRepositoryImpl} from "../../battle/field/your/repository/YourFieldRepositoryImpl";
-import {YourFieldCardSceneCacheImpl} from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCacheImpl";
-import {BattleFieldCardAttributeMarkRepositoryImpl} from "../../battle/card/attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
-import {BattleFieldCardAttributeMarkSceneRepositoryImpl} from "../../battle/card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
-import {OpponentFieldCardSceneCacheImpl} from "../../battle/field/opponent/card_scene/cache/OpponentFieldCardSceneCacheImpl";
-import {OpponentFieldRepositoryImpl} from "../../battle/field/opponent/repository/OpponentFieldRepositoryImpl";
-import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../battle/field/opponent/attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
-import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../battle/field/opponent/attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
-import {LeftClickHandDetectRepositoryImpl} from "../../left_click_detect/repository/LeftClickHandDetectRepositoryImpl";
-import {ActivePanelAreaCacheImpl} from "../../battle/active_panel/cache/ActivePanelAreaCacheImpl";
-import {NeonBorderRepositoryImpl} from "../../neon_border/repository/NeonBorderRepositoryImpl";
-import {NeonBorderLineSceneRepositoryImpl} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
-import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository";
-import {YourFieldRepository} from "../../battle/field/your/repository/YourFieldRepository";
-import {YourFieldCardSceneCache} from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCache";
-import {BattleFieldCardAttributeMarkRepository} from "../../battle/card/attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
-import {BattleFieldCardAttributeMarkSceneRepository} from "../../battle/card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
-import {OpponentFieldCardSceneCache} from "../../battle/field/opponent/card_scene/cache/OpponentFieldCardSceneCache";
-import {OpponentFieldRepository} from "../../battle/field/opponent/repository/OpponentFieldRepository";
-import {OpponentFieldCardAttributeMarkRepository} from "../../battle/field/opponent/attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
-import {OpponentFieldCardAttributeMarkSceneRepository} from "../../battle/field/opponent/attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
-import {LeftClickHandDetectRepository} from "../../left_click_detect/repository/LeftClickHandDetectRepository";
-import {ActivePanelAreaCache} from "../../battle/active_panel/cache/ActivePanelAreaCache";
-import {NeonBorderRepository} from "../../neon_border/repository/NeonBorderRepository";
-import {NeonBorderLineSceneRepository} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepository";
+import {DragMoveRepositoryImpl} from "../../../../drag_move/repository/DragMoveRepositoryImpl";
+import {YourFieldRepositoryImpl} from "../../../field/your/repository/YourFieldRepositoryImpl";
+import {YourFieldCardSceneCacheImpl} from "../../../field/your/card_scene/cache/YourFieldCardSceneCacheImpl";
+import {BattleFieldCardAttributeMarkStoreImpl} from "../../attribute_mark/store/BattleFieldCardAttributeMarkStoreImpl";
+import {BattleFieldCardAttributeMarkSceneCacheImpl} from "../../attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCacheImpl";
+import {OpponentFieldCardSceneCacheImpl} from "../../../field/opponent/card_scene/cache/OpponentFieldCardSceneCacheImpl";
+import {OpponentFieldRepositoryImpl} from "../../../field/opponent/repository/OpponentFieldRepositoryImpl";
+import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../../field/opponent/attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
+import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../../field/opponent/attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
+import {LeftClickHandDetectRepositoryImpl} from "../../../../left_click_detect/repository/LeftClickHandDetectRepositoryImpl";
+import {ActivePanelAreaCacheImpl} from "../../../active_panel/cache/ActivePanelAreaCacheImpl";
+import {NeonBorderRepositoryImpl} from "../../../../neon_border/repository/NeonBorderRepositoryImpl";
+import {NeonBorderLineSceneRepositoryImpl} from "../../../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
+import {DragMoveRepository} from "../../../../drag_move/repository/DragMoveRepository";
+import {YourFieldRepository} from "../../../field/your/repository/YourFieldRepository";
+import {YourFieldCardSceneCache} from "../../../field/your/card_scene/cache/YourFieldCardSceneCache";
+import {BattleFieldCardAttributeMarkStore} from "../../attribute_mark/store/BattleFieldCardAttributeMarkStore";
+import {BattleFieldCardAttributeMarkSceneCache} from "../../attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCache";
+import {OpponentFieldCardSceneCache} from "../../../field/opponent/card_scene/cache/OpponentFieldCardSceneCache";
+import {OpponentFieldRepository} from "../../../field/opponent/repository/OpponentFieldRepository";
+import {OpponentFieldCardAttributeMarkRepository} from "../../../field/opponent/attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
+import {OpponentFieldCardAttributeMarkSceneRepository} from "../../../field/opponent/attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
+import {LeftClickHandDetectRepository} from "../../../../left_click_detect/repository/LeftClickHandDetectRepository";
+import {ActivePanelAreaCache} from "../../../active_panel/cache/ActivePanelAreaCache";
+import {NeonBorderRepository} from "../../../../neon_border/repository/NeonBorderRepository";
+import {NeonBorderLineSceneRepository} from "../../../../neon_border_line_scene/repository/NeonBorderLineSceneRepository";
 
-import {NeonBorderHandler} from "../../neon_border/handler/NeonBorderHandler";
+import {NeonBorderHandler} from "../../../../neon_border/handler/NeonBorderHandler";
 
-import {AttributeMarkPositionCalculator} from "../../common/attribute_mark/AttributeMarkPositionCalculator";
-import {BattleFieldHandRepositoryImpl} from "../../battle/hand/repository/BattleFieldHandRepositoryImpl";
+import {AttributeMarkPositionCalculator} from "../../../../common/attribute_mark/AttributeMarkPositionCalculator";
+import {BattleFieldHandRepositoryImpl} from "../../../hand/repository/BattleFieldHandRepositoryImpl";
 import {
-    BattleFieldHandCardPositionRepositoryImpl
-} from "../../battle/card/position/repository/BattleFieldHandCardPositionRepositoryImpl";
+    BattleFieldCardPositionStoreImpl
+} from "../../position/store/BattleFieldCardPositionStoreImpl";
 import {
-    BattleFieldCardSceneRepositoryImpl
-} from "../../battle/card/scene/repository/BattleFieldCardSceneRepositoryImpl";
-import {BattleFieldHandRepository} from "../../battle/hand/repository/BattleFieldHandRepository";
+    BattleFieldCardSceneCacheImpl
+} from "../../scene/cache/BattleFieldCardSceneCacheImpl";
+import {BattleFieldHandRepository} from "../../../hand/repository/BattleFieldHandRepository";
 import {
-    BattleFieldHandCardPositionRepository
-} from "../../battle/card/position/repository/BattleFieldHandCardPositionRepository";
-import {BattleFieldCardSceneRepository} from "../../battle/card/scene/repository/BattleFieldCardSceneRepository";
-import {Vector2d} from "../../common/math/Vector2d";
-import {BattleFieldConstants} from "../../common/BattleFieldConstants";
+    BattleFieldCardPositionStore
+} from "../../position/store/BattleFieldCardPositionStore";
+import {BattleFieldCardSceneCache} from "../../scene/cache/BattleFieldCardSceneCache";
+import {Vector2d} from "../../../../common/math/Vector2d";
+import {BattleFieldConstants} from "../../../../common/BattleFieldConstants";
 import chalk from "chalk";
-import {BattleFieldCardScene} from "../../battle/card/scene/entity/BattleFieldCardScene";
-import {NeonBorderSceneType} from "../../neon_border/entity/NeonBorderSceneType";
+import {BattleFieldCardScene} from "../../scene/entity/BattleFieldCardScene";
+import {NeonBorderSceneType} from "../../../../neon_border/entity/NeonBorderSceneType";
 import {
-    BattleFieldCardAttributeMarkPositionRepository
-} from "../../battle/card/attribute_mark_position/repository/BattleFieldCardAttributeMarkPositionRepository";
+    BattleFieldCardAttributeMarkPositionStore
+} from "../../attribute_mark_position/store/BattleFieldCardAttributeMarkPositionStore";
 import {
-    BattleFieldCardAttributeMarkPositionRepositoryImpl
-} from "../../battle/card/attribute_mark_position/repository/BattleFieldCardAttributeMarkPositionRepositoryImpl";
+    BattleFieldCardAttributeMarkPositionStoreImpl
+} from "../../attribute_mark_position/store/BattleFieldCardAttributeMarkPositionStoreImpl";
 import {
     NeonBorderLinePositionRepository
-} from "../../neon_border_line_position/repository/NeonBorderLinePositionRepository";
+} from "../../../../neon_border_line_position/repository/NeonBorderLinePositionRepository";
 import {
     NeonBorderLinePositionRepositoryImpl
-} from "../../neon_border_line_position/repository/NeonBorderLinePositionRepositoryImpl";
-import {YourField} from "../../battle/field/your/entity/YourField";
-import {BattleFieldHandPageStore} from "../../battle/hand/page/store/BattleFieldHandPageStore";
-import {BattleFieldHandPageStoreImpl} from "../../battle/hand/page/store/BattleFieldHandPageStoreImpl";
-import {BattleFieldCardPosition} from "../../battle/card/position/entity/BattleFieldCardPosition";
-import {BattleFieldHand} from "../../battle/hand/entity/BattleFieldHand";
+} from "../../../../neon_border_line_position/repository/NeonBorderLinePositionRepositoryImpl";
+import {YourField} from "../../../field/your/entity/YourField";
+import {BattleFieldHandPageStore} from "../../../hand/page/store/BattleFieldHandPageStore";
+import {BattleFieldHandPageStoreImpl} from "../../../hand/page/store/BattleFieldHandPageStoreImpl";
+import {BattleFieldCardPosition} from "../../position/entity/BattleFieldCardPosition";
+import {BattleFieldHand} from "../../../hand/entity/BattleFieldHand";
 
 export class BattleFieldCardAlignHandler {
     private static instance: BattleFieldCardAlignHandler;
@@ -73,12 +73,12 @@ export class BattleFieldCardAlignHandler {
     private battleFieldHandPageStore: BattleFieldHandPageStore;
 
     private battleFieldHandRepository: BattleFieldHandRepository
-    private battleFieldHandCardPositionRepository: BattleFieldHandCardPositionRepository
-    private battleFieldCardSceneRepository: BattleFieldCardSceneRepository
+    private battleFieldCardPositionStore: BattleFieldCardPositionStore
+    private battleFieldCardSceneCache: BattleFieldCardSceneCache
 
-    private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository;
-    private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository;
-    private battleFieldCardAttributeMarkPositionRepository: BattleFieldCardAttributeMarkPositionRepository;
+    private battleFieldCardAttributeMarkStore: BattleFieldCardAttributeMarkStore;
+    private battleFieldCardAttributeMarkSceneCache: BattleFieldCardAttributeMarkSceneCache;
+    private battleFieldCardAttributeMarkPositionStore: BattleFieldCardAttributeMarkPositionStore;
 
     private neonBorderRepository: NeonBorderRepository;
     private neonBorderLineSceneRepository: NeonBorderLineSceneRepository;
@@ -90,12 +90,12 @@ export class BattleFieldCardAlignHandler {
         this.battleFieldHandPageStore = BattleFieldHandPageStoreImpl.getInstance();
 
         this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance()
-        this.battleFieldHandCardPositionRepository = BattleFieldHandCardPositionRepositoryImpl.getInstance()
-        this.battleFieldCardSceneRepository = BattleFieldCardSceneRepositoryImpl.getInstance()
+        this.battleFieldCardPositionStore = BattleFieldCardPositionStoreImpl.getInstance()
+        this.battleFieldCardSceneCache = BattleFieldCardSceneCacheImpl.getInstance()
 
-        this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance();
-        this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
-        this.battleFieldCardAttributeMarkPositionRepository = BattleFieldCardAttributeMarkPositionRepositoryImpl.getInstance();
+        this.battleFieldCardAttributeMarkStore = BattleFieldCardAttributeMarkStoreImpl.getInstance();
+        this.battleFieldCardAttributeMarkSceneCache = BattleFieldCardAttributeMarkSceneCacheImpl.getInstance();
+        this.battleFieldCardAttributeMarkPositionStore = BattleFieldCardAttributeMarkPositionStoreImpl.getInstance();
 
         this.neonBorderRepository = NeonBorderRepositoryImpl.getInstance();
         this.neonBorderLineSceneRepository = NeonBorderLineSceneRepositoryImpl.getInstance();
@@ -133,8 +133,8 @@ export class BattleFieldCardAlignHandler {
         const positionId = handCard.getPositionId();
         const cardSceneId = handCard.getCardSceneId();
 
-        const cardPosition = this.battleFieldHandCardPositionRepository.findById(positionId);
-        const mainCardScene = await this.battleFieldCardSceneRepository.findById(cardSceneId);
+        const cardPosition = this.battleFieldCardPositionStore.findById(positionId);
+        const mainCardScene = await this.battleFieldCardSceneCache.findById(cardSceneId);
 
         if (!cardPosition) {
             console.error(`Position not found for Card Scene ID: ${cardSceneId}, PositionId: ${positionId}`);
@@ -178,21 +178,21 @@ export class BattleFieldCardAlignHandler {
 
         await Promise.all(attributeMarkList.map(async (attributeMarkId: number) => {
             try {
-                const attributeMark = await this.battleFieldCardAttributeMarkRepository.findById(attributeMarkId);
+                const attributeMark = await this.battleFieldCardAttributeMarkStore.findById(attributeMarkId);
                 if (!attributeMark) {
                     console.error(`AttributeMark not found for ID: ${attributeMarkId}`);
                     return;
                 }
 
                 const attributeMarkPosition =
-                    await this.battleFieldCardAttributeMarkPositionRepository.findById(attributeMark.attributeMarkPositionId);
+                    await this.battleFieldCardAttributeMarkPositionStore.findById(attributeMark.attributeMarkPositionId);
                 if (!attributeMarkPosition) {
                     console.error(`AttributeMarkPosition not found for ID: ${attributeMark.attributeMarkPositionId}`);
                     return;
                 }
 
                 const attributeMarkScene =
-                    await this.battleFieldCardAttributeMarkSceneRepository.findById(attributeMark.attributeMarkSceneId);
+                    await this.battleFieldCardAttributeMarkSceneCache.findById(attributeMark.attributeMarkSceneId);
                 if (!attributeMarkScene) {
                     console.error(`AttributeMarkScene not found for ID: ${attributeMark.attributeMarkSceneId}`);
                     return;
@@ -327,7 +327,7 @@ export class BattleFieldCardAlignHandler {
 
         for (const attributeMarkId of yourFieldAttributeMarkSceneIdList) {
             // BattleFieldCardAttributeMark 객체를 비동기적으로 가져오기
-            const attributeMark = await this.battleFieldCardAttributeMarkRepository.findById(attributeMarkId);
+            const attributeMark = await this.battleFieldCardAttributeMarkStore.findById(attributeMarkId);
             console.log(`alignYourField() attributeMark: ${attributeMark}`);
             if (!attributeMark) {
                 console.error(`AttributeMark을 찾을 수 없습니다. id: ${attributeMarkId}`);
@@ -336,7 +336,7 @@ export class BattleFieldCardAlignHandler {
 
             // attributeMark을 처리하는 부분 (예: 위치 업데이트)
             const attributeMarkPositionId = attributeMark.attributeMarkPositionId;
-            const attributeMarkPosition = await this.battleFieldCardAttributeMarkPositionRepository.findById(attributeMarkPositionId);
+            const attributeMarkPosition = await this.battleFieldCardAttributeMarkPositionStore.findById(attributeMarkPositionId);
             if (!attributeMarkPosition) {
                 console.error(`AttributeMarkPosition을 찾을 수 없습니다. id: ${attributeMarkPositionId}`);
                 continue; // 위치가 없으면 다음 iteration으로 넘어갑니다
@@ -344,7 +344,7 @@ export class BattleFieldCardAlignHandler {
 
             // 예시: attributeMarkPosition으로 mesh 위치 업데이트
             const attributeMarkSceneId = attributeMark.attributeMarkSceneId;
-            const attributeMarkScene = await this.battleFieldCardAttributeMarkSceneRepository.findById(attributeMarkSceneId);
+            const attributeMarkScene = await this.battleFieldCardAttributeMarkSceneCache.findById(attributeMarkSceneId);
             if (!attributeMarkScene) {
                 console.error(`AttributeMarkScene을 찾을 수 없습니다. id: ${attributeMarkSceneId}`);
                 continue; // Scene을 찾을 수 없으면 다음으로 넘어갑니다
@@ -356,7 +356,7 @@ export class BattleFieldCardAlignHandler {
 
             if (mesh) {
                 const yourFieldPositionId = createdYourField.getPositionId()
-                const cardPosition = this.battleFieldHandCardPositionRepository.findById(yourFieldPositionId)
+                const cardPosition = this.battleFieldCardPositionStore.findById(yourFieldPositionId)
 
                 if (!cardPosition) {
                     console.error(`yourFieldPosition을 찾을 수 없습니다: ${cardPosition}`);
@@ -377,7 +377,7 @@ export class BattleFieldCardAlignHandler {
                 attributeMarkPosition.setPosition(x, y);
 
                 // 업데이트된 position을 다시 저장
-                await this.battleFieldCardAttributeMarkPositionRepository.save(attributeMarkPosition);
+                await this.battleFieldCardAttributeMarkPositionStore.save(attributeMarkPosition);
                 // console.log(`attributeMarkPosition이 업데이트되었습니다. id: ${attributeMarkPositionId}`);
             }
         }
