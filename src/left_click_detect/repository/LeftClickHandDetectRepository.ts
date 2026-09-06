@@ -1,4 +1,4 @@
-import {BattleFieldCardScene} from "../../battle_field_card_scene/entity/BattleFieldCardScene";
+import {BattleFieldCardScene} from "../../battle/card/scene/entity/BattleFieldCardScene";
 import * as THREE from "three";
 
 export interface LeftClickHandDetectRepository {

@@ -58,7 +58,7 @@
 | **R2-31** | Structure | Battle Animation | [스킬 사용 시 카드가 이동하는 자리 좌표를 한 곳에서 읽게 한다](R2-31-share-skill-slot.md) | R2-17 | **완료** |
 | **R2-32** | Structure | Battle | [확인용 화면만 쓰던 옛 화면 조립과 전투 배경 삭제](R2-32-delete-legacy-assembly.md) | R2-30 | **완료** |
 | **R2-33** | Structure | Battle Field | [상대 필드 카드 표시 패키지 조정](R2-33-move-opponent-attribute-mark.md) | R2-22 | **완료** |
-| **R2-34** | Structure | Battle | 카드에 붙어 따라다니는 것 패키지 조정 (여섯 폴더) | R2-22 | 예정 |
+| **R2-34** | Structure | Battle 공용 | [카드에 붙어 따라다니는 것 패키지 조정](R2-34-move-card-attached.md) | R2-22 | **완료** |
 | **R2-35** | Structure | Battle | 손패와 필드 정렬을 갈라 각자 자리로 보낸다 | R2-34 | 예정 |
 | **R2-36** | Structure | Battle 공용 | 손패와 필드 공용 저장소 이름 정리 | R2-35 | 예정 |
 | **R2-37** | Structure | Battle | 본체 체력 패키지 조정 | — | 예정 |

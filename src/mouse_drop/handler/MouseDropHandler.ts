@@ -1,14 +1,14 @@
 import * as THREE from "three";
 
 import {CardKind} from "../../card/kind";
-import {BattleFieldCardScene} from "../../battle_field_card_scene/entity/BattleFieldCardScene";
+import {BattleFieldCardScene} from "../../battle/card/scene/entity/BattleFieldCardScene";
 import {getCardById} from "../../card/utility";
 import {BattleFieldHandRepository} from "../../battle/hand/repository/BattleFieldHandRepository";
 import {BattleFieldHandRepositoryImpl} from "../../battle/hand/repository/BattleFieldHandRepositoryImpl";
-import {BattleFieldCardSceneRepository} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepository";
+import {BattleFieldCardSceneRepository} from "../../battle/card/scene/repository/BattleFieldCardSceneRepository";
 import {
     BattleFieldCardSceneRepositoryImpl
-} from "../../battle_field_card_scene/repository/BattleFieldCardSceneRepositoryImpl";
+} from "../../battle/card/scene/repository/BattleFieldCardSceneRepositoryImpl";
 import {YourFieldCardSceneCache} from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCache";
 import {
     YourFieldCardSceneCacheImpl

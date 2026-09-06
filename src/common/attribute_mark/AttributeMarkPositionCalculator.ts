@@ -1,4 +1,4 @@
-import { MarkSceneType } from "../../battle_field_card_attribute_mark_scene/entity/MarkSceneType";
+import { MarkSceneType } from "../../battle/card/attribute_mark_scene/entity/MarkSceneType";
 import { Vector2d } from "../math/Vector2d";
 
 export class AttributeMarkPositionCalculator {

@@ -1,11 +1,11 @@
 import {YourFieldRepository} from "../../../battle/field/your/repository/YourFieldRepository";
-import {BattleFieldCardAttributeMarkRepository} from "../../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
-import {BattleFieldCardAttributeMarkSceneRepository} from "../../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
+import {BattleFieldCardAttributeMarkRepository} from "../../../battle/card/attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
+import {BattleFieldCardAttributeMarkSceneRepository} from "../../../battle/card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
 import {YourFieldRepositoryImpl} from "../../../battle/field/your/repository/YourFieldRepositoryImpl";
-import {BattleFieldCardAttributeMarkRepositoryImpl} from "../../../battle_field_card_attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
-import {BattleFieldCardAttributeMarkSceneRepositoryImpl} from "../../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
-import {BattleFieldCardAttributeMark} from "../../../battle_field_card_attribute_mark/entity/BattleFieldCardAttributeMark";
-import {BattleFieldCardAttributeMarkScene} from "../../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
+import {BattleFieldCardAttributeMarkRepositoryImpl} from "../../../battle/card/attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
+import {BattleFieldCardAttributeMarkSceneRepositoryImpl} from "../../../battle/card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
+import {BattleFieldCardAttributeMark} from "../../../battle/card/attribute_mark/entity/BattleFieldCardAttributeMark";
+import {BattleFieldCardAttributeMarkScene} from "../../../battle/card/attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
 
 export class YourFieldAttributeMarkManager {
     private static instance: YourFieldAttributeMarkManager;

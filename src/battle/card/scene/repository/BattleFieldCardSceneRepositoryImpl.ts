@@ -1,12 +1,12 @@
 import {BattleFieldCardScene} from "../entity/BattleFieldCardScene";
-import { DisposableMeshStore, disposeMesh } from "../../core/lifecycle/DisposableMeshStore";
+import { DisposableMeshStore, disposeMesh } from "../../../../core/lifecycle/DisposableMeshStore";
 import {BattleFieldCardSceneRepository} from "./BattleFieldCardSceneRepository";
-import {MeshGenerator} from "../../mesh/generator";
+import {MeshGenerator} from "../../../../mesh/generator";
 
-import {TextureManager} from "../../texture_manager/TextureManager";
-import {getCardById} from "../../card/utility";
-import {Vector2d} from "../../common/math/Vector2d";
-import {BattleFieldConstants} from "../../common/BattleFieldConstants";
+import {TextureManager} from "../../../../texture_manager/TextureManager";
+import {getCardById} from "../../../../card/utility";
+import {Vector2d} from "../../../../common/math/Vector2d";
+import {BattleFieldConstants} from "../../../../common/BattleFieldConstants";
 
 export class BattleFieldCardSceneRepositoryImpl implements BattleFieldCardSceneRepository, DisposableMeshStore {
     private static instance: BattleFieldCardSceneRepositoryImpl;

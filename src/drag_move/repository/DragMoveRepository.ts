@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {BattleFieldCardAttributeMarkScene} from "../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
+import {BattleFieldCardAttributeMarkScene} from "../../battle/card/attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
 import {LeftClickedArea} from "../../left_click_detect/entity/LeftClickedArea";
 
 export interface DragMoveRepository {

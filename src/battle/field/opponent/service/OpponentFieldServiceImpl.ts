@@ -26,7 +26,7 @@ import {OpponentFieldCardAttributeMark} from "../attribute_mark/entity/OpponentF
 import {OpponentFieldCardAttributeMarkPosition} from "../attribute_mark_position/entity/OpponentFieldCardAttributeMarkPosition";
 import {OpponentFieldCardAttributeMarkScene} from "../attribute_mark_scene/entity/OpponentFieldCardAttributeMarkScene";
 import {OpponentFieldCardAttributeMarkStatus} from "../attribute_mark/entity/OpponentFieldCardAttributeMarkStatus";
-import {MarkSceneType} from "../attribute_mark_scene/entity/MarkSceneType";
+import {MarkSceneType} from "../../../card/attribute_mark_scene/entity/MarkSceneType";
 import {BattleFieldConstants} from "../../../../common/BattleFieldConstants";
 
 export class OpponentFieldServiceImpl implements OpponentFieldService {

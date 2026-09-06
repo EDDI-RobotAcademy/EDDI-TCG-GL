@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { DragMoveRepository } from './DragMoveRepository';
-import {BattleFieldCardAttributeMarkScene} from "../../battle_field_card_attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
+import {BattleFieldCardAttributeMarkScene} from "../../battle/card/attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
 import {LeftClickedArea} from "../../left_click_detect/entity/LeftClickedArea";
 
 export class DragMoveRepositoryImpl implements DragMoveRepository {

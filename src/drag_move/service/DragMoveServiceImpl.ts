@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import {DragMoveService} from './DragMoveService';
 import {DragMoveRepositoryImpl} from "../repository/DragMoveRepositoryImpl";
 import {DragMoveRepository} from "../repository/DragMoveRepository";
-import {BattleFieldCardScene} from "../../battle_field_card_scene/entity/BattleFieldCardScene";
+import {BattleFieldCardScene} from "../../battle/card/scene/entity/BattleFieldCardScene";
 import {NeonBorderRepository} from "../../neon_border/repository/NeonBorderRepository";
 
 import {NeonBorderLineSceneRepository} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepository";

@@ -11,7 +11,7 @@ import {MouseCursorDetectRepository} from "../../mouse_cursor_detect/repository/
 import {LeftClickedArea} from "../../left_click_detect/entity/LeftClickedArea";
 import {ActivePanelAreaCache} from "../../battle/active_panel/cache/ActivePanelAreaCache";
 import {ActivePanelAreaCacheImpl} from "../../battle/active_panel/cache/ActivePanelAreaCacheImpl";
-import {BattleFieldCardScene} from "../../battle_field_card_scene/entity/BattleFieldCardScene";
+import {BattleFieldCardScene} from "../../battle/card/scene/entity/BattleFieldCardScene";
 import {getCardById} from "../../card/utility";
 import {YourFieldRepository} from "../../battle/field/your/repository/YourFieldRepository";
 import {YourFieldRepositoryImpl} from "../../battle/field/your/repository/YourFieldRepositoryImpl";

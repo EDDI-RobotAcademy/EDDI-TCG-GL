@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 import {LeftClickHandDetectRepository} from "./LeftClickHandDetectRepository";
-import {BattleFieldCardScene} from "../../battle_field_card_scene/entity/BattleFieldCardScene";
+import {BattleFieldCardScene} from "../../battle/card/scene/entity/BattleFieldCardScene";
 
 export class LeftClickHandDetectRepositoryImpl implements LeftClickHandDetectRepository {
     private static instance: LeftClickHandDetectRepositoryImpl;

@@ -1,5 +1,5 @@
-import {IdGenerator} from "../../common/id_generator/IdGenerator";
-import {Vector2d} from "../../common/math/Vector2d";
+import {IdGenerator} from "../../../../common/id_generator/IdGenerator";
+import {Vector2d} from "../../../../common/math/Vector2d";
 
 export class BattleFieldCardPosition {
     id: number;
