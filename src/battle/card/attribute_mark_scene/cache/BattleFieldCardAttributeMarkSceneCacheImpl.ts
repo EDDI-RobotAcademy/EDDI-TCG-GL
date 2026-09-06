@@ -1,18 +1,18 @@
 import { DisposableMeshStore, disposeMesh } from "../../../../core/lifecycle/DisposableMeshStore";
-import { BattleFieldCardAttributeMarkSceneRepository } from './BattleFieldCardAttributeMarkSceneRepository';
+import { BattleFieldCardAttributeMarkSceneCache } from './BattleFieldCardAttributeMarkSceneCache';
 import {BattleFieldCardAttributeMarkScene} from "../entity/BattleFieldCardAttributeMarkScene";
 
-export class BattleFieldCardAttributeMarkSceneRepositoryImpl implements BattleFieldCardAttributeMarkSceneRepository, DisposableMeshStore {
-    private static instance: BattleFieldCardAttributeMarkSceneRepositoryImpl;
+export class BattleFieldCardAttributeMarkSceneCacheImpl implements BattleFieldCardAttributeMarkSceneCache, DisposableMeshStore {
+    private static instance: BattleFieldCardAttributeMarkSceneCacheImpl;
     private scenes: BattleFieldCardAttributeMarkScene[] = [];
 
     private constructor() {}
 
-    public static getInstance(): BattleFieldCardAttributeMarkSceneRepositoryImpl {
-        if (!BattleFieldCardAttributeMarkSceneRepositoryImpl.instance) {
-            BattleFieldCardAttributeMarkSceneRepositoryImpl.instance = new BattleFieldCardAttributeMarkSceneRepositoryImpl();
+    public static getInstance(): BattleFieldCardAttributeMarkSceneCacheImpl {
+        if (!BattleFieldCardAttributeMarkSceneCacheImpl.instance) {
+            BattleFieldCardAttributeMarkSceneCacheImpl.instance = new BattleFieldCardAttributeMarkSceneCacheImpl();
         }
-        return BattleFieldCardAttributeMarkSceneRepositoryImpl.instance;
+        return BattleFieldCardAttributeMarkSceneCacheImpl.instance;
     }
 
     async save(scene: BattleFieldCardAttributeMarkScene): Promise<BattleFieldCardAttributeMarkScene> {
@@ -21,7 +21,7 @@ export class BattleFieldCardAttributeMarkSceneRepositoryImpl implements BattleFi
     }
 
     async findById(id: number): Promise<BattleFieldCardAttributeMarkScene | null> {
-        // console.log(`BattleFieldCardAttributeMarkSceneRepositoryImpl: Current scenes -> ${JSON.stringify(this.scenes, null, 2)}`);
+        // console.log(`BattleFieldCardAttributeMarkSceneCacheImpl: Current scenes -> ${JSON.stringify(this.scenes, null, 2)}`);
         return this.scenes.find(scene => scene.id === id) || null;
     }
 

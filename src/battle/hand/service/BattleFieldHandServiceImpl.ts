@@ -1,10 +1,10 @@
 import {BattleFieldHandService} from "./BattleFieldHandService";
 import {BattleFieldHandRepository} from "../repository/BattleFieldHandRepository";
 import {BattleFieldHandRepositoryImpl} from "../repository/BattleFieldHandRepositoryImpl";
-import {BattleFieldCardSceneRepository} from "../../card/scene/repository/BattleFieldCardSceneRepository";
-import {BattleFieldCardSceneRepositoryImpl} from "../../card/scene/repository/BattleFieldCardSceneRepositoryImpl";
-import {BattleFieldHandCardPositionRepository} from "../../card/position/repository/BattleFieldHandCardPositionRepository";
-import {BattleFieldHandCardPositionRepositoryImpl} from "../../card/position/repository/BattleFieldHandCardPositionRepositoryImpl";
+import {BattleFieldCardSceneCache} from "../../card/scene/cache/BattleFieldCardSceneCache";
+import {BattleFieldCardSceneCacheImpl} from "../../card/scene/cache/BattleFieldCardSceneCacheImpl";
+import {BattleFieldCardPositionStore} from "../../card/position/store/BattleFieldCardPositionStore";
+import {BattleFieldCardPositionStoreImpl} from "../../card/position/store/BattleFieldCardPositionStoreImpl";
 import {BattleFieldCardPosition} from "../../card/position/entity/BattleFieldCardPosition";
 import {Vector2d} from "../../../common/math/Vector2d";
 import {BattleFieldHand} from "../entity/BattleFieldHand";
@@ -16,12 +16,12 @@ import {BattleFieldCardScene} from "../../card/scene/entity/BattleFieldCardScene
 import {CardJob} from "../../../card/job";
 import {TextureManager} from "../../../texture_manager/TextureManager";
 import {MeshGenerator} from "../../../mesh/generator";
-import {BattleFieldCardAttributeMarkRepository} from "../../card/attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
-import {BattleFieldCardAttributeMarkRepositoryImpl} from "../../card/attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
-import {BattleFieldCardAttributeMarkPositionRepository} from "../../card/attribute_mark_position/repository/BattleFieldCardAttributeMarkPositionRepository";
-import {BattleFieldCardAttributeMarkPositionRepositoryImpl} from "../../card/attribute_mark_position/repository/BattleFieldCardAttributeMarkPositionRepositoryImpl";
-import {BattleFieldCardAttributeMarkSceneRepository} from "../../card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
-import {BattleFieldCardAttributeMarkSceneRepositoryImpl} from "../../card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
+import {BattleFieldCardAttributeMarkStore} from "../../card/attribute_mark/store/BattleFieldCardAttributeMarkStore";
+import {BattleFieldCardAttributeMarkStoreImpl} from "../../card/attribute_mark/store/BattleFieldCardAttributeMarkStoreImpl";
+import {BattleFieldCardAttributeMarkPositionStore} from "../../card/attribute_mark_position/store/BattleFieldCardAttributeMarkPositionStore";
+import {BattleFieldCardAttributeMarkPositionStoreImpl} from "../../card/attribute_mark_position/store/BattleFieldCardAttributeMarkPositionStoreImpl";
+import {BattleFieldCardAttributeMarkSceneCache} from "../../card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCache";
+import {BattleFieldCardAttributeMarkSceneCacheImpl} from "../../card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCacheImpl";
 import {BattleFieldCardAttributeMarkPosition} from "../../card/attribute_mark_position/entity/BattleFieldCardAttributeMarkPosition";
 import {BattleFieldCardAttributeMarkScene} from "../../card/attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
 import {BattleFieldCardAttributeMark} from "../../card/attribute_mark/entity/BattleFieldCardAttributeMark";
@@ -36,12 +36,12 @@ export class BattleFieldHandServiceImpl implements BattleFieldHandService {
 
     private battleFieldHandRepository: BattleFieldHandRepository;
     private battleFieldHandMapRepository: BattleFieldHandMapRepository;
-    private battleFieldCardSceneRepository: BattleFieldCardSceneRepository;
-    private battleFieldHandCardPositionRepository: BattleFieldHandCardPositionRepository;
+    private battleFieldCardSceneCache: BattleFieldCardSceneCache;
+    private battleFieldCardPositionStore: BattleFieldCardPositionStore;
 
-    private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository;
-    private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository;
-    private battleFieldCardAttributeMarkPositionRepository: BattleFieldCardAttributeMarkPositionRepository;
+    private battleFieldCardAttributeMarkStore: BattleFieldCardAttributeMarkStore;
+    private battleFieldCardAttributeMarkSceneCache: BattleFieldCardAttributeMarkSceneCache;
+    private battleFieldCardAttributeMarkPositionStore: BattleFieldCardAttributeMarkPositionStore;
 
     private textureManager: TextureManager = TextureManager.getInstance();
 
@@ -64,12 +64,12 @@ export class BattleFieldHandServiceImpl implements BattleFieldHandService {
     private constructor() {
         this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance();
         this.battleFieldHandMapRepository = BattleFieldHandMapRepositoryImpl.getInstance();
-        this.battleFieldCardSceneRepository = BattleFieldCardSceneRepositoryImpl.getInstance();
-        this.battleFieldHandCardPositionRepository = BattleFieldHandCardPositionRepositoryImpl.getInstance();
+        this.battleFieldCardSceneCache = BattleFieldCardSceneCacheImpl.getInstance();
+        this.battleFieldCardPositionStore = BattleFieldCardPositionStoreImpl.getInstance();
 
-        this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance();
-        this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
-        this.battleFieldCardAttributeMarkPositionRepository = BattleFieldCardAttributeMarkPositionRepositoryImpl.getInstance();
+        this.battleFieldCardAttributeMarkStore = BattleFieldCardAttributeMarkStoreImpl.getInstance();
+        this.battleFieldCardAttributeMarkSceneCache = BattleFieldCardAttributeMarkSceneCacheImpl.getInstance();
+        this.battleFieldCardAttributeMarkPositionStore = BattleFieldCardAttributeMarkPositionStoreImpl.getInstance();
     }
 
     public static getInstance(): BattleFieldHandServiceImpl {
@@ -112,7 +112,7 @@ export class BattleFieldHandServiceImpl implements BattleFieldHandService {
     }
 
     private calculateHandPosition(): Vector2d {
-        const handPositionCount = this.battleFieldHandCardPositionRepository.count();
+        const handPositionCount = this.battleFieldCardPositionStore.count();
         const handPositionX = (this.HAND_INITIAL_X + handPositionCount * this.GAP_OF_EACH_CARD) * window.innerWidth;
         const handPositionY = this.HAND_INITIAL_Y * window.innerHeight
             + (this.CARD_HEIGHT_RATIO * this.HALF * window.innerWidth);
@@ -121,11 +121,11 @@ export class BattleFieldHandServiceImpl implements BattleFieldHandService {
 
     private saveHandPosition(position: Vector2d): BattleFieldCardPosition {
         const cardPosition = new BattleFieldCardPosition(position.getX(), position.getY());
-        return this.battleFieldHandCardPositionRepository.save(cardPosition);
+        return this.battleFieldCardPositionStore.save(cardPosition);
     }
 
     private async createMainCardScene(cardId: number, position: Vector2d): Promise<BattleFieldCardScene> {
-        return await this.battleFieldCardSceneRepository.create(cardId, position);
+        return await this.battleFieldCardSceneCache.create(cardId, position);
     }
 
     private async loadCardTextures(unitJob: number, cardKind: number, card: any): Promise<(THREE.Texture | null)[]> {
@@ -364,17 +364,17 @@ export class BattleFieldHandServiceImpl implements BattleFieldHandService {
 
     private async saveCardAttributeMark(mesh: THREE.Mesh, position: Vector2d, markSceneType: MarkSceneType): Promise<BattleFieldCardAttributeMark> {
         const attributeMarkPosition = new BattleFieldCardAttributeMarkPosition(position.getX(), position.getY());
-        await this.battleFieldCardAttributeMarkPositionRepository.save(attributeMarkPosition);
+        await this.battleFieldCardAttributeMarkPositionStore.save(attributeMarkPosition);
 
         const attributeMarkScene = new BattleFieldCardAttributeMarkScene(mesh, markSceneType);
-        await this.battleFieldCardAttributeMarkSceneRepository.save(attributeMarkScene);
+        await this.battleFieldCardAttributeMarkSceneCache.save(attributeMarkScene);
 
         const attributeMark = new BattleFieldCardAttributeMark(
             BattleFieldCardAttributeMarkStatus.HAND,
             attributeMarkScene.getId(),
             attributeMarkPosition.getId()
         );
-        return await this.battleFieldCardAttributeMarkRepository.save(attributeMark);
+        return await this.battleFieldCardAttributeMarkStore.save(attributeMark);
     }
 
     // private async saveCardAttributeNumber(
@@ -384,10 +384,10 @@ export class BattleFieldHandServiceImpl implements BattleFieldHandService {
     //     markId: number
     // ): Promise<BattleFieldCardAttributeNumber> {
     //     const numberPosition = new BattleFieldCardAttributeMarkPosition(position.getX(), position.getY());
-    //     await this.battleFieldCardAttributeMarkPositionRepository.save(numberPosition);
+    //     await this.battleFieldCardAttributeMarkPositionStore.save(numberPosition);
     //
     //     const numberScene = new BattleFieldCardAttributeMarkScene(textMesh, MarkSceneType.ENERGY_NUMBER);
-    //     await this.battleFieldCardAttributeMarkSceneRepository.save(numberScene);
+    //     await this.battleFieldCardAttributeMarkSceneCache.save(numberScene);
     //
     //     const numberEntity = new BattleFieldCardAttributeNumber(
     //         value,

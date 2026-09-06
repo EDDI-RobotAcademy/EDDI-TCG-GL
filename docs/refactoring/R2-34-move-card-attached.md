@@ -1,6 +1,6 @@
 # [ETWGL-R2-34] 카드에 붙어 따라다니는 것 패키지 조정
 
-선행: R2-22 │ 후행: R2-35 │ 산출물: src/battle/card/ │ Type: Structure │ Domain: Battle 공용
+선행: R2-22 │ 후행: R2-35 │ 산출물: src/battle/card/ │ Type: Structure │ Domain: Battle Card
 
 # Success criteria
 
@@ -68,7 +68,7 @@
     - [x] npx tsc --noEmit 통과
     - [x] npm run depcruise 통과
     - [x] 시나리오 빌드 통과
-    - [ ] 손패와 필드의 표시, 상세 보기, 네온 테두리, 키보드 조작
+    - [x] 손패와 필드의 표시, 상세 보기, 네온 테두리, 키보드 조작
 
 # Issue
 

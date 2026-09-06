@@ -1,6 +1,6 @@
 import {LeftClickDetectService} from "./LeftClickDetectService";
-import {BattleFieldCardSceneRepositoryImpl} from "../../battle/card/scene/repository/BattleFieldCardSceneRepositoryImpl";
-import {BattleFieldCardSceneRepository} from "../../battle/card/scene/repository/BattleFieldCardSceneRepository";
+import {BattleFieldCardSceneCacheImpl} from "../../battle/card/scene/cache/BattleFieldCardSceneCacheImpl";
+import {BattleFieldCardSceneCache} from "../../battle/card/scene/cache/BattleFieldCardSceneCache";
 import {LeftClickHandDetectRepositoryImpl} from "../repository/LeftClickHandDetectRepositoryImpl";
 import {LeftClickHandDetectRepository} from "../repository/LeftClickHandDetectRepository";
 import {CameraRepository} from "../../camera/repository/CameraRepository";
@@ -12,11 +12,11 @@ import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository"
 import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
 import {BattleFieldHandRepository} from "../../battle/hand/repository/BattleFieldHandRepository";
 import {BattleFieldHandRepositoryImpl} from "../../battle/hand/repository/BattleFieldHandRepositoryImpl";
-import {BattleFieldCardAttributeMarkSceneRepository} from "../../battle/card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
-import {BattleFieldCardAttributeMarkSceneRepositoryImpl} from "../../battle/card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
+import {BattleFieldCardAttributeMarkSceneCache} from "../../battle/card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCache";
+import {BattleFieldCardAttributeMarkSceneCacheImpl} from "../../battle/card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCacheImpl";
 import {BattleFieldCardAttributeMarkScene} from "../../battle/card/attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
-import {BattleFieldCardAttributeMarkRepositoryImpl} from "../../battle/card/attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
-import {BattleFieldCardAttributeMarkRepository} from "../../battle/card/attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
+import {BattleFieldCardAttributeMarkStoreImpl} from "../../battle/card/attribute_mark/store/BattleFieldCardAttributeMarkStoreImpl";
+import {BattleFieldCardAttributeMarkStore} from "../../battle/card/attribute_mark/store/BattleFieldCardAttributeMarkStore";
 import {BattleFieldCardAttributeMark} from "../../battle/card/attribute_mark/entity/BattleFieldCardAttributeMark";
 import {NeonBorderRepository} from "../../neon_border/repository/NeonBorderRepository";
 import {NeonBorderRepositoryImpl} from "../../neon_border/repository/NeonBorderRepositoryImpl";
@@ -74,7 +74,7 @@ import {BattleFieldHandPageStore} from "../../battle/hand/page/store/BattleField
 import {
     BattleFieldHandPageStoreImpl
 } from "../../battle/hand/page/store/BattleFieldHandPageStoreImpl";
-import {BattleFieldCardAlignHandler} from "../../battle_field_card_alignment/handler/BattleFieldCardAlignHandler";
+import {BattleFieldCardAlignHandler} from "../../battle/card/alignment/handler/BattleFieldCardAlignHandler";
 import {updateFieldEnergyCount} from "../../battle/field_energy/your/FieldEnergyCount";
 
 export class LeftClickDetectServiceImpl implements LeftClickDetectService {
@@ -111,9 +111,9 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private battleFieldCardAlignHandler: BattleFieldCardAlignHandler;
     private battleFieldHandPageStore: BattleFieldHandPageStore;
 
-    private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository
-    private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository
-    private battleFieldCardSceneRepository: BattleFieldCardSceneRepository;
+    private battleFieldCardAttributeMarkSceneCache: BattleFieldCardAttributeMarkSceneCache
+    private battleFieldCardAttributeMarkStore: BattleFieldCardAttributeMarkStore
+    private battleFieldCardSceneCache: BattleFieldCardSceneCache;
     private battleFieldHandRepository: BattleFieldHandRepository;
 
     private yourFieldCardSceneCache: YourFieldCardSceneCache
@@ -180,9 +180,9 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
         this.battleFieldHandPageStore = BattleFieldHandPageStoreImpl.getInstance();
 
-        this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance()
-        this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance()
-        this.battleFieldCardSceneRepository = BattleFieldCardSceneRepositoryImpl.getInstance();
+        this.battleFieldCardAttributeMarkSceneCache = BattleFieldCardAttributeMarkSceneCacheImpl.getInstance()
+        this.battleFieldCardAttributeMarkStore = BattleFieldCardAttributeMarkStoreImpl.getInstance()
+        this.battleFieldCardSceneCache = BattleFieldCardSceneCacheImpl.getInstance();
         this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance()
 
         this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance()
@@ -352,7 +352,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     }
 
     private async handleYourHandClick(x: number, y: number): Promise<void> {
-        const handSceneList = this.battleFieldCardSceneRepository.findAll();
+        const handSceneList = this.battleFieldCardSceneCache.findAll();
         const clickedHandCard = this.leftClickHandDetectRepository.isYourHandAreaClicked({ x, y }, handSceneList, this.camera);
         if (clickedHandCard === null) {
             return;

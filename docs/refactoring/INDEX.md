@@ -58,9 +58,9 @@
 | **R2-31** | Structure | Battle Animation | [스킬 사용 시 카드가 이동하는 자리 좌표를 한 곳에서 읽게 한다](R2-31-share-skill-slot.md) | R2-17 | **완료** |
 | **R2-32** | Structure | Battle | [확인용 화면만 쓰던 옛 화면 조립과 전투 배경 삭제](R2-32-delete-legacy-assembly.md) | R2-30 | **완료** |
 | **R2-33** | Structure | Battle Field | [상대 필드 카드 표시 패키지 조정](R2-33-move-opponent-attribute-mark.md) | R2-22 | **완료** |
-| **R2-34** | Structure | Battle 공용 | [카드에 붙어 따라다니는 것 패키지 조정](R2-34-move-card-attached.md) | R2-22 | **완료** |
-| **R2-35** | Structure | Battle | 손패와 필드 정렬을 갈라 각자 자리로 보낸다 | R2-34 | 예정 |
-| **R2-36** | Structure | Battle 공용 | 손패와 필드 공용 저장소 이름 정리 | R2-35 | 예정 |
+| **R2-34** | Structure | Battle Card | [카드에 붙어 따라다니는 것 패키지 조정](R2-34-move-card-attached.md) | R2-22 | **완료** |
+| **R2-35** | Structure | Battle Card | [카드 정렬 패키지 조정](R2-35-move-card-alignment.md) | R2-34 | **완료** |
+| **R2-36** | Structure | Battle Card | 카드에 붙는 것들의 저장소 이름 정리 | R2-35 | 예정 |
 | **R2-37** | Structure | Battle | 본체 체력 패키지 조정 | — | 예정 |
 | **R2-38** | Strategy | Battle | 이름만 죽었다고 되어 있는 저장소의 처지 결정 | — | 예정 |
 | **R2-39** | Structure | Battle Animation | 유닛 카드 등장 연출 패키지 조정 | R2-18 | 예정 |
@@ -105,6 +105,7 @@
 | Battle Tomb | 쌓이는 곳. **부활할 수 있다** |
 | Battle LostZone | 쌓이는 곳. **부활할 수 없다.** 특수 수단으로만 회수 |
 | Battle 〈나머지〉 | field, unit, hand, hud, ability, animation, view 안의 도메인은 그 카테고리를 옮길 때 정한다 |
+| Battle Card | 카드에 붙어 따라다니는 것. 손패에 있든 필드에 있든 카드를 따라간다 |
 | Battle 공용 | 여러 도메인이 함께 쓰는 것 |
 | Deck | 덱을 짜는 화면. 전투 중의 덱과 제어 방식이 정반대다 |
 | Collection | 보유 카드 |

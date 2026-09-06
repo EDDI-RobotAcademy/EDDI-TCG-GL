@@ -1,6 +1,6 @@
 import {BattleFieldCardAttributeMarkScene} from "../entity/BattleFieldCardAttributeMarkScene";
 
-export interface BattleFieldCardAttributeMarkSceneRepository {
+export interface BattleFieldCardAttributeMarkSceneCache {
     save(scene: BattleFieldCardAttributeMarkScene): Promise<BattleFieldCardAttributeMarkScene>;
     findById(id: number): Promise<BattleFieldCardAttributeMarkScene | null>;
     findAll(): Promise<BattleFieldCardAttributeMarkScene[]>;

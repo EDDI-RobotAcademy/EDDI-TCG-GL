@@ -10,11 +10,11 @@ import {getCardById} from "../../card/utility";
 import {Vector2d} from "../../common/math/Vector2d";
 import {BattleFieldCardPosition} from "../../battle/card/position/entity/BattleFieldCardPosition";
 import {
-    BattleFieldHandCardPositionRepository
-} from "../../battle/card/position/repository/BattleFieldHandCardPositionRepository";
+    BattleFieldCardPositionStore
+} from "../../battle/card/position/store/BattleFieldCardPositionStore";
 import {
-    BattleFieldHandCardPositionRepositoryImpl
-} from "../../battle/card/position/repository/BattleFieldHandCardPositionRepositoryImpl";
+    BattleFieldCardPositionStoreImpl
+} from "../../battle/card/position/store/BattleFieldCardPositionStoreImpl";
 import {BattleFieldConstants} from "../../common/BattleFieldConstants";
 import {BattleFieldCardScene} from "../../battle/card/scene/entity/BattleFieldCardScene";
 import {Texture} from "three";
@@ -34,29 +34,29 @@ import {
     BattleFieldHandSceneRepository
 } from "../../battle_field_hand/deprecated_repository/BattleFieldHandSceneRepository";
 import {
-    BattleFieldCardAttributeMarkRepository
-} from "../../battle/card/attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
-import {BattleFieldCardSceneRepository} from "../../battle/card/scene/repository/BattleFieldCardSceneRepository";
+    BattleFieldCardAttributeMarkStore
+} from "../../battle/card/attribute_mark/store/BattleFieldCardAttributeMarkStore";
+import {BattleFieldCardSceneCache} from "../../battle/card/scene/cache/BattleFieldCardSceneCache";
 import {
-    BattleFieldCardSceneRepositoryImpl
-} from "../../battle/card/scene/repository/BattleFieldCardSceneRepositoryImpl";
+    BattleFieldCardSceneCacheImpl
+} from "../../battle/card/scene/cache/BattleFieldCardSceneCacheImpl";
 import {
-    BattleFieldCardAttributeMarkRepositoryImpl
-} from "../../battle/card/attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
+    BattleFieldCardAttributeMarkStoreImpl
+} from "../../battle/card/attribute_mark/store/BattleFieldCardAttributeMarkStoreImpl";
 import {TextureManager} from "../../texture_manager/TextureManager";
 import {
-    BattleFieldCardAttributeMarkPositionRepository
-} from "../../battle/card/attribute_mark_position/repository/BattleFieldCardAttributeMarkPositionRepository";
+    BattleFieldCardAttributeMarkPositionStore
+} from "../../battle/card/attribute_mark_position/store/BattleFieldCardAttributeMarkPositionStore";
 import {
-    BattleFieldCardAttributeMarkPositionRepositoryImpl
-} from "../../battle/card/attribute_mark_position/repository/BattleFieldCardAttributeMarkPositionRepositoryImpl";
+    BattleFieldCardAttributeMarkPositionStoreImpl
+} from "../../battle/card/attribute_mark_position/store/BattleFieldCardAttributeMarkPositionStoreImpl";
 import {
-    BattleFieldCardAttributeMarkSceneRepository
-} from "../../battle/card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
+    BattleFieldCardAttributeMarkSceneCache
+} from "../../battle/card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCache";
 import {
-    BattleFieldCardAttributeMarkSceneRepositoryImpl
-} from "../../battle/card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
-import {BattleFieldCardAlignHandler} from "../../battle_field_card_alignment/handler/BattleFieldCardAlignHandler";
+    BattleFieldCardAttributeMarkSceneCacheImpl
+} from "../../battle/card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCacheImpl";
+import {BattleFieldCardAlignHandler} from "../../battle/card/alignment/handler/BattleFieldCardAlignHandler";
 import {BattleFieldHandPageStore} from "../../battle/hand/page/store/BattleFieldHandPageStore";
 import {
     BattleFieldHandPageStoreImpl
@@ -71,15 +71,15 @@ export class KeyboardActionHandler {
 
     private battleFieldHandMapRepository: BattleFieldHandMapRepository;
     private battleFieldHandRepository: BattleFieldHandRepository;
-    private battleFieldHandCardPositionRepository: BattleFieldHandCardPositionRepository;
+    private battleFieldCardPositionStore: BattleFieldCardPositionStore;
     private battleFieldHandSceneRepository: BattleFieldHandSceneRepository;
 
     private battleFieldHandPageStore: BattleFieldHandPageStore ;
 
-    private battleFieldCardSceneRepository: BattleFieldCardSceneRepository;
-    private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository;
-    private battleFieldCardAttributeMarkPositionRepository: BattleFieldCardAttributeMarkPositionRepository;
-    private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository;
+    private battleFieldCardSceneCache: BattleFieldCardSceneCache;
+    private battleFieldCardAttributeMarkStore: BattleFieldCardAttributeMarkStore;
+    private battleFieldCardAttributeMarkPositionStore: BattleFieldCardAttributeMarkPositionStore;
+    private battleFieldCardAttributeMarkSceneCache: BattleFieldCardAttributeMarkSceneCache;
 
     private textureManager: TextureManager;
 
@@ -94,15 +94,15 @@ export class KeyboardActionHandler {
     private constructor(scene: THREE.Scene) {
         this.battleFieldHandMapRepository = BattleFieldHandMapRepositoryImpl.getInstance();
         this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance();
-        this.battleFieldHandCardPositionRepository = BattleFieldHandCardPositionRepositoryImpl.getInstance();
+        this.battleFieldCardPositionStore = BattleFieldCardPositionStoreImpl.getInstance();
         this.battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance();
 
         this.battleFieldHandPageStore = BattleFieldHandPageStoreImpl.getInstance();
 
-        this.battleFieldCardSceneRepository = BattleFieldCardSceneRepositoryImpl.getInstance();
-        this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance();
-        this.battleFieldCardAttributeMarkPositionRepository = BattleFieldCardAttributeMarkPositionRepositoryImpl.getInstance();
-        this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
+        this.battleFieldCardSceneCache = BattleFieldCardSceneCacheImpl.getInstance();
+        this.battleFieldCardAttributeMarkStore = BattleFieldCardAttributeMarkStoreImpl.getInstance();
+        this.battleFieldCardAttributeMarkPositionStore = BattleFieldCardAttributeMarkPositionStoreImpl.getInstance();
+        this.battleFieldCardAttributeMarkSceneCache = BattleFieldCardAttributeMarkSceneCacheImpl.getInstance();
 
         this.textureManager = TextureManager.getInstance();
 
@@ -211,7 +211,7 @@ export class KeyboardActionHandler {
     }
 
     private calculateHandPosition(elementsInPage: number): Vector2d {
-        // const handPositionCount = this.battleFieldHandCardPositionRepository.count();
+        // const handPositionCount = this.battleFieldCardPositionStore.count();
         const handPositionX = (BattleFieldConstants.HAND_INITIAL_X + elementsInPage * BattleFieldConstants.GAP_OF_EACH_CARD) * window.innerWidth;
         const handPositionY = BattleFieldConstants.HAND_INITIAL_Y * window.innerHeight
             + (BattleFieldConstants.CARD_HEIGHT_RATIO * BattleFieldConstants.HALF * window.innerWidth);
@@ -220,11 +220,11 @@ export class KeyboardActionHandler {
 
     private saveHandPosition(position: Vector2d): BattleFieldCardPosition {
         const cardPosition = new BattleFieldCardPosition(position.getX(), position.getY());
-        return this.battleFieldHandCardPositionRepository.save(cardPosition);
+        return this.battleFieldCardPositionStore.save(cardPosition);
     }
 
     private async createMainCardScene(cardId: number, position: Vector2d): Promise<BattleFieldCardScene> {
-        return await this.battleFieldCardSceneRepository.create(cardId, position);
+        return await this.battleFieldCardSceneCache.create(cardId, position);
     }
 
     private async loadCardTextures(unitJob: number, cardKind: number, card: any): Promise<(THREE.Texture | null)[]> {
@@ -428,16 +428,16 @@ export class KeyboardActionHandler {
 
     private async saveCardAttributeMark(mesh: THREE.Mesh, position: Vector2d, markSceneType: MarkSceneType): Promise<BattleFieldCardAttributeMark> {
         const attributeMarkPosition = new BattleFieldCardAttributeMarkPosition(position.getX(), position.getY());
-        await this.battleFieldCardAttributeMarkPositionRepository.save(attributeMarkPosition);
+        await this.battleFieldCardAttributeMarkPositionStore.save(attributeMarkPosition);
 
         const attributeMarkScene = new BattleFieldCardAttributeMarkScene(mesh, markSceneType);
-        await this.battleFieldCardAttributeMarkSceneRepository.save(attributeMarkScene);
+        await this.battleFieldCardAttributeMarkSceneCache.save(attributeMarkScene);
 
         const attributeMark = new BattleFieldCardAttributeMark(
             BattleFieldCardAttributeMarkStatus.HAND,
             attributeMarkScene.getId(),
             attributeMarkPosition.getId()
         );
-        return await this.battleFieldCardAttributeMarkRepository.save(attributeMark);
+        return await this.battleFieldCardAttributeMarkStore.save(attributeMark);
     }
 }

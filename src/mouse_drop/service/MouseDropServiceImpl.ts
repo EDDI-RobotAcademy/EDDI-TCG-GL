@@ -7,22 +7,22 @@ import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveReposit
 import {BattleFieldCardScene} from "../../battle/card/scene/entity/BattleFieldCardScene";
 import {BattleFieldHandRepository} from "../../battle/hand/repository/BattleFieldHandRepository";
 import {BattleFieldHandRepositoryImpl} from "../../battle/hand/repository/BattleFieldHandRepositoryImpl";
-import {BattleFieldCardAttributeMarkRepository} from "../../battle/card/attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
-import {BattleFieldCardAttributeMarkRepositoryImpl} from "../../battle/card/attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
+import {BattleFieldCardAttributeMarkStore} from "../../battle/card/attribute_mark/store/BattleFieldCardAttributeMarkStore";
+import {BattleFieldCardAttributeMarkStoreImpl} from "../../battle/card/attribute_mark/store/BattleFieldCardAttributeMarkStoreImpl";
 import {BattleFieldCardAttributeMark} from "../../battle/card/attribute_mark/entity/BattleFieldCardAttributeMark";
-import {BattleFieldCardAttributeMarkPositionRepository} from "../../battle/card/attribute_mark_position/repository/BattleFieldCardAttributeMarkPositionRepository";
-import {BattleFieldCardAttributeMarkPositionRepositoryImpl} from "../../battle/card/attribute_mark_position/repository/BattleFieldCardAttributeMarkPositionRepositoryImpl";
-import {BattleFieldHandCardPositionRepositoryImpl} from "../../battle/card/position/repository/BattleFieldHandCardPositionRepositoryImpl";
-import {BattleFieldHandCardPositionRepository} from "../../battle/card/position/repository/BattleFieldHandCardPositionRepository";
+import {BattleFieldCardAttributeMarkPositionStore} from "../../battle/card/attribute_mark_position/store/BattleFieldCardAttributeMarkPositionStore";
+import {BattleFieldCardAttributeMarkPositionStoreImpl} from "../../battle/card/attribute_mark_position/store/BattleFieldCardAttributeMarkPositionStoreImpl";
+import {BattleFieldCardPositionStoreImpl} from "../../battle/card/position/store/BattleFieldCardPositionStoreImpl";
+import {BattleFieldCardPositionStore} from "../../battle/card/position/store/BattleFieldCardPositionStore";
 import {BattleFieldCardPosition} from "../../battle/card/position/entity/BattleFieldCardPosition";
-import {BattleFieldCardAttributeMarkSceneRepositoryImpl} from "../../battle/card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
-import {BattleFieldCardAttributeMarkSceneRepository} from "../../battle/card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
+import {BattleFieldCardAttributeMarkSceneCacheImpl} from "../../battle/card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCacheImpl";
+import {BattleFieldCardAttributeMarkSceneCache} from "../../battle/card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCache";
 import {YourFieldRepositoryImpl} from "../../battle/field/your/repository/YourFieldRepositoryImpl";
 import {YourFieldRepository} from "../../battle/field/your/repository/YourFieldRepository";
 import {getCardById} from "../../card/utility";
 import {CardKind} from "../../card/kind";
-import {BattleFieldCardSceneRepository} from "../../battle/card/scene/repository/BattleFieldCardSceneRepository";
-import {BattleFieldCardSceneRepositoryImpl} from "../../battle/card/scene/repository/BattleFieldCardSceneRepositoryImpl";
+import {BattleFieldCardSceneCache} from "../../battle/card/scene/cache/BattleFieldCardSceneCache";
+import {BattleFieldCardSceneCacheImpl} from "../../battle/card/scene/cache/BattleFieldCardSceneCacheImpl";
 import {YourFieldCardSceneCache} from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCache";
 import {YourFieldCardSceneCacheImpl} from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCacheImpl";
 import {YourFieldCardPositionStore} from "../../battle/field/your/card_position/store/YourFieldCardPositionStore";
@@ -40,7 +40,7 @@ import {NeonBorderSceneType} from "../../neon_border/entity/NeonBorderSceneType"
 import chalk from "chalk";
 import {NeonBorderType} from "../../neon_border/entity/NeonBorderType";
 import {BattleFieldConstants} from "../../common/BattleFieldConstants";
-import {BattleFieldCardAlignHandler} from "../../battle_field_card_alignment/handler/BattleFieldCardAlignHandler";
+import {BattleFieldCardAlignHandler} from "../../battle/card/alignment/handler/BattleFieldCardAlignHandler";
 import {MouseDropHandler} from "../handler/MouseDropHandler";
 
 export class MouseDropServiceImpl implements MouseDropService {
@@ -75,12 +75,12 @@ export class MouseDropServiceImpl implements MouseDropService {
     private battleFieldCardAlignHandler: BattleFieldCardAlignHandler;
 
     private battleFieldHandRepository: BattleFieldHandRepository
-    private battleFieldHandCardPositionRepository: BattleFieldHandCardPositionRepository
-    private battleFieldCardSceneRepository: BattleFieldCardSceneRepository
+    private battleFieldCardPositionStore: BattleFieldCardPositionStore
+    private battleFieldCardSceneCache: BattleFieldCardSceneCache
 
-    private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository
-    private battleFieldCardAttributeMarkPositionRepository: BattleFieldCardAttributeMarkPositionRepository
-    private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository
+    private battleFieldCardAttributeMarkStore: BattleFieldCardAttributeMarkStore
+    private battleFieldCardAttributeMarkPositionStore: BattleFieldCardAttributeMarkPositionStore
+    private battleFieldCardAttributeMarkSceneCache: BattleFieldCardAttributeMarkSceneCache
 
     private yourFieldRepository: YourFieldRepository
     private yourFieldCardSceneCache: YourFieldCardSceneCache
@@ -100,12 +100,12 @@ export class MouseDropServiceImpl implements MouseDropService {
         this.battleFieldCardAlignHandler = BattleFieldCardAlignHandler.getInstance();
 
         this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance()
-        this.battleFieldHandCardPositionRepository = BattleFieldHandCardPositionRepositoryImpl.getInstance()
-        this.battleFieldCardSceneRepository = BattleFieldCardSceneRepositoryImpl.getInstance()
+        this.battleFieldCardPositionStore = BattleFieldCardPositionStoreImpl.getInstance()
+        this.battleFieldCardSceneCache = BattleFieldCardSceneCacheImpl.getInstance()
 
-        this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance()
-        this.battleFieldCardAttributeMarkPositionRepository = BattleFieldCardAttributeMarkPositionRepositoryImpl.getInstance()
-        this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance()
+        this.battleFieldCardAttributeMarkStore = BattleFieldCardAttributeMarkStoreImpl.getInstance()
+        this.battleFieldCardAttributeMarkPositionStore = BattleFieldCardAttributeMarkPositionStoreImpl.getInstance()
+        this.battleFieldCardAttributeMarkSceneCache = BattleFieldCardAttributeMarkSceneCacheImpl.getInstance()
 
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance()
         this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance()
@@ -158,7 +158,7 @@ export class MouseDropServiceImpl implements MouseDropService {
 
         for (const attributeMarkId of yourFieldAttributeMarkSceneIdList) {
             // BattleFieldCardAttributeMark 객체를 비동기적으로 가져오기
-            const attributeMark = await this.battleFieldCardAttributeMarkRepository.findById(attributeMarkId);
+            const attributeMark = await this.battleFieldCardAttributeMarkStore.findById(attributeMarkId);
             console.log(`alignYourField() attributeMark: ${attributeMark}`);
             if (!attributeMark) {
                 console.error(`AttributeMark을 찾을 수 없습니다. id: ${attributeMarkId}`);
@@ -167,7 +167,7 @@ export class MouseDropServiceImpl implements MouseDropService {
 
             // attributeMark을 처리하는 부분 (예: 위치 업데이트)
             const attributeMarkPositionId = attributeMark.attributeMarkPositionId;
-            const attributeMarkPosition = await this.battleFieldCardAttributeMarkPositionRepository.findById(attributeMarkPositionId);
+            const attributeMarkPosition = await this.battleFieldCardAttributeMarkPositionStore.findById(attributeMarkPositionId);
             if (!attributeMarkPosition) {
                 console.error(`AttributeMarkPosition을 찾을 수 없습니다. id: ${attributeMarkPositionId}`);
                 continue; // 위치가 없으면 다음 iteration으로 넘어갑니다
@@ -175,7 +175,7 @@ export class MouseDropServiceImpl implements MouseDropService {
 
             // 예시: attributeMarkPosition으로 mesh 위치 업데이트
             const attributeMarkSceneId = attributeMark.attributeMarkSceneId;
-            const attributeMarkScene = await this.battleFieldCardAttributeMarkSceneRepository.findById(attributeMarkSceneId);
+            const attributeMarkScene = await this.battleFieldCardAttributeMarkSceneCache.findById(attributeMarkSceneId);
             if (!attributeMarkScene) {
                 console.error(`AttributeMarkScene을 찾을 수 없습니다. id: ${attributeMarkSceneId}`);
                 continue; // Scene을 찾을 수 없으면 다음으로 넘어갑니다
@@ -187,7 +187,7 @@ export class MouseDropServiceImpl implements MouseDropService {
 
             if (mesh) {
                 const yourFieldPositionId = createdYourField.getPositionId()
-                const cardPosition = this.battleFieldHandCardPositionRepository.findById(yourFieldPositionId)
+                const cardPosition = this.battleFieldCardPositionStore.findById(yourFieldPositionId)
 
                 if (!cardPosition) {
                     console.error(`yourFieldPosition을 찾을 수 없습니다: ${cardPosition}`);
@@ -207,7 +207,7 @@ export class MouseDropServiceImpl implements MouseDropService {
                 attributeMarkPosition.setPosition(x, y);
 
                 // 업데이트된 position을 다시 저장
-                await this.battleFieldCardAttributeMarkPositionRepository.save(attributeMarkPosition);
+                await this.battleFieldCardAttributeMarkPositionStore.save(attributeMarkPosition);
                 // console.log(`attributeMarkPosition이 업데이트되었습니다. id: ${attributeMarkPositionId}`);
             }
         }
@@ -222,7 +222,7 @@ export class MouseDropServiceImpl implements MouseDropService {
 
         const calculatedYourFieldPosition = this.calculateYourFieldPositionByIndex(yourFieldCount - 1)
         const yourFieldPositionId = createdYourField.getPositionId()
-        const cardPosition = this.battleFieldHandCardPositionRepository.findById(yourFieldPositionId)
+        const cardPosition = this.battleFieldCardPositionStore.findById(yourFieldPositionId)
 
         if (!cardPosition) {
             console.error(`yourFieldPosition: ${cardPosition}`);
@@ -248,7 +248,7 @@ export class MouseDropServiceImpl implements MouseDropService {
             yourFieldSceneMesh.position.y = y;
 
             cardPosition.setPosition(x, y);
-            this.battleFieldHandCardPositionRepository.save(cardPosition);
+            this.battleFieldCardPositionStore.save(cardPosition);
 
             // TODO: yourFieldSceneId가 되면서 sceneId로 제어하던 일관성이 깨졌음
             this.repositionNeonBorder(yourFieldSceneId, x, y);
@@ -450,7 +450,7 @@ export class MouseDropServiceImpl implements MouseDropService {
         // console.log(`handCardIndex: ${handCardIndex}`);
         //
         // let yourFieldCardScene;
-        // const willBePlaceYourFieldCardScene = this.battleFieldCardSceneRepository.extractByIndex(handCardIndex)
+        // const willBePlaceYourFieldCardScene = this.battleFieldCardSceneCache.extractByIndex(handCardIndex)
         // const willBePlaceYourFieldCardSceneMesh = willBePlaceYourFieldCardScene?.getMesh()
         //
         // if (willBePlaceYourFieldCardSceneMesh) {
@@ -469,7 +469,7 @@ export class MouseDropServiceImpl implements MouseDropService {
         // //     throw new Error('Position ID를 찾을 수 없습니다');
         // // }
         // //
-        // // const willBePlaceYourFieldCardPosition = this.battleFieldHandCardPositionRepository.extractById(handCardPositionId)
+        // // const willBePlaceYourFieldCardPosition = this.battleFieldCardPositionStore.extractById(handCardPositionId)
         // // if (willBePlaceYourFieldCardPosition) {
         // //     const positionX = willBePlaceYourFieldCardPosition.getX()
         // //     const positionY = willBePlaceYourFieldCardPosition.getY()
@@ -493,7 +493,7 @@ export class MouseDropServiceImpl implements MouseDropService {
             const cardSceneId = selectedObject.getId();
             const cardPositionId = this.battleFieldHandRepository.findPositionIdByCardSceneId(cardSceneId);
             if (cardPositionId !== null) {
-                const cardPositionEntity = await this.battleFieldHandCardPositionRepository.findById(cardPositionId);
+                const cardPositionEntity = await this.battleFieldCardPositionStore.findById(cardPositionId);
                 if (cardPositionEntity) {
                     this.restoreCardPosition(selectedObject, cardPositionEntity);
                 }
@@ -563,19 +563,19 @@ export class MouseDropServiceImpl implements MouseDropService {
     }
 
     private async getAttributeMarks(attributeMarkIdList: number[]): Promise<BattleFieldCardAttributeMark[]> {
-        const marks = await Promise.all(attributeMarkIdList.map(id => this.battleFieldCardAttributeMarkRepository.findById(id)));
+        const marks = await Promise.all(attributeMarkIdList.map(id => this.battleFieldCardAttributeMarkStore.findById(id)));
         return marks.filter((mark): mark is BattleFieldCardAttributeMark => mark !== null); // Type guard to filter null values
     }
 
     private async getValidAttributePositions(attributeMarkList: BattleFieldCardAttributeMark[]): Promise<any[]> {
         return Promise.all(attributeMarkList.map(attributeMark =>
-            this.battleFieldCardAttributeMarkPositionRepository.findById(attributeMark.attributeMarkPositionId)
+            this.battleFieldCardAttributeMarkPositionStore.findById(attributeMark.attributeMarkPositionId)
         ));
     }
 
     private async getValidAttributeScenes(attributeMarkList: BattleFieldCardAttributeMark[]): Promise<any[]> {
         return Promise.all(attributeMarkList.map(attributeMark =>
-            this.battleFieldCardAttributeMarkSceneRepository.findById(attributeMark.attributeMarkSceneId)
+            this.battleFieldCardAttributeMarkSceneCache.findById(attributeMark.attributeMarkSceneId)
         ));
     }
 

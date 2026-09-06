@@ -1,9 +1,9 @@
 import {YourFieldRepository} from "../../../battle/field/your/repository/YourFieldRepository";
-import {BattleFieldCardAttributeMarkRepository} from "../../../battle/card/attribute_mark/repository/BattleFieldCardAttributeMarkRepository";
-import {BattleFieldCardAttributeMarkSceneRepository} from "../../../battle/card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
+import {BattleFieldCardAttributeMarkStore} from "../../../battle/card/attribute_mark/store/BattleFieldCardAttributeMarkStore";
+import {BattleFieldCardAttributeMarkSceneCache} from "../../../battle/card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCache";
 import {YourFieldRepositoryImpl} from "../../../battle/field/your/repository/YourFieldRepositoryImpl";
-import {BattleFieldCardAttributeMarkRepositoryImpl} from "../../../battle/card/attribute_mark/repository/BattleFieldCardAttributeMarkRepositoryImpl";
-import {BattleFieldCardAttributeMarkSceneRepositoryImpl} from "../../../battle/card/attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
+import {BattleFieldCardAttributeMarkStoreImpl} from "../../../battle/card/attribute_mark/store/BattleFieldCardAttributeMarkStoreImpl";
+import {BattleFieldCardAttributeMarkSceneCacheImpl} from "../../../battle/card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCacheImpl";
 import {BattleFieldCardAttributeMark} from "../../../battle/card/attribute_mark/entity/BattleFieldCardAttributeMark";
 import {BattleFieldCardAttributeMarkScene} from "../../../battle/card/attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
 
@@ -11,13 +11,13 @@ export class YourFieldAttributeMarkManager {
     private static instance: YourFieldAttributeMarkManager;
 
     private yourFieldRepository: YourFieldRepository
-    private battleFieldCardAttributeMarkRepository: BattleFieldCardAttributeMarkRepository
-    private battleFieldCardAttributeMarkSceneRepository: BattleFieldCardAttributeMarkSceneRepository
+    private battleFieldCardAttributeMarkStore: BattleFieldCardAttributeMarkStore
+    private battleFieldCardAttributeMarkSceneCache: BattleFieldCardAttributeMarkSceneCache
 
     private constructor() {
         this.yourFieldRepository = YourFieldRepositoryImpl.getInstance()
-        this.battleFieldCardAttributeMarkRepository = BattleFieldCardAttributeMarkRepositoryImpl.getInstance()
-        this.battleFieldCardAttributeMarkSceneRepository = BattleFieldCardAttributeMarkSceneRepositoryImpl.getInstance()
+        this.battleFieldCardAttributeMarkStore = BattleFieldCardAttributeMarkStoreImpl.getInstance()
+        this.battleFieldCardAttributeMarkSceneCache = BattleFieldCardAttributeMarkSceneCacheImpl.getInstance()
     } // 외부에서 인스턴스 생성 방지
 
     public static getInstance(): YourFieldAttributeMarkManager {
@@ -36,7 +36,7 @@ export class YourFieldAttributeMarkManager {
     // 속성 마크 객체 목록 가져오기
     public async getAttributeMarkList(attributeMarkIdList: number[]): Promise<BattleFieldCardAttributeMark[]> {
         const attributeMarkPromises = attributeMarkIdList.map(id =>
-            this.battleFieldCardAttributeMarkRepository.findById(id)
+            this.battleFieldCardAttributeMarkStore.findById(id)
         );
 
         const attributeMarkResults = await Promise.all(attributeMarkPromises);
@@ -50,7 +50,7 @@ export class YourFieldAttributeMarkManager {
     // 유효한 속성 마크 장면 가져오기
     public async getValidAttributeScenes(attributeMarkList: BattleFieldCardAttributeMark[]): Promise<BattleFieldCardAttributeMarkScene[]> {
         const scenePromises = attributeMarkList.map(attributeMark =>
-            this.battleFieldCardAttributeMarkSceneRepository.findById(attributeMark.attributeMarkSceneId)
+            this.battleFieldCardAttributeMarkSceneCache.findById(attributeMark.attributeMarkSceneId)
         );
 
         const sceneResults = await Promise.all(scenePromises);
