@@ -1,4 +1,4 @@
-import { DisposableMeshStore, disposeMesh } from "../../core/lifecycle/DisposableMeshStore";
+import { DisposableMeshStore, disposeMesh } from "../../../../../core/lifecycle/DisposableMeshStore";
 import {OpponentFieldCardAttributeMarkSceneRepository} from "./OpponentFieldCardAttributeMarkSceneRepository";
 import {OpponentFieldCardAttributeMarkScene} from "../entity/OpponentFieldCardAttributeMarkScene";
 

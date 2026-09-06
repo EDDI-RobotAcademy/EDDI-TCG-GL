@@ -16,17 +16,17 @@ import {MeshGenerator} from "../../../../mesh/generator";
 import {Card} from "../../../../card/types";
 import {OpponentFieldRepositoryImpl} from "../repository/OpponentFieldRepositoryImpl";
 import {OpponentFieldRepository} from "../repository/OpponentFieldRepository";
-import {OpponentFieldCardAttributeMarkPositionRepository} from "../../../../opponent_field_card_attribute_mark_position/repository/OpponentFieldCardAttributeMarkPositionRepository";
-import {OpponentFieldCardAttributeMarkSceneRepository} from "../../../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
-import {OpponentFieldCardAttributeMarkRepository} from "../../../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
-import {OpponentFieldCardAttributeMarkPositionRepositoryImpl} from "../../../../opponent_field_card_attribute_mark_position/repository/OpponentFieldCardAttributeMarkPositionRepositoryImpl";
-import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
-import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
-import {OpponentFieldCardAttributeMark} from "../../../../opponent_field_card_attribute_mark/entity/OpponentFieldCardAttributeMark";
-import {OpponentFieldCardAttributeMarkPosition} from "../../../../opponent_field_card_attribute_mark_position/entity/OpponentFieldCardAttributeMarkPosition";
-import {OpponentFieldCardAttributeMarkScene} from "../../../../opponent_field_card_attribute_mark_scene/entity/OpponentFieldCardAttributeMarkScene";
-import {OpponentFieldCardAttributeMarkStatus} from "../../../../opponent_field_card_attribute_mark/entity/OpponentFieldCardAttributeMarkStatus";
-import {MarkSceneType} from "../../../../opponent_field_card_attribute_mark_scene/entity/MarkSceneType";
+import {OpponentFieldCardAttributeMarkPositionRepository} from "../attribute_mark_position/repository/OpponentFieldCardAttributeMarkPositionRepository";
+import {OpponentFieldCardAttributeMarkSceneRepository} from "../attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
+import {OpponentFieldCardAttributeMarkRepository} from "../attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
+import {OpponentFieldCardAttributeMarkPositionRepositoryImpl} from "../attribute_mark_position/repository/OpponentFieldCardAttributeMarkPositionRepositoryImpl";
+import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
+import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
+import {OpponentFieldCardAttributeMark} from "../attribute_mark/entity/OpponentFieldCardAttributeMark";
+import {OpponentFieldCardAttributeMarkPosition} from "../attribute_mark_position/entity/OpponentFieldCardAttributeMarkPosition";
+import {OpponentFieldCardAttributeMarkScene} from "../attribute_mark_scene/entity/OpponentFieldCardAttributeMarkScene";
+import {OpponentFieldCardAttributeMarkStatus} from "../attribute_mark/entity/OpponentFieldCardAttributeMarkStatus";
+import {MarkSceneType} from "../attribute_mark_scene/entity/MarkSceneType";
 import {BattleFieldConstants} from "../../../../common/BattleFieldConstants";
 
 export class OpponentFieldServiceImpl implements OpponentFieldService {
