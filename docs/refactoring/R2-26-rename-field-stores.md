@@ -1,4 +1,4 @@
-# [ETWGL-R2-26] 내 필드와 상대 필드 저장소 이름 정리
+# [ETWGL-R2-26] 내 필드와 상대 필드에 붙는 것들의 이름 정리
 
 선행: R2-25 │ 후행: R2-27 │ 산출물: src/battle/field/*/{area,card_scene}/cache/, card_position/store/ │ Type: Structure │ Domain: Battle Field
 
