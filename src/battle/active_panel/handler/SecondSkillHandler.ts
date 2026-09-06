@@ -9,8 +9,8 @@ import {BattleFieldCardAttributeMarkRepositoryImpl} from "../../../battle_field_
 import {BattleFieldCardAttributeMarkSceneRepositoryImpl} from "../../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepositoryImpl";
 import {OpponentFieldCardSceneCacheImpl} from "../../field/opponent/card_scene/cache/OpponentFieldCardSceneCacheImpl";
 import {OpponentFieldRepositoryImpl} from "../../field/opponent/repository/OpponentFieldRepositoryImpl";
-import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
-import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
+import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../field/opponent/attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
+import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../field/opponent/attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
 import {LeftClickHandDetectRepositoryImpl} from "../../../left_click_detect/repository/LeftClickHandDetectRepositoryImpl";
 import {ActivePanelAreaCacheImpl} from "../cache/ActivePanelAreaCacheImpl";
 import {NeonBorderRepositoryImpl} from "../../../neon_border/repository/NeonBorderRepositoryImpl";
@@ -22,8 +22,8 @@ import {BattleFieldCardAttributeMarkRepository} from "../../../battle_field_card
 import {BattleFieldCardAttributeMarkSceneRepository} from "../../../battle_field_card_attribute_mark_scene/repository/BattleFieldCardAttributeMarkSceneRepository";
 import {OpponentFieldCardSceneCache} from "../../field/opponent/card_scene/cache/OpponentFieldCardSceneCache";
 import {OpponentFieldRepository} from "../../field/opponent/repository/OpponentFieldRepository";
-import {OpponentFieldCardAttributeMarkRepository} from "../../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
-import {OpponentFieldCardAttributeMarkSceneRepository} from "../../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
+import {OpponentFieldCardAttributeMarkRepository} from "../../field/opponent/attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
+import {OpponentFieldCardAttributeMarkSceneRepository} from "../../field/opponent/attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
 import {LeftClickHandDetectRepository} from "../../../left_click_detect/repository/LeftClickHandDetectRepository";
 import {ActivePanelAreaCache} from "../cache/ActivePanelAreaCache";
 import {NeonBorderRepository} from "../../../neon_border/repository/NeonBorderRepository";

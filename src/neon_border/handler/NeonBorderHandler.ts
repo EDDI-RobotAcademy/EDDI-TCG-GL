@@ -37,16 +37,16 @@ import {
 } from "../../neon_border_line_position/repository/NeonBorderLinePositionRepositoryImpl";
 import {
     OpponentFieldCardAttributeMarkRepository
-} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
+} from "../../battle/field/opponent/attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
 import {
     OpponentFieldCardAttributeMarkRepositoryImpl
-} from "../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
+} from "../../battle/field/opponent/attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
 import {
     OpponentFieldCardAttributeMarkSceneRepository
-} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
+} from "../../battle/field/opponent/attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
 import {
     OpponentFieldCardAttributeMarkSceneRepositoryImpl
-} from "../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
+} from "../../battle/field/opponent/attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
 import {BattleFieldConstants} from "../../common/BattleFieldConstants";
 
 export class NeonBorderHandler {

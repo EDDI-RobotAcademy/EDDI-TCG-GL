@@ -21,10 +21,10 @@ import { LeftClickHandDetectRepository } from "../../../left_click_detect/reposi
 import { LeftClickHandDetectRepositoryImpl } from "../../../left_click_detect/repository/LeftClickHandDetectRepositoryImpl";
 import { OpponentFieldRepository } from "../../field/opponent/repository/OpponentFieldRepository";
 import { OpponentFieldRepositoryImpl } from "../../field/opponent/repository/OpponentFieldRepositoryImpl";
-import { OpponentFieldCardAttributeMarkRepository } from "../../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
-import { OpponentFieldCardAttributeMarkRepositoryImpl } from "../../../opponent_field_card_attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
-import { OpponentFieldCardAttributeMarkSceneRepository } from "../../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
-import { OpponentFieldCardAttributeMarkSceneRepositoryImpl } from "../../../opponent_field_card_attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
+import { OpponentFieldCardAttributeMarkRepository } from "../../field/opponent/attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
+import { OpponentFieldCardAttributeMarkRepositoryImpl } from "../../field/opponent/attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
+import { OpponentFieldCardAttributeMarkSceneRepository } from "../../field/opponent/attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
+import { OpponentFieldCardAttributeMarkSceneRepositoryImpl } from "../../field/opponent/attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
 import { ActivePanelAreaCache } from "../cache/ActivePanelAreaCache";
 import { ActivePanelAreaCacheImpl } from "../cache/ActivePanelAreaCacheImpl";
 import { ClickableCard } from "../../../left_click_detect/service/ClickableCard";
