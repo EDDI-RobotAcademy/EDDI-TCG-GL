@@ -133,8 +133,8 @@ import { TurnStateRepositoryImpl } from "../../src/battle/turn/state/repository/
 import {
     createDefaultMasterHpFrame,
     createOpponentMasterHpFrame,
-} from "../../src/master_hp/frame/MasterHpFrame";
-import { MasterHpRendererV2 } from "../../src/master_hp/renderer/MasterHpRendererV2";
+} from "../../src/battle/master_hp/frame/MasterHpFrame";
+import { MasterHpRendererV2 } from "../../src/battle/master_hp/renderer/MasterHpRendererV2";
 
 import { createDefaultGuideMessageHudFrame } from "../../src/common/guide_message/frame/GuideMessageHudFrame";
 

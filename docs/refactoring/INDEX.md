@@ -61,7 +61,7 @@
 | **R2-34** | Structure | Battle Card | [카드에 붙어 따라다니는 것 패키지 조정](R2-34-move-card-attached.md) | R2-22 | **완료** |
 | **R2-35** | Structure | Battle Card | [카드 정렬 패키지 조정](R2-35-move-card-alignment.md) | R2-34 | **완료** |
 | **R2-36** | Structure | Battle Card | [카드에 붙는 속성들의 이름 정리](R2-36-rename-card-stores.md) | R2-35 | **완료** |
-| **R2-37** | Structure | Battle | 본체 체력 패키지 조정 | — | 예정 |
+| **R2-37** | Structure | Battle | [본체 체력 패키지 조정](R2-37-move-master-hp.md) | — | **완료** |
 | **R2-38** | Strategy | Battle | 이름만 죽었다고 되어 있는 코드의 처지 결정 | — | 예정 |
 | **R2-39** | Structure | Battle Animation | 유닛 카드 등장 연출 패키지 조정 | R2-18 | 예정 |
 | **R2-40** | Structure | Battle Animation | 유닛 카드 스킬 연출 패키지 조정 | R2-39 | 예정 |
