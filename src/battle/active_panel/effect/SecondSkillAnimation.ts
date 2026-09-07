@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import {SkillPlayback} from "../../../animation/skill/SkillPlayback";
-import {NetherBladeFirstPassiveEffect} from "../../../animation/nether_blade/NetherBladeFirstPassiveEffect";
+import {NetherBladeFirstPassiveEffect} from "../../animation/card/unit/019_nether_blade/skill/NetherBladeFirstPassiveEffect";
 
 // Per-card hooks for the second-skill panel sequence. When the attacker's cardId
 // matches a registered card, the effect callback runs the dedicated visuals
