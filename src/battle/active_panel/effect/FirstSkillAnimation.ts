@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import {SkillPlayback} from "../../../animation/skill/SkillPlayback";
-import {NetherBladeFirstPassiveEffect} from "../../../animation/nether_blade/NetherBladeFirstPassiveEffect";
+import {NetherBladeFirstPassiveEffect} from "../../animation/card/unit/019_nether_blade/skill/NetherBladeFirstPassiveEffect";
 
 // Card-ID gate: 마검의 지배자 네더 블레이드. When this card is the attacker, the
 // first-skill panel sequence dispatches the dedicated charge-aura + violet
