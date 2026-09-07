@@ -63,7 +63,7 @@
 | **R2-36** | Structure | Battle Card | [카드에 붙는 속성들의 이름 정리](R2-36-rename-card-stores.md) | R2-35 | **완료** |
 | **R2-37** | Structure | Battle | [본체 체력 패키지 조정](R2-37-move-master-hp.md) | — | **완료** |
 | **R2-38** | Strategy | Battle Hand | [낡은 방식 표시를 언제 뗄 수 있는지 정한다](R2-38-deprecated-removal-policy.md) | — | **완료** |
-| **R2-39** | Structure | Battle Animation | 유닛 카드 등장 연출 패키지 조정 | R2-18 | 예정 |
+| **R2-39** | Structure | Battle Animation | [유닛 카드 등장 연출 패키지 조정](R2-39-move-unit-entrance-effect.md) | R2-18 | **완료** |
 | **R2-40** | Structure | Battle Animation | 유닛 카드 스킬 연출 패키지 조정 | R2-39 | 예정 |
 | **R2-41** | Structure | Battle Animation | 아이템 카드 연출 패키지 조정 | R2-40 | 예정 |
 | **R2-42** | Structure | Battle Animation | 서포트, 에너지 카드 연출 패키지 조정 | R2-41 | 예정 |

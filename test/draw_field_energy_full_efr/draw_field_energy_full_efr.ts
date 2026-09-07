@@ -74,7 +74,7 @@ import { DoomContractEffect } from "../../src/animation/doom_contract/DoomContra
 import { CorpseExplosionEffect } from "../../src/animation/corpse_explosion/CorpseExplosionEffect";
 import { DeadLandsEffect } from "../../src/animation/dead_lands/DeadLandsEffect";
 import { LeonikSummonEffect } from "../../src/animation/leonik_summon/LeonikSummonEffect";
-import { NetherBladeEntranceEffect } from "../../src/animation/nether_blade_entrance/NetherBladeEntranceEffect";
+import { NetherBladeEntranceEffect } from "../../src/battle/animation/card/unit/019_nether_blade/entrance/NetherBladeEntranceEffect";
 import { NetherBladeFirstPassiveEffect } from "../../src/animation/nether_blade/NetherBladeFirstPassiveEffect";
 import { NetherBladeSecondPassiveEffect } from "../../src/animation/nether_blade/NetherBladeSecondPassiveEffect";
 import { MoraleConvertEffect } from "../../src/animation/morale_convert/MoraleConvertEffect";
