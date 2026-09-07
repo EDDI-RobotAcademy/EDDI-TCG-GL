@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { CardMoveEasing, moveCard } from "../../../animation/motion/CardMove";
 import { BattleFieldConstants } from "../../../common/BattleFieldConstants";
 import { createCardSkillPositionFrame } from "../../../animation/skill/frame/CardSkillPositionFrame";
 
@@ -1743,16 +1744,9 @@ export class AttackAnimationV2 {
         this.animating = false;
     }
 
+    // 옮기는 일은 moveCard 가 한다. 걸리는 시간은 부르는 쪽이 정한다.
     private moveCardTo(group: THREE.Group, x: number, y: number, z: number, duration: number): Promise<void> {
-        return new Promise(resolve => {
-            const from = { x: group.position.x, y: group.position.y, z: group.position.z };
-            new TWEEN.Tween(from)
-                .to({ x, y, z }, duration)
-                .easing(TWEEN.Easing.Quadratic.InOut)
-                .onUpdate(() => { group.position.set(from.x, from.y, from.z); })
-                .onComplete(() => resolve())
-                .start();
-        });
+        return moveCard(group, { x, y, z }, duration, CardMoveEasing.inOut);
     }
 
     private cardRise(group: THREE.Group, origY: number, amount: number, duration: number): Promise<void> {

@@ -66,6 +66,7 @@ import { createDefaultActivePanelFrame, ActivePanelButtonSpec } from "../../src/
 import { ActivePanelRendererV2 } from "../../src/battle/active_panel/renderer/ActivePanelRendererV2";
 import { AttackAnimationV2 } from "../../src/battle/animation/attack/AttackAnimationV2";
 import { createCardSkillPositionFrame } from "../../src/animation/skill/frame/CardSkillPositionFrame";
+import { CardMoveEasing, moveCard } from "../../src/animation/motion/CardMove";
 import { FrozenBurningOverlayEffect } from "../../src/battle/animation/card/energy/151_cold_dark_energy/FrozenBurningOverlayEffect";
 import { ColdDarkTraitMarkEffect } from "../../src/battle/animation/card/energy/151_cold_dark_energy/ColdDarkTraitMarkEffect";
 import { ScytheCutEffect } from "../../src/battle/animation/card/item/008_scythe/ScytheCutEffect";
@@ -1261,26 +1262,10 @@ async function main(container: HTMLElement): Promise<void> {
         const { x: skillPositionX, y: skillPositionY } = createCardSkillPositionFrame(h);
         const origPos = group.position.clone();
 
-        const moveTo = (tx: number, ty: number, tz: number, durMs: number): Promise<void> => {
-            const startMs = performance.now();
-            const fromX = group.position.x;
-            const fromY = group.position.y;
-            const fromZ = group.position.z;
-            return new Promise<void>((resolve) => {
-                const step = () => {
-                    const t = Math.min(1, (performance.now() - startMs) / durMs);
-                    const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-                    group.position.set(
-                        fromX + (tx - fromX) * e,
-                        fromY + (ty - fromY) * e,
-                        fromZ + (tz - fromZ) * e,
-                    );
-                    if (t < 1) requestAnimationFrame(step);
-                    else resolve();
-                };
-                requestAnimationFrame(step);
-            });
-        };
+        // 옮기는 일은 moveCard 가 한다. 예전에는 여기서 직접 계산했는데,
+        // 그 식이 TWEEN 의 Quadratic.InOut 과 같은 곡선이라 값이 바뀌지 않는다.
+        const moveTo = (tx: number, ty: number, tz: number, durMs: number): Promise<void> =>
+            moveCard(group, { x: tx, y: ty, z: tz }, durMs, CardMoveEasing.inOut);
 
         // Forward: lift z by +1 so the card draws above other field meshes during travel.
         await moveTo(skillPositionX, skillPositionY, origPos.z + 1, 700);
