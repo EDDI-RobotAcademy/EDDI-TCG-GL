@@ -67,7 +67,7 @@
 | **R2-40** | Structure | Battle Animation | [유닛 카드 스킬 연출 패키지 조정](R2-40-move-unit-skill-effect.md) | R2-39 | **완료** |
 | **R2-41** | Structure | Battle Animation | [아이템 카드 연출 패키지 조정](R2-41-move-item-card-effects.md) | R2-40 | **완료** |
 | **R2-42** | Structure | Battle Animation | [서포트, 에너지 카드 연출 패키지 조정](R2-42-move-support-energy-card-effects.md) | R2-41 | **완료** |
-| **R2-43** | Rendering | Battle Animation | 카드를 스킬 자리로 옮기는 코드를 한 곳으로 모은다 | R2-42 | 예정 |
+| **R2-43** | Rendering | Battle Animation | [스킬 사용 시 카드 이동 코드 통합](R2-43-unify-card-move.md) | R2-42 | **완료** |
 | **R2-44** | Rule | Battle Animation | 덱 편성 화면이 전투 연출을 만들지 않게 한다 | R2-43 | 예정 |
 | **R2-45** | Rendering | Battle 공용 | 화면 자원 정리 실제 적용 | R2-36 | 예정 |
 | **R2-46** | Rendering | Battle 공용 | 전투 중 만들어 쓰는 글자 그림의 정리 시점 정의 | R2-45 | 예정 |
@@ -89,6 +89,7 @@
 | **R2-62** | Rendering | Battle Hand | 본편 두 곳이 손패 화면 덩어리를 새 자리에서 읽게 한다 | R2-61 | 예정 |
 | **R2-63** | Structure | Battle Hand | 확인용 화면 열둘이 손패 화면 덩어리를 새 자리에서 읽게 하고 낡은 방식을 지운다 | R2-62 | 예정 |
 | **R2-64** | Rendering | Battle Animation | 벨른의 광역기를 공격 연출 파일에서 꺼낸다 | R2-40 | 예정 |
+| **R2-65** | Rendering | Battle Animation | 카드가 서는 자리를 재는 시점을 맞춘다 | R2-43 | 예정 |
 
 ### Type — 무엇을 바꾸는 작업인가
 
