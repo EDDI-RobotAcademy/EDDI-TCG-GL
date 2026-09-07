@@ -66,20 +66,20 @@ import { createDefaultActivePanelFrame, ActivePanelButtonSpec } from "../../src/
 import { ActivePanelRendererV2 } from "../../src/battle/active_panel/renderer/ActivePanelRendererV2";
 import { AttackAnimationV2 } from "../../src/battle/animation/attack/AttackAnimationV2";
 import { createCardSkillPositionFrame } from "../../src/animation/skill/frame/CardSkillPositionFrame";
-import { FrozenBurningOverlayEffect } from "../../src/animation/cold_dark_energy/FrozenBurningOverlayEffect";
-import { ColdDarkTraitMarkEffect } from "../../src/animation/cold_dark_energy/ColdDarkTraitMarkEffect";
-import { ScytheCutEffect } from "../../src/animation/scythe/ScytheCutEffect";
-import { EnergyBurnEffect } from "../../src/animation/energy_burn/EnergyBurnEffect";
-import { DoomContractEffect } from "../../src/animation/doom_contract/DoomContractEffect";
-import { CorpseExplosionEffect } from "../../src/animation/corpse_explosion/CorpseExplosionEffect";
-import { DeadLandsEffect } from "../../src/animation/dead_lands/DeadLandsEffect";
-import { LeonikSummonEffect } from "../../src/animation/leonik_summon/LeonikSummonEffect";
+import { FrozenBurningOverlayEffect } from "../../src/battle/animation/card/energy/151_cold_dark_energy/FrozenBurningOverlayEffect";
+import { ColdDarkTraitMarkEffect } from "../../src/battle/animation/card/energy/151_cold_dark_energy/ColdDarkTraitMarkEffect";
+import { ScytheCutEffect } from "../../src/battle/animation/card/item/008_scythe/ScytheCutEffect";
+import { EnergyBurnEffect } from "../../src/battle/animation/card/item/009_energy_burn/EnergyBurnEffect";
+import { DoomContractEffect } from "../../src/battle/animation/card/item/025_doom_contract/DoomContractEffect";
+import { CorpseExplosionEffect } from "../../src/battle/animation/card/item/033_corpse_explosion/CorpseExplosionEffect";
+import { DeadLandsEffect } from "../../src/battle/animation/card/item/036_dead_lands/DeadLandsEffect";
+import { LeonikSummonEffect } from "../../src/battle/animation/card/support/030_leonik_summon/LeonikSummonEffect";
 import { NetherBladeEntranceEffect } from "../../src/battle/animation/card/unit/019_nether_blade/entrance/NetherBladeEntranceEffect";
-import { NetherBladeFirstPassiveEffect } from "../../src/animation/nether_blade/NetherBladeFirstPassiveEffect";
-import { NetherBladeSecondPassiveEffect } from "../../src/animation/nether_blade/NetherBladeSecondPassiveEffect";
-import { MoraleConvertEffect } from "../../src/animation/morale_convert/MoraleConvertEffect";
-import { OverflowMoraleEffect } from "../../src/animation/overflow_morale/OverflowMoraleEffect";
-import { SwampEffect } from "../../src/animation/swamp/SwampEffect";
+import { NetherBladeFirstPassiveEffect } from "../../src/battle/animation/card/unit/019_nether_blade/skill/NetherBladeFirstPassiveEffect";
+import { NetherBladeSecondPassiveEffect } from "../../src/battle/animation/card/unit/019_nether_blade/skill/NetherBladeSecondPassiveEffect";
+import { MoraleConvertEffect } from "../../src/battle/animation/card/item/035_morale_convert/MoraleConvertEffect";
+import { OverflowMoraleEffect } from "../../src/battle/animation/card/support/002_overflow_morale/OverflowMoraleEffect";
+import { SwampEffect } from "../../src/battle/animation/card/support/020_swamp/SwampEffect";
 
 import { YourLostZoneRepositoryImpl } from "../../src/battle/zone/your_lost_zone/repository/YourLostZoneRepositoryImpl";
 import {
