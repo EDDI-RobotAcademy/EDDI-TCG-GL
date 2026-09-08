@@ -77,7 +77,7 @@
 | **R2-50** | Rule | Battle Turn | [턴 상태를 전투 상태 안으로 옮긴다](R2-50-move-turn-into-battle.md) | R2-49 | **완료** |
 | **R2-51** | Rule | Battle Deck | [덱을 전투 상태 안으로 옮긴다](R2-51-move-deck-into-battle.md) | R2-50 | **완료** |
 | **R2-52** | Rule | Battle Tomb | [무덤을 전투 상태 안으로 옮긴다](R2-52-move-tomb-into-battle.md) | R2-51 | **완료** |
-| **R2-53** | Rule | Battle LostZone | 로스트 존을 전투 상태 안으로 옮긴다 | R2-52 | 예정 |
+| **R2-53** | Rule | Battle LostZone | [로스트 존을 전투 상태 안으로 옮긴다](R2-53-move-lost-zone-into-battle.md) | R2-52 | **완료** |
 | **R2-54** | Rule | Battle Unit | 필드에 나온 유닛을 전투 상태 안으로 옮긴다 | R2-53 | 예정 |
 | **R2-55** | Rule | Battle Field | 필드에 놓인 카드를 전투 상태 안으로 옮긴다 | R2-54 | 예정 |
 | **R2-56** | Rule | Battle Hand | 손패를 전투 상태 안으로 옮긴다 | R2-55 | 예정 |

@@ -2,6 +2,7 @@ import {BattleSnapshot} from "./BattleSnapshot";
 import {TurnOwner} from "./TurnOwner";
 import {Deck} from "./Deck";
 import {Tomb} from "./Tomb";
+import {LostZone} from "./LostZone";
 
 // 전투 한 판이다.
 //
@@ -23,6 +24,9 @@ export class Battle {
     private readonly yourTomb = new Tomb();
     private readonly opponentTomb = new Tomb();
 
+    private readonly yourLostZone = new LostZone();
+    private readonly opponentLostZone = new LostZone();
+
     private constructor(private readonly battleId: number) {}
 
     // 전투를 새로 시작한다.
@@ -38,6 +42,8 @@ export class Battle {
         battle.opponentDeck.seed(snapshot.opponentDeckCards);
         battle.yourTomb.restoreFrom(snapshot.yourTombCards);
         battle.opponentTomb.restoreFrom(snapshot.opponentTombCards);
+        battle.yourLostZone.restoreFrom(snapshot.yourLostZoneCards);
+        battle.opponentLostZone.restoreFrom(snapshot.opponentLostZoneCards);
         return battle;
     }
 
@@ -135,6 +141,33 @@ export class Battle {
         this.opponentTomb.clear();
     }
 
+    /* ── 로스트 존 ── */
+    // 이 판에서 완전히 빠진 카드가 쌓이는 곳이다. 부활하지 못한다.
+
+    sendToYourLostZone(cardId: number): void {
+        this.yourLostZone.add(cardId);
+    }
+
+    getYourLostZoneCards(): readonly number[] {
+        return this.yourLostZone.getCards();
+    }
+
+    clearYourLostZone(): void {
+        this.yourLostZone.clear();
+    }
+
+    sendToOpponentLostZone(cardId: number): void {
+        this.opponentLostZone.add(cardId);
+    }
+
+    getOpponentLostZoneCards(): readonly number[] {
+        return this.opponentLostZone.getCards();
+    }
+
+    clearOpponentLostZone(): void {
+        this.opponentLostZone.clear();
+    }
+
     // 지금 상태를 통째로 적는다.
     toSnapshot(): BattleSnapshot {
         return {
@@ -144,6 +177,8 @@ export class Battle {
             opponentDeckCards: [...this.opponentDeck.getCards()],
             yourTombCards: [...this.yourTomb.getCards()],
             opponentTombCards: [...this.opponentTomb.getCards()],
+            yourLostZoneCards: [...this.yourLostZone.getCards()],
+            opponentLostZoneCards: [...this.opponentLostZone.getCards()],
         };
     }
 }
