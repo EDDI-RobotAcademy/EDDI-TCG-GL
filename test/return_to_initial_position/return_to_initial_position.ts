@@ -1,4 +1,5 @@
 import { RouteMap } from "../../src/router/RouteMap";
+import { BattleRepositoryImpl } from "../../src/battle/repository/BattleRepositoryImpl";
 import { routes } from "../../src/router/routes";
 import { TCGMainLobbyView } from "../../src/lobby/TCGMainLobbyView";
 
@@ -9,9 +10,8 @@ import { TextureManager } from "../../src/texture_manager/TextureManager";
 import { NonBackgroundImage } from "../../src/shape/image/NonBackgroundImage";
 import { AudioController } from "../../src/audio/AudioController";
 import { MouseController } from "../../src/mouse/MouseController";
-import { BattleFieldUnitRepository } from "../../src/battle/unit/repository/BattleFieldUnitRepository";
 import { Vector2d } from "../../src/common/math/Vector2d";
-import { BattleFieldUnit } from "../../src/battle/unit/entity/BattleFieldUnit";
+import { BattleFieldUnit } from "../../src/battle/domain/BattleFieldUnit";
 import { BattleFieldUnitScene } from "../../src/battle/unit/scene/BattleFieldUnitScene";
 import { ResourceManager } from "../../src/resouce_manager/ResourceManager";
 import { BattleFieldUnitRenderer } from "../../src/battle/unit/renderer/BattleFieldUnitRenderer";
@@ -52,8 +52,6 @@ export class TCGJustTestBattleFieldReturnToInitialPositionView {
     private audioController: AudioController;
     private mouseController: MouseController;
     private dragAndDropManager: LegacyDragAndDropManager;
-
-    private battleFieldUnitRepository = BattleFieldUnitRepository.getInstance();
     private battleFieldUnitScene = new BattleFieldUnitScene();
     private battleFieldResourceManager = new ResourceManager();
     private battleFieldUnitRenderer?: BattleFieldUnitRenderer;
@@ -87,6 +85,8 @@ export class TCGJustTestBattleFieldReturnToInitialPositionView {
         this.camera.position.set(0, 0, 5);
         this.camera.lookAt(0, 0, 0);
 
+        // 전투 한 판을 시작한다. 필드에 놓은 유닛이 이 안에 담긴다.
+        BattleRepositoryImpl.getInstance().start();
         this.dragAndDropManager = LegacyDragAndDropManager.getInstance(this.camera, this.scene);
 
         this.textureManager = TextureManager.getInstance();

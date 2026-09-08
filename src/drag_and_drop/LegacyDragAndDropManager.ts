@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import {NonBackgroundImage} from "../shape/image/NonBackgroundImage";
 import {CardState} from "../card/state";
-import {BattleFieldUnit} from "../battle/unit/entity/BattleFieldUnit";
-import {BattleFieldUnitRepository} from "../battle/unit/repository/BattleFieldUnitRepository";
+import {BattleFieldUnit} from "../battle/domain/BattleFieldUnit";
+import {BattleRepositoryImpl} from "../battle/repository/BattleRepositoryImpl";
 import {getCardById} from "../card/utility";
 import {Vector2d} from "../common/math/Vector2d";
 import {UnitCardGenerator} from "../card/unit/generate";
@@ -133,8 +133,8 @@ export class LegacyDragAndDropManager {
                 const cardMesh = this.selectedObject;
                 const cardNumber = this.selectedObject.userData.cardNumber;
                 if (cardNumber !== undefined) {
-                    const repository = BattleFieldUnitRepository.getInstance();
-                    const currentUnitCount = repository.getBattleFieldUnitList().length
+                    const battle = BattleRepositoryImpl.getInstance().getCurrentOrThrow();
+                    const currentUnitCount = battle.getDeployedUnitCount()
 
                     console.log(`Valid card detected with number: ${cardNumber}, currentUnitCount: ${currentUnitCount}`);
 
@@ -176,9 +176,9 @@ export class LegacyDragAndDropManager {
                         new Vector2d(xPosition, yPosition) // Vector2d 사용
                     );
 
-                    repository.addBattleFieldUnit(unit);
+                    battle.deployUnit(unit);
 
-                    console.log("BattleFieldUnit added to deprecated_repository:", unit);
+                    console.log("BattleFieldUnit deployed:", unit);
 
                     // const cardInitialInfoMap = UnitCardGenerator.getCardInitialInfoMap()
                     const handCardInitialInfoMap = CardStateManager.getAllHandCards()

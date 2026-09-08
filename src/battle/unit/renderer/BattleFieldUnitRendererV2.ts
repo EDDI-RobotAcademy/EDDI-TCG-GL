@@ -5,7 +5,7 @@ import { EntityRenderer } from "../../../core/renderer/EntityRenderer";
 import { resolveAnchorPoint } from "../../../core/frame/Anchor";
 import { SlotSpec } from "../../../core/frame/SlotSpec";
 import { ResourceManager } from "../../../resouce_manager/ResourceManager";
-import { BattleFieldUnit } from "../entity/BattleFieldUnit";
+import { BattleFieldUnit } from "../../domain/BattleFieldUnit";
 import { UnitFrame } from "../frame/UnitFrame";
 
 interface ResolvedSlot {

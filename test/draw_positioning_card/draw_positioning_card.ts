@@ -4,9 +4,9 @@ import { LegacyBattleFieldUnit } from "../../src/battle/unit/entity/LegacyBattle
 import {LegacyNonBackgroundImage} from "../../src/shape/image/LegacyNonBackgroundImage";
 import {BattleFieldUnitScene} from "../../src/battle/unit/scene/BattleFieldUnitScene";
 import {BattleFieldUnitRenderer} from "../../src/battle/unit/renderer/BattleFieldUnitRenderer";
-import {BattleFieldUnitRepository} from "../../src/battle/unit/repository/BattleFieldUnitRepository";
+import {BattleRepositoryImpl} from "../../src/battle/repository/BattleRepositoryImpl";
 import {Vector2d} from "../../src/common/math/Vector2d";
-import {BattleFieldUnit} from "../../src/battle/unit/entity/BattleFieldUnit";
+import {BattleFieldUnit} from "../../src/battle/domain/BattleFieldUnit";
 
 const container = document.body;
 
@@ -42,7 +42,7 @@ resourceManager.registerBattleFieldUnitPath({
 const unitScene = new BattleFieldUnitScene();
 const unitRenderer = new BattleFieldUnitRenderer(unitScene, resourceManager);
 
-const unitRepository = BattleFieldUnitRepository.getInstance();
+const battle = BattleRepositoryImpl.getInstance().start();
 
 const backgroundImagePath = 'resource/background/battle_field.png'
 const backgroundWidth = viewSize * aspect
@@ -62,8 +62,9 @@ const position = new Vector2d(0, 0);
 
 const battleFieldUnit = new BattleFieldUnit(cardId, weaponId, hpId, energyId, raceId, position);
 
-// BattleFieldUnitRepository에 유닛 추가
-unitRepository.addBattleFieldUnit(battleFieldUnit);
+// 전투에 담고, 그리라고 시킨다.
+battle.deployUnit(battleFieldUnit);
+unitRenderer.addUnit(battleFieldUnit);
 
 // const initialX = camera.left + 75; // 카드 너비의 절반
 // const initialY = camera.bottom + 75 * 1.615 / 2; // 카드 높이의 절반

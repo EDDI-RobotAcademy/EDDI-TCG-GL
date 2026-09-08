@@ -5,7 +5,6 @@ import {TextureManager} from "../../src/texture_manager/TextureManager";
 import {NonBackgroundImage} from "../../src/shape/image/NonBackgroundImage";
 import {AudioController} from "../../src/audio/AudioController";
 import {MouseController} from "../../src/mouse/MouseController";
-import {BattleFieldUnitRepository} from "../../src/battle/unit/repository/BattleFieldUnitRepository";
 
 import {BattleFieldUnitScene} from "../../src/battle/unit/scene/BattleFieldUnitScene";
 import {ResourceManager} from "../../src/resouce_manager/ResourceManager";
@@ -30,7 +29,6 @@ import {BattleFieldHandServiceImpl} from "../../src/battle/hand/service/BattleFi
 import {BattleFieldHandMapRepositoryImpl} from "../../src/battle/hand/repository/BattleFieldHandMapRepositoryImpl";
 import {CardGenerationHandler} from "../../src/card/handler";
 import {LegacyDragAndDropManager} from "../../src/drag_and_drop/LegacyDragAndDropManager";
-import {DragAndDropManager} from "../../src/drag_and_drop/DragAndDropManager";
 import {LeftClickDetectServiceImpl} from "../../src/left_click_detect/service/LeftClickDetectServiceImpl";
 import {LeftClickDetectService} from "../../src/left_click_detect/service/LeftClickDetectService";
 import {DragMoveServiceImpl} from "../../src/drag_move/service/DragMoveServiceImpl";
@@ -57,8 +55,6 @@ export class TCGJustTestBattleFieldView {
 
     private background: NonBackgroundImage | null = null;
     private backgroundService = BackgroundServiceImpl.getInstance()
-
-    private battleFieldUnitRepository = BattleFieldUnitRepository.getInstance();
     private battleFieldUnitScene = new BattleFieldUnitScene();
     private battleFieldResourceManager = new ResourceManager()
     private battleFieldUnitRenderer?: BattleFieldUnitRenderer;

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {BattleFieldUnit} from "../entity/BattleFieldUnit";
+import {BattleFieldUnit} from "../../domain/BattleFieldUnit";
 import {ResourceManager} from "../../../resouce_manager/ResourceManager";
 import {LegacyNonBackgroundImage} from "../../../shape/image/LegacyNonBackgroundImage";
 import {BattleFieldUnitEntry} from "./BattleFieldUnitEntry";

@@ -1,4 +1,4 @@
-import { BattleFieldUnit } from "../entity/BattleFieldUnit";
+import { BattleFieldUnit } from "../../domain/BattleFieldUnit";
 import { LegacyNonBackgroundImage } from "../../../shape/image/LegacyNonBackgroundImage";
 
 export interface BattleFieldUnitEntry {

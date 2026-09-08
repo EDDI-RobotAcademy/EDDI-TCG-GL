@@ -1,7 +1,8 @@
-import {Vector2d} from "../../../common/math/Vector2d";
+import {Vector2d} from "../../common/math/Vector2d";
 import {ExtraUsefulEffectInfo} from "./ExtraUsefulEffectInfo";
 import {HarmfulEffectInfo} from "./HarmfulEffectInfo";
 import {AttachedEnergyInfo} from "./AttachedEnergyInfo";
+import {BattleFieldUnitSnapshot} from "./BattleFieldUnitSnapshot";
 
 export class BattleFieldUnit {
     private static nextId: number = 1;
@@ -48,8 +49,40 @@ export class BattleFieldUnit {
         this.attachedEnergyInfo = attachedEnergyInfo
     }
 
+    // 적어 둔 것으로 되돌린다. 번호를 그대로 살려야 재접속 뒤에도 같은 유닛을 가리킨다.
+    public static restore(snapshot: BattleFieldUnitSnapshot): BattleFieldUnit {
+        const unit = new BattleFieldUnit(
+            snapshot.cardId,
+            snapshot.weaponId,
+            snapshot.hpId,
+            snapshot.energyId,
+            snapshot.raceId,
+            new Vector2d(snapshot.x, snapshot.y),
+        );
+        unit.id = snapshot.id;
+        if (BattleFieldUnit.nextId <= snapshot.id) {
+            BattleFieldUnit.nextId = snapshot.id + 1;
+        }
+        return unit;
+    }
+
     public getId(): number {
         return this.id;
+    }
+
+    // 지금 상태를 적는다.
+    public toSnapshot(): BattleFieldUnitSnapshot {
+        const position = this.getLocalTranslationPosition();
+        return {
+            id: this.id,
+            cardId: this.getCardId(),
+            weaponId: this.getWeaponId(),
+            hpId: this.getHpId(),
+            energyId: this.getEnergyId(),
+            raceId: this.getRaceId(),
+            x: position.getX(),
+            y: position.getY(),
+        };
     }
 
     public getLocalTranslationPosition(): Vector2d {

@@ -1,33 +1,25 @@
 import * as THREE from 'three'
-import {BattleFieldUnitRepository} from "../repository/BattleFieldUnitRepository";
 import {ResourceManager} from "../../../resouce_manager/ResourceManager";
 import {BattleFieldUnitScene} from "../scene/BattleFieldUnitScene";
-import {BattleFieldUnit} from "../entity/BattleFieldUnit";
+import {BattleFieldUnit} from "../../domain/BattleFieldUnit";
 import {LegacyNonBackgroundImage} from "../../../shape/image/LegacyNonBackgroundImage";
 
 export class BattleFieldUnitRenderer {
     private unitScene: BattleFieldUnitScene
-    // TODO: Service로 수정해야함
-    private battleFieldUnitRepository: BattleFieldUnitRepository
     private resourceManager: ResourceManager
 
     constructor(unitScene: BattleFieldUnitScene, resourceManager: ResourceManager) {
         this.unitScene = unitScene
-        this.battleFieldUnitRepository = BattleFieldUnitRepository.getInstance()
         this.resourceManager = resourceManager
-
-        this.battleFieldUnitRepository.setUnitAddedCallback((unit: BattleFieldUnit) => {
-            this.unitScene.addUnit(unit, this.resourceManager);
-        });
     }
 
-    // public renderBattleFieldUnit(): void {
-    //     const battleFieldUnitList = this.battleFieldUnitRepository.getBattleFieldUnitList()
+    // 유닛 하나를 그린다.
     //
-    //     battleFieldUnitList.forEach(battleFieldUnit => {
-    //         this.unitScene.addUnit(battleFieldUnit, this.resourceManager);
-    //     });
-    // }
+    // 전에는 저장소가 유닛을 받으면 이쪽으로 알려 줬다. 그러면 값을 담는 곳이
+    // 화면을 알게 된다. 이제는 유닛을 내보내는 쪽이 전투에 담고 여기에 그리라고 시킨다.
+    public addUnit(unit: BattleFieldUnit): void {
+        this.unitScene.addUnit(unit, this.resourceManager);
+    }
 
     public render(renderer: THREE.WebGLRenderer, camera: THREE.OrthographicCamera): void {
         // this.renderBattleFieldUnit();
