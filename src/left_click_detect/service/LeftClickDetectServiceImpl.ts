@@ -262,7 +262,10 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         const yourFieldCardId = selectedYourFieldCard.getId()
         console.log(`yourFieldCardId: ${yourFieldCardId}`)
 
-        const yourFieldCard = this.yourFieldRepository.findById(yourFieldCardId);
+        // 넣는 값이 화면 카드 번호이므로 그것으로 찾는 길을 쓴다.
+        // 전에는 필드 카드 자신의 번호로 찾는 길에 화면 카드 번호를 넣고 있었다.
+        // 두 번호가 각자 0부터 나란히 세어져서 우연히 맞아떨어졌을 뿐이다.
+        const yourFieldCard = this.yourFieldRepository.findByCardSceneId(yourFieldCardId);
         if (yourFieldCard == null) return null;
 
         const cardId = yourFieldCard.getCardId()

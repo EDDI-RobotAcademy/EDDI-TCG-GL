@@ -43,8 +43,10 @@ export class BattleFieldCardSceneCacheImpl implements BattleFieldCardSceneCache,
         const mainCardMesh = MeshGenerator.createMesh(cardTexture, cardWidth, cardHeight, position);
         const newCardScene = new BattleFieldCardScene(mainCardMesh);
 
-        const currentCount = this.count()
-        this.cardSceneMap.set(currentCount, newCardScene);
+        // 열쇠는 카드 자신의 번호다. 전에는 [만들 때 몇 개 있었나] 를 열쇠로 썼다.
+        // 그러면 열쇠가 곧 자리라서, 중간 것을 진짜로 지우면 다음에 만드는 카드가
+        // 이미 쓰던 번호를 받아 앞엣것을 덮어쓴다.
+        this.cardSceneMap.set(newCardScene.getId(), newCardScene);
 
         return newCardScene;
     }
@@ -57,7 +59,7 @@ export class BattleFieldCardSceneCacheImpl implements BattleFieldCardSceneCache,
     //     return Array.from(this.cardSceneMap.values());
     // }
     findAll(): BattleFieldCardScene[] {
-        return Array.from(this.cardSceneMap.values()).filter(scene => scene !== null);
+        return Array.from(this.cardSceneMap.values());
     }
 
     deleteById(id: number): boolean {
@@ -76,35 +78,19 @@ export class BattleFieldCardSceneCacheImpl implements BattleFieldCardSceneCache,
         this.cardSceneMap.clear();
     }
 
-    extractByIndex(index: number): BattleFieldCardScene | undefined {
-        // const entries = Array.from(this.cardSceneMap.entries());
-        // console.log("All entries:", entries);
-        //
-        // if (index < 0 || index >= entries.length) {
-        //     return undefined;
-        // }
-        //
-        // const [key, value] = entries[index];
-        // this.cardSceneMap.delete(key);
-        // this.cardSceneMap.set(key, null as any);
-        // return value;
-
-        // console.log("==== All entries in cardSceneMap ====");
-        // this.cardSceneMap.forEach((value, key) => {
-        //     console.log(`key: ${key}, value:`, value);
-        // });
-        // console.log("=====================================");
-
-        // key === index 인 항목을 직접 꺼낸다
-        const value = this.cardSceneMap.get(index);
+    // 카드 하나를 꺼내 온다. 손패에서 필드로 갈 때 쓴다.
+    //
+    // 전에는 꺼낸 자리에 빈 것을 도로 넣었다. 열쇠가 자리 순번이라 진짜로 지울 수
+    // 없었기 때문이다. 그 빈 자리가 [없는데 한 칸 비어 있는] 것의 정체였다.
+    // 이제 열쇠가 카드 자신의 번호라서 그냥 지우면 된다.
+    extractById(cardSceneId: number): BattleFieldCardScene | undefined {
+        const value = this.cardSceneMap.get(cardSceneId);
 
         if (!value) {
             return undefined;
         }
 
-        // 삭제 후 null 대입
-        this.cardSceneMap.delete(index);
-        this.cardSceneMap.set(index, null as any);
+        this.cardSceneMap.delete(cardSceneId);
 
         return value;
     }

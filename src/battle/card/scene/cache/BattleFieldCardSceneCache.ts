@@ -8,5 +8,5 @@ export interface BattleFieldCardSceneCache {
     findAll(): BattleFieldCardScene[];
     deleteById(id: number): boolean;
     deleteAll(): void;
-    extractByIndex(index: number): BattleFieldCardScene | undefined
+    extractById(cardSceneId: number): BattleFieldCardScene | undefined
 }

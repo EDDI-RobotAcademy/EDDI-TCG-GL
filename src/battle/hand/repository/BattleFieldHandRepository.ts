@@ -12,5 +12,4 @@ export interface BattleFieldHandRepository {
     findByCardSceneId(cardSceneId: number): BattleFieldHand | null
     findAttributeMarkIdListByCardSceneId(cardSceneId: number): number[] | null
     findPositionIdByCardSceneId(cardSceneId: number): number | null
-    findCardIndexByCardSceneId(cardSceneId: number): number | null
 }
