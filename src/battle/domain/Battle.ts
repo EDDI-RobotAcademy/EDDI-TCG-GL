@@ -8,6 +8,7 @@ import {Field} from "./Field";
 import {FieldCard} from "./FieldCard";
 import {Hand} from "./Hand";
 import {HandCard} from "./HandCard";
+import {Master} from "./Master";
 
 // 전투 한 판이다.
 //
@@ -40,6 +41,9 @@ export class Battle {
 
     private readonly hand = new Hand();
 
+    private readonly yourMaster = new Master();
+    private readonly opponentMaster = new Master();
+
     private constructor(private readonly battleId: number) {}
 
     // 전투를 새로 시작한다.
@@ -61,6 +65,8 @@ export class Battle {
         battle.yourField.restoreFrom(snapshot.yourFieldCards);
         battle.opponentField.restoreFrom(snapshot.opponentFieldCards);
         battle.hand.restoreFrom(snapshot.handCards);
+        battle.yourMaster.restoreFrom(snapshot.yourMasterHp);
+        battle.opponentMaster.restoreFrom(snapshot.opponentMasterHp);
         return battle;
     }
 
@@ -267,6 +273,32 @@ export class Battle {
         return this.hand.count();
     }
 
+    /* ── 본체 ── */
+
+    getYourMasterHp(): number {
+        return this.yourMaster.getHp();
+    }
+
+    damageYourMaster(amount: number): number {
+        return this.yourMaster.damage(amount);
+    }
+
+    isYourMasterDefeated(): boolean {
+        return this.yourMaster.isDefeated();
+    }
+
+    getOpponentMasterHp(): number {
+        return this.opponentMaster.getHp();
+    }
+
+    setOpponentMasterHp(next: number): number {
+        return this.opponentMaster.setHp(next);
+    }
+
+    isOpponentMasterDefeated(): boolean {
+        return this.opponentMaster.isDefeated();
+    }
+
     // 지금 상태를 통째로 적는다.
     toSnapshot(): BattleSnapshot {
         return {
@@ -282,6 +314,8 @@ export class Battle {
             yourFieldCards: this.yourField.getCards().map((it) => it.toSnapshot()),
             opponentFieldCards: this.opponentField.getCards().map((it) => it.toSnapshot()),
             handCards: this.hand.getCards().map((it) => it.toSnapshot()),
+            yourMasterHp: this.yourMaster.getHp(),
+            opponentMasterHp: this.opponentMaster.getHp(),
         };
     }
 }

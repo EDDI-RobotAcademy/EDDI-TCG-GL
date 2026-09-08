@@ -168,6 +168,10 @@ function resolveCards(cardIds: number[], label: string): CardFace[] {
 }
 
 async function main(container: HTMLElement): Promise<void> {
+    // 전투 한 판을 여기서 시작한다. 담을 그릇이 먼저 있어야 담는다.
+    // 턴, 덱, 무덤, 로스트 존, 필드, 손패, 본체가 이 안에 들어 있다.
+    const battle = BattleRepositoryImpl.getInstance().start();
+
     const rendererManager = new RendererManager(container);
     const sceneManager = new SceneManager();
     const cameraManager = CameraManager.getInstance();
@@ -264,8 +268,7 @@ async function main(container: HTMLElement): Promise<void> {
     masterGroup.userData = { baseCardWidth: masterW, baseCardHeight: masterH };
     scene.add(masterGroup);
 
-    // 상대 본체 HP. 내 본체와 대칭이 되도록 100에서 시작한다.
-    let opponentMasterHp = 100;
+    // 상대 본체 HP는 전투가 든다. 여기서는 표기만 맞춘다.
 
     const opponentMasterHpFrame = createOpponentMasterHpFrame();
     const opponentMasterHpRenderer = new MasterHpRendererV2();
@@ -275,16 +278,15 @@ async function main(container: HTMLElement): Promise<void> {
     // 상대 본체 HP를 바꾸는 **유일한** 지점. 여러 카드 효과가 제각기 값을 건드리면
     // 표기 갱신을 빠뜨리기 쉬우므로 여기로 모은다. 반환값은 갱신 후 HP.
     function setOpponentMasterHp(next: number, reason: string): number {
-        const clamped = Math.max(0, next);
-        if (clamped !== opponentMasterHp) {
-            const prev = opponentMasterHp;
-            opponentMasterHp = clamped;
+        const prev = battle.getOpponentMasterHp();
+        const clamped = battle.setOpponentMasterHp(next);
+        if (clamped !== prev) {
             void opponentMasterHpRenderer.setHp(
                 opponentMasterHpGroup, opponentMasterHpFrame, clamped,
             );
             console.log(`[opponent-master-hp] ${reason} → ${prev} → ${clamped}${clamped <= 0 ? ' (defeated)' : ''}`);
         }
-        return opponentMasterHp;
+        return clamped;
     }
 
     // ── 메인 캐릭터(본체) HP ──────────────────────────────────────────────────
@@ -294,15 +296,15 @@ async function main(container: HTMLElement): Promise<void> {
     const masterHpRenderer = new MasterHpRendererV2();
     const masterHpGroup = await masterHpRenderer.build(masterHpFrame);
     scene.add(masterHpGroup);
-    let yourMasterHp = masterHpFrame.maxHp;
+    // 내 본체 HP도 전투가 든다.
 
     // 메인 캐릭터가 피해를 입는 유일한 지점. 표기 갱신까지 여기서 함께 한다.
     function damageYourMaster(amount: number, reason: string): void {
-        if (amount <= 0 || yourMasterHp <= 0) return;
-        const prev = yourMasterHp;
-        yourMasterHp = Math.max(0, prev - amount);
-        void masterHpRenderer.setHp(masterHpGroup, masterHpFrame, yourMasterHp);
-        console.log(`[master-hp] ${reason} → ${prev} → ${yourMasterHp}${yourMasterHp <= 0 ? ' (defeated)' : ''}`);
+        const prev = battle.getYourMasterHp();
+        const next = battle.damageYourMaster(amount);
+        if (next === prev) return;
+        void masterHpRenderer.setHp(masterHpGroup, masterHpFrame, next);
+        console.log(`[master-hp] ${reason} → ${prev} → ${next}${next <= 0 ? ' (defeated)' : ''}`);
     }
 
     // Pilot B — hand row (6장으로 확장해 페이지네이션 검증)
@@ -330,9 +332,6 @@ async function main(container: HTMLElement): Promise<void> {
         33,  // 시체 폭발 (ITEM)
     ];
     const hand = resolveCards(handCardIds, 'hand');
-
-    // 전투 한 판을 시작한다. 턴과 덱은 이 안에 들어 있다.
-    const battle = BattleRepositoryImpl.getInstance().start();
 
     // 섞을 때 쓸 씨앗을 만든다. 도메인 안에서는 무작위를 못 쓰므로 밖에서 만들어 넣는다.
     // 씨앗을 적어 두면 같은 순서를 다시 만들 수 있다. 재접속과 다시 보기에 그것이 필요하다.
@@ -988,7 +987,7 @@ async function main(container: HTMLElement): Promise<void> {
             };
 
             // Master first (smaller target; raycast doesn't intersect opponent group).
-            if (opponentMasterHp > 0) {
+            if (battle.getOpponentMasterHp() > 0) {
                 const masterHits = sharedRaycaster.intersectObjects(masterGroup.children, true);
                 if (masterHits.length > 0) {
                     recordPick({ kind: 'master' });
@@ -1025,7 +1024,7 @@ async function main(container: HTMLElement): Promise<void> {
             sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
 
             // Master first (own raycast tree).
-            if (opponentMasterHp > 0) {
+            if (battle.getOpponentMasterHp() > 0) {
                 const masterHits = sharedRaycaster.intersectObjects(masterGroup.children, true);
                 if (masterHits.length > 0) {
                     void runResolving(() => resolveNetherBladePassive2({ kind: 'master' }));
@@ -1309,7 +1308,7 @@ async function main(container: HTMLElement): Promise<void> {
                 opponentEntries.some((oe) =>
                     oe.group.visible && opponentAliveOrder.includes(oe.cardIndex),
                 );
-            const hasMaster = opponentMasterHp > 0;
+            const hasMaster = battle.getOpponentMasterHp() > 0;
             if (!hasOpponents && !hasMaster) {
                 console.log('[nether-blade] passive 2 → no valid targets, skipped');
                 resolve();
@@ -1341,7 +1340,7 @@ async function main(container: HTMLElement): Promise<void> {
         // flies to where the unit currently sits.
         let singleTarget: THREE.Vector3 | null = null;
         if (pick.kind === 'master') {
-            if (opponentMasterHp > 0) {
+            if (battle.getOpponentMasterHp() > 0) {
                 singleTarget = masterGroup.getWorldPosition(new THREE.Vector3());
             }
         } else {
@@ -1383,9 +1382,9 @@ async function main(container: HTMLElement): Promise<void> {
 
         const dmg = NETHER_BLADE_PASSIVE2_DAMAGE;
         if (pick.kind === 'master') {
-            if (opponentMasterHp > 0) {
-                setOpponentMasterHp(opponentMasterHp - dmg, 'nether-blade passive 2');
-                if (opponentMasterHp <= 0) {
+            if (battle.getOpponentMasterHp() > 0) {
+                setOpponentMasterHp(battle.getOpponentMasterHp() - dmg, 'nether-blade passive 2');
+                if (battle.getOpponentMasterHp() <= 0) {
                     masterGroup.visible = false;
                     console.log('[nether-blade] opponent MASTER defeated by passive 2!');
                 }
@@ -1622,10 +1621,10 @@ async function main(container: HTMLElement): Promise<void> {
                         }
 
                         // EveryField also hits master
-                        if (skillType === SkillType.EveryField && opponentMasterHp > 0) {
-                            setOpponentMasterHp(opponentMasterHp - damage, `${btnType} (AoE EveryField)`);
+                        if (skillType === SkillType.EveryField && battle.getOpponentMasterHp() > 0) {
+                            setOpponentMasterHp(battle.getOpponentMasterHp() - damage, `${btnType} (AoE EveryField)`);
                             // 본체 피격 표현 없음 (투명 유지)
-                            if (opponentMasterHp <= 0) {
+                            if (battle.getOpponentMasterHp() <= 0) {
                                 setTimeout(() => { masterGroup.visible = false; }, 300);
                             }
                         }
@@ -1641,7 +1640,7 @@ async function main(container: HTMLElement): Promise<void> {
                                 enemyNeonEffect.attach(entry.cardIndex, entry.group);
                             }
                         }
-                        if (opponentMasterHp > 0) {
+                        if (battle.getOpponentMasterHp() > 0) {
                             enemyNeonEffect.attach(-1, masterGroup);
                         }
                         console.log(`${btnType} (Single, damage=${damage}) — choose opponent target or master`);
@@ -1655,7 +1654,7 @@ async function main(container: HTMLElement): Promise<void> {
         }
 
         // Check master click while in attack mode
-        if (interactionState === 'attackMode' && opponentMasterHp > 0) {
+        if (interactionState === 'attackMode' && battle.getOpponentMasterHp() > 0) {
             const masterHits = sharedRaycaster.intersectObjects(masterGroup.children, true);
             if (masterHits.length > 0) {
                 e.stopImmediatePropagation();
@@ -1668,9 +1667,9 @@ async function main(container: HTMLElement): Promise<void> {
                     await attackAnimation.playAttack(attackerEntry.group, masterGroup, pendingAttackType);
                 }
 
-                setOpponentMasterHp(opponentMasterHp - atkPower, `attack on MASTER (ATK=${atkPower})`);
+                setOpponentMasterHp(battle.getOpponentMasterHp() - atkPower, `attack on MASTER (ATK=${atkPower})`);
 
-                if (opponentMasterHp <= 0) {
+                if (battle.getOpponentMasterHp() <= 0) {
                     setTimeout(() => { masterGroup.visible = false; console.log('Opponent MASTER defeated!'); }, 300);
                 }
                 return;
@@ -2326,7 +2325,7 @@ async function main(container: HTMLElement): Promise<void> {
         }
         reflowOpponentField();
 
-        setOpponentMasterHp(opponentMasterHp - DOOM_CONTRACT_DAMAGE, 'doom contract');
+        setOpponentMasterHp(battle.getOpponentMasterHp() - DOOM_CONTRACT_DAMAGE, 'doom contract');
 
         const drawn = battle.drawFromOpponentDeck();
         if (drawn != null) {
@@ -2554,7 +2553,7 @@ async function main(container: HTMLElement): Promise<void> {
         for (const oe of opponentEntries) {
             if (oe.group.visible) enemyNeonEffect.attach(oe.cardIndex, oe.group);
         }
-        if (opponentMasterHp > 0) {
+        if (battle.getOpponentMasterHp() > 0) {
             enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, masterGroup);
         }
     };
@@ -2608,8 +2607,8 @@ async function main(container: HTMLElement): Promise<void> {
         const onProjectileLand = (idx: number): void => {
             const pick = state.picks[idx];
             if (pick.kind === 'master') {
-                if (opponentMasterHp > 0) {
-                    setOpponentMasterHp(opponentMasterHp - CORPSE_EXPLOSION_DAMAGE, 'corpse explosion');
+                if (battle.getOpponentMasterHp() > 0) {
+                    setOpponentMasterHp(battle.getOpponentMasterHp() - CORPSE_EXPLOSION_DAMAGE, 'corpse explosion');
                 }
             } else {
                 const prev = opponentHpState.get(pick.cardIndex) ?? 0;
@@ -2636,7 +2635,7 @@ async function main(container: HTMLElement): Promise<void> {
             else uniqueOpponentIdxs.add(p.cardIndex);
         }
 
-        const masterDied = masterPicked && opponentMasterHp <= 0 && masterGroup.visible;
+        const masterDied = masterPicked && battle.getOpponentMasterHp() <= 0 && masterGroup.visible;
         const deadOpponentIndices: number[] = [];
         for (const idx of uniqueOpponentIdxs) {
             const hp = opponentHpState.get(idx) ?? 0;
