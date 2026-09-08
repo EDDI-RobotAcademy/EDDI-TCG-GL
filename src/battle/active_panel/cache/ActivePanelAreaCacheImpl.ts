@@ -4,8 +4,9 @@ import {TextureManager} from "../../../texture_manager/TextureManager";
 import {MeshGenerator} from "../../../mesh/generator";
 import {Vector2d} from "../../../common/math/Vector2d";
 import {getCardById} from "../../../card/utility";
-import {ActivePanelButtonType} from "../entity/ActivePanelButtonType";
 import {BattleFieldConstants} from "../../../common/BattleFieldConstants";
+import {SelectedActivePanelButtonStore} from "../store/SelectedActivePanelButtonStore";
+import {SelectedActivePanelButtonStoreImpl} from "../store/SelectedActivePanelButtonStoreImpl";
 
 export class ActivePanelAreaCacheImpl implements ActivePanelAreaCache {
     private static instance: ActivePanelAreaCacheImpl | null = null;
@@ -26,7 +27,9 @@ export class ActivePanelAreaCacheImpl implements ActivePanelAreaCache {
     private readonly FIRST_SKILL = 1;
     private readonly SECOND_SKILL = 2;
 
-    private buttonType: ActivePanelButtonType = ActivePanelButtonType.NONE;
+    // 고른 버튼 값의 주인은 이쪽이 아니다. 패널을 치울 때 함께 처음으로 돌리기만 한다.
+    private selectedActivePanelButtonStore: SelectedActivePanelButtonStore =
+        SelectedActivePanelButtonStoreImpl.getInstance();
 
     private constructor(camera: THREE.Camera, scene: THREE.Scene) {
         this.camera = camera;
@@ -182,7 +185,7 @@ export class ActivePanelAreaCacheImpl implements ActivePanelAreaCache {
             }
         });
         this.activeButtons = []; // 참조 초기화
-        this.buttonType = ActivePanelButtonType.NONE;
+        this.selectedActivePanelButtonStore.clear();
     }
 
     exists(): boolean {
@@ -191,14 +194,6 @@ export class ActivePanelAreaCacheImpl implements ActivePanelAreaCache {
 
     getActiveButtons(): THREE.Mesh[] {
         return this.activeButtons;
-    }
-
-    getActivePanelButtonType(): ActivePanelButtonType {
-        return this.buttonType
-    }
-
-    setActivePanelButtonType(type: ActivePanelButtonType): void {
-        this.buttonType = type;
     }
 }
 

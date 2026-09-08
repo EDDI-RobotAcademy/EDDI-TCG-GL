@@ -72,7 +72,7 @@
 | **R2-45** | Rendering | Battle 공용 | ~~[화면 자원 정리 실제 적용](R2-45-discarded-dispose-wiring.md)~~ | R2-36 | **폐기** |
 | **R2-46** | Rendering | Platform | [전투 중 만들어 쓰는 글자 그림의 정리 시점 정의](R2-46-owned-texture-disposal.md) | R2-36 | **완료** |
 | **R2-47** | Rendering | Battle Hand | [손패 페이지 버튼을 만드는 일을 렌더러로 옮긴다](R2-47-move-hand-page-buttons-to-renderer.md) | R2-27 | **완료** |
-| **R2-48** | Structure | Battle Active Panel | 눌린 버튼 상태를 갈라낸다 | R2-28 | 예정 |
+| **R2-48** | Structure | Battle Active Panel | [눌린 버튼 상태를 갈라낸다](R2-48-split-selected-active-panel-button.md) | R2-28 | **완료** |
 | **R2-49** | Rule | Battle | 전투 상태를 하나의 일관된 단위로 관리하도록 Battle 애그리게이트 추출 | R2-24 | 예정 |
 | **R2-50** | Rule | Battle | 재접속 시 어떤 유닛의 상태를 복원할지 식별할 수 있도록 식별자 통합 | R2-49 | 예정 |
 | **R2-51** | Rule | Battle | 연출 도중 종료되어도 전투 상태가 일관되도록 처리 순서 분리 | R2-50 | 예정 |
@@ -92,6 +92,8 @@
 | **R2-65** | Rendering | Battle Animation | 카드가 서는 자리를 재는 시점을 맞춘다 | R2-43 | 예정 |
 | **R2-66** | Rendering | Battle 공용 | 체력, 무기, 에너지 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정 |
 | **R2-67** | Rendering | Battle Animation | 연출들이 각자 가진 정리 함수를 한 곳으로 모은다 | R2-46 | 예정 |
+| **R2-68** | Structure | Platform | 기본 실행 명령이 없는 화면을 가리키는 것을 고친다 | — | 예정 |
+| **R2-69** | Structure | Battle Active Panel | 액티브 패널을 닫는 일곱 곳을 하나로 묶는다 | R2-48 | 예정 |
 
 ### Type — 무엇을 바꾸는 작업인가
 
