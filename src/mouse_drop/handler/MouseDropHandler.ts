@@ -5,8 +5,6 @@ import {BattleRepositoryImpl} from "../../battle/repository/BattleRepositoryImpl
 import {CardKind} from "../../card/kind";
 import {BattleFieldCardScene} from "../../battle/card/scene/entity/BattleFieldCardScene";
 import {getCardById} from "../../card/utility";
-import {BattleFieldHandRepository} from "../../battle/hand/repository/BattleFieldHandRepository";
-import {BattleFieldHandRepositoryImpl} from "../../battle/hand/repository/BattleFieldHandRepositoryImpl";
 import {BattleFieldCardSceneCache} from "../../battle/card/scene/cache/BattleFieldCardSceneCache";
 import {
     BattleFieldCardSceneCacheImpl
@@ -18,8 +16,6 @@ import {
 
 export class MouseDropHandler {
     private static instance: MouseDropHandler;
-
-    private battleFieldHandRepository: BattleFieldHandRepository;
     private battleFieldCardSceneCache: BattleFieldCardSceneCache;
     private yourFieldCardSceneCache: YourFieldCardSceneCache;
 
@@ -36,7 +32,6 @@ export class MouseDropHandler {
     };
 
     private constructor() {
-        this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance();
         this.battleFieldCardSceneCache = BattleFieldCardSceneCacheImpl.getInstance();
         this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance();
     }
@@ -67,7 +62,7 @@ export class MouseDropHandler {
         const cardSceneId = selectedObject.getId();
 
         // handCard 가져오기
-        const willBePlacedYourFieldHandCard = this.battleFieldHandRepository.findByCardSceneId(cardSceneId);
+        const willBePlacedYourFieldHandCard = BattleRepositoryImpl.getInstance().getCurrentOrThrow().findInHand(cardSceneId);
         if (!willBePlacedYourFieldHandCard) {
             throw new Error(`Hand card not found for sceneId: ${cardSceneId}`);
         }
@@ -81,7 +76,7 @@ export class MouseDropHandler {
         console.log("Handling UNIT card:", card);
 
         const positionId = willBePlacedYourFieldHandCard.getPositionId() ?? 0;
-        const attributeMarkIdList = willBePlacedYourFieldHandCard.getAttributeMarkIdList() ?? [];
+        const attributeMarkIdList = willBePlacedYourFieldHandCard.getAttributeMarkIds() ?? [];
 
         // CardScene Mesh 가져오기
         // 카드 번호로 바로 꺼낸다. 전에는 손패에서 몇 번째인지를 세어 그 수로 꺼냈는데,
@@ -104,12 +99,8 @@ export class MouseDropHandler {
         );
         BattleRepositoryImpl.getInstance().getCurrentOrThrow().placeOnYourField(createdYourField);
 
-        // handCard 삭제
-        const handCardId = willBePlacedYourFieldHandCard.getId();
-        if (handCardId === undefined) {
-            throw new Error("Hand card ID를 찾을 수 없습니다.");
-        }
-        this.battleFieldHandRepository.deleteById(handCardId);
+        // 손패에서 뺀다. 뒤엣것이 당겨진다.
+        BattleRepositoryImpl.getInstance().getCurrentOrThrow().removeFromHand(cardSceneId);
 
         return createdYourField;
     }

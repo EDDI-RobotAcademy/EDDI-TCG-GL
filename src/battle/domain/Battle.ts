@@ -6,6 +6,8 @@ import {LostZone} from "./LostZone";
 import {BattleFieldUnit} from "./BattleFieldUnit";
 import {Field} from "./Field";
 import {FieldCard} from "./FieldCard";
+import {Hand} from "./Hand";
+import {HandCard} from "./HandCard";
 
 // 전투 한 판이다.
 //
@@ -36,6 +38,8 @@ export class Battle {
     private readonly yourField = new Field();
     private readonly opponentField = new Field();
 
+    private readonly hand = new Hand();
+
     private constructor(private readonly battleId: number) {}
 
     // 전투를 새로 시작한다.
@@ -56,6 +60,7 @@ export class Battle {
         battle.deployedUnits = snapshot.deployedUnits.map((it) => BattleFieldUnit.restore(it));
         battle.yourField.restoreFrom(snapshot.yourFieldCards);
         battle.opponentField.restoreFrom(snapshot.opponentFieldCards);
+        battle.hand.restoreFrom(snapshot.handCards);
         return battle;
     }
 
@@ -239,6 +244,29 @@ export class Battle {
         return this.opponentField.count();
     }
 
+    /* ── 손패 ── */
+    // 몇 장씩 나눠 보여줄지는 화면이 정한다. 여기는 목록만 준다.
+
+    addToHand(card: HandCard): void {
+        this.hand.add(card);
+    }
+
+    findInHand(battleCardId: number): HandCard | null {
+        return this.hand.findById(battleCardId);
+    }
+
+    removeFromHand(battleCardId: number): boolean {
+        return this.hand.removeById(battleCardId);
+    }
+
+    getHandCards(): readonly HandCard[] {
+        return this.hand.getCards();
+    }
+
+    getHandCount(): number {
+        return this.hand.count();
+    }
+
     // 지금 상태를 통째로 적는다.
     toSnapshot(): BattleSnapshot {
         return {
@@ -253,6 +281,7 @@ export class Battle {
             deployedUnits: this.deployedUnits.map((it) => it.toSnapshot()),
             yourFieldCards: this.yourField.getCards().map((it) => it.toSnapshot()),
             opponentFieldCards: this.opponentField.getCards().map((it) => it.toSnapshot()),
+            handCards: this.hand.getCards().map((it) => it.toSnapshot()),
         };
     }
 }

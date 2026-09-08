@@ -1,4 +1,9 @@
 import {RouteMap} from "../../src/router/RouteMap";
+
+// 손패의 시작 카드다. 실제 대전에서는 서버가 준다.
+// 전에는 저장소가 이 넉 장을 스스로 들고 있어서, 값을 담는 곳이 시나리오를 정하고 있었다.
+const HAND_START_CARD_IDS = [2, 19, 93, 26];
+
 import {routes} from "../../src/router/routes";
 import {TCGMainLobbyView} from "../../src/lobby/TCGMainLobbyView";
 
@@ -21,11 +26,9 @@ import {BattleFieldHandPositionRepository} from "../../src/battle_field_hand/dep
 
 import {UserWindowSize} from "../../src/window_size/WindowSize"
 import {UnitCardGenerator} from "../../src/card/unit/generate";
-import {BattleFieldHandMapRepository} from "../../src/battle/hand/repository/BattleFieldHandMapRepository";
 import {SupportCardGenerator} from "../../src/card/support/generate";
 import {ItemCardGenerator} from "../../src/card/item/generate";
 import {EnergyCardGenerator} from "../../src/card/energy/generate";
-import {BattleFieldHandMapRepositoryImpl} from "../../src/battle/hand/repository/BattleFieldHandMapRepositoryImpl";
 
 export class TCGJustTestBattleFieldView {
     private static instance: TCGJustTestBattleFieldView | null = null;
@@ -45,7 +48,6 @@ export class TCGJustTestBattleFieldView {
     private battleFieldUnitRenderer?: BattleFieldUnitRenderer;
 
     // private battleFieldHandRepository = BattleFieldHandRepository.getInstance()
-    private battleFieldHandMapRepository = BattleFieldHandMapRepositoryImpl.getInstance()
     private battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance()
     private battleFieldHandPositionRepository = BattleFieldHandPositionRepository.getInstance()
 
@@ -161,7 +163,7 @@ export class TCGJustTestBattleFieldView {
 
     private async addYourHandUnitList(): Promise<void> {
         // const battleFieldHandList = this.battleFieldHandRepository.getBattleFieldHandList()
-        const battleFieldHandList = this.battleFieldHandMapRepository.getBattleFieldHandList()
+        const battleFieldHandList = HAND_START_CARD_IDS
         console.log('battleFieldHandList:', battleFieldHandList)
 
         let indexCount = 0

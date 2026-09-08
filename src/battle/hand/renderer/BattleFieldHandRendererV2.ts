@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { HandCard } from "../entity/HandCard";
+import { CardFace } from "../entity/CardFace";
 import { HandCardFrame } from "../frame/HandCardFrame";
 import {
     BattleFieldHandLayoutFrame,
@@ -9,7 +9,7 @@ import {
 import { HandCardRendererV2 } from "./HandCardRendererV2";
 
 export interface HandEntry {
-    card: HandCard;
+    card: CardFace;
     cardIndex: number;
     group: THREE.Group;
 }
@@ -24,7 +24,7 @@ export class BattleFieldHandRendererV2 {
     constructor(private readonly cardRenderer: HandCardRendererV2 = new HandCardRendererV2()) {}
 
     public async build(
-        hand: readonly HandCard[],
+        hand: readonly CardFace[],
         cardFrame: HandCardFrame,
         layout: BattleFieldHandLayoutFrame,
     ): Promise<THREE.Group> {
@@ -54,7 +54,7 @@ export class BattleFieldHandRendererV2 {
     // Position is left at (0,0) — the caller is responsible for reflowing hand/placed slots after.
     public async appendCard(
         handGroup: THREE.Group,
-        card: HandCard,
+        card: CardFace,
         cardFrame: HandCardFrame,
     ): Promise<HandEntry> {
         const { entries } = handGroup.userData as HandUserData;

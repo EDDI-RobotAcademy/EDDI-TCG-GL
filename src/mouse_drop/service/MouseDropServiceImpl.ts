@@ -7,8 +7,6 @@ import {MouseDropFieldRepository} from "../repository/MouseDropRepository";
 import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository";
 import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
 import {BattleFieldCardScene} from "../../battle/card/scene/entity/BattleFieldCardScene";
-import {BattleFieldHandRepository} from "../../battle/hand/repository/BattleFieldHandRepository";
-import {BattleFieldHandRepositoryImpl} from "../../battle/hand/repository/BattleFieldHandRepositoryImpl";
 import {BattleFieldCardAttributeMarkStore} from "../../battle/card/attribute_mark/store/BattleFieldCardAttributeMarkStore";
 import {BattleFieldCardAttributeMarkStoreImpl} from "../../battle/card/attribute_mark/store/BattleFieldCardAttributeMarkStoreImpl";
 import {BattleFieldCardAttributeMark} from "../../battle/card/attribute_mark/entity/BattleFieldCardAttributeMark";
@@ -72,8 +70,6 @@ export class MouseDropServiceImpl implements MouseDropService {
     private mouseDropHandler: MouseDropHandler;
 
     private battleFieldCardAlignHandler: BattleFieldCardAlignHandler;
-
-    private battleFieldHandRepository: BattleFieldHandRepository
     private battleFieldCardPositionStore: BattleFieldCardPositionStore
     private battleFieldCardSceneCache: BattleFieldCardSceneCache
 
@@ -95,8 +91,6 @@ export class MouseDropServiceImpl implements MouseDropService {
         this.mouseDropHandler = MouseDropHandler.getInstance()
 
         this.battleFieldCardAlignHandler = BattleFieldCardAlignHandler.getInstance();
-
-        this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance()
         this.battleFieldCardPositionStore = BattleFieldCardPositionStoreImpl.getInstance()
         this.battleFieldCardSceneCache = BattleFieldCardSceneCacheImpl.getInstance()
 
@@ -413,7 +407,7 @@ export class MouseDropServiceImpl implements MouseDropService {
     private async handleValidDrop(selectedObject: BattleFieldCardScene): Promise<FieldCard | null> {
         const cardSceneId = selectedObject.getId()
 
-        const willBePlacedYourFieldHandCard = this.battleFieldHandRepository.findByCardSceneId(cardSceneId);
+        const willBePlacedYourFieldHandCard = BattleRepositoryImpl.getInstance().getCurrentOrThrow().findInHand(cardSceneId);
         const cardId = willBePlacedYourFieldHandCard?.getCardId() ?? 0; // 기본값 0
         const card = getCardById(cardId)
 
@@ -459,7 +453,7 @@ export class MouseDropServiceImpl implements MouseDropService {
         // const createdYourField = this.yourFieldRepository.save(yourFieldCardScene.getId(), positionId, attributeMarkIdList, cardId);
         // console.log(`handleValidDrop() yourFieldRepository saved: ${JSON.stringify(createdYourField, null, 2)}`);
         //
-        // // const handCardPositionId = this.battleFieldHandRepository.findPositionIdByCardSceneId(cardSceneId)
+        // // const handCardPositionId = (BattleRepositoryImpl.getInstance().getCurrentOrThrow().findInHand(cardSceneId)?.getPositionId() ?? null)
         // // if (handCardPositionId === null) {
         // //     throw new Error('Position ID를 찾을 수 없습니다');
         // // }
@@ -486,7 +480,7 @@ export class MouseDropServiceImpl implements MouseDropService {
     private async restoreOriginalPosition(selectedObject: THREE.Object3D): Promise<void> {
         if (selectedObject instanceof BattleFieldCardScene) {
             const cardSceneId = selectedObject.getId();
-            const cardPositionId = this.battleFieldHandRepository.findPositionIdByCardSceneId(cardSceneId);
+            const cardPositionId = (BattleRepositoryImpl.getInstance().getCurrentOrThrow().findInHand(cardSceneId)?.getPositionId() ?? null);
             if (cardPositionId !== null) {
                 const cardPositionEntity = await this.battleFieldCardPositionStore.findById(cardPositionId);
                 if (cardPositionEntity) {
@@ -548,7 +542,7 @@ export class MouseDropServiceImpl implements MouseDropService {
     }
 
     private async restoreAttributeMarksPosition(cardSceneId: number): Promise<void> {
-        const attributeMarkIdList = this.battleFieldHandRepository.findAttributeMarkIdListByCardSceneId(cardSceneId);
+        const attributeMarkIdList = (BattleRepositoryImpl.getInstance().getCurrentOrThrow().findInHand(cardSceneId)?.getAttributeMarkIds() ?? null);
         if (attributeMarkIdList?.length) {
             const attributeMarkList = await this.getAttributeMarks(attributeMarkIdList);
             const validAttributePositions = await this.getValidAttributePositions(attributeMarkList);

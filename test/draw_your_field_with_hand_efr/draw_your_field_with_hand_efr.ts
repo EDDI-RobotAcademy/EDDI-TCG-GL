@@ -1,4 +1,9 @@
 import { CameraManager } from "../../src/core/camera/CameraManager";
+
+// 손패의 시작 카드다. 실제 대전에서는 서버가 준다.
+// 전에는 저장소가 이 넉 장을 스스로 들고 있어서, 값을 담는 곳이 시나리오를 정하고 있었다.
+const HAND_START_CARD_IDS = [2, 19, 93, 26];
+
 import { RendererManager } from "../../src/core/renderer/RendererManager";
 import { SceneManager } from "../../src/core/scene/SceneManager";
 import { AnimationLoop } from "../../src/core/animation/AnimationLoop";
@@ -9,8 +14,7 @@ import { BackgroundRendererV2 } from "../../src/background/renderer/BackgroundRe
 import { createDefaultYourFieldAreaFrame } from "../../src/battle/field/your/area/frame/YourFieldAreaFrame";
 import { YourFieldAreaRendererV2 } from "../../src/battle/field/your/area/renderer/YourFieldAreaRendererV2";
 
-import { BattleFieldHandMapRepositoryImpl } from "../../src/battle/hand/repository/BattleFieldHandMapRepositoryImpl";
-import { HandCard } from "../../src/battle/hand/entity/HandCard";
+import { CardFace } from "../../src/battle/hand/entity/CardFace";
 import { createDefaultHandCardFrame } from "../../src/battle/hand/frame/HandCardFrame";
 import { createDefaultBattleFieldHandLayoutFrame } from "../../src/battle/hand/frame/BattleFieldHandLayoutFrame";
 import { BattleFieldHandRendererV2 } from "../../src/battle/hand/renderer/BattleFieldHandRendererV2";
@@ -24,8 +28,8 @@ if (!rootElement) {
     throw new Error("Cannot find element with id 'app'.");
 }
 
-function resolveHandCards(cardIds: number[]): HandCard[] {
-    const hand: HandCard[] = [];
+function resolveHandCards(cardIds: number[]): CardFace[] {
+    const hand: CardFace[] = [];
     for (const cardId of cardIds) {
         const card = getCardById(cardId);
         if (!card) {
@@ -69,7 +73,7 @@ async function main(container: HTMLElement): Promise<void> {
     const yourFieldAreaGroup = await yourFieldAreaRenderer.build(yourFieldAreaFrame);
     scene.add(yourFieldAreaGroup);
 
-    const handCardIds = BattleFieldHandMapRepositoryImpl.getInstance().getBattleFieldHandList();
+    const handCardIds = HAND_START_CARD_IDS;
     const hand = resolveHandCards(handCardIds);
 
     const handCardFrame = createDefaultHandCardFrame();

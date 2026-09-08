@@ -1,5 +1,10 @@
 import * as THREE from 'three';
 
+// 손패의 시작 카드다. 실제 대전에서는 서버가 준다.
+// 전에는 저장소가 이 넉 장을 스스로 들고 있어서, 값을 담는 곳이 시나리오를 정하고 있었다.
+const HAND_START_CARD_IDS = [2, 19, 93, 26];
+
+
 // 상대 필드의 시작 배치다. 실제 대전에서는 서버가 준다.
 // 전에는 저장소가 이 다섯 줄을 스스로 들고 있어서, 값을 담는 곳이 시나리오를 정하고 있었다.
 const OPPONENT_FIELD_START_CARD_IDS = [31, 32, 32, 26, 27];
@@ -14,7 +19,6 @@ import { YourFieldAreaServiceImpl } from "../../battle/field/your/area/service/Y
 import { OpponentFieldAreaServiceImpl } from "../../battle/field/opponent/area/service/OpponentFieldAreaServiceImpl";
 import { BattleFieldHandServiceImpl } from "../../battle/hand/service/BattleFieldHandServiceImpl";
 import { OpponentFieldServiceImpl } from "../../battle/field/opponent/service/OpponentFieldServiceImpl";
-import { BattleFieldHandMapRepositoryImpl } from "../../battle/hand/repository/BattleFieldHandMapRepositoryImpl";
 import { BattleFieldHandSceneRepository } from "../../battle_field_hand/deprecated_repository/BattleFieldHandSceneRepository";
 import { NonBackgroundImage } from "../../shape/image/NonBackgroundImage";
 import { UnitCardGenerator } from "../../card/unit/generate";
@@ -24,7 +28,6 @@ import { EnergyCardGenerator } from "../../card/energy/generate";
 
 export class BattleFieldController {
     private background: NonBackgroundImage | null = null;
-    private battleFieldHandMapRepository = BattleFieldHandMapRepositoryImpl.getInstance();
     private battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance();
     private readonly handPageButtonsRenderer = new HandPageButtonsRendererV2();
     private readonly battleRepository: BattleRepository = BattleRepositoryImpl.getInstance();
@@ -89,7 +92,7 @@ export class BattleFieldController {
     }
 
     private async addYourHandUnitList(): Promise<void> {
-        const battleFieldHandList = this.battleFieldHandMapRepository.getBattleFieldHandList();
+        const battleFieldHandList = HAND_START_CARD_IDS;
 
         for (const handCardId of battleFieldHandList) {
             const createdHand = await this.battleFieldHandService.createHand(handCardId);

@@ -23,8 +23,7 @@ import { OpponentFieldAreaRendererV2 } from "../../src/battle/field/opponent/are
 import { createDefaultOpponentFieldLayoutFrame, computeOpponentFieldCardCenter } from "../../src/battle/field/opponent/frame/OpponentFieldLayoutFrame";
 import { OpponentFieldRendererV2 } from "../../src/battle/field/opponent/renderer/OpponentFieldRendererV2";
 
-import { BattleFieldHandMapRepositoryImpl } from "../../src/battle/hand/repository/BattleFieldHandMapRepositoryImpl";
-import { HandCard } from "../../src/battle/hand/entity/HandCard";
+import { CardFace } from "../../src/battle/hand/entity/CardFace";
 import { HandEntry } from "../../src/battle/hand/renderer/BattleFieldHandRendererV2";
 import { createDefaultHandCardFrame } from "../../src/battle/hand/frame/HandCardFrame";
 import {
@@ -144,8 +143,8 @@ if (!rootElement) {
     throw new Error("Cannot find element with id 'app'.");
 }
 
-function resolveCards(cardIds: number[], label: string): HandCard[] {
-    const out: HandCard[] = [];
+function resolveCards(cardIds: number[], label: string): CardFace[] {
+    const out: CardFace[] = [];
     for (const cardId of cardIds) {
         const card = getCardById(cardId);
         if (!card) {
@@ -306,19 +305,28 @@ async function main(container: HTMLElement): Promise<void> {
 
     // Pilot B — hand row (6장으로 확장해 페이지네이션 검증)
     const placementFrame = createDefaultPlacedCardPlacementFrame();
-
-    const handMapRepo = BattleFieldHandMapRepositoryImpl.getInstance();
     // Initial hand — 6 cards drawn from the 40-card deck spec. Mix of UNIT/SUPPORT/ENERGY/ITEM.
     // Default repo seed already contains (2, 19, 93, 26); add 27 + Energy Burn (9) for testing.
-    handMapRepo.addBattleFieldHand(27);
-    handMapRepo.addBattleFieldHand(9);   // 에너지 번 (ITEM) — drains up to 2 energy off opponent units
-    handMapRepo.addBattleFieldHand(25);  // 파멸의 계약 (ITEM) — 15 AoE dmg + deck-to-lost-zone
-    handMapRepo.addBattleFieldHand(35);  // 사기 전환 (ITEM) — sacrifice ally for floor(hp/5) field energy
-    handMapRepo.addBattleFieldHand(20);  // 망자의 늪 (SUPPORT) — draw 3 from deck
-    handMapRepo.addBattleFieldHand(36);  // 죽음의 대지 (ITEM) — drain 2 opponent field energy
-    handMapRepo.addBattleFieldHand(30);  // 레오닉의 부름 (SUPPORT) — pick 2 hero-or-below UNITs from deck
-    handMapRepo.addBattleFieldHand(33);  // 시체 폭발 (ITEM) — sacrifice undead ally → 2x10 dmg to enemies
-    const handCardIds = handMapRepo.getBattleFieldHandList();
+    //
+    //   // 에너지 번 (ITEM) — drains up to 2 energy off opponent units
+    //  // 파멸의 계약 (ITEM) — 15 AoE dmg + deck-to-lost-zone
+    //  // 사기 전환 (ITEM) — sacrifice ally for floor(hp/5) field energy
+    //  // 망자의 늪 (SUPPORT) — draw 3 from deck
+    //  // 죽음의 대지 (ITEM) — drain 2 opponent field energy
+    //  // 레오닉의 부름 (SUPPORT) — pick 2 hero-or-below UNITs from deck
+    //  // 시체 폭발 (ITEM) — sacrifice undead ally → 2x10 dmg to enemies
+    // 손패의 시작 카드다. 실제 대전에서는 서버가 준다.
+    const handCardIds = [
+        2, 19, 93, 26,
+        27,
+        9,   // 에너지 번 (ITEM)
+        25,  // 파멸의 계약 (ITEM)
+        35,  // 사기 전환 (ITEM)
+        20,  // 망자의 늪 (SUPPORT)
+        36,  // 죽음의 대지 (ITEM)
+        30,  // 레오닉의 부름 (SUPPORT)
+        33,  // 시체 폭발 (ITEM)
+    ];
     const hand = resolveCards(handCardIds, 'hand');
 
     // 전투 한 판을 시작한다. 턴과 덱은 이 안에 들어 있다.
@@ -697,7 +705,7 @@ async function main(container: HTMLElement): Promise<void> {
         opponentAliveOrder.push(i);
     }
 
-    const opponentEntries = (opponentGroup.userData as { entries: { card: HandCard; cardIndex: number; group: THREE.Group }[] }).entries;
+    const opponentEntries = (opponentGroup.userData as { entries: { card: CardFace; cardIndex: number; group: THREE.Group }[] }).entries;
 
     const reflowOpponentField = (): void => {
         const w = window.innerWidth;

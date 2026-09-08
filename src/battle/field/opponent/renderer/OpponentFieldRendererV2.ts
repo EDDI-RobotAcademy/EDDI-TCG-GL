@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { HandCard } from "../../../hand/entity/HandCard";
+import { CardFace } from "../../../hand/entity/CardFace";
 import { HandCardFrame } from "../../../hand/frame/HandCardFrame";
 import { HandCardRendererV2 } from "../../../hand/renderer/HandCardRendererV2";
 import {
@@ -9,7 +9,7 @@ import {
 } from "../frame/OpponentFieldLayoutFrame";
 
 interface OpponentFieldEntry {
-    card: HandCard;
+    card: CardFace;
     cardIndex: number;
     group: THREE.Group;
 }
@@ -29,7 +29,7 @@ export class OpponentFieldRendererV2 {
     constructor(private readonly cardRenderer: HandCardRendererV2 = new HandCardRendererV2()) {}
 
     public async build(
-        cards: readonly HandCard[],
+        cards: readonly CardFace[],
         cardFrame: HandCardFrame,
         layout: OpponentFieldLayoutFrame,
     ): Promise<THREE.Group> {

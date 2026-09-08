@@ -7,7 +7,9 @@ import { CardKind } from "../../../card/kind";
 //
 // energyCount: currently-attached energy for a UNIT card. When 0, the Renderer skips both
 // the energy icon and the number text — per user directive, "show 0" is not a valid state.
-export interface HandCard {
+// 카드 앞면에 적혀 있는 것이다. 그리는 쪽이 읽는다.
+// 손패에 든 카드 한 장은 battle/domain/HandCard 다. 다른 것이다.
+export interface CardFace {
     readonly cardId: number;
     readonly cardKind: CardKind;
     readonly unitJob: CardJob;

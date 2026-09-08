@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {BattleRepositoryImpl} from "../../../../battle/repository/BattleRepositoryImpl";
 
 import {DragMoveRepositoryImpl} from "../../../../drag_move/repository/DragMoveRepositoryImpl";
 import {YourFieldCardSceneCacheImpl} from "../../../field/your/card_scene/cache/YourFieldCardSceneCacheImpl";
@@ -26,14 +27,12 @@ import {NeonBorderLineSceneRepository} from "../../../../neon_border_line_scene/
 import {NeonBorderHandler} from "../../../../neon_border/handler/NeonBorderHandler";
 
 import {AttributeMarkPositionCalculator} from "../../../../common/attribute_mark/AttributeMarkPositionCalculator";
-import {BattleFieldHandRepositoryImpl} from "../../../hand/repository/BattleFieldHandRepositoryImpl";
 import {
     BattleFieldCardPositionStoreImpl
 } from "../../position/store/BattleFieldCardPositionStoreImpl";
 import {
     BattleFieldCardSceneCacheImpl
 } from "../../scene/cache/BattleFieldCardSceneCacheImpl";
-import {BattleFieldHandRepository} from "../../../hand/repository/BattleFieldHandRepository";
 import {
     BattleFieldCardPositionStore
 } from "../../position/store/BattleFieldCardPositionStore";
@@ -59,7 +58,7 @@ import {FieldCard} from "../../../domain/FieldCard";
 import {BattleFieldHandPageStore} from "../../../hand/page/store/BattleFieldHandPageStore";
 import {BattleFieldHandPageStoreImpl} from "../../../hand/page/store/BattleFieldHandPageStoreImpl";
 import {BattleFieldCardPosition} from "../../position/entity/BattleFieldCardPosition";
-import {BattleFieldHand} from "../../../hand/entity/BattleFieldHand";
+import {HandCard} from "../../../domain/HandCard";
 
 export class BattleFieldCardAlignHandler {
     private static instance: BattleFieldCardAlignHandler;
@@ -67,8 +66,6 @@ export class BattleFieldCardAlignHandler {
     private dragMoveRepository: DragMoveRepository;
 
     private battleFieldHandPageStore: BattleFieldHandPageStore;
-
-    private battleFieldHandRepository: BattleFieldHandRepository
     private battleFieldCardPositionStore: BattleFieldCardPositionStore
     private battleFieldCardSceneCache: BattleFieldCardSceneCache
 
@@ -84,8 +81,6 @@ export class BattleFieldCardAlignHandler {
         this.dragMoveRepository = DragMoveRepositoryImpl.getInstance();
 
         this.battleFieldHandPageStore = BattleFieldHandPageStoreImpl.getInstance();
-
-        this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance()
         this.battleFieldCardPositionStore = BattleFieldCardPositionStoreImpl.getInstance()
         this.battleFieldCardSceneCache = BattleFieldCardSceneCacheImpl.getInstance()
 
@@ -109,7 +104,10 @@ export class BattleFieldCardAlignHandler {
         const currentPage = this.battleFieldHandPageStore.getCurrentPage();
         const cardsPerPage = this.battleFieldHandPageStore.getCardsPerPage();
 
-        const currentHandCardList = this.battleFieldHandRepository.findAllWithPage(currentPage, cardsPerPage);
+        // 몇 장씩 나눠 보여줄지는 화면이 정한다. 전투는 목록만 준다.
+        const startIndex = (currentPage - 1) * cardsPerPage;
+        const currentHandCardList = BattleRepositoryImpl.getInstance().getCurrentOrThrow()
+            .getHandCards().slice(startIndex, startIndex + cardsPerPage);
 
         await Promise.all(
             currentHandCardList.map((handCard, index) =>
@@ -119,7 +117,7 @@ export class BattleFieldCardAlignHandler {
     }
 
     private async alignPaginatedHandCard(
-        handCard: BattleFieldHand,
+        handCard: HandCard,
         index: number,
         visible: boolean = true
     ): Promise<void> {
@@ -127,7 +125,7 @@ export class BattleFieldCardAlignHandler {
 
         const calculatedPosition = this.calculateHandPositionByIndex(index);
         const positionId = handCard.getPositionId();
-        const cardSceneId = handCard.getCardSceneId();
+        const cardSceneId = handCard.getBattleCardId();
 
         const cardPosition = this.battleFieldCardPositionStore.findById(positionId);
         const mainCardScene = await this.battleFieldCardSceneCache.findById(cardSceneId);
@@ -162,11 +160,11 @@ export class BattleFieldCardAlignHandler {
     }
 
     private async alignAttributeMarks(
-        handCard: BattleFieldHand,
+        handCard: HandCard,
         calculatedPosition: Vector2d,
         visible: boolean = true
     ): Promise<void> {
-        const attributeMarkList = handCard.getAttributeMarkIdList();
+        const attributeMarkList = handCard.getAttributeMarkIds();
         if (!attributeMarkList) {
             console.error(`attributeMarkList 없다: ${attributeMarkList}`);
             return;

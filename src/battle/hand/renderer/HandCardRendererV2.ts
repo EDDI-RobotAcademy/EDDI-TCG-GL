@@ -4,7 +4,7 @@ import { disposeMesh, markOwnedTexture } from "../../../core/lifecycle/Disposabl
 import { CardJob } from "../../../card/job";
 import { CardKind } from "../../../card/kind";
 import { Vector2d } from "../../../common/math/Vector2d";
-import { HandCard } from "../entity/HandCard";
+import { CardFace } from "../entity/CardFace";
 import { HandCardFrame, HandCardSlot } from "../frame/HandCardFrame";
 
 interface HandCardUserData {
@@ -34,7 +34,7 @@ const RESOURCE_PATHS = {
 // centered at the local origin (0, 0). The parent BattleFieldHandRendererV2 places each card
 // into the row by setting the outer Group's position.
 export class HandCardRendererV2 {
-    public async build(entity: HandCard, frame: HandCardFrame): Promise<THREE.Group> {
+    public async build(entity: CardFace, frame: HandCardFrame): Promise<THREE.Group> {
         const group = new THREE.Group();
 
         const cardWidth = frame.cardWidthRatio * window.innerWidth;
@@ -152,7 +152,7 @@ export class HandCardRendererV2 {
         group.add(textMesh);
     }
 
-    private resolveSlotBuilds(entity: HandCard, frame: HandCardFrame): SlotBuild[] {
+    private resolveSlotBuilds(entity: CardFace, frame: HandCardFrame): SlotBuild[] {
         const builds: SlotBuild[] = [];
 
         // Matches BattleFieldHandServiceImpl.addAttributesToCardGroup exactly:

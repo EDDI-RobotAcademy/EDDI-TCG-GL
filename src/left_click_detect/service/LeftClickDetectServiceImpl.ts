@@ -11,8 +11,6 @@ import * as THREE from "three";
 
 import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository";
 import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
-import {BattleFieldHandRepository} from "../../battle/hand/repository/BattleFieldHandRepository";
-import {BattleFieldHandRepositoryImpl} from "../../battle/hand/repository/BattleFieldHandRepositoryImpl";
 import {BattleFieldCardAttributeMarkSceneCache} from "../../battle/card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCache";
 import {BattleFieldCardAttributeMarkSceneCacheImpl} from "../../battle/card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCacheImpl";
 import {BattleFieldCardAttributeMarkScene} from "../../battle/card/attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
@@ -113,7 +111,6 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private battleFieldCardAttributeMarkSceneCache: BattleFieldCardAttributeMarkSceneCache
     private battleFieldCardAttributeMarkStore: BattleFieldCardAttributeMarkStore
     private battleFieldCardSceneCache: BattleFieldCardSceneCache;
-    private battleFieldHandRepository: BattleFieldHandRepository;
 
     private yourFieldCardSceneCache: YourFieldCardSceneCache
     private opponentFieldCardSceneCache: OpponentFieldCardSceneCache
@@ -181,7 +178,6 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         this.battleFieldCardAttributeMarkSceneCache = BattleFieldCardAttributeMarkSceneCacheImpl.getInstance()
         this.battleFieldCardAttributeMarkStore = BattleFieldCardAttributeMarkStoreImpl.getInstance()
         this.battleFieldCardSceneCache = BattleFieldCardSceneCacheImpl.getInstance();
-        this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance()
 
         this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance()
         this.opponentFieldCardSceneCache = OpponentFieldCardSceneCacheImpl.getInstance()
@@ -554,7 +550,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private async handleYourHandNextButtonClick(x: number, y: number): Promise<void> {
         console.log('Your Hand 다음 버튼 클릭');
 
-        const activeCardNumber = this.battleFieldHandRepository.countActiveCards();
+        const activeCardNumber = BattleRepositoryImpl.getInstance().getCurrentOrThrow().getHandCount();
         const maxPageSize = activeCardNumber / BattleFieldConstants.MAX_HAND_REPRESENTATION;
 
         const currentPage = this.battleFieldHandPageStore.getCurrentPage()
