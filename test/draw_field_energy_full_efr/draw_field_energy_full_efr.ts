@@ -1,4 +1,5 @@
 import { CameraManager } from "../../src/core/camera/CameraManager";
+import { FieldCard } from "../../src/battle/domain/FieldCard";
 import { findCardAbility, cardIdsTargeting } from "../../src/battle/ability/CardAbility";
 import { AbilityTarget } from "../../src/battle/ability/AbilityTarget";
 import { RendererManager } from "../../src/core/renderer/RendererManager";
@@ -642,7 +643,7 @@ async function main(container: HTMLElement): Promise<void> {
     // Burial helper — whenever an opponent unit dies on the field (HP ≤ 0), look up its
     // cardId by cardIndex and push it into the Opponent Tomb repo. Call at every death
     // site (scythe, energy-burn, doom-contract, AoE skill, single-target attack) right
-    // next to the existing opponentAliveOrder.splice(aliveIdx, 1).
+    // next to the existing battle.removeFromOpponentField(...).
     const buryOpponentUnit = (cardIndex: number): void => {
         const card = opponentCards[cardIndex];
         if (!card) return;
@@ -693,18 +694,39 @@ async function main(container: HTMLElement): Promise<void> {
     const lostZoneTotalPages = (): number =>
         Math.max(1, Math.ceil(battle.getYourLostZoneCards().length / lostZoneCardsPerPage));
 
-    // Opponent HP state + alive order for reflow on death
-    const opponentHpState = new Map<number, number>();
-    const opponentEnergyState = new Map<number, number>();
-    const opponentAliveOrder: number[] = [];
+    // 상대 유닛의 체력과 붙은 에너지, 그리고 살아 있는 차례는 전투가 든다.
+    // 전에는 이 화면이 지도 둘과 배열 하나로 따로 들고 있었다.
     for (let i = 0; i < opponentCards.length; i++) {
         const oc = opponentCards[i];
         const card = getCardById(oc.cardId);
         const hp = card?.체력 ?? 0;
-        opponentHpState.set(i, typeof hp === 'number' ? hp : 0);
-        opponentEnergyState.set(i, oc.energyCount);
-        opponentAliveOrder.push(i);
+        battle.placeOnOpponentField(new FieldCard(
+            i,                                   // 신원. 이 화면에서는 만들 때의 차례를 쓴다
+            oc.cardId,
+            [],
+            0,                                   // 화면 좌표 번호를 안 쓴다
+            typeof hp === 'number' ? hp : 0,
+            oc.energyCount,
+        ));
     }
+
+    // 살아 있는 차례는 전투가 든 상대 필드 목록 그 자체다.
+    const opponentAliveIds = (): number[] =>
+        battle.getOpponentFieldCards().map((it) => it.getBattleCardId());
+    const opponentAliveIndexOf = (cardIndex: number): number =>
+        battle.getOpponentFieldCards().findIndex((it) => it.getBattleCardId() === cardIndex);
+    const isOpponentAlive = (cardIndex: number): boolean =>
+        battle.findOnOpponentField(cardIndex) !== null;
+    const opponentHpOf = (cardIndex: number): number =>
+        battle.findOnOpponentField(cardIndex)?.getHp() ?? 0;
+    const setOpponentHp = (cardIndex: number, next: number): void => {
+        battle.findOnOpponentField(cardIndex)?.setHp(next);
+    };
+    const opponentEnergyOf = (cardIndex: number): number =>
+        battle.findOnOpponentField(cardIndex)?.getEnergyCount() ?? 0;
+    const setOpponentEnergy = (cardIndex: number, next: number): void => {
+        battle.findOnOpponentField(cardIndex)?.setEnergyCount(next);
+    };
 
     const opponentEntries = (opponentGroup.userData as { entries: { card: CardFace; cardIndex: number; group: THREE.Group }[] }).entries;
 
@@ -712,7 +734,7 @@ async function main(container: HTMLElement): Promise<void> {
         const w = window.innerWidth;
         const h = window.innerHeight;
         for (const entry of opponentEntries) {
-            const aliveIdx = opponentAliveOrder.indexOf(entry.cardIndex);
+            const aliveIdx = opponentAliveIndexOf(entry.cardIndex);
             if (aliveIdx >= 0) {
                 const { x, y } = computeOpponentFieldCardCenter(opponentLayoutFrame, aliveIdx, w, h);
                 entry.group.position.set(x, y, 0);
@@ -1304,9 +1326,9 @@ async function main(container: HTMLElement): Promise<void> {
 
     const enterNetherBladePassive2 = (deployedEntry: HandEntry): Promise<void> => {
         return new Promise<void>((resolve) => {
-            const hasOpponents = opponentAliveOrder.length > 0 &&
+            const hasOpponents = battle.getOpponentFieldCount() > 0 &&
                 opponentEntries.some((oe) =>
-                    oe.group.visible && opponentAliveOrder.includes(oe.cardIndex),
+                    oe.group.visible && isOpponentAlive(oe.cardIndex),
                 );
             const hasMaster = battle.getOpponentMasterHp() > 0;
             if (!hasOpponents && !hasMaster) {
@@ -1316,7 +1338,7 @@ async function main(container: HTMLElement): Promise<void> {
             }
 
             for (const oe of opponentEntries) {
-                if (oe.group.visible && opponentAliveOrder.includes(oe.cardIndex)) {
+                if (oe.group.visible && isOpponentAlive(oe.cardIndex)) {
                     enemyNeonEffect.attach(oe.cardIndex, oe.group);
                 }
             }
@@ -1359,7 +1381,7 @@ async function main(container: HTMLElement): Promise<void> {
         // 않아, 조각이 흩어진 자리가 그대로 사망이 된다. 연출이 끝난 뒤 되살아났다가
         // 아래 데미지 처리로 사라지면 카드가 깜빡이는 것처럼 보인다.
         const lethal = pick.kind === 'opponent'
-            && (opponentHpState.get(pick.cardIndex) ?? 0) - NETHER_BLADE_PASSIVE2_DAMAGE <= 0;
+            && (opponentHpOf(pick.cardIndex)) - NETHER_BLADE_PASSIVE2_DAMAGE <= 0;
 
         await playSkillPanelMoveOnly(state.deployedEntry.group, async (_panelPos) => {
             if (!canvasEl || !singleTarget) {
@@ -1393,15 +1415,15 @@ async function main(container: HTMLElement): Promise<void> {
             // Opponent unit pick.
             const target = opponentEntries.find((oe) => oe.cardIndex === pick.cardIndex);
             if (target && target.group.visible) {
-                const prev = opponentHpState.get(pick.cardIndex) ?? 0;
+                const prev = opponentHpOf(pick.cardIndex);
                 const newHp = Math.max(0, prev - dmg);
-                opponentHpState.set(pick.cardIndex, newHp);
+                setOpponentHp(pick.cardIndex, newHp);
                 // 패시브도 이 유닛의 공격이다 — 보유자면 암흑 화염 + 빙결이 실린다.
                 if (newHp > 0) applyColdDarkTraits(state.deployedEntry, pick.cardIndex);
                 console.log(`[nether-blade] passive 2 → opponent idx=${pick.cardIndex} cardId=${target.card.cardId} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
                 if (newHp <= 0) {
                     buryOpponentUnit(pick.cardIndex);
-                    opponentAliveOrder.splice(opponentAliveOrder.indexOf(pick.cardIndex), 1);
+                    battle.removeFromOpponentField(pick.cardIndex);
                     target.group.visible = false;
                     reflowOpponentField();
                 }
@@ -1435,7 +1457,7 @@ async function main(container: HTMLElement): Promise<void> {
         // still in their grid slots. The slash mesh will fly from the panel slot to
         // each captured position.
         const aoeTargets: THREE.Vector3[] = [];
-        for (const idx of [...opponentAliveOrder]) {
+        for (const idx of opponentAliveIds()) {
             const target = opponentEntries.find((oe) => oe.cardIndex === idx);
             if (!target || !target.group.visible) continue;
             aoeTargets.push(target.group.getWorldPosition(new THREE.Vector3()));
@@ -1460,18 +1482,18 @@ async function main(container: HTMLElement): Promise<void> {
 
         const dmg = NETHER_BLADE_PASSIVE_DAMAGE;
         const deadIndices: number[] = [];
-        for (const idx of [...opponentAliveOrder]) {
+        for (const idx of opponentAliveIds()) {
             const target = opponentEntries.find((oe) => oe.cardIndex === idx);
             if (!target || !target.group.visible) continue;
-            const prev = opponentHpState.get(idx) ?? 0;
+            const prev = opponentHpOf(idx);
             const newHp = Math.max(0, prev - dmg);
-            opponentHpState.set(idx, newHp);
+            setOpponentHp(idx, newHp);
             // 패시브도 이 유닛의 공격이다 — 보유자면 암흑 화염 + 빙결이 실린다.
             if (newHp > 0) applyColdDarkTraits(deployedEntry, idx);
             console.log(`[nether-blade] AoE → opponent idx=${idx} cardId=${target.card.cardId} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
             if (newHp <= 0) {
                 buryOpponentUnit(idx);
-                opponentAliveOrder.splice(opponentAliveOrder.indexOf(idx), 1);
+                battle.removeFromOpponentField(idx);
                 deadIndices.push(idx);
             }
         }
@@ -1564,13 +1586,13 @@ async function main(container: HTMLElement): Promise<void> {
                             }
                         }
 
-                        for (const idx of [...opponentAliveOrder]) {
+                        for (const idx of opponentAliveIds()) {
                             const entry = opponentEntries.find((oe) => oe.cardIndex === idx);
                             if (!entry) continue;
 
-                            const currentHp = opponentHpState.get(idx) ?? 0;
+                            const currentHp = opponentHpOf(idx);
                             const newHp = currentHp - damage;
-                            opponentHpState.set(idx, newHp);
+                            setOpponentHp(idx, newHp);
 
                             // 차갑게 불타는 암흑 에너지 보유자의 광역기 — 맞은 전원에게 부여.
                             if (newHp > 0) applyColdDarkTraits(atkEntry, idx);
@@ -1608,10 +1630,10 @@ async function main(container: HTMLElement): Promise<void> {
                             if (newHp <= 0) {
                                 const capturedIdx = idx;
                                 setTimeout(() => {
-                                    const aliveIdx = opponentAliveOrder.indexOf(capturedIdx);
+                                    const aliveIdx = opponentAliveIndexOf(capturedIdx);
                                     if (aliveIdx >= 0) {
                                         buryOpponentUnit(capturedIdx);
-                                        opponentAliveOrder.splice(aliveIdx, 1);
+                                        battle.removeFromOpponentField(capturedIdx);
                                     }
                                     reflowOpponentField();
                                 }, 450);
@@ -1708,9 +1730,9 @@ async function main(container: HTMLElement): Promise<void> {
                 }
 
                 const targetIdx = targetEntry.cardIndex;
-                const currentHp = opponentHpState.get(targetIdx) ?? 0;
+                const currentHp = opponentHpOf(targetIdx);
                 const newHp = currentHp - attackPower;
-                opponentHpState.set(targetIdx, newHp);
+                setOpponentHp(targetIdx, newHp);
 
                 // 차갑게 불타는 암흑 에너지 보유자의 공격/단일기 — 맞은 대상에게 부여.
                 if (newHp > 0) applyColdDarkTraits(attackerEntry, targetIdx);
@@ -1731,13 +1753,13 @@ async function main(container: HTMLElement): Promise<void> {
 
                 if (newHp <= 0) {
                     setTimeout(() => {
-                        const aliveIdx = opponentAliveOrder.indexOf(targetIdx);
+                        const aliveIdx = opponentAliveIndexOf(targetIdx);
                         if (aliveIdx >= 0) {
                             buryOpponentUnit(targetIdx);
-                            opponentAliveOrder.splice(aliveIdx, 1);
+                            battle.removeFromOpponentField(targetIdx);
                         }
                         reflowOpponentField();
-                        console.log(`Opponent idx=${targetIdx} defeated! Remaining: ${opponentAliveOrder.length}`);
+                        console.log(`Opponent idx=${targetIdx} defeated! Remaining: ${battle.getOpponentFieldCount()}`);
                     }, 300);
                 } else {
                     console.log(`Opponent idx=${targetIdx} survived with HP=${newHp}`);
@@ -2017,17 +2039,17 @@ async function main(container: HTMLElement): Promise<void> {
         for (const idx of [...darkFlameTargets]) {
             const target = opponentEntries.find((oe) => oe.cardIndex === idx);
             if (!target || !target.group.visible) { clearColdDarkStatus(idx); continue; }
-            const prev = opponentHpState.get(idx) ?? 0;
+            const prev = opponentHpOf(idx);
             const newHp = Math.max(0, prev - DARK_FLAME_TURN_DAMAGE);
-            opponentHpState.set(idx, newHp);
+            setOpponentHp(idx, newHp);
             console.log(`[cold-dark-energy] 암흑 화염 → idx=${idx} HP ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
             if (newHp <= 0) dead.push(idx);
         }
         for (const idx of dead) {
-            const aliveIdx = opponentAliveOrder.indexOf(idx);
+            const aliveIdx = opponentAliveIndexOf(idx);
             if (aliveIdx >= 0) {
                 buryOpponentUnit(idx);
-                opponentAliveOrder.splice(aliveIdx, 1);
+                battle.removeFromOpponentField(idx);
             }
             const target = opponentEntries.find((oe) => oe.cardIndex === idx);
             if (target) target.group.visible = false;
@@ -2176,10 +2198,10 @@ async function main(container: HTMLElement): Promise<void> {
         const isMythic = grade === CardGrade.MYTHICAL;
 
         const targetIdx = target.cardIndex;
-        const currentHp = opponentHpState.get(targetIdx) ?? 0;
+        const currentHp = opponentHpOf(targetIdx);
         const damage = isMythic ? SCYTHE_MYTHIC_DAMAGE : currentHp;
         const newHp = Math.max(0, currentHp - damage);
-        opponentHpState.set(targetIdx, newHp);
+        setOpponentHp(targetIdx, newHp);
         const killing = newHp <= 0;
 
         console.log(`[scythe] target cardId=${target.card.cardId} grade=${grade}${isMythic ? ' (MYTHICAL → 30 dmg)' : ' (instant kill)'} HP: ${currentHp} → ${newHp}`);
@@ -2189,13 +2211,13 @@ async function main(container: HTMLElement): Promise<void> {
         await scytheCutEffect.play(target.group, target.card.cardId, killing);
 
         if (killing) {
-            const aliveIdx = opponentAliveOrder.indexOf(targetIdx);
+            const aliveIdx = opponentAliveIndexOf(targetIdx);
             if (aliveIdx >= 0) {
                 buryOpponentUnit(targetIdx);
-                opponentAliveOrder.splice(aliveIdx, 1);
+                battle.removeFromOpponentField(targetIdx);
             }
             reflowOpponentField();
-            console.log(`[scythe] opponent idx=${targetIdx} defeated. Remaining: ${opponentAliveOrder.length}`);
+            console.log(`[scythe] opponent idx=${targetIdx} defeated. Remaining: ${battle.getOpponentFieldCount()}`);
         }
     };
 
@@ -2234,20 +2256,20 @@ async function main(container: HTMLElement): Promise<void> {
 
     const applyEnergyBurnEffect = async (target: OpponentEntry): Promise<void> => {
         const targetIdx = target.cardIndex;
-        const currentEnergy = opponentEnergyState.get(targetIdx) ?? 0;
+        const currentEnergy = opponentEnergyOf(targetIdx);
         const energyDrained = Math.min(2, currentEnergy);
         const damageMultiplier = 2 - energyDrained;  // 0 e → 2, 1 e → 1, ≥2 e → 0
         const damage = damageMultiplier * ENERGY_BURN_PER_MISSING_DAMAGE;
 
         const newEnergy = currentEnergy - energyDrained;
-        opponentEnergyState.set(targetIdx, newEnergy);
+        setOpponentEnergy(targetIdx, newEnergy);
 
         let newHp = 0;
         let killing = false;
         if (damage > 0) {
-            const currentHp = opponentHpState.get(targetIdx) ?? 0;
+            const currentHp = opponentHpOf(targetIdx);
             newHp = Math.max(0, currentHp - damage);
-            opponentHpState.set(targetIdx, newHp);
+            setOpponentHp(targetIdx, newHp);
             killing = newHp <= 0;
             console.log(`[energy-burn] target cardId=${target.card.cardId} energy: ${currentEnergy} → ${newEnergy} (drained ${energyDrained}) damage=${damage} HP → ${newHp}${killing ? ' (defeated — card burns away)' : ''}`);
         } else {
@@ -2279,10 +2301,10 @@ async function main(container: HTMLElement): Promise<void> {
         ]);
 
         if (killing) {
-            const aliveIdx = opponentAliveOrder.indexOf(targetIdx);
+            const aliveIdx = opponentAliveIndexOf(targetIdx);
             if (aliveIdx >= 0) {
                 buryOpponentUnit(targetIdx);
-                opponentAliveOrder.splice(aliveIdx, 1);
+                battle.removeFromOpponentField(targetIdx);
             }
             reflowOpponentField();
         }
@@ -2310,16 +2332,16 @@ async function main(container: HTMLElement): Promise<void> {
     const applyStateChangesForDoomContract = (): void => {
         console.log(`[doom-contract] AoE ${DOOM_CONTRACT_DAMAGE} dmg to all opponent units + master; opponent deck → opponent lost zone`);
 
-        for (const idx of [...opponentAliveOrder]) {
-            const currentHp = opponentHpState.get(idx) ?? 0;
+        for (const idx of opponentAliveIds()) {
+            const currentHp = opponentHpOf(idx);
             const newHp = Math.max(0, currentHp - DOOM_CONTRACT_DAMAGE);
-            opponentHpState.set(idx, newHp);
+            setOpponentHp(idx, newHp);
             console.log(`  opponent idx=${idx} HP: ${currentHp} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
             if (newHp <= 0) {
-                const aliveIdx = opponentAliveOrder.indexOf(idx);
+                const aliveIdx = opponentAliveIndexOf(idx);
                 if (aliveIdx >= 0) {
                     buryOpponentUnit(idx);
-                    opponentAliveOrder.splice(aliveIdx, 1);
+                    battle.removeFromOpponentField(idx);
                 }
             }
         }
@@ -2611,9 +2633,9 @@ async function main(container: HTMLElement): Promise<void> {
                     setOpponentMasterHp(battle.getOpponentMasterHp() - CORPSE_EXPLOSION_DAMAGE, 'corpse explosion');
                 }
             } else {
-                const prev = opponentHpState.get(pick.cardIndex) ?? 0;
+                const prev = opponentHpOf(pick.cardIndex);
                 const newHp = Math.max(0, prev - CORPSE_EXPLOSION_DAMAGE);
-                opponentHpState.set(pick.cardIndex, newHp);
+                setOpponentHp(pick.cardIndex, newHp);
                 const entry = opponentEntries.find((oe) => oe.cardIndex === pick.cardIndex);
                 console.log(`[corpse-explosion] projectile → opponent idx=${pick.cardIndex}${entry ? ` cardId=${entry.card.cardId}` : ''} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
             }
@@ -2638,14 +2660,14 @@ async function main(container: HTMLElement): Promise<void> {
         const masterDied = masterPicked && battle.getOpponentMasterHp() <= 0 && masterGroup.visible;
         const deadOpponentIndices: number[] = [];
         for (const idx of uniqueOpponentIdxs) {
-            const hp = opponentHpState.get(idx) ?? 0;
+            const hp = opponentHpOf(idx);
             if (hp > 0) continue;
             const entry = opponentEntries.find((oe) => oe.cardIndex === idx);
             if (!entry || !entry.group.visible) continue;
-            const aliveIdx = opponentAliveOrder.indexOf(idx);
+            const aliveIdx = opponentAliveIndexOf(idx);
             if (aliveIdx >= 0) {
                 buryOpponentUnit(idx);
-                opponentAliveOrder.splice(aliveIdx, 1);
+                battle.removeFromOpponentField(idx);
             }
             deadOpponentIndices.push(idx);
         }
