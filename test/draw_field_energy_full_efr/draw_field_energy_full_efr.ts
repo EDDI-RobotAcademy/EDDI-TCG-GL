@@ -1,4 +1,6 @@
 import { CameraManager } from "../../src/core/camera/CameraManager";
+import { findCardAbility, cardIdsTargeting } from "../../src/battle/ability/CardAbility";
+import { AbilityTarget } from "../../src/battle/ability/AbilityTarget";
 import { RendererManager } from "../../src/core/renderer/RendererManager";
 import { SceneManager } from "../../src/core/scene/SceneManager";
 import { AnimationLoop } from "../../src/core/animation/AnimationLoop";
@@ -2095,39 +2097,30 @@ async function main(container: HTMLElement): Promise<void> {
         }
     });
 
-    // Scythe (cardId 8) — consume + effect on opponent card drop.
-    // Below MYTHICAL → instant kill; MYTHICAL → 30 damage.
+    // 카드 능력의 숫자와 고르는 방식은 battle/ability/CardAbility 에 값으로 적혀 있다.
+    // 전에는 이 화면 파일 안에 흩어져 있어서, 카드를 더할 때마다 이 파일이 커졌다.
+    const ability = (cardId: number) => {
+        const found = findCardAbility(cardId);
+        if (!found) throw new Error(`카드 능력을 찾을 수 없다: ${cardId}`);
+        return found;
+    };
+
     const SCYTHE_CARD_ID = 8;
-    const SCYTHE_MYTHIC_DAMAGE = 30;
+    const SCYTHE_MYTHIC_DAMAGE = ability(SCYTHE_CARD_ID).numbers.mythicDamage;
 
-    // Energy Burn (cardId 9) — ITEM that targets opponent units like scythe.
-    //   0 energy on target → 20 damage (10 × 2)
-    //   1 energy on target → 10 damage (10 × 1) + drain 1 energy
-    //  ≥2 energy on target → 0 damage          + drain 2 energy
     const ENERGY_BURN_CARD_ID = 9;
-    const ENERGY_BURN_PER_MISSING_DAMAGE = 10;
+    const ENERGY_BURN_PER_MISSING_DAMAGE = ability(ENERGY_BURN_CARD_ID).numbers.perMissingEnergyDamage;
 
-    // Card IDs that target opponent units when picked up (red neon on all visible opponents).
-    const OPPONENT_TARGETING_ITEM_IDS: readonly number[] = [SCYTHE_CARD_ID, ENERGY_BURN_CARD_ID];
+    const OPPONENT_TARGETING_ITEM_IDS: readonly number[] = cardIdsTargeting(AbilityTarget.OPPONENT_UNIT);
 
-    // 사기 전환 (Morale Conversion, cardId 35) — ITEM that targets YOUR OWN placed units.
-    // On drop onto an ally: gain floor(ally_hp / 5) field energy, and the ally goes to the
-    // tomb. Picking up the card highlights all placed allies with a green neon border.
     const MORALE_CONVERT_CARD_ID = 35;
 
-    // 넘쳐흐르는 사기 (Overflowing Morale, cardId 2) — SUPPORT that targets YOUR OWN placed units.
-    // On drop onto an ally: search the deck for death-energy (cardId 93), remove up to 2 of
-    // them, and attach that many energy to the target. Pickup highlights placed allies same
-    // as 사기 전환 (green neon); the card is SUPPORT not ITEM but the pickup branch below is
-    // cardId-gated, not kind-gated, so the list name is historical.
     const OVERFLOW_MORALE_CARD_ID = 2;
-    const DEATH_ENERGY_CARD_ID = 93;
-    const OVERFLOW_MORALE_MAX = 2;
+    const DEATH_ENERGY_CARD_ID = ability(OVERFLOW_MORALE_CARD_ID).numbers.pullCardId;
+    const OVERFLOW_MORALE_MAX = ability(OVERFLOW_MORALE_CARD_ID).numbers.maxPull;
 
-    // 차갑게 불타는 암흑 에너지 (151, ENERGY) — 유닛에게 해당 종족 에너지 1을 주고,
-    // 그 유닛의 모든 공격과 스킬에 '암흑 화염'과 '빙결'을 부여한다.
     const COLD_DARK_ENERGY_CARD_ID = 151;
-    const DARK_FLAME_TURN_DAMAGE = 5;
+    const DARK_FLAME_TURN_DAMAGE = ability(COLD_DARK_ENERGY_CARD_ID).numbers.darkFlameTurnDamage;
 
     // 이 에너지를 보유한 아군 유닛. 보유 개수가 아니라 보유 여부만 의미가 있다.
     const coldDarkEnergyHolders = new Set<HandEntry>();
@@ -2137,67 +2130,29 @@ async function main(container: HTMLElement): Promise<void> {
     const frozenTargets = new Set<number>();        // 빙결: 이번 1회만 행동 불가
     const freezeImmuneTargets = new Set<number>();  // 빙결이 풀린 직후 1턴간 재빙결 불가
 
-    // Death-energy (ENERGY kind) also targets placed allies when picked up — same
-    // green-neon highlight + hitAllyAt drop test, just with its own ENERGY branch below.
-    const ALLY_TARGETING_ITEM_IDS: readonly number[] = [
-        MORALE_CONVERT_CARD_ID,
-        OVERFLOW_MORALE_CARD_ID,
-        DEATH_ENERGY_CARD_ID,
-        COLD_DARK_ENERGY_CARD_ID,
-    ];
+    const ALLY_TARGETING_ITEM_IDS: readonly number[] = cardIdsTargeting(AbilityTarget.ALLY_UNIT);
 
-    // 망자의 늪 (Swamp of the Dead, cardId 20) — SUPPORT card. Pickup puts a green neon
-    // border on the WHOLE YOUR FIELD AREA. Drop onto your field → draw 3 from your deck.
     const SWAMP_OF_DEAD_CARD_ID = 20;
-    const SWAMP_DRAW_COUNT = 3;
+    const SWAMP_DRAW_COUNT = ability(SWAMP_OF_DEAD_CARD_ID).numbers.drawCount;
 
-    // 파멸의 계약 (Contract of Doom, cardId 25) — ITEM that targets the OPPONENT FIELD
-    // AS A WHOLE (neon border on the field area rectangle, not individual units). On drop
-    // it deals 15 dmg to every alive opponent unit + the opponent master body, and moves
-    // 1 card from the player's deck into the lost zone. No visual effect this step.
     const DOOM_CONTRACT_CARD_ID = 25;
-    const DOOM_CONTRACT_DAMAGE = 15;
+    const DOOM_CONTRACT_DAMAGE = ability(DOOM_CONTRACT_CARD_ID).numbers.damage;
     const FIELD_NEON_ENTITY_ID = -1;  // sentinel — distinct from any card.cardIndex
 
-    // 죽음의 대지 (Dead Lands, cardId 36) — ITEM that targets the OPPONENT FIELD AS A
-    // WHOLE (same red neon highlight pattern as 파멸의 계약). On drop it drains the
-    // opponent's field energy by DEAD_LANDS_DRAIN, flooring at 0. No unit damage.
     const DEAD_LANDS_CARD_ID = 36;
-    const DEAD_LANDS_DRAIN = 2;
+    const DEAD_LANDS_DRAIN = ability(DEAD_LANDS_CARD_ID).numbers.fieldEnergyDrain;
 
-    // 레오닉의 부름 (Leonik's Summon, cardId 30) — SUPPORT that lets the player hand-pick
-    // LEONIK_MAX_PICK UNIT cards from the deck whose grade is ≤ LEONIK_MAX_GRADE (HERO or
-    // below). Pickup highlights the whole YOUR FIELD with green neon (same as 망자의 늪).
-    // Drop on the field opens a picker popup; the Leonik card itself isn't consumed until
-    // the user clicks CONFIRM in the popup. On confirm: the two picked cards move from
-    // deck → hand, Leonik → tomb, and the deck is shuffled.
     const LEONIK_SUMMON_CARD_ID = 30;
-    const LEONIK_MAX_PICK = 2;
-    const LEONIK_MAX_GRADE = CardGrade.HERO;
+    const LEONIK_MAX_PICK = ability(LEONIK_SUMMON_CARD_ID).numbers.maxPick;
+    const LEONIK_MAX_GRADE = ability(LEONIK_SUMMON_CARD_ID).grade!;
 
-    // 시체 폭발 (Corpse Explosion, cardId 33) — ITEM (CardKind 2). Requires at least one
-    // UNDEAD ally on Your Field. Pickup paints green neon on UNDEAD allies only. Drop
-    // onto an UNDEAD ally → that ally is sacrificed (→ tomb). Game then enters a 2-pick
-    // targeting state with red neon on every visible opponent unit + opponent master
-    // body. The next two clicks on opponent/master each deal CORPSE_EXPLOSION_DAMAGE;
-    // the SAME TARGET can be picked twice (10 + 10 = 20 dmg on one). After the 2nd pick:
-    // corpse-explosion card → tomb, neons cleared, state exits.
     const CORPSE_EXPLOSION_CARD_ID = 33;
-    const CORPSE_EXPLOSION_DAMAGE = 10;
-    const CORPSE_EXPLOSION_PICKS = 2;
+    const CORPSE_EXPLOSION_DAMAGE = ability(CORPSE_EXPLOSION_CARD_ID).numbers.damage;
+    const CORPSE_EXPLOSION_PICKS = ability(CORPSE_EXPLOSION_CARD_ID).numbers.picks;
 
-    // 마검의 지배자 네더 블레이드 (Nether Blade, cardId 19) — UNIT, MYTHICAL.
-    // First passive: AUTO-FIRES on deployment (출격 시) — the unit briefly travels to
-    // the skill-panel slot (same trajectory used by 벨른's playAoESkill) and returns;
-    // ONLY THEN is AoE damage applied to every visible opponent UNIT (master EXCLUDED,
-    // skill-type 패시브 1 = "2" = EveryUnitField). No spell visuals yet — mythical-tier
-    // effect lands in a later pass; for now just the move-and-return motion + damage.
     const NETHER_BLADE_CARD_ID = 19;
-    const NETHER_BLADE_PASSIVE_DAMAGE = 10;
-    // Second passive: 패시브 2 = "1" (Single), 패시브2 데미지 = 20. Auto-enters target
-    // selection after passive 1 resolves. Picks an opponent unit OR the master; same
-    // skill-panel move-and-return motion fires after the user clicks; THEN damage.
-    const NETHER_BLADE_PASSIVE2_DAMAGE = 20;
+    const NETHER_BLADE_PASSIVE_DAMAGE = ability(NETHER_BLADE_CARD_ID).numbers.passive1Damage;
+    const NETHER_BLADE_PASSIVE2_DAMAGE = ability(NETHER_BLADE_CARD_ID).numbers.passive2Damage;
 
     type OpponentEntry = typeof opponentEntries[number];
 
@@ -2485,7 +2440,7 @@ async function main(container: HTMLElement): Promise<void> {
         const card = getCardById(target.card.cardId);
         const rawHp = card?.체력;
         const hpNum = typeof rawHp === 'number' ? rawHp : parseInt(String(rawHp ?? 0), 10) || 0;
-        const energyGain = Math.floor(hpNum / 5);
+        const energyGain = Math.floor(hpNum / ability(MORALE_CONVERT_CARD_ID).numbers.hpDividedBy);
 
         // Capture the source world position BEFORE removing the mesh.
         const sourceWorld = new THREE.Vector3(
