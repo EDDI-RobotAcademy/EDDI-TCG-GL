@@ -64,6 +64,8 @@ import {LeftClickOpponentMasterDetectRepository} from "../repository/LeftClickOp
 import {LeftClickOpponentMasterDetectRepositoryImpl} from "../repository/LeftClickOpponentMasterDetectRepositoryImpl";
 
 import {ActivePanelButtonType} from "../../battle/active_panel/entity/ActivePanelButtonType";
+import {SelectedActivePanelButtonStore} from "../../battle/active_panel/store/SelectedActivePanelButtonStore";
+import {SelectedActivePanelButtonStoreImpl} from "../../battle/active_panel/store/SelectedActivePanelButtonStoreImpl";
 import {GeneralAttackType} from "../../battle/ability/entity/GeneralAttackType";
 import {ActivePanelButtonHandler} from "../../battle/active_panel/handler/ActivePanelButtonHandler";
 import {BattleFieldCommonAreaType} from "../../common/type/BattleFieldCommonAreaType";
@@ -135,6 +137,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private yourFieldAttributeMarkManager: YourFieldAttributeMarkManager
 
     private activePanelAreaCache: ActivePanelAreaCache
+    private selectedActivePanelButtonStore: SelectedActivePanelButtonStore
     private activePanelButtonHandler: ActivePanelButtonHandler
 
     private leftMouseDown: boolean = false;
@@ -204,6 +207,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         this.yourFieldAttributeMarkManager = YourFieldAttributeMarkManager.getInstance()
 
         this.activePanelAreaCache = ActivePanelAreaCacheImpl.getInstance(camera, scene)
+        this.selectedActivePanelButtonStore = SelectedActivePanelButtonStoreImpl.getInstance()
         this.activePanelButtonHandler = ActivePanelButtonHandler.getInstance(camera, scene)
     }
 
@@ -289,27 +293,27 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             case "general":
                 this.neonBorderHandler.createOpponentNeonBorderList()
                 this.neonBorderHandler.createOpponentMasterNeonBorder()
-                this.activePanelAreaCache.setActivePanelButtonType(ActivePanelButtonType.GENERAL)
+                this.selectedActivePanelButtonStore.set(ActivePanelButtonType.GENERAL)
                 break;
             case "firstSkill":
                 console.log("firstSkill type")
                 if (skill1Type === SkillType.Single) {
                     this.neonBorderHandler.createOpponentNeonBorderList()
                     this.neonBorderHandler.createOpponentMasterNeonBorder()
-                    this.activePanelAreaCache.setActivePanelButtonType(ActivePanelButtonType.FIRST_SKILL)
+                    this.selectedActivePanelButtonStore.set(ActivePanelButtonType.FIRST_SKILL)
                 }
                 break;
             case "secondSkill":
                 console.log("secondSkill type")
                 if (skill2Type === SkillType.EveryUnitField) {
                     console.log("유닛 필드 전체 공격")
-                    this.activePanelAreaCache.setActivePanelButtonType(ActivePanelButtonType.SECOND_SKILL)
+                    this.selectedActivePanelButtonStore.set(ActivePanelButtonType.SECOND_SKILL)
                     this.activePanelButtonHandler.execute(ActivePanelButtonType.SECOND_SKILL, BattleFieldCommonAreaType.EVERY_OPPONENT_FIELD_UNIT)
                 }
                 break;
             case "details":
                 console.log("details type")
-                this.activePanelAreaCache.setActivePanelButtonType(ActivePanelButtonType.DETAILS)
+                this.selectedActivePanelButtonStore.set(ActivePanelButtonType.DETAILS)
                 if (this.currentMouseCursorDetectArea === MouseCursorDetectArea.YOUR_FIELD) {
                     this.activePanelButtonHandler.execute(ActivePanelButtonType.DETAILS, BattleFieldCommonAreaType.YOUR_FIELD_UNIT)
                 }
@@ -433,7 +437,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     async handleOpponentFieldClick(x: number, y: number): Promise<void> {
         console.log(`handleOpponentFieldClick()`);
 
-        const currentActivePanelButtonType = this.activePanelAreaCache.getActivePanelButtonType();
+        const currentActivePanelButtonType = this.selectedActivePanelButtonStore.get();
 
         if (currentActivePanelButtonType === ActivePanelButtonType.NONE) {
             console.warn("현재 ActivePanelButtonType이 선택되지 않았습니다.");
@@ -531,7 +535,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     }
 
     private async handleOpponentMasterClick(x: number, y: number): Promise<void> {
-        const currentActivePanelButtonType = this.activePanelAreaCache.getActivePanelButtonType();
+        const currentActivePanelButtonType = this.selectedActivePanelButtonStore.get();
 
         if (currentActivePanelButtonType === ActivePanelButtonType.NONE) {
             console.warn("현재 ActivePanelButtonType이 선택되지 않았습니다.");
