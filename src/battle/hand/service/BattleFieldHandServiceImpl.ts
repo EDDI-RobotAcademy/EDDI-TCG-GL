@@ -1,4 +1,5 @@
 import {BattleFieldHandService} from "./BattleFieldHandService";
+import { markOwnedTexture } from "../../../core/lifecycle/DisposableMeshStore";
 import {BattleFieldHandRepository} from "../repository/BattleFieldHandRepository";
 import {BattleFieldHandRepositoryImpl} from "../repository/BattleFieldHandRepositoryImpl";
 import {BattleFieldCardSceneCache} from "../../card/scene/cache/BattleFieldCardSceneCache";
@@ -346,7 +347,7 @@ export class BattleFieldHandServiceImpl implements BattleFieldHandService {
         const yOffset = canvas.height / 2 + 0.01030927835 * window.innerHeight;
         ctx.fillText(value.toString(), canvas.width / 2, yOffset);
 
-        const texture = new THREE.CanvasTexture(canvas);
+        const texture = markOwnedTexture(new THREE.CanvasTexture(canvas));
         texture.needsUpdate = true;
         const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
 

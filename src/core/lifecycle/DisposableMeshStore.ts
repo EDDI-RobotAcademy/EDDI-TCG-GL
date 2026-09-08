@@ -25,6 +25,18 @@ export interface DisposableMeshStore {
     dispose(): void;
 }
 
+// 이 그림은 만든 쪽이 책임진다는 표시.
+//
+// TextureManager 가 나눠 주는 그림은 여러 카드가 함께 쓴다. 한 장이 사라질 때 놓아주면
+// 남은 카드가 깨진다. 그래서 공유 그림에는 이 표시를 하지 않는다.
+//
+// 반면 전투 중에 글자를 그려 만든 그림은 그 메시 하나만 쓴다. 아무도 안 놓아주면
+// 숫자가 바뀔 때마다, 연출이 돌 때마다 쌓인다.
+export function markOwnedTexture<T extends THREE.Texture>(texture: T): T {
+    texture.userData.ownedByMesh = true;
+    return texture;
+}
+
 // 메시 하나를 화면에서 빼고 놓아준다.
 //
 // scene 을 받지 않는다. 카드 메시는 scene 에 바로 붙지 않고 Group 안에 들어가는데,
@@ -37,8 +49,17 @@ export function disposeMesh(mesh: THREE.Mesh): void {
 
     const material = mesh.material;
     if (Array.isArray(material)) {
-        material.forEach((m) => m.dispose());
-    } else {
-        material?.dispose();
+        material.forEach(disposeMaterial);
+    } else if (material) {
+        disposeMaterial(material);
     }
+}
+
+// 재질을 놓아준다. 그 재질이 물고 있는 그림은 만든 쪽이 책임지는 것일 때만 놓아준다.
+function disposeMaterial(material: THREE.Material): void {
+    const map = (material as THREE.Material & { map?: THREE.Texture | null }).map;
+    if (map?.userData?.ownedByMesh) {
+        map.dispose();
+    }
+    material.dispose();
 }

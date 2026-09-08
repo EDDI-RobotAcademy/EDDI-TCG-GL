@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { markOwnedTexture } from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // Scythe (죽음의 낫) — dark-power cut effect.
 // Phases:
@@ -312,7 +313,7 @@ export class ScytheCutEffect {
         ctx.fillRect(131, 166, 2, 14);
         ctx.fillRect(138, 166, 2, 14);
 
-        const texture = new THREE.CanvasTexture(canvas);
+        const texture = markOwnedTexture(new THREE.CanvasTexture(canvas));
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.LinearFilter;
         texture.generateMipmaps = false;
@@ -646,7 +647,7 @@ export class ScytheCutEffect {
         ctx.fillRect(156, 259, 6, 1);
         ctx.fillRect(157, 327, 6, 1);
 
-        const texture = new THREE.CanvasTexture(canvas);
+        const texture = markOwnedTexture(new THREE.CanvasTexture(canvas));
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.LinearFilter;
         texture.generateMipmaps = false;
@@ -1478,7 +1479,13 @@ export class ScytheCutEffect {
     private disposeMesh(mesh: THREE.Mesh): void {
         mesh.geometry.dispose();
         const mat = mesh.material;
-        if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
-        else (mat as THREE.Material).dispose();
+        // 글자를 그려 만든 그림은 이 메시만 쓴다. 표시가 있으면 함께 놓아준다.
+        const disposeOne = (m: THREE.Material) => {
+            const map = (m as THREE.Material & { map?: THREE.Texture | null }).map;
+            if (map?.userData?.ownedByMesh) map.dispose();
+            m.dispose();
+        };
+        if (Array.isArray(mat)) mat.forEach(disposeOne);
+        else disposeOne(mat as THREE.Material);
     }
 }

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { markOwnedTexture } from "../../../../../../core/lifecycle/DisposableMeshStore";
 
 import { NetherBladeChargeVisual } from "./NetherBladeChargeVisual";
 
@@ -137,7 +138,7 @@ export class NetherBladeSecondPassiveEffect {
         canvas.height = vh;
         const ctx = canvas.getContext('2d')!;
 
-        const tex = new THREE.CanvasTexture(canvas);
+        const tex = markOwnedTexture(new THREE.CanvasTexture(canvas));
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.minFilter = THREE.LinearFilter;
         tex.magFilter = THREE.LinearFilter;

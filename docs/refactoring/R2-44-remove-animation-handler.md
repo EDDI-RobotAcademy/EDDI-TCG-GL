@@ -1,4 +1,4 @@
-# [ETWGL-R2-44] 덱 편성 화면이 전투 연출을 만들지 않게 한다
+# [ETWGL-R2-44] 전투 연출을 전투 화면만 만들게 한다
 
 선행: R2-43 │ 후행: R2-45 │ 산출물: 없음 (삭제와 연결 변경) │ Type: Rule │ Domain: Battle Animation
 

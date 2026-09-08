@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { disposeMesh, markOwnedTexture } from "../../../core/lifecycle/DisposableMeshStore";
 
 import { CardJob } from "../../../card/job";
 import { CardKind } from "../../../card/kind";
@@ -120,12 +121,11 @@ export class HandCardRendererV2 {
             }
         }
         for (const child of toRemove) {
-            group.remove(child);
             if (child instanceof THREE.Mesh) {
-                child.geometry?.dispose();
-                const material = child.material;
-                if (Array.isArray(material)) material.forEach((m) => m.dispose());
-                else material?.dispose();
+                // 숫자가 바뀔 때마다 글자 그림을 새로 만든다. 옛것을 놓아주지 않으면 쌓인다.
+                disposeMesh(child);
+            } else {
+                group.remove(child);
             }
         }
 
@@ -201,7 +201,7 @@ export class HandCardRendererV2 {
         const yOffset = canvas.height / 2 + 0.01030927835 * window.innerHeight;
         ctx.fillText(value.toString(), canvas.width / 2, yOffset);
 
-        const texture = new THREE.CanvasTexture(canvas);
+        const texture = markOwnedTexture(new THREE.CanvasTexture(canvas));
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.magFilter = THREE.LinearFilter;
         texture.minFilter = THREE.LinearFilter;

@@ -1,4 +1,5 @@
 import {TextureManager} from "../../../../texture_manager/TextureManager";
+import { markOwnedTexture } from "../../../../core/lifecycle/DisposableMeshStore";
 import {CardJob} from "../../../../card/job";
 import * as THREE from "three";
 import {OpponentFieldService} from "./OpponentFieldService";
@@ -343,7 +344,7 @@ export class OpponentFieldServiceImpl implements OpponentFieldService {
         const yOffset = canvas.height / 2 + 0.01030927835 * window.innerHeight;
         ctx.fillText(value.toString(), canvas.width / 2, yOffset);
 
-        const texture = new THREE.CanvasTexture(canvas);
+        const texture = markOwnedTexture(new THREE.CanvasTexture(canvas));
         texture.needsUpdate = true;
         const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
 
