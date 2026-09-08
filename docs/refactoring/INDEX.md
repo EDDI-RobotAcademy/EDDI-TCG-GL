@@ -74,7 +74,7 @@
 | **R2-47** | Rendering | Battle Hand | [손패 페이지 버튼을 만드는 일을 렌더러로 옮긴다](R2-47-move-hand-page-buttons-to-renderer.md) | R2-27 | **완료** |
 | **R2-48** | Structure | Battle Active Panel | [눌린 버튼 상태를 갈라낸다](R2-48-split-selected-active-panel-button.md) | R2-28 | **완료** |
 | **R2-49** | Rule | Battle | [전투 상태를 한 덩어리로 담을 자리를 만든다](R2-49-make-battle-aggregate-place.md) | R2-24 | **완료** |
-| **R2-50** | Rule | Battle Turn | 턴 상태를 전투 덩어리 안으로 옮긴다 | R2-49 | 예정 |
+| **R2-50** | Rule | Battle Turn | [턴 상태를 전투 덩어리 안으로 옮긴다](R2-50-move-turn-into-battle.md) | R2-49 | **완료** |
 | **R2-51** | Rule | Battle Deck | 덱을 전투 덩어리 안으로 옮긴다 | R2-50 | 예정 |
 | **R2-52** | Rule | Battle Tomb | 무덤을 전투 덩어리 안으로 옮긴다 | R2-51 | 예정 |
 | **R2-53** | Rule | Battle LostZone | 로스트 존을 전투 덩어리 안으로 옮긴다 | R2-52 | 예정 |
@@ -119,6 +119,7 @@
 
 | Domain | 무엇 |
 |---|---|
+| Battle | 전투 한 판 그 자체. 판의 시작과 끝, 통째로 적고 되돌리는 것 |
 | Battle Deck | 전투 중 뽑는 더미. 순서가 있고 내가 순서를 못 정한다 |
 | Battle Tomb | 쌓이는 곳. **부활할 수 있다** |
 | Battle LostZone | 쌓이는 곳. **부활할 수 없다.** 특수 수단으로만 회수 |
