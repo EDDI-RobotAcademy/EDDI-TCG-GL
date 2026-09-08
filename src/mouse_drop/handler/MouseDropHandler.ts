@@ -88,15 +88,10 @@ export class MouseDropHandler {
         const positionId = willBePlacedYourFieldHandCard.getPositionId() ?? 0;
         const attributeMarkIdList = willBePlacedYourFieldHandCard.getAttributeMarkIdList() ?? [];
 
-        // handCardIndex 확인
-        const handCardIndex = this.battleFieldHandRepository.findCardIndexByCardSceneId(cardSceneId);
-        if (handCardIndex === null) {
-            throw new Error(`sceneId ${cardSceneId} 존재하지 않음`);
-        }
-        console.log(`handCardIndex: ${handCardIndex}`);
-
         // CardScene Mesh 가져오기
-        const willBePlaceYourFieldCardScene = this.battleFieldCardSceneCache.extractByIndex(handCardIndex);
+        // 카드 번호로 바로 꺼낸다. 전에는 손패에서 몇 번째인지를 세어 그 수로 꺼냈는데,
+        // 손패와 화면 저장소가 각자 구멍을 남기며 자라야만 그 수가 맞았다.
+        const willBePlaceYourFieldCardScene = this.battleFieldCardSceneCache.extractById(cardSceneId);
         const willBePlaceYourFieldCardSceneMesh = willBePlaceYourFieldCardScene?.getMesh();
 
         if (!willBePlaceYourFieldCardSceneMesh) {

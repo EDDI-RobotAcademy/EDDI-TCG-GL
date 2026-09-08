@@ -79,13 +79,13 @@
 | **R2-52** | Rule | Battle Tomb | [무덤을 전투 상태 안으로 옮긴다](R2-52-move-tomb-into-battle.md) | R2-51 | **완료** |
 | **R2-53** | Rule | Battle LostZone | [로스트 존을 전투 상태 안으로 옮긴다](R2-53-move-lost-zone-into-battle.md) | R2-52 | **완료** |
 | **R2-54** | Rule | Battle Unit | [필드에 나온 유닛을 전투 상태 안으로 옮긴다](R2-54-move-unit-into-battle.md) | R2-53 | **완료** |
-| **R2-55** | Rule | Battle Field | 필드에 놓인 카드를 전투 상태 안으로 옮긴다 | R2-54 | 예정 |
-| **R2-56** | Rule | Battle Hand | 손패를 전투 상태 안으로 옮긴다 | R2-55 | 예정 |
-| **R2-57** | Rule | Battle | 재접속 시 어떤 유닛의 상태를 복원할지 식별할 수 있도록 식별자 통합 | R2-56 | 예정 |
+| **R2-55** | Rule | Battle Card | [카드가 누구인지와 몇 번째인지를 갈라낸다](R2-55-split-identity-and-order.md) | R2-54 | **완료** |
+| **R2-56** | Rule | Battle Field | 필드에 놓인 카드를 전투 상태 안으로 옮긴다 | R2-55 | 예정 |
+| **R2-57** | Rule | Battle Hand | 손패를 전투 상태 안으로 옮긴다 | R2-56 | 예정 |
 | **R2-58** | Rule | Battle | 연출 도중 종료되어도 전투 상태가 일관되도록 처리 순서 분리 | R2-57 | 예정 |
 | **R2-59** | Rule | Battle | 카드를 추가할 때 코드 수정 없이 데이터로 정의할 수 있도록 능력 정의 구조 도입 | R2-58 | 예정 |
 | **R2-60** | Rule | Battle Turn | 턴 진행 규칙을 한 곳에서 읽을 수 있게 한다 | R2-50 | 예정 |
-| **R2-61** | Rendering | Battle | 화면 표시가 상태를 들고 있지 않게 한다 | R2-56 | 예정 |
+| **R2-61** | Rendering | Battle | 화면 표시가 상태를 들고 있지 않게 한다 | R2-57 | 예정 |
 | **R2-62** | Rule | Battle Active Panel | 액티브 패널이 화면과 카메라를 들지 않게 한다 | R2-44 | 예정 |
 | **R2-63** | Rendering | Battle Active Panel | 액티브 패널 버튼을 만드는 일을 렌더러로 옮긴다 | R2-62 | 예정 |
 | **R2-64** | Rule | Lobby | 로비의 게임 입장 버튼이 눌리도록 등록되지 않은 경로 정리 | — | 예정 |

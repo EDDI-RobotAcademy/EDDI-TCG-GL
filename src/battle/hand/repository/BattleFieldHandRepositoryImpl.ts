@@ -29,13 +29,12 @@ export class BattleFieldHandRepositoryImpl implements BattleFieldHandRepository 
 
     findById(id: number): BattleFieldHand | undefined {
         const hand = this.cardMap.get(id);
-        return hand && hand.cardId !== -1 ? hand : undefined;
+        return hand;
     }
 
     findAllWithPage(currentPage: number, cardsPerPage: number): BattleFieldHand[] {
         // 유효한 카드 배열 생성
-        const validCards = Array.from(this.cardMap.values())
-            .filter(hand => hand.cardId !== -1);
+        const validCards = Array.from(this.cardMap.values());
 
         // 페이지네이션 처리
         const startIndex = (currentPage - 1) * cardsPerPage;
@@ -44,27 +43,25 @@ export class BattleFieldHandRepositoryImpl implements BattleFieldHandRepository 
         return validCards.slice(startIndex, endIndex);
     }
 
+    // 손패에서 진짜로 지운다.
+    //
+    // 전에는 지우지 않고 cardId 를 -1 로 바꿔 묘비만 남겼다. 화면 저장소가 자리
+    // 순번을 열쇠로 쓰고 있어서, 손패도 같은 자리에 구멍을 남겨야 둘이 맞았다.
+    // 이제 화면 저장소가 카드 번호를 열쇠로 쓰므로 맞출 필요가 없다.
     deleteById(id: number): boolean {
-        const hand = this.cardMap.get(id);
-        if (hand) {
-            hand.cardId = -1; // 인덱스 유지, cardId를 -1로 설정
-            return true;
-        }
-        return false;
+        return this.cardMap.delete(id);
     }
 
     deleteAll(): void {
-        this.cardMap.forEach(hand => hand.cardId = -1); // 전체 삭제 시 모든 카드의 cardId를 -1로 변경
+        this.cardMap.clear();
     }
 
     countActiveCards(): number {
-        return Array.from(this.cardMap.values())
-            .filter(hand => hand.cardId !== -1)
-            .length;
+        return this.cardMap.size;
     }
 
     findByCardSceneId(cardSceneId: number): BattleFieldHand | null {
-        const hand = Array.from(this.cardMap.values()).find(hand => hand.cardSceneId === cardSceneId && hand.cardId !== -1);
+        const hand = Array.from(this.cardMap.values()).find(hand => hand.cardSceneId === cardSceneId);
         return hand || null;
     }
 
@@ -76,23 +73,5 @@ export class BattleFieldHandRepositoryImpl implements BattleFieldHandRepository 
     findPositionIdByCardSceneId(cardSceneId: number): number | null {
         const hand = this.findByCardSceneId(cardSceneId);
         return hand ? hand.positionId : null;
-    }
-
-    findCardIndexByCardSceneId(cardSceneId: number): number | null {
-        console.log("==== cardMap 전체 상태 ====");
-        this.cardMap.forEach((value, key) => {
-            console.log(`key: ${key}, value:`, value);
-        });
-        console.log("===========================");
-
-        // const cardArray = Array.from(this.cardMap.values()).filter(card => card.cardId !== -1);
-        // console.log("유효한 카드 배열:", cardArray);
-
-        const cardArray = Array.from(this.cardMap.values())
-
-        const index = cardArray.findIndex(card => card.cardSceneId === cardSceneId);
-        console.log(`찾는 cardSceneId: ${cardSceneId}, 찾은 index: ${index}`);
-
-        return index !== -1 ? index : null;
     }
 }
