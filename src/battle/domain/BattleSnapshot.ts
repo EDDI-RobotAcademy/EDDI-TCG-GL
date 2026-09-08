@@ -5,8 +5,11 @@ import {TurnOwner} from "./TurnOwner";
 // 재접속했을 때 이것 하나만 있으면 전투를 그대로 되돌릴 수 있어야 한다.
 // 그래서 화면에 그려지는 것은 여기에 들어오지 않는다. 값만 들어온다.
 //
-// 덱, 무덤, 로스트 존, 유닛, 필드, 손패가 R2-51 부터 하나씩 여기에 붙는다.
+// 무덤, 로스트 존, 유닛, 필드, 손패가 R2-52 부터 하나씩 여기에 붙는다.
 export interface BattleSnapshot {
     readonly battleId: number;
     readonly turnOwner: TurnOwner;
+    // 덱은 순서가 그대로여야 한다. 순서가 어긋나면 다음에 뽑히는 카드가 달라진다.
+    readonly yourDeckCards: readonly number[];
+    readonly opponentDeckCards: readonly number[];
 }

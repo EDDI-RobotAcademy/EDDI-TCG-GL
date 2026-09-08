@@ -73,14 +73,14 @@
 | **R2-46** | Rendering | Platform | [전투 중 만들어 쓰는 글자 그림의 정리 시점 정의](R2-46-owned-texture-disposal.md) | R2-36 | **완료** |
 | **R2-47** | Rendering | Battle Hand | [손패 페이지 버튼을 만드는 일을 렌더러로 옮긴다](R2-47-move-hand-page-buttons-to-renderer.md) | R2-27 | **완료** |
 | **R2-48** | Structure | Battle Active Panel | [눌린 버튼 상태를 갈라낸다](R2-48-split-selected-active-panel-button.md) | R2-28 | **완료** |
-| **R2-49** | Rule | Battle | [전투 상태를 한 덩어리로 담을 자리를 만든다](R2-49-make-battle-aggregate-place.md) | R2-24 | **완료** |
-| **R2-50** | Rule | Battle Turn | [턴 상태를 전투 덩어리 안으로 옮긴다](R2-50-move-turn-into-battle.md) | R2-49 | **완료** |
-| **R2-51** | Rule | Battle Deck | 덱을 전투 덩어리 안으로 옮긴다 | R2-50 | 예정 |
-| **R2-52** | Rule | Battle Tomb | 무덤을 전투 덩어리 안으로 옮긴다 | R2-51 | 예정 |
-| **R2-53** | Rule | Battle LostZone | 로스트 존을 전투 덩어리 안으로 옮긴다 | R2-52 | 예정 |
-| **R2-54** | Rule | Battle Unit | 필드에 나온 유닛을 전투 덩어리 안으로 옮긴다 | R2-53 | 예정 |
-| **R2-55** | Rule | Battle Field | 필드에 놓인 카드를 전투 덩어리 안으로 옮긴다 | R2-54 | 예정 |
-| **R2-56** | Rule | Battle Hand | 손패를 전투 덩어리 안으로 옮긴다 | R2-55 | 예정 |
+| **R2-49** | Rule | Battle | [전투 상태를 한 곳에 모을 자리를 만든다](R2-49-make-battle-aggregate-place.md) | R2-24 | **완료** |
+| **R2-50** | Rule | Battle Turn | [턴 상태를 전투 상태 안으로 옮긴다](R2-50-move-turn-into-battle.md) | R2-49 | **완료** |
+| **R2-51** | Rule | Battle Deck | [덱을 전투 상태 안으로 옮긴다](R2-51-move-deck-into-battle.md) | R2-50 | **완료** |
+| **R2-52** | Rule | Battle Tomb | 무덤을 전투 상태 안으로 옮긴다 | R2-51 | 예정 |
+| **R2-53** | Rule | Battle LostZone | 로스트 존을 전투 상태 안으로 옮긴다 | R2-52 | 예정 |
+| **R2-54** | Rule | Battle Unit | 필드에 나온 유닛을 전투 상태 안으로 옮긴다 | R2-53 | 예정 |
+| **R2-55** | Rule | Battle Field | 필드에 놓인 카드를 전투 상태 안으로 옮긴다 | R2-54 | 예정 |
+| **R2-56** | Rule | Battle Hand | 손패를 전투 상태 안으로 옮긴다 | R2-55 | 예정 |
 | **R2-57** | Rule | Battle | 재접속 시 어떤 유닛의 상태를 복원할지 식별할 수 있도록 식별자 통합 | R2-56 | 예정 |
 | **R2-58** | Rule | Battle | 연출 도중 종료되어도 전투 상태가 일관되도록 처리 순서 분리 | R2-57 | 예정 |
 | **R2-59** | Rule | Battle | 카드를 추가할 때 코드 수정 없이 데이터로 정의할 수 있도록 능력 정의 구조 도입 | R2-58 | 예정 |
@@ -157,7 +157,7 @@
 > 순수 도메인 테스트 러너(R2-1 To-do)가 같은 갈래로 들어온다.
 
 > **폴더를 옮기는 것만으로는 고칠 곳이 줄지 않는다.** R2-6 에서 재보고 확인했다.
-> 이득은 R2-49 부터 R2-56 사이에 전투 상태를 한 덩어리로 묶을 때 나온다. 옮기는 것은 그 준비다.
+> 이득은 R2-49 부터 R2-56 사이에 전투 상태를 한 곳에 모을 때 나온다. 옮기는 것은 그 준비다.
 
 > **착수 직전에 다시 센다.** 계획 때 적은 파일 수가 실제와 절반쯤 달랐다.
 > 이름이 눈에 띄는 폴더가 큰 폴더가 아니다. 자세한 것은 이동 계획표에 있다.

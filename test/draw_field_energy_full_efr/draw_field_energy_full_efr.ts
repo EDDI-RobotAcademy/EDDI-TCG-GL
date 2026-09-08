@@ -25,7 +25,6 @@ import { OpponentFieldRendererV2 } from "../../src/battle/field/opponent/rendere
 import { OpponentFieldMapRepositoryImpl } from "../../src/battle/field/opponent/map/repository/OpponentFieldMapRepositoryImpl";
 
 import { BattleFieldHandMapRepositoryImpl } from "../../src/battle/hand/repository/BattleFieldHandMapRepositoryImpl";
-import { YourDeckRepositoryImpl } from "../../src/battle/zone/your_deck/repository/YourDeckRepositoryImpl";
 import { HandCard } from "../../src/battle/hand/entity/HandCard";
 import { HandEntry } from "../../src/battle/hand/renderer/BattleFieldHandRendererV2";
 import { createDefaultHandCardFrame } from "../../src/battle/hand/frame/HandCardFrame";
@@ -123,7 +122,6 @@ import { OpponentTombRepositoryImpl } from "../../src/battle/zone/opponent_tomb/
 import { createDefaultOpponentLostZonePopupFrame } from "../../src/battle/zone/opponent_lost_zone/frame/OpponentLostZonePopupFrame";
 import { OpponentLostZonePanelRendererV2 } from "../../src/battle/zone/opponent_lost_zone/renderer/OpponentLostZonePanelRendererV2";
 import { OpponentLostZoneRepositoryImpl } from "../../src/battle/zone/opponent_lost_zone/repository/OpponentLostZoneRepositoryImpl";
-import { OpponentDeckRepositoryImpl } from "../../src/battle/zone/opponent_deck/repository/OpponentDeckRepositoryImpl";
 
 import {
     createDefaultTurnEndButtonFrame,
@@ -328,10 +326,16 @@ async function main(container: HTMLElement): Promise<void> {
     const handCardIds = handMapRepo.getBattleFieldHandList();
     const hand = resolveCards(handCardIds, 'hand');
 
+    // 전투 한 판을 시작한다. 턴과 덱은 이 안에 들어 있다.
+    const battle = BattleRepositoryImpl.getInstance().start();
+
+    // 섞을 때 쓸 씨앗을 만든다. 도메인 안에서는 무작위를 못 쓰므로 밖에서 만들어 넣는다.
+    // 씨앗을 적어 두면 같은 순서를 다시 만들 수 있다. 재접속과 다시 보기에 그것이 필요하다.
+    const makeShuffleSeed = (): number => Math.floor(Math.random() * 0xffffffff);
+
     // Draw pile — remaining 35 cards after subtracting 1 of each of (2, 19, 26, 27, 93) from
     // the 40-card deck spec. Array order is draw order (index 0 = next draw).
-    const deckRepo = YourDeckRepositoryImpl.getInstance();
-    deckRepo.seed([
+    battle.seedYourDeck([
         8, 8, 8,          // 죽음의 낫 x3 (legendary)
         9, 9,             // 에너지 번 x2 (hero)
         25, 25, 25,       // 파멸의 계약 x3 (hero)
@@ -450,8 +454,6 @@ async function main(container: HTMLElement): Promise<void> {
     const turnEndButtonRenderer = new TurnEndButtonRendererV2();
     const turnEndButtonGroup = await turnEndButtonRenderer.build(turnEndButtonFrame);
     scene.add(turnEndButtonGroup);
-    // 전투 한 판을 시작한다. 턴은 이 안에 들어 있다.
-    const battle = BattleRepositoryImpl.getInstance().start();
     // Declared here (not next to the 'f' handler that increments it) because the drop
     // handler stamps deployedTurn with it and the right-click handler compares against it —
     // both run earlier in the file.
@@ -480,11 +482,11 @@ async function main(container: HTMLElement): Promise<void> {
     });
 
     // ── OPPONENT DECK — PILOT-ONLY DUMMY SEED ──
-    // OpponentDeckRepositoryImpl starts empty. In production, a network handler will seed
+    // 상대 덱은 비어서 시작한다. 실제 대전에서는 서버가 준 것으로 채운다.
     // it with the server-provided deck snapshot — the server is the authority on opponent
     // deck contents. Because the dummy seed lives HERE (in the pilot) rather than inside
     // the repository itself, it never leaks into production callers that reuse the repo.
-    OpponentDeckRepositoryImpl.getInstance().seed([
+    battle.seedOpponentDeck([
         31, 32, 33, 35, 36, 26, 27, 25, 30, 20, 2, 8, 9, 93, 151,
     ]);
 
@@ -2350,7 +2352,7 @@ async function main(container: HTMLElement): Promise<void> {
     //   2) 15 dmg to the opponent master body
     //   3) Draw 1 card from the OPPONENT's deck → push to the OPPONENT's lost zone.
     //      (Not Your deck. In production this source will be the server-driven opponent
-    //      deck snapshot; see OpponentDeckRepositoryImpl's comment.)
+    //      deck snapshot.)
     // State mutations are timed to the effect's BOOM phase (~1400ms in) so the numbers
     // change on-screen the same beat the grimoire explodes.
     const applyStateChangesForDoomContract = (): void => {
@@ -2373,11 +2375,10 @@ async function main(container: HTMLElement): Promise<void> {
 
         setOpponentMasterHp(opponentMasterHp - DOOM_CONTRACT_DAMAGE, 'doom contract');
 
-        const oppDeck = OpponentDeckRepositoryImpl.getInstance();
-        const drawn = oppDeck.drawCard();
+        const drawn = battle.drawFromOpponentDeck();
         if (drawn != null) {
             OpponentLostZoneRepositoryImpl.getInstance().addCard(drawn);
-            console.log(`  opponent deck → opponent lost zone: cardId ${drawn} (opp deck remaining: ${oppDeck.getRemainingCount()})`);
+            console.log(`  opponent deck → opponent lost zone: cardId ${drawn} (opp deck remaining: ${battle.getOpponentDeckRemainingCount()})`);
         } else {
             console.log(`  opponent deck empty — nothing to send to lost zone`);
         }
@@ -2401,7 +2402,7 @@ async function main(container: HTMLElement): Promise<void> {
     const applySwampEffect = async (): Promise<void> => {
         const drawnIds: number[] = [];
         for (let i = 0; i < SWAMP_DRAW_COUNT; i++) {
-            const id = deckRepo.drawCard();
+            const id = battle.drawFromYourDeck();
             if (id == null) break;
             drawnIds.push(id);
         }
@@ -2537,9 +2538,9 @@ async function main(container: HTMLElement): Promise<void> {
     // gets consumed (moved to tomb) regardless of how many energies were pulled — matches
     // the card's passive text "덱에서 찾아 최대 0~2개를 선택하여 유닛에게 수급".
     const applyOverflowMoraleEffect = async (target: HandEntry): Promise<void> => {
-        const pulled = deckRepo.drawMatching(DEATH_ENERGY_CARD_ID, OVERFLOW_MORALE_MAX);
+        const pulled = battle.drawMatchingFromYourDeck(DEATH_ENERGY_CARD_ID, OVERFLOW_MORALE_MAX);
         const attached = pulled.length;
-        console.log(`[overflow-morale] target cardId=${target.card.cardId} → pulled ${attached} death-energy from deck (deck remaining=${deckRepo.getRemainingCount()})`);
+        console.log(`[overflow-morale] target cardId=${target.card.cardId} → pulled ${attached} death-energy from deck (deck remaining=${battle.getYourDeckRemainingCount()})`);
 
         // Deck world-position — same convention as SwampEffect (screen 0.81, 0.87),
         // sitting left of the Field Energy HUD.
@@ -2893,7 +2894,7 @@ async function main(container: HTMLElement): Promise<void> {
 
     const collectLeonikEligibleIndices = (): number[] => {
         const out: number[] = [];
-        const cards = deckRepo.getCards();
+        const cards = battle.getYourDeckCards();
         for (let i = 0; i < cards.length; i++) {
             const cardData = getCardById(cards[i]);
             if (!cardData) continue;
@@ -2950,7 +2951,7 @@ async function main(container: HTMLElement): Promise<void> {
     const buildLeonikPopupForCurrentPage = async (): Promise<THREE.Group> => {
         const start = leonikPopupPage * leonikCardsPerPage;
         const pageDeckIndices = leonikEligibleDeckIndices.slice(start, start + leonikCardsPerPage);
-        const deckCards = deckRepo.getCards();
+        const deckCards = battle.getYourDeckCards();
         const pageCardIds = pageDeckIndices.map((di) => deckCards[di]);
         const resolved = resolveCards(pageCardIds, 'leonik');
         const group = await leonikPopupRenderer.build(leonikPopupFrame, resolved);
@@ -3004,7 +3005,7 @@ async function main(container: HTMLElement): Promise<void> {
             // Still consume the card per spec (card is used regardless of result).
             const idx = handOrder.indexOf(sourceEntry);
             if (idx >= 0) consumeHandCard(sourceEntry, idx);
-            deckRepo.shuffle();
+            battle.shuffleYourDeck(makeShuffleSeed());
             leonikSourceEntry = null;
             reflowHandAndPlaced();
             return;
@@ -3095,7 +3096,7 @@ async function main(container: HTMLElement): Promise<void> {
             .sort((a, b) => b - a);
         const pulledIds: number[] = [];
         for (const deckIdx of selectedDeckIndices) {
-            const id = deckRepo.removeAt(deckIdx);
+            const id = battle.removeFromYourDeckAt(deckIdx);
             if (id != null) pulledIds.push(id);
         }
 
@@ -3140,10 +3141,10 @@ async function main(container: HTMLElement): Promise<void> {
         // After effect fully resolves: Leonik → tomb + deck shuffle.
         const idx = handOrder.indexOf(sourceEntry);
         if (idx >= 0) consumeHandCard(sourceEntry, idx);
-        deckRepo.shuffle();
+        battle.shuffleYourDeck(makeShuffleSeed());
         reflowHandAndPlaced();
 
-        console.log(`[leonik] pulled ${pulledIds.join(',')} from deck → hand; leonik → tomb; deck shuffled; remaining=${deckRepo.getRemainingCount()}`);
+        console.log(`[leonik] pulled ${pulledIds.join(',')} from deck → hand; leonik → tomb; deck shuffled; remaining=${battle.getYourDeckRemainingCount()}`);
     };
 
     // Pilot C — click / drag / drop
@@ -3461,7 +3462,7 @@ async function main(container: HTMLElement): Promise<void> {
     // New cards land at the end of handOrder; pagination reflow hides overflow on other pages.
     document.addEventListener('keydown', async (e: KeyboardEvent) => {
         if (e.key !== 'd' && e.key !== 'D') return;
-        const drawnId = deckRepo.drawCard();
+        const drawnId = battle.drawFromYourDeck();
         if (drawnId == null) {
             console.log('[deck] empty — nothing to draw');
             return;
@@ -3472,7 +3473,7 @@ async function main(container: HTMLElement): Promise<void> {
         const newEntry = await handRenderer.appendCard(handGroup, newCard, handCardFrame);
         handOrder.push(newEntry);
         reflowHandAndPlaced();
-        console.log(`[deck] drew cardId=${drawnId}. Remaining: ${deckRepo.getRemainingCount()}`);
+        console.log(`[deck] drew cardId=${drawnId}. Remaining: ${battle.getYourDeckRemainingCount()}`);
     });
 
     // Pilot D-1 — field-energy HUD overlays
@@ -3729,14 +3730,14 @@ async function main(container: HTMLElement): Promise<void> {
         timerRenderer.reset(timerElement);
 
         // Turn-start deck draw — mirrors the 'd'-key handler but runs automatically.
-        const drawnId = deckRepo.drawCard();
+        const drawnId = battle.drawFromYourDeck();
         if (drawnId != null) {
             const resolved = resolveCards([drawnId], 'turn-start-draw');
             if (resolved.length > 0) {
                 const newEntry = await handRenderer.appendCard(handGroup, resolved[0], handCardFrame);
                 handOrder.push(newEntry);
                 reflowHandAndPlaced();
-                console.log(`[deck] turn-start drew cardId=${drawnId}. Remaining: ${deckRepo.getRemainingCount()}`);
+                console.log(`[deck] turn-start drew cardId=${drawnId}. Remaining: ${battle.getYourDeckRemainingCount()}`);
             }
         } else {
             console.log(`[deck] empty — no turn-start draw`);
