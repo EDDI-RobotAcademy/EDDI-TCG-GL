@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { createDefaultHandPageButtonsFrame } from "../../battle/hand/page/frame/HandPageButtonsFrame";
+import { HandPageButtonsRendererV2 } from "../../battle/hand/page/renderer/HandPageButtonsRendererV2";
 
 import { BackgroundServiceImpl } from "../../background/service/BackgroundServiceImpl";
 import { YourFieldAreaServiceImpl } from "../../battle/field/your/area/service/YourFieldAreaServiceImpl";
@@ -8,7 +10,6 @@ import { OpponentFieldServiceImpl } from "../../battle/field/opponent/service/Op
 import { BattleFieldHandMapRepositoryImpl } from "../../battle/hand/repository/BattleFieldHandMapRepositoryImpl";
 import { BattleFieldHandSceneRepository } from "../../battle_field_hand/deprecated_repository/BattleFieldHandSceneRepository";
 import { OpponentFieldMapRepositoryImpl } from "../../battle/field/opponent/map/repository/OpponentFieldMapRepositoryImpl";
-import { BattleFieldHandPageServiceImpl } from "../../battle/hand/page/service/BattleFieldHandPageServiceImpl";
 import { NonBackgroundImage } from "../../shape/image/NonBackgroundImage";
 import { UnitCardGenerator } from "../../card/unit/generate";
 import { SupportCardGenerator } from "../../card/support/generate";
@@ -20,7 +21,7 @@ export class BattleFieldController {
     private battleFieldHandMapRepository = BattleFieldHandMapRepositoryImpl.getInstance();
     private battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance();
     private opponentFieldMapRepository = OpponentFieldMapRepositoryImpl.getInstance();
-    private battleFieldHandPageService = BattleFieldHandPageServiceImpl.getInstance();
+    private readonly handPageButtonsRenderer = new HandPageButtonsRendererV2();
 
     constructor(
         private scene: THREE.Scene,
@@ -37,8 +38,7 @@ export class BattleFieldController {
         this.addOpponentField();
         await this.addYourHandUnitList();
         await this.addOpponentFieldUnitList();
-        await this.addYourHandPagePrevButton();
-        await this.addYourHandPageNextButton();
+        await this.addYourHandPageButtons();
     }
 
     private async addBackground(): Promise<void> {
@@ -72,14 +72,11 @@ export class BattleFieldController {
         this.scene.add(opponentFieldAreaMesh);
     }
 
-    private async addYourHandPagePrevButton(): Promise<void> {
-        const createdPrevButton = await this.battleFieldHandPageService.createPrevButton();
-        this.scene.add(createdPrevButton);
-    }
-
-    private async addYourHandPageNextButton(): Promise<void> {
-        const createdNextButton = await this.battleFieldHandPageService.createNextButton();
-        this.scene.add(createdNextButton);
+    // 페이지 넘김 버튼은 렌더러가 만든다. 이전과 다음을 한 덩어리로 준다.
+    private async addYourHandPageButtons(): Promise<void> {
+        const frame = createDefaultHandPageButtonsFrame();
+        const group = await this.handPageButtonsRenderer.build(frame);
+        this.scene.add(group);
     }
 
     private async addYourHandUnitList(): Promise<void> {

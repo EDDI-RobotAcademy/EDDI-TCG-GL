@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { createDefaultHandPageButtonsFrame } from "../../src/battle/hand/page/frame/HandPageButtonsFrame";
+import { HandPageButtonsRendererV2 } from "../../src/battle/hand/page/renderer/HandPageButtonsRendererV2";
 
 import battleFieldMusic from '@resource/music/battle_field/battle-field.mp3';
 import {TextureManager} from "../../src/texture_manager/TextureManager";
@@ -36,8 +38,6 @@ import {OpponentFieldServiceImpl} from "../../src/battle/field/opponent/service/
 import {RightClickDetectServiceImpl} from "../../src/right_click_detect/service/RightClickDetectServiceImpl";
 import {RightClickDetectService} from "../../src/right_click_detect/service/RightClickDetectService";
 import {LeftClickedArea} from "../../src/left_click_detect/entity/LeftClickedArea";
-import {BattleFieldHandPageServiceImpl} from "../../src/battle/hand/page/service/BattleFieldHandPageServiceImpl";
-import {BattleFieldHandPageService} from "../../src/battle/hand/page/service/BattleFieldHandPageService";
 
 declare const TWEEN: {
     Tween: any;
@@ -66,7 +66,7 @@ export class TCGJustTestBattleFieldView {
     private battleFieldHandService = BattleFieldHandServiceImpl.getInstance()
     private battleFieldHandMapRepository = BattleFieldHandMapRepositoryImpl.getInstance()
     private battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance()
-    private battleFieldHandPageService: BattleFieldHandPageService;
+    private readonly handPageButtonsRenderer = new HandPageButtonsRendererV2();
 
     private opponentFieldMapRepository = OpponentFieldMapRepositoryImpl.getInstance()
     private opponentFieldService = OpponentFieldServiceImpl.getInstance()
@@ -105,8 +105,6 @@ export class TCGJustTestBattleFieldView {
         this.simulationBattleFieldContainer.appendChild(this.renderer.domElement);
 
         this.userWindowSize = UserWindowSize.getInstance()
-
-        this.battleFieldHandPageService = BattleFieldHandPageServiceImpl.getInstance()
 
         const aspect = window.innerWidth / window.innerHeight;
         const viewSize = window.innerHeight;
@@ -280,13 +278,13 @@ export class TCGJustTestBattleFieldView {
     }
 
     private async addYourHandPagePrevButton(): Promise<void> {
-        const createadPrevButton = await this.battleFieldHandPageService.createPrevButton();
-        this.scene.add(createadPrevButton);
+        // 페이지 넘김 버튼은 렌더러가 만든다.
+        const handPageButtonsFrame = createDefaultHandPageButtonsFrame();
+        const handPageButtonsGroup = await this.handPageButtonsRenderer.build(handPageButtonsFrame);
+        this.scene.add(handPageButtonsGroup);
     }
 
     private async addYourHandPageNextButton(): Promise<void> {
-        const createadNextButton = await this.battleFieldHandPageService.createNextButton();
-        this.scene.add(createadNextButton);
     }
 
     private async addYourHandUnitList(): Promise<void> {

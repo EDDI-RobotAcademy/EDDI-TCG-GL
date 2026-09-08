@@ -71,7 +71,7 @@
 | **R2-44** | Rule | Battle Animation | [전투 연출을 전투 화면만 만들게 한다](R2-44-remove-animation-handler.md) | R2-43 | **완료** |
 | **R2-45** | Rendering | Battle 공용 | ~~[화면 자원 정리 실제 적용](R2-45-discarded-dispose-wiring.md)~~ | R2-36 | **폐기** |
 | **R2-46** | Rendering | Platform | [전투 중 만들어 쓰는 글자 그림의 정리 시점 정의](R2-46-owned-texture-disposal.md) | R2-36 | **완료** |
-| **R2-47** | Rendering | Battle Hand | 손패 페이지 버튼을 만드는 일을 렌더러로 옮긴다 | R2-27 | 예정 |
+| **R2-47** | Rendering | Battle Hand | [손패 페이지 버튼을 만드는 일을 렌더러로 옮긴다](R2-47-move-hand-page-buttons-to-renderer.md) | R2-27 | **완료** |
 | **R2-48** | Structure | Battle Active Panel | 눌린 버튼 상태를 갈라낸다 | R2-28 | 예정 |
 | **R2-49** | Rule | Battle | 전투 상태를 하나의 일관된 단위로 관리하도록 Battle 애그리게이트 추출 | R2-24 | 예정 |
 | **R2-50** | Rule | Battle | 재접속 시 어떤 유닛의 상태를 복원할지 식별할 수 있도록 식별자 통합 | R2-49 | 예정 |

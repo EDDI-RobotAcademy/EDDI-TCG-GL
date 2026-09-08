@@ -67,8 +67,7 @@ export class HandPageButtonsRendererV2 implements FrameRenderer<HandPageButtonsF
         const w = window.innerWidth;
         const h = window.innerHeight;
 
-        const baseWidth = Math.abs(spec.endXPercent - spec.startXPercent) * w;
-        const baseHeight = Math.abs(spec.endYPercent - spec.startYPercent) * h;
+        const { width: baseWidth, height: baseHeight } = this.computeSize(spec, w, h);
 
         const material = new THREE.MeshBasicMaterial({
             map: texture,
@@ -92,12 +91,33 @@ export class HandPageButtonsRendererV2 implements FrameRenderer<HandPageButtonsF
         const { entries } = group.userData as HandPageButtonsUserData;
         for (const entry of entries) {
             const center = this.computeCenter(entry.spec, viewportWidth, viewportHeight);
-            const width = Math.abs(entry.spec.endXPercent - entry.spec.startXPercent) * viewportWidth;
-            const height = Math.abs(entry.spec.endYPercent - entry.spec.startYPercent) * viewportHeight;
+            const { width, height } = this.computeSize(entry.spec, viewportWidth, viewportHeight);
 
-            entry.mesh.scale.set(width / entry.baseWidth, height / entry.baseHeight, 1);
+            // 배율을 쓰지 않고 판을 다시 만든다. 배율은 만들 때 크기를 기준으로 삼는데,
+            // 만드는 시점과 자리를 잡는 시점의 화면 크기가 다르면 그 기준이 어긋나고
+            // 그 뒤로 계속 어긋난 채 곱해진다.
+            entry.mesh.geometry.dispose();
+            entry.mesh.geometry = new THREE.PlaneGeometry(width, height);
+            entry.mesh.scale.set(1, 1, 1);
             entry.mesh.position.set(center.getX(), center.getY(), 0);
+            entry.baseWidth = width;
+            entry.baseHeight = height;
         }
+    }
+
+    // 크기는 두 모서리 사이의 거리다. 부호를 남기면 판이 뒤집혀 그림이 180도 돌아간다.
+    //
+    // 옛 방식은 시작점에서 끝점을 빼서 음수를 넘겼다. 그래서 옛 방식으로 그린 화면은
+    // 화살표가 거꾸로 보인다. 이전 버튼과 다음 버튼 그림이 좌우 대칭이라 서로 바뀐 것처럼
+    // 보일 뿐 티가 잘 안 난다.
+    private computeSize(
+        spec: HandPageButtonSpec,
+        viewportWidth: number,
+        viewportHeight: number,
+    ): { width: number; height: number } {
+        const width = Math.abs(spec.endXPercent - spec.startXPercent) * viewportWidth;
+        const height = Math.abs(spec.endYPercent - spec.startYPercent) * viewportHeight;
+        return { width, height };
     }
 
     private computeCenter(
