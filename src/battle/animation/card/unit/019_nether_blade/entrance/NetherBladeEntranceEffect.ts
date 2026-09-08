@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { markOwnedTexture } from "../../../../../../core/lifecycle/DisposableMeshStore";
 
 // 마검의 지배자 네더 블레이드 — DEPLOY entrance scene. Plays ONCE on initial deployment,
 // before the passive chain (AoE → single-target picker) starts. Per the user's spec
@@ -1151,7 +1152,7 @@ export class NetherBladeEntranceEffect {
             particles.push(p);
         }
 
-        const tex = new THREE.CanvasTexture(canvas);
+        const tex = markOwnedTexture(new THREE.CanvasTexture(canvas));
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.minFilter = THREE.LinearFilter;
         tex.magFilter = THREE.LinearFilter;
@@ -1808,7 +1809,7 @@ export class NetherBladeEntranceEffect {
     // ═══════════════════════════════════════════════════════════════════════════════
     private createDemonFaceMesh(size: number): THREE.Mesh {
         const canvas = this.createSwordCanvas();
-        const tex = new THREE.CanvasTexture(canvas);
+        const tex = markOwnedTexture(new THREE.CanvasTexture(canvas));
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.minFilter = THREE.LinearFilter;
         tex.magFilter = THREE.LinearFilter;
@@ -2275,7 +2276,13 @@ export class NetherBladeEntranceEffect {
     private disposeMesh(mesh: THREE.Mesh): void {
         mesh.geometry?.dispose();
         const material = mesh.material;
-        if (Array.isArray(material)) material.forEach((m) => m.dispose());
-        else material?.dispose();
+        // 글자를 그려 만든 그림은 이 메시만 쓴다. 표시가 있으면 함께 놓아준다.
+        const disposeOne = (m: THREE.Material) => {
+            const map = (m as THREE.Material & { map?: THREE.Texture | null }).map;
+            if (map?.userData?.ownedByMesh) map.dispose();
+            m.dispose();
+        };
+        if (Array.isArray(material)) material.forEach(disposeOne);
+        else if (material) disposeOne(material);
     }
 }

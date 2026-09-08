@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { markOwnedTexture } from "../../../../core/lifecycle/DisposableMeshStore";
 
 import { FrameRenderer } from "../../../../core/renderer/FrameRenderer";
 import {
@@ -174,7 +175,7 @@ export class OpponentFieldEnergyHudRendererV2
         ctx.fillStyle = '#222';
         ctx.fillText(String(this.energy), x, y);
 
-        const texture = new THREE.CanvasTexture(canvas);
+        const texture = markOwnedTexture(new THREE.CanvasTexture(canvas));
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.LinearFilter;
