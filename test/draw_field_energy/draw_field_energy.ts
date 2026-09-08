@@ -44,7 +44,7 @@ import {showTurn} from "../../src/battle/turn/hud/Turn";
 import {showFieldEnergy} from "../../src/battle/field_energy/your/FieldEnergy";
 import {showFieldEnergyRace} from "../../src/common/card_race/CardRace";
 import {showFieldEnergyCount} from "../../src/battle/field_energy/your/FieldEnergyCount";
-import {AnimationHandler} from "../../src/animation/handler/AnimationHandler";
+import {SlashCutEffect} from "../../src/battle/animation/attack/weapon/SlashCutEffect";
 
 declare const TWEEN: {
     Tween: any;
@@ -97,7 +97,6 @@ export class TCGJustTestBattleFieldView {
     private readonly cameraRepository = CameraRepositoryImpl.getInstance()
     private readonly cameraService = CameraServiceImpl.getInstance()
 
-    private animationHandler: AnimationHandler;
 
     private initialized = false;
     private isAnimating = false;
@@ -130,7 +129,7 @@ export class TCGJustTestBattleFieldView {
         this.audioController = AudioController.getInstance();
         this.audioController.setMusic(battleFieldMusic);
 
-        this.animationHandler = AnimationHandler.initialize(this.camera, this.scene, this.renderer);
+        SlashCutEffect.initialize(this.renderer, this.scene, this.camera);
 
         this.neonShape = NeonShape.getInstance(this.scene, this.renderer, this.camera);
 

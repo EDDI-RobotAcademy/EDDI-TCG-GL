@@ -68,7 +68,7 @@
 | **R2-41** | Structure | Battle Animation | [아이템 카드 연출 패키지 조정](R2-41-move-item-card-effects.md) | R2-40 | **완료** |
 | **R2-42** | Structure | Battle Animation | [서포트, 에너지 카드 연출 패키지 조정](R2-42-move-support-energy-card-effects.md) | R2-41 | **완료** |
 | **R2-43** | Rendering | Battle Animation | [스킬 사용 시 카드 이동 코드 통합](R2-43-unify-card-move.md) | R2-42 | **완료** |
-| **R2-44** | Rule | Battle Animation | 덱 편성 화면이 전투 연출을 만들지 않게 한다 | R2-43 | 예정 |
+| **R2-44** | Rule | Battle Animation | [덱 편성 화면이 전투 연출을 만들지 않게 한다](R2-44-remove-animation-handler.md) | R2-43 | **완료** |
 | **R2-45** | Rendering | Battle 공용 | 화면 자원 정리 실제 적용 | R2-36 | 예정 |
 | **R2-46** | Rendering | Battle 공용 | 전투 중 만들어 쓰는 글자 그림의 정리 시점 정의 | R2-45 | 예정 |
 | **R2-47** | Rendering | Battle Hand | 손패 페이지 버튼을 만드는 일을 렌더러로 옮긴다 | R2-27 | 예정 |

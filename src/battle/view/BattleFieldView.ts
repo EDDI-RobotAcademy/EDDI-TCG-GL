@@ -6,7 +6,7 @@ import {RendererManager} from "../../core/renderer/RendererManager";
 import {CameraManager} from "../../core/camera/CameraManager";
 import {InputManager} from "../../input/InputManager";
 import {AnimationLoop} from "../../core/animation/AnimationLoop";
-import {AnimationHandler} from "../../animation/handler/AnimationHandler";
+import {SlashCutEffect} from "../animation/attack/weapon/SlashCutEffect";
 import {BattleFieldController} from "../../game/battle/BattleFieldController";
 import {AudioController} from "../../audio/AudioController";
 import {TextureManager} from "../../texture_manager/TextureManager";
@@ -45,7 +45,6 @@ export class BattleFieldView {
     private cameraManager: CameraManager;
     private inputManager: InputManager;
     private animationLoop: AnimationLoop;
-    private animationHandler: AnimationHandler;
     private battleFieldController: BattleFieldController;
 
     private audioController: AudioController;
@@ -74,8 +73,9 @@ export class BattleFieldView {
         const renderer = this.rendererManager.getRenderer();
         renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 
-        // AnimationHandler 초기화
-        this.animationHandler = AnimationHandler.initialize(camera, scene, renderer);
+        // 검으로 본체를 칠 때 화면을 가르는 연출을 만들어 둔다.
+        // GeneralAttackAnimation 이 getInstance 로 꺼내 쓰므로 여기서 만들어야 한다.
+        SlashCutEffect.initialize(renderer, scene, camera);
 
         // Neon effect 초기화
         this.neonShape = NeonShape.getInstance(scene, renderer, camera);
@@ -266,10 +266,6 @@ export class BattleFieldView {
         this.animationLoop.stop();
         this.rendererManager.getDomElement().style.display = 'none';
         this.container.style.display = 'none';
-    }
-
-    public getAnimationHandler(): AnimationHandler {
-        return this.animationHandler;
     }
 
     public getScene(): THREE.Scene | null {
