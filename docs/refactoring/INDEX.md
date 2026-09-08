@@ -80,7 +80,7 @@
 | **R2-53** | Rule | Battle LostZone | [로스트 존을 전투 상태 안으로 옮긴다](R2-53-move-lost-zone-into-battle.md) | R2-52 | **완료** |
 | **R2-54** | Rule | Battle Unit | [필드에 나온 유닛을 전투 상태 안으로 옮긴다](R2-54-move-unit-into-battle.md) | R2-53 | **완료** |
 | **R2-55** | Rule | Battle Card | [카드가 누구인지와 몇 번째인지를 갈라낸다](R2-55-split-identity-and-order.md) | R2-54 | **완료** |
-| **R2-56** | Rule | Battle Field | 필드에 놓인 카드를 전투 상태 안으로 옮긴다 | R2-55 | 예정 |
+| **R2-56** | Rule | Battle Field | [필드에 놓인 카드를 전투 상태 안으로 옮긴다](R2-56-move-field-into-battle.md) | R2-55 | **완료** |
 | **R2-57** | Rule | Battle Hand | 손패를 전투 상태 안으로 옮긴다 | R2-56 | 예정 |
 | **R2-58** | Rule | Battle | 연출 도중 종료되어도 전투 상태가 일관되도록 처리 순서 분리 | R2-57 | 예정 |
 | **R2-59** | Rule | Battle | 카드를 추가할 때 코드 수정 없이 데이터로 정의할 수 있도록 능력 정의 구조 도입 | R2-58 | 예정 |

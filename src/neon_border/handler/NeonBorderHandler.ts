@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {BattleRepositoryImpl} from "../../battle/repository/BattleRepositoryImpl";
 
 import {NeonBorderRepository} from "../repository/NeonBorderRepository";
 import {NeonBorderLineSceneRepository} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepository";
@@ -14,14 +15,10 @@ import { ActivePanelAreaCache } from "src/battle/active_panel/cache/ActivePanelA
 import {ActivePanelAreaCacheImpl} from "../../battle/active_panel/cache/ActivePanelAreaCacheImpl";
 import {DragMoveRepository} from "../../drag_move/repository/DragMoveRepository";
 import {DragMoveRepositoryImpl} from "../../drag_move/repository/DragMoveRepositoryImpl";
-import {YourFieldRepository} from "../../battle/field/your/repository/YourFieldRepository";
-import {YourFieldRepositoryImpl} from "../../battle/field/your/repository/YourFieldRepositoryImpl";
 import {NeonBorder} from "../entity/NeonBorder";
 import {NeonBorderLineScene} from "../../neon_border_line_scene/entity/NeonBorderLineScene";
 import {NeonBorderLinePosition} from "../../neon_border_line_position/entity/NeonBorderLinePosition";
 import {Vector2d} from "../../common/math/Vector2d";
-import {OpponentFieldRepository} from "../../battle/field/opponent/repository/OpponentFieldRepository";
-import {OpponentFieldRepositoryImpl} from "../../battle/field/opponent/repository/OpponentFieldRepositoryImpl";
 import {
     OpponentFieldCardSceneCache
 } from "../../battle/field/opponent/card_scene/cache/OpponentFieldCardSceneCache";
@@ -60,10 +57,6 @@ export class NeonBorderHandler {
 
     private readonly OPPONENT_END_X: number = 0.5410156;
     private readonly OPPONENT_END_Y: number = 0.0476804;
-
-    private yourFieldRepository: YourFieldRepository;
-
-    private opponentFieldRepository: OpponentFieldRepository;
     private opponentFieldCardSceneCache: OpponentFieldCardSceneCache;
     private opponentFieldCardAttributeMarkRepository: OpponentFieldCardAttributeMarkRepository;
     private opponentFieldCardAttributeMarkSceneRepository: OpponentFieldCardAttributeMarkSceneRepository;
@@ -78,9 +71,6 @@ export class NeonBorderHandler {
     private dragMoveRepository: DragMoveRepository;
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
-        this.yourFieldRepository = YourFieldRepositoryImpl.getInstance();
-
-        this.opponentFieldRepository = OpponentFieldRepositoryImpl.getInstance();
         this.opponentFieldCardSceneCache = OpponentFieldCardSceneCacheImpl.getInstance();
         this.opponentFieldCardAttributeMarkRepository = OpponentFieldCardAttributeMarkRepositoryImpl.getInstance();
         this.opponentFieldCardAttributeMarkSceneRepository = OpponentFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
@@ -211,10 +201,10 @@ export class NeonBorderHandler {
     }
 
     public async createOpponentNeonBorderList() {
-        const opponentFieldList = this.opponentFieldRepository.findAll();
+        const opponentFieldList = BattleRepositoryImpl.getInstance().getCurrentOrThrow().getOpponentFieldCards();
 
         for (const opponentField of opponentFieldList) {
-            const opponentCardSceneId = opponentField.getCardSceneId();
+            const opponentCardSceneId = opponentField.getBattleCardId();
 
             const existingNeonBorder = this.neonBorderRepository.findByCardSceneIdWithPlacement(
                 opponentCardSceneId, NeonBorderSceneType.FIELD, NeonBorderType.ENEMY
@@ -245,7 +235,7 @@ export class NeonBorderHandler {
         const opponentCardMesh = opponentCardSceneMesh.getMesh();
         opponentCardMesh.renderOrder = 1;
 
-        const attributeMarkIds = this.opponentFieldRepository.findAttributeMarkIdListByCardSceneId(opponentCardSceneId) || [];
+        const attributeMarkIds = BattleRepositoryImpl.getInstance().getCurrentOrThrow().findOnOpponentField(opponentCardSceneId)?.getAttributeMarkIds() || [];
         await this.updateOpponentMarkRenderOrder(attributeMarkIds);
 
         const halfWidth = this.CARD_WIDTH_RATIO * window.innerWidth / 2;

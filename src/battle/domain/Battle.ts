@@ -4,6 +4,8 @@ import {Deck} from "./Deck";
 import {Tomb} from "./Tomb";
 import {LostZone} from "./LostZone";
 import {BattleFieldUnit} from "./BattleFieldUnit";
+import {Field} from "./Field";
+import {FieldCard} from "./FieldCard";
 
 // 전투 한 판이다.
 //
@@ -31,6 +33,9 @@ export class Battle {
     // 필드에 나온 유닛이다. 나온 차례대로 담긴다.
     private deployedUnits: BattleFieldUnit[] = [];
 
+    private readonly yourField = new Field();
+    private readonly opponentField = new Field();
+
     private constructor(private readonly battleId: number) {}
 
     // 전투를 새로 시작한다.
@@ -49,6 +54,8 @@ export class Battle {
         battle.yourLostZone.restoreFrom(snapshot.yourLostZoneCards);
         battle.opponentLostZone.restoreFrom(snapshot.opponentLostZoneCards);
         battle.deployedUnits = snapshot.deployedUnits.map((it) => BattleFieldUnit.restore(it));
+        battle.yourField.restoreFrom(snapshot.yourFieldCards);
+        battle.opponentField.restoreFrom(snapshot.opponentFieldCards);
         return battle;
     }
 
@@ -188,6 +195,50 @@ export class Battle {
         return this.deployedUnits.length;
     }
 
+    /* ── 내 필드 ── */
+
+    placeOnYourField(card: FieldCard): void {
+        this.yourField.place(card);
+    }
+
+    findOnYourField(battleCardId: number): FieldCard | null {
+        return this.yourField.findById(battleCardId);
+    }
+
+    removeFromYourField(battleCardId: number): boolean {
+        return this.yourField.removeById(battleCardId);
+    }
+
+    getYourFieldCards(): readonly FieldCard[] {
+        return this.yourField.getCards();
+    }
+
+    getYourFieldCount(): number {
+        return this.yourField.count();
+    }
+
+    /* ── 상대 필드 ── */
+
+    placeOnOpponentField(card: FieldCard): void {
+        this.opponentField.place(card);
+    }
+
+    findOnOpponentField(battleCardId: number): FieldCard | null {
+        return this.opponentField.findById(battleCardId);
+    }
+
+    removeFromOpponentField(battleCardId: number): boolean {
+        return this.opponentField.removeById(battleCardId);
+    }
+
+    getOpponentFieldCards(): readonly FieldCard[] {
+        return this.opponentField.getCards();
+    }
+
+    getOpponentFieldCount(): number {
+        return this.opponentField.count();
+    }
+
     // 지금 상태를 통째로 적는다.
     toSnapshot(): BattleSnapshot {
         return {
@@ -200,6 +251,8 @@ export class Battle {
             yourLostZoneCards: [...this.yourLostZone.getCards()],
             opponentLostZoneCards: [...this.opponentLostZone.getCards()],
             deployedUnits: this.deployedUnits.map((it) => it.toSnapshot()),
+            yourFieldCards: this.yourField.getCards().map((it) => it.toSnapshot()),
+            opponentFieldCards: this.opponentField.getCards().map((it) => it.toSnapshot()),
         };
     }
 }

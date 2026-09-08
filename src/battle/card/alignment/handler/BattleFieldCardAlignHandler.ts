@@ -1,12 +1,10 @@
 import * as THREE from "three";
 
 import {DragMoveRepositoryImpl} from "../../../../drag_move/repository/DragMoveRepositoryImpl";
-import {YourFieldRepositoryImpl} from "../../../field/your/repository/YourFieldRepositoryImpl";
 import {YourFieldCardSceneCacheImpl} from "../../../field/your/card_scene/cache/YourFieldCardSceneCacheImpl";
 import {BattleFieldCardAttributeMarkStoreImpl} from "../../attribute_mark/store/BattleFieldCardAttributeMarkStoreImpl";
 import {BattleFieldCardAttributeMarkSceneCacheImpl} from "../../attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCacheImpl";
 import {OpponentFieldCardSceneCacheImpl} from "../../../field/opponent/card_scene/cache/OpponentFieldCardSceneCacheImpl";
-import {OpponentFieldRepositoryImpl} from "../../../field/opponent/repository/OpponentFieldRepositoryImpl";
 import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../../field/opponent/attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
 import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../../field/opponent/attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
 import {LeftClickHandDetectRepositoryImpl} from "../../../../left_click_detect/repository/LeftClickHandDetectRepositoryImpl";
@@ -14,12 +12,10 @@ import {ActivePanelAreaCacheImpl} from "../../../active_panel/cache/ActivePanelA
 import {NeonBorderRepositoryImpl} from "../../../../neon_border/repository/NeonBorderRepositoryImpl";
 import {NeonBorderLineSceneRepositoryImpl} from "../../../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
 import {DragMoveRepository} from "../../../../drag_move/repository/DragMoveRepository";
-import {YourFieldRepository} from "../../../field/your/repository/YourFieldRepository";
 import {YourFieldCardSceneCache} from "../../../field/your/card_scene/cache/YourFieldCardSceneCache";
 import {BattleFieldCardAttributeMarkStore} from "../../attribute_mark/store/BattleFieldCardAttributeMarkStore";
 import {BattleFieldCardAttributeMarkSceneCache} from "../../attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCache";
 import {OpponentFieldCardSceneCache} from "../../../field/opponent/card_scene/cache/OpponentFieldCardSceneCache";
-import {OpponentFieldRepository} from "../../../field/opponent/repository/OpponentFieldRepository";
 import {OpponentFieldCardAttributeMarkRepository} from "../../../field/opponent/attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
 import {OpponentFieldCardAttributeMarkSceneRepository} from "../../../field/opponent/attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
 import {LeftClickHandDetectRepository} from "../../../../left_click_detect/repository/LeftClickHandDetectRepository";
@@ -59,7 +55,7 @@ import {
 import {
     NeonBorderLinePositionRepositoryImpl
 } from "../../../../neon_border_line_position/repository/NeonBorderLinePositionRepositoryImpl";
-import {YourField} from "../../../field/your/entity/YourField";
+import {FieldCard} from "../../../domain/FieldCard";
 import {BattleFieldHandPageStore} from "../../../hand/page/store/BattleFieldHandPageStore";
 import {BattleFieldHandPageStoreImpl} from "../../../hand/page/store/BattleFieldHandPageStoreImpl";
 import {BattleFieldCardPosition} from "../../position/entity/BattleFieldCardPosition";
@@ -321,8 +317,8 @@ export class BattleFieldCardAlignHandler {
         }
     }
 
-    public async alignYourFieldAttributeMark(createdYourField: YourField): Promise<void> {
-        const yourFieldAttributeMarkSceneIdList = createdYourField.getAttributeMarkIdList();
+    public async alignYourFieldAttributeMark(createdYourField: FieldCard): Promise<void> {
+        const yourFieldAttributeMarkSceneIdList = createdYourField.getAttributeMarkIds();
         console.log(`alignYourField() yourFieldAttributeMarkSceneIdList: ${yourFieldAttributeMarkSceneIdList}`);
 
         for (const attributeMarkId of yourFieldAttributeMarkSceneIdList) {

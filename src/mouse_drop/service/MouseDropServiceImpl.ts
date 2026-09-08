@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import {FieldCard} from "../../battle/domain/FieldCard";
+import {BattleRepositoryImpl} from "../../battle/repository/BattleRepositoryImpl";
 import {MouseDropService} from './MouseDropService';
 import {MouseDropFieldRepositoryImpl} from "../repository/MouseDropRepositoryImpl";
 import {MouseDropFieldRepository} from "../repository/MouseDropRepository";
@@ -17,8 +19,6 @@ import {BattleFieldCardPositionStore} from "../../battle/card/position/store/Bat
 import {BattleFieldCardPosition} from "../../battle/card/position/entity/BattleFieldCardPosition";
 import {BattleFieldCardAttributeMarkSceneCacheImpl} from "../../battle/card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCacheImpl";
 import {BattleFieldCardAttributeMarkSceneCache} from "../../battle/card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCache";
-import {YourFieldRepositoryImpl} from "../../battle/field/your/repository/YourFieldRepositoryImpl";
-import {YourFieldRepository} from "../../battle/field/your/repository/YourFieldRepository";
 import {getCardById} from "../../card/utility";
 import {CardKind} from "../../card/kind";
 import {BattleFieldCardSceneCache} from "../../battle/card/scene/cache/BattleFieldCardSceneCache";
@@ -29,7 +29,6 @@ import {YourFieldCardPositionStore} from "../../battle/field/your/card_position/
 import {YourFieldCardPositionStoreImpl} from "../../battle/field/your/card_position/store/YourFieldCardPositionStoreImpl";
 import {Vector2d} from "../../common/math/Vector2d";
 import {AttributeMarkPositionCalculator} from "../../common/attribute_mark/AttributeMarkPositionCalculator";
-import {YourField} from "../../battle/field/your/entity/YourField";
 import {NeonBorderRepository} from "../../neon_border/repository/NeonBorderRepository";
 import {NeonBorderLineSceneRepository} from "../../neon_border_line_scene/repository/NeonBorderLineSceneRepository";
 import {NeonBorderRepositoryImpl} from "../../neon_border/repository/NeonBorderRepositoryImpl";
@@ -81,8 +80,6 @@ export class MouseDropServiceImpl implements MouseDropService {
     private battleFieldCardAttributeMarkStore: BattleFieldCardAttributeMarkStore
     private battleFieldCardAttributeMarkPositionStore: BattleFieldCardAttributeMarkPositionStore
     private battleFieldCardAttributeMarkSceneCache: BattleFieldCardAttributeMarkSceneCache
-
-    private yourFieldRepository: YourFieldRepository
     private yourFieldCardSceneCache: YourFieldCardSceneCache
     private yourFieldCardPositionStore: YourFieldCardPositionStore
 
@@ -106,8 +103,6 @@ export class MouseDropServiceImpl implements MouseDropService {
         this.battleFieldCardAttributeMarkStore = BattleFieldCardAttributeMarkStoreImpl.getInstance()
         this.battleFieldCardAttributeMarkPositionStore = BattleFieldCardAttributeMarkPositionStoreImpl.getInstance()
         this.battleFieldCardAttributeMarkSceneCache = BattleFieldCardAttributeMarkSceneCacheImpl.getInstance()
-
-        this.yourFieldRepository = YourFieldRepositoryImpl.getInstance()
         this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance()
         this.yourFieldCardPositionStore = YourFieldCardPositionStoreImpl.getInstance()
 
@@ -152,8 +147,8 @@ export class MouseDropServiceImpl implements MouseDropService {
         this.clearSelection();
     }
 
-    private async alignYourFieldAttributeMark(createdYourField: YourField): Promise<void> {
-        const yourFieldAttributeMarkSceneIdList = createdYourField.getAttributeMarkIdList();
+    private async alignYourFieldAttributeMark(createdYourField: FieldCard): Promise<void> {
+        const yourFieldAttributeMarkSceneIdList = createdYourField.getAttributeMarkIds();
         console.log(`alignYourField() yourFieldAttributeMarkSceneIdList: ${yourFieldAttributeMarkSceneIdList}`);
 
         for (const attributeMarkId of yourFieldAttributeMarkSceneIdList) {
@@ -213,11 +208,11 @@ export class MouseDropServiceImpl implements MouseDropService {
         }
     }
 
-    private alignYourField(createdYourField: YourField): void {
+    private alignYourField(createdYourField: FieldCard): void {
         console.log(`createdYourField: ${JSON.stringify(createdYourField, null, 2)}`)
         // x = 1920, y = 1848
         // (358, 607)
-        const yourFieldCount = this.yourFieldRepository.count()
+        const yourFieldCount = BattleRepositoryImpl.getInstance().getCurrentOrThrow().getYourFieldCount()
         console.log(`yourFieldCount: ${yourFieldCount}`)
 
         const calculatedYourFieldPosition = this.calculateYourFieldPositionByIndex(yourFieldCount - 1)
@@ -229,7 +224,7 @@ export class MouseDropServiceImpl implements MouseDropService {
             return;
         }
 
-        const yourFieldSceneId = createdYourField.getCardSceneId()
+        const yourFieldSceneId = createdYourField.getBattleCardId()
         const yourFieldScene = this.yourFieldCardSceneCache.findById(yourFieldSceneId)
         console.log(chalk.red.bold(`alignYourField() yourFieldScene: ${yourFieldScene}`))
 
@@ -415,7 +410,7 @@ export class MouseDropServiceImpl implements MouseDropService {
         return new Vector2d(handPositionX, handPositionY);
     }
 
-    private async handleValidDrop(selectedObject: BattleFieldCardScene): Promise<YourField | null> {
+    private async handleValidDrop(selectedObject: BattleFieldCardScene): Promise<FieldCard | null> {
         const cardSceneId = selectedObject.getId()
 
         const willBePlacedYourFieldHandCard = this.battleFieldHandRepository.findByCardSceneId(cardSceneId);

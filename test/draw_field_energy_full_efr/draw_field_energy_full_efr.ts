@@ -22,7 +22,6 @@ import { createDefaultOpponentFieldAreaFrame } from "../../src/battle/field/oppo
 import { OpponentFieldAreaRendererV2 } from "../../src/battle/field/opponent/area/renderer/OpponentFieldAreaRendererV2";
 import { createDefaultOpponentFieldLayoutFrame, computeOpponentFieldCardCenter } from "../../src/battle/field/opponent/frame/OpponentFieldLayoutFrame";
 import { OpponentFieldRendererV2 } from "../../src/battle/field/opponent/renderer/OpponentFieldRendererV2";
-import { OpponentFieldMapRepositoryImpl } from "../../src/battle/field/opponent/map/repository/OpponentFieldMapRepositoryImpl";
 
 import { BattleFieldHandMapRepositoryImpl } from "../../src/battle/hand/repository/BattleFieldHandMapRepositoryImpl";
 import { HandCard } from "../../src/battle/hand/entity/HandCard";
@@ -402,9 +401,8 @@ async function main(container: HTMLElement): Promise<void> {
     // Add mythic unit (네더 블레이드, cardId 19) to the opponent field for scythe-targeting tests:
     //   scythe vs <MYTHICAL → instant kill; scythe vs MYTHICAL → 30 damage.
     // 2 copies for testing duplicate-target picks (e.g., 시체 폭발) + multi-NB scenarios.
-    OpponentFieldMapRepositoryImpl.getInstance().addOpponentField(19);
-    OpponentFieldMapRepositoryImpl.getInstance().addOpponentField(19);
-    const opponentCardIds = OpponentFieldMapRepositoryImpl.getInstance().getOpponentFieldList();
+    // 상대 필드의 시작 배치다. 실제 대전에서는 서버가 준다.
+    const opponentCardIds = [31, 32, 32, 26, 27, 19, 19];
     const opponentCards = resolveCards(opponentCardIds, 'opponent');
 
     // Seed energy on opponent units for energy-burn testing:

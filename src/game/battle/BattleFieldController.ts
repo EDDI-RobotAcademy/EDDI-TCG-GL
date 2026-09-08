@@ -1,4 +1,9 @@
 import * as THREE from 'three';
+
+// 상대 필드의 시작 배치다. 실제 대전에서는 서버가 준다.
+// 전에는 저장소가 이 다섯 줄을 스스로 들고 있어서, 값을 담는 곳이 시나리오를 정하고 있었다.
+const OPPONENT_FIELD_START_CARD_IDS = [31, 32, 32, 26, 27];
+
 import { BattleRepository } from "../../battle/repository/BattleRepository";
 import { BattleRepositoryImpl } from "../../battle/repository/BattleRepositoryImpl";
 import { createDefaultHandPageButtonsFrame } from "../../battle/hand/page/frame/HandPageButtonsFrame";
@@ -11,7 +16,6 @@ import { BattleFieldHandServiceImpl } from "../../battle/hand/service/BattleFiel
 import { OpponentFieldServiceImpl } from "../../battle/field/opponent/service/OpponentFieldServiceImpl";
 import { BattleFieldHandMapRepositoryImpl } from "../../battle/hand/repository/BattleFieldHandMapRepositoryImpl";
 import { BattleFieldHandSceneRepository } from "../../battle_field_hand/deprecated_repository/BattleFieldHandSceneRepository";
-import { OpponentFieldMapRepositoryImpl } from "../../battle/field/opponent/map/repository/OpponentFieldMapRepositoryImpl";
 import { NonBackgroundImage } from "../../shape/image/NonBackgroundImage";
 import { UnitCardGenerator } from "../../card/unit/generate";
 import { SupportCardGenerator } from "../../card/support/generate";
@@ -22,7 +26,6 @@ export class BattleFieldController {
     private background: NonBackgroundImage | null = null;
     private battleFieldHandMapRepository = BattleFieldHandMapRepositoryImpl.getInstance();
     private battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance();
-    private opponentFieldMapRepository = OpponentFieldMapRepositoryImpl.getInstance();
     private readonly handPageButtonsRenderer = new HandPageButtonsRendererV2();
     private readonly battleRepository: BattleRepository = BattleRepositoryImpl.getInstance();
 
@@ -99,7 +102,7 @@ export class BattleFieldController {
     }
 
     private async addOpponentFieldUnitList(): Promise<void> {
-        const opponentFieldUnitList = this.opponentFieldMapRepository.getOpponentFieldList();
+        const opponentFieldUnitList = OPPONENT_FIELD_START_CARD_IDS;
         console.log(`opponentFieldUnitList: ${opponentFieldUnitList}`);
 
         for (const opponentCardId of opponentFieldUnitList) {

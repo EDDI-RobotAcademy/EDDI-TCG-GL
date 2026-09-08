@@ -1,7 +1,6 @@
-import {YourFieldRepository} from "../../../battle/field/your/repository/YourFieldRepository";
+import {BattleRepositoryImpl} from "../../../battle/repository/BattleRepositoryImpl";
 import {BattleFieldCardAttributeMarkStore} from "../../../battle/card/attribute_mark/store/BattleFieldCardAttributeMarkStore";
 import {BattleFieldCardAttributeMarkSceneCache} from "../../../battle/card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCache";
-import {YourFieldRepositoryImpl} from "../../../battle/field/your/repository/YourFieldRepositoryImpl";
 import {BattleFieldCardAttributeMarkStoreImpl} from "../../../battle/card/attribute_mark/store/BattleFieldCardAttributeMarkStoreImpl";
 import {BattleFieldCardAttributeMarkSceneCacheImpl} from "../../../battle/card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCacheImpl";
 import {BattleFieldCardAttributeMark} from "../../../battle/card/attribute_mark/entity/BattleFieldCardAttributeMark";
@@ -9,13 +8,10 @@ import {BattleFieldCardAttributeMarkScene} from "../../../battle/card/attribute_
 
 export class YourFieldAttributeMarkManager {
     private static instance: YourFieldAttributeMarkManager;
-
-    private yourFieldRepository: YourFieldRepository
     private battleFieldCardAttributeMarkStore: BattleFieldCardAttributeMarkStore
     private battleFieldCardAttributeMarkSceneCache: BattleFieldCardAttributeMarkSceneCache
 
     private constructor() {
-        this.yourFieldRepository = YourFieldRepositoryImpl.getInstance()
         this.battleFieldCardAttributeMarkStore = BattleFieldCardAttributeMarkStoreImpl.getInstance()
         this.battleFieldCardAttributeMarkSceneCache = BattleFieldCardAttributeMarkSceneCacheImpl.getInstance()
     } // 외부에서 인스턴스 생성 방지
@@ -29,7 +25,7 @@ export class YourFieldAttributeMarkManager {
 
     // 속성 마크 ID 목록 가져오기
     public getAttributeMarkIdList(cardSceneId: number): number[] {
-        const result = this.yourFieldRepository.findAttributeMarkIdListByCardSceneId(cardSceneId);
+        const result = BattleRepositoryImpl.getInstance().getCurrentOrThrow().findOnYourField(cardSceneId)?.getAttributeMarkIds() ?? null;
         return result || []; // null인 경우 빈 배열 반환
     }
 

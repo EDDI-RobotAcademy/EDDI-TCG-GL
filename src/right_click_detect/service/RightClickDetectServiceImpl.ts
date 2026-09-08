@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {BattleRepositoryImpl} from "../../battle/repository/BattleRepositoryImpl";
 
 import {RightClickDetectService} from "./RightClickDetectService";
 import {CameraRepository} from "../../camera/repository/CameraRepository";
@@ -13,10 +14,6 @@ import {ActivePanelAreaCache} from "../../battle/active_panel/cache/ActivePanelA
 import {ActivePanelAreaCacheImpl} from "../../battle/active_panel/cache/ActivePanelAreaCacheImpl";
 import {BattleFieldCardScene} from "../../battle/card/scene/entity/BattleFieldCardScene";
 import {getCardById} from "../../card/utility";
-import {YourFieldRepository} from "../../battle/field/your/repository/YourFieldRepository";
-import {YourFieldRepositoryImpl} from "../../battle/field/your/repository/YourFieldRepositoryImpl";
-import {YourFieldMapRepository} from "../../battle/field/your/map/repository/YourFieldMapRepository";
-import {YourFieldMapRepositoryImpl} from "../../battle/field/your/map/repository/YourFieldMapRepositoryImpl";
 import {
     YourFieldCardSceneCacheImpl
 } from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCacheImpl";
@@ -29,15 +26,14 @@ export class RightClickDetectServiceImpl implements RightClickDetectService {
     private dragMoveRepository: DragMoveRepository
     private mouseCursorDetectRepository: MouseCursorDetectRepository
     private activePanelAreaCache: ActivePanelAreaCache;
-    private yourFieldRepository: YourFieldRepository;
     private yourFieldCardSceneCache: YourFieldCardSceneCache;
 
     private rightMouseDown: boolean = false;
 
-    private constructor(private camera: THREE.Camera, scene: THREE.Scene) {
+    private constructor(
+    private camera: THREE.Camera, scene: THREE.Scene) {
         this.cameraRepository = CameraRepositoryImpl.getInstance()
         this.dragMoveRepository = DragMoveRepositoryImpl.getInstance()
-        this.yourFieldRepository = YourFieldRepositoryImpl.getInstance()
         this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance()
         this.mouseCursorDetectRepository = MouseCursorDetectRepositoryImpl.getInstance()
         this.activePanelAreaCache = ActivePanelAreaCacheImpl.getInstance(camera, scene);
@@ -85,7 +81,7 @@ export class RightClickDetectServiceImpl implements RightClickDetectService {
 
         // const yourFieldCardScene = this.yourFieldCardSceneCache.findIndexByCardMeshId(meshId)
 
-        const yourFieldCard = this.yourFieldRepository.findByCardSceneId(cardScene.getId())
+        const yourFieldCard = BattleRepositoryImpl.getInstance().getCurrentOrThrow().findOnYourField(cardScene.getId())
         // console.log(`yourFieldCard: ${JSON.stringify(yourFieldCard, null, 2)}`);
 
         if (!yourFieldCard) return;
