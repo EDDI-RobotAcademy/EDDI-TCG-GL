@@ -130,7 +130,7 @@ import {
     isPointInsideTurnEndButton,
 } from "../../src/battle/turn/end_button/frame/TurnEndButtonFrame";
 import { TurnEndButtonRendererV2 } from "../../src/battle/turn/end_button/renderer/TurnEndButtonRendererV2";
-import { TurnStateRepositoryImpl } from "../../src/battle/turn/state/repository/TurnStateRepositoryImpl";
+import { BattleRepositoryImpl } from "../../src/battle/repository/BattleRepositoryImpl";
 import {
     createDefaultMasterHpFrame,
     createOpponentMasterHpFrame,
@@ -450,7 +450,8 @@ async function main(container: HTMLElement): Promise<void> {
     const turnEndButtonRenderer = new TurnEndButtonRendererV2();
     const turnEndButtonGroup = await turnEndButtonRenderer.build(turnEndButtonFrame);
     scene.add(turnEndButtonGroup);
-    const turnStateRepo = TurnStateRepositoryImpl.getInstance();
+    // 전투 한 판을 시작한다. 턴은 이 안에 들어 있다.
+    const battle = BattleRepositoryImpl.getInstance().start();
     // Declared here (not next to the 'f' handler that increments it) because the drop
     // handler stamps deployedTurn with it and the right-click handler compares against it —
     // both run earlier in the file.
@@ -849,7 +850,7 @@ async function main(container: HTMLElement): Promise<void> {
 
     function passTurnOnExpiry(reason: string): void {
         cancelPendingTargeting();
-        if (turnStateRepo.getOwner() === 'your') {
+        if (battle.getTurnOwner() === 'your') {
             endYourTurn(reason);
         } else {
             void beginYourTurn(reason);
@@ -3158,7 +3159,7 @@ async function main(container: HTMLElement): Promise<void> {
             // passive 2 single-pick flow is in progress — neither card flow should be
             // interruptible by another hand action.
             canPickup: () =>
-                turnStateRepo.getOwner() === 'your' &&
+                battle.getTurnOwner() === 'your' &&
                 corpseExplosionState === null &&
                 netherBladePassive2State === null,
             onPickup: (entityId, group) => {
@@ -3692,8 +3693,8 @@ async function main(container: HTMLElement): Promise<void> {
     // your → opponent. Triggers: 턴 종료 버튼 클릭, 모래시계 만료.
     // No-op unless it's currently your turn (idempotent).
     function endYourTurn(reason: string): void {
-        if (turnStateRepo.getOwner() !== 'your') return;
-        turnStateRepo.setOwner('opponent');
+        if (battle.getTurnOwner() !== 'your') return;
+        battle.setTurnOwner('opponent');
         timerRenderer.reset(timerElement);
         guideRenderer.show(guideElement, '상대방의 턴입니다.', 3000);
         console.log(`[turn-state] your → opponent (${reason}) · TURN ${currentTurn}`);
@@ -3707,11 +3708,11 @@ async function main(container: HTMLElement): Promise<void> {
     // turn-start draw), plus (e) announce the handback on the guide banner. No-op unless it's
     // currently the opponent's turn (idempotent).
     async function beginYourTurn(reason: string): Promise<void> {
-        if (turnStateRepo.getOwner() !== 'opponent') {
+        if (battle.getTurnOwner() !== 'opponent') {
             console.log(`[turn-state] ${reason} ignored — already your turn`);
             return;
         }
-        turnStateRepo.setOwner('your');
+        battle.setTurnOwner('your');
         guideRenderer.show(guideElement, '당신의 턴입니다.', 3000);
 
         currentTurn += 1;

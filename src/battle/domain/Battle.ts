@@ -1,4 +1,5 @@
 import {BattleSnapshot} from "./BattleSnapshot";
+import {TurnOwner} from "./TurnOwner";
 
 // 전투 한 판이다.
 //
@@ -8,6 +9,9 @@ import {BattleSnapshot} from "./BattleSnapshot";
 //
 // 여기에는 화면에 그려지는 것을 두지 않는다. 적어 둘 수 있는 값만 둔다.
 export class Battle {
+    // 전투는 내 턴으로 시작한다. 게임을 연 쪽이 먼저 둔다.
+    private turnOwner: TurnOwner = 'your';
+
     private constructor(private readonly battleId: number) {}
 
     // 전투를 새로 시작한다.
@@ -17,15 +21,31 @@ export class Battle {
 
     // 적어 둔 것으로부터 전투를 되돌린다. 재접속할 때 쓴다.
     static restore(snapshot: BattleSnapshot): Battle {
-        return new Battle(snapshot.battleId);
+        const battle = new Battle(snapshot.battleId);
+        battle.turnOwner = snapshot.turnOwner;
+        return battle;
     }
 
     getId(): number {
         return this.battleId;
     }
 
+    getTurnOwner(): TurnOwner {
+        return this.turnOwner;
+    }
+
+    setTurnOwner(owner: TurnOwner): void {
+        if (this.turnOwner === owner) return;
+        const prev = this.turnOwner;
+        this.turnOwner = owner;
+        console.log(`[turn-state] owner: ${prev} → ${owner}`);
+    }
+
     // 지금 상태를 통째로 적는다.
     toSnapshot(): BattleSnapshot {
-        return {battleId: this.battleId};
+        return {
+            battleId: this.battleId,
+            turnOwner: this.turnOwner,
+        };
     }
 }
