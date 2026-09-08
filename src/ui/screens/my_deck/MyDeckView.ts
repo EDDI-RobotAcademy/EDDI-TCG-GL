@@ -6,7 +6,6 @@ import {RendererManager} from "../../../core/renderer/RendererManager";
 import {CameraManager} from "../../../core/camera/CameraManager";
 import {InputManager} from "../../../input/InputManager";
 import {AnimationLoop} from "../../../core/animation/AnimationLoop";
-import {AnimationHandler} from "../../../animation/handler/AnimationHandler";
 import {MyDeckController} from "../../../game/my_deck/MyDeckController";
 import {AudioController} from "../../../audio/AudioController";
 import {TextureManager} from "../../../texture_manager/TextureManager";
@@ -27,7 +26,6 @@ export class MyDeckView {
     private cameraManager: CameraManager;
     private inputManager: InputManager;
     private animationLoop: AnimationLoop;
-    private animationHandler: AnimationHandler;
     private myDeckController: MyDeckController;
 
     private audioController: AudioController;
@@ -55,8 +53,6 @@ export class MyDeckView {
         const renderer = this.rendererManager.getRenderer();
         renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 
-        // AnimationHandler 초기화
-        this.animationHandler = AnimationHandler.initialize(camera, scene, renderer);
 
         // Audio 초기화
         this.audioController = AudioController.getInstance();
@@ -180,10 +176,6 @@ export class MyDeckView {
         this.animationLoop.stop();
         this.rendererManager.getDomElement().style.display = 'none';
         this.container.style.display = 'none';
-    }
-
-    public getAnimationHandler(): AnimationHandler {
-        return this.animationHandler;
     }
 
     public getScene(): THREE.Scene | null {
