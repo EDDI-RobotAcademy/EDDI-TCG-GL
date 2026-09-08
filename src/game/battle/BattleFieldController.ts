@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { BattleRepository } from "../../battle/repository/BattleRepository";
+import { BattleRepositoryImpl } from "../../battle/repository/BattleRepositoryImpl";
 import { createDefaultHandPageButtonsFrame } from "../../battle/hand/page/frame/HandPageButtonsFrame";
 import { HandPageButtonsRendererV2 } from "../../battle/hand/page/renderer/HandPageButtonsRendererV2";
 
@@ -22,6 +24,7 @@ export class BattleFieldController {
     private battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance();
     private opponentFieldMapRepository = OpponentFieldMapRepositoryImpl.getInstance();
     private readonly handPageButtonsRenderer = new HandPageButtonsRendererV2();
+    private readonly battleRepository: BattleRepository = BattleRepositoryImpl.getInstance();
 
     constructor(
         private scene: THREE.Scene,
@@ -33,6 +36,9 @@ export class BattleFieldController {
     ) {}
 
     public async initialize(): Promise<void> {
+        // 전투 한 판이 여기서 시작된다. 앞으로 턴, 덱, 무덤, 손패, 필드가 이 안으로 들어온다.
+        this.battleRepository.start();
+
         await this.addBackground();
         this.addYourField();
         this.addOpponentField();
