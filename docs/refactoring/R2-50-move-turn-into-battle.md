@@ -1,4 +1,4 @@
-# [ETWGL-R2-50] 턴 상태를 전투 덩어리 안으로 옮긴다
+# [ETWGL-R2-50] 턴 상태를 전투 상태 안으로 옮긴다
 
 선행: R2-49 │ 후행: R2-51 │ 산출물: Battle 이 턴 주인을 들고 있다 │ Type: Rule │ Domain: Battle Turn
 
