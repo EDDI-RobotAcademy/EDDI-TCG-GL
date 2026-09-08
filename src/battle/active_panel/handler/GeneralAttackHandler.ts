@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {BattleRepositoryImpl} from "../../../battle/repository/BattleRepositoryImpl";
 
 import { GeneralAttackType } from "../../ability/entity/GeneralAttackType";
 import { MarkSceneType } from "../../card/attribute_mark_scene/entity/MarkSceneType";
@@ -6,8 +7,6 @@ import { MarkSceneType } from "../../card/attribute_mark_scene/entity/MarkSceneT
 import { YourFieldCardScene } from "../../field/your/card_scene/entity/YourFieldCardScene";
 import { DragMoveRepository } from "../../../drag_move/repository/DragMoveRepository";
 import { DragMoveRepositoryImpl } from "../../../drag_move/repository/DragMoveRepositoryImpl";
-import { YourFieldRepository } from "../../field/your/repository/YourFieldRepository";
-import { YourFieldRepositoryImpl } from "../../field/your/repository/YourFieldRepositoryImpl";
 import { YourFieldCardSceneCache } from "../../field/your/card_scene/cache/YourFieldCardSceneCache";
 import { YourFieldCardSceneCacheImpl } from "../../field/your/card_scene/cache/YourFieldCardSceneCacheImpl";
 import { BattleFieldCardAttributeMarkScene } from "../../card/attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
@@ -19,8 +18,6 @@ import { OpponentFieldCardSceneCache } from "../../field/opponent/card_scene/cac
 import { OpponentFieldCardSceneCacheImpl } from "../../field/opponent/card_scene/cache/OpponentFieldCardSceneCacheImpl";
 import { LeftClickHandDetectRepository } from "../../../left_click_detect/repository/LeftClickHandDetectRepository";
 import { LeftClickHandDetectRepositoryImpl } from "../../../left_click_detect/repository/LeftClickHandDetectRepositoryImpl";
-import { OpponentFieldRepository } from "../../field/opponent/repository/OpponentFieldRepository";
-import { OpponentFieldRepositoryImpl } from "../../field/opponent/repository/OpponentFieldRepositoryImpl";
 import { OpponentFieldCardAttributeMarkRepository } from "../../field/opponent/attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
 import { OpponentFieldCardAttributeMarkRepositoryImpl } from "../../field/opponent/attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
 import { OpponentFieldCardAttributeMarkSceneRepository } from "../../field/opponent/attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
@@ -43,12 +40,10 @@ export class GeneralAttackHandler {
     private static instance: GeneralAttackHandler;
 
     private dragMoveRepository: DragMoveRepository;
-    private yourFieldRepository: YourFieldRepository;
     private yourFieldCardSceneCache: YourFieldCardSceneCache;
     private battleFieldCardAttributeMarkStore: BattleFieldCardAttributeMarkStore;
     private battleFieldCardAttributeMarkSceneCache: BattleFieldCardAttributeMarkSceneCache;
     private opponentFieldCardSceneCache: OpponentFieldCardSceneCache;
-    private opponentFieldRepository: OpponentFieldRepository;
     private opponentFieldCardAttributeMarkRepository: OpponentFieldCardAttributeMarkRepository;
     private opponentFieldCardAttributeMarkSceneRepository: OpponentFieldCardAttributeMarkSceneRepository;
 
@@ -68,12 +63,10 @@ export class GeneralAttackHandler {
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.dragMoveRepository = DragMoveRepositoryImpl.getInstance();
-        this.yourFieldRepository = YourFieldRepositoryImpl.getInstance();
         this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance();
         this.battleFieldCardAttributeMarkStore = BattleFieldCardAttributeMarkStoreImpl.getInstance();
         this.battleFieldCardAttributeMarkSceneCache = BattleFieldCardAttributeMarkSceneCacheImpl.getInstance();
         this.opponentFieldCardSceneCache = OpponentFieldCardSceneCacheImpl.getInstance();
-        this.opponentFieldRepository = OpponentFieldRepositoryImpl.getInstance();
         this.opponentFieldCardAttributeMarkRepository = OpponentFieldCardAttributeMarkRepositoryImpl.getInstance();
         this.opponentFieldCardAttributeMarkSceneRepository = OpponentFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
 
@@ -140,12 +133,12 @@ export class GeneralAttackHandler {
         // 넣는 값이 화면 카드 번호이므로 그것으로 찾는 길을 쓴다.
         // 전에는 필드 카드 자신의 번호로 찾는 길에 화면 카드 번호를 넣고 있었다.
         // 두 번호가 각자 0부터 나란히 세어져서 우연히 맞아떨어졌을 뿐이다.
-        const yourFieldCard = this.yourFieldRepository.findByCardSceneId(yourFieldCardId);
+        const yourFieldCard = BattleRepositoryImpl.getInstance().getCurrentOrThrow().findOnYourField(yourFieldCardId);
         if (!yourFieldCard) throw new Error("공격자 카드 찾기 실패");
 
-        const attributeMarkIdList = yourFieldCard.getAttributeMarkIdList();
+        const attributeMarkIdList = yourFieldCard.getAttributeMarkIds();
 
-        const cardSceneId = yourFieldCard.getCardSceneId();
+        const cardSceneId = yourFieldCard.getBattleCardId();
         if (cardSceneId == null) throw new Error("공격자 SceneId 없음");
 
         const yourFieldCardScene = this.yourFieldCardSceneCache.findById(cardSceneId);
@@ -235,10 +228,10 @@ export class GeneralAttackHandler {
         opponentCardGroup.add(clickedOpponentFieldCardScene.getMesh());
 
         // 속성 마크도 붙이기
-        const opponentFieldEntity = this.opponentFieldRepository.findByCardSceneId(clickedOpponentFieldCardScene.getId());
+        const opponentFieldEntity = BattleRepositoryImpl.getInstance().getCurrentOrThrow().findOnOpponentField(clickedOpponentFieldCardScene.getId());
         if (!opponentFieldEntity) return null;
 
-        for (const id of opponentFieldEntity.getAttributeMarkIdList()) {
+        for (const id of opponentFieldEntity.getAttributeMarkIds()) {
             const mark = await this.opponentFieldCardAttributeMarkRepository.findById(id);
             if (!mark) continue;
 

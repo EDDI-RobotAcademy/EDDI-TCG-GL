@@ -1,4 +1,5 @@
 import {LeftClickDetectService} from "./LeftClickDetectService";
+import {BattleRepositoryImpl} from "../../battle/repository/BattleRepositoryImpl";
 import {BattleFieldCardSceneCacheImpl} from "../../battle/card/scene/cache/BattleFieldCardSceneCacheImpl";
 import {BattleFieldCardSceneCache} from "../../battle/card/scene/cache/BattleFieldCardSceneCache";
 import {LeftClickHandDetectRepositoryImpl} from "../repository/LeftClickHandDetectRepositoryImpl";
@@ -42,8 +43,6 @@ import {MouseCursorDetectRepository} from "../../mouse_cursor_detect/repository/
 import {MouseCursorDetectRepositoryImpl} from "../../mouse_cursor_detect/repository/MouseCursorDetectRepositoryImpl";
 import {ClickableCard} from "./ClickableCard";
 import {YourFieldAttributeMarkManager} from "../handler/your_field/YourFieldAttributeMarkManager";
-import {YourFieldRepository} from "../../battle/field/your/repository/YourFieldRepository";
-import {YourFieldRepositoryImpl} from "../../battle/field/your/repository/YourFieldRepositoryImpl";
 import {YourFieldCardScene} from "../../battle/field/your/card_scene/entity/YourFieldCardScene";
 import {ActivePanelAreaCache} from "../../battle/active_panel/cache/ActivePanelAreaCache";
 import {ActivePanelAreaCacheImpl} from "../../battle/active_panel/cache/ActivePanelAreaCacheImpl";
@@ -51,8 +50,6 @@ import {getCardById} from "../../card/utility";
 import {getSkillType, SkillType} from "../../card/SkillType";
 import {OpponentFieldCardSceneCache} from "../../battle/field/opponent/card_scene/cache/OpponentFieldCardSceneCache";
 import {OpponentFieldCardSceneCacheImpl} from "../../battle/field/opponent/card_scene/cache/OpponentFieldCardSceneCacheImpl";
-import {OpponentFieldRepositoryImpl} from "../../battle/field/opponent/repository/OpponentFieldRepositoryImpl";
-import {OpponentFieldRepository} from "../../battle/field/opponent/repository/OpponentFieldRepository";
 import {OpponentFieldCardAttributeMarkRepository} from "../../battle/field/opponent/attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
 
 import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../battle/field/opponent/attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
@@ -119,10 +116,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
     private battleFieldHandRepository: BattleFieldHandRepository;
 
     private yourFieldCardSceneCache: YourFieldCardSceneCache
-    private yourFieldRepository: YourFieldRepository
-
     private opponentFieldCardSceneCache: OpponentFieldCardSceneCache
-    private opponentFieldRepository: OpponentFieldRepository
     private opponentFieldCardAttributeMarkRepository: OpponentFieldCardAttributeMarkRepository
     private opponentFieldCardAttributeMarkSceneRepository: OpponentFieldCardAttributeMarkSceneRepository
 
@@ -168,7 +162,8 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         [MouseCursorDetectArea.FIELD_ENERGY_NEXT]: this.handleFieldEnergyNextButtonClick.bind(this),
     };
 
-    private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
+    private constructor(
+    private camera: THREE.Camera, private scene: THREE.Scene) {
         this.mouseCursorDetectRepository = MouseCursorDetectRepositoryImpl.getInstance()
 
         this.neonBorderRepository = NeonBorderRepositoryImpl.getInstance();
@@ -189,9 +184,6 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance()
 
         this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance()
-        this.yourFieldRepository = YourFieldRepositoryImpl.getInstance()
-
-        this.opponentFieldRepository = OpponentFieldRepositoryImpl.getInstance()
         this.opponentFieldCardSceneCache = OpponentFieldCardSceneCacheImpl.getInstance()
         this.opponentFieldCardAttributeMarkRepository = OpponentFieldCardAttributeMarkRepositoryImpl.getInstance()
         this.opponentFieldCardAttributeMarkSceneRepository = OpponentFieldCardAttributeMarkSceneRepositoryImpl.getInstance()
@@ -265,7 +257,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         // 넣는 값이 화면 카드 번호이므로 그것으로 찾는 길을 쓴다.
         // 전에는 필드 카드 자신의 번호로 찾는 길에 화면 카드 번호를 넣고 있었다.
         // 두 번호가 각자 0부터 나란히 세어져서 우연히 맞아떨어졌을 뿐이다.
-        const yourFieldCard = this.yourFieldRepository.findByCardSceneId(yourFieldCardId);
+        const yourFieldCard = BattleRepositoryImpl.getInstance().getCurrentOrThrow().findOnYourField(yourFieldCardId);
         if (yourFieldCard == null) return null;
 
         const cardId = yourFieldCard.getCardId()

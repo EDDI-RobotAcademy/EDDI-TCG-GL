@@ -1,4 +1,9 @@
 import * as THREE from 'three';
+
+// 상대 필드의 시작 배치다. 실제 대전에서는 서버가 준다.
+// 전에는 저장소가 이 다섯 줄을 스스로 들고 있어서, 값을 담는 곳이 시나리오를 정하고 있었다.
+const OPPONENT_FIELD_START_CARD_IDS = [31, 32, 32, 26, 27];
+
 import { createDefaultHandPageButtonsFrame } from "../../src/battle/hand/page/frame/HandPageButtonsFrame";
 import { HandPageButtonsRendererV2 } from "../../src/battle/hand/page/renderer/HandPageButtonsRendererV2";
 
@@ -33,7 +38,6 @@ import {NeonShape} from "../../src/neon/NeonShape";
 import {OpponentFieldAreaServiceImpl} from "../../src/battle/field/opponent/area/service/OpponentFieldAreaServiceImpl";
 import {KeyboardService} from "../../src/keyboard/service/KeyboardService";
 import {KeyboardServiceImpl} from "../../src/keyboard/service/KeyboardServiceImpl";
-import {OpponentFieldMapRepositoryImpl} from "../../src/battle/field/opponent/map/repository/OpponentFieldMapRepositoryImpl";
 import {OpponentFieldServiceImpl} from "../../src/battle/field/opponent/service/OpponentFieldServiceImpl";
 import {RightClickDetectServiceImpl} from "../../src/right_click_detect/service/RightClickDetectServiceImpl";
 import {RightClickDetectService} from "../../src/right_click_detect/service/RightClickDetectService";
@@ -70,8 +74,6 @@ export class TCGJustTestBattleFieldView {
     private battleFieldHandMapRepository = BattleFieldHandMapRepositoryImpl.getInstance()
     private battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance()
     private readonly handPageButtonsRenderer = new HandPageButtonsRendererV2();
-
-    private opponentFieldMapRepository = OpponentFieldMapRepositoryImpl.getInstance()
     private opponentFieldService = OpponentFieldServiceImpl.getInstance()
 
     private neonShape: NeonShape
@@ -308,7 +310,7 @@ export class TCGJustTestBattleFieldView {
     }
 
     private async addOpponentFieldUnitList(): Promise<void> {
-        const opponentFieldUnitList = this.opponentFieldMapRepository.getOpponentFieldList()
+        const opponentFieldUnitList = OPPONENT_FIELD_START_CARD_IDS
         console.log(`opponentFieldUnitList: ${opponentFieldUnitList}`)
 
         for (const opponentCardId of opponentFieldUnitList) {

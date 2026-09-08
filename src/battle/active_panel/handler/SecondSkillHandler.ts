@@ -1,14 +1,13 @@
 import * as THREE from "three";
+import {BattleRepositoryImpl} from "../../../battle/repository/BattleRepositoryImpl";
 
 import {YourFieldCardScene} from "../../field/your/card_scene/entity/YourFieldCardScene";
 import {BattleFieldCardAttributeMark} from "../../card/attribute_mark/entity/BattleFieldCardAttributeMark";
 import {DragMoveRepositoryImpl} from "../../../drag_move/repository/DragMoveRepositoryImpl";
-import {YourFieldRepositoryImpl} from "../../field/your/repository/YourFieldRepositoryImpl";
 import {YourFieldCardSceneCacheImpl} from "../../field/your/card_scene/cache/YourFieldCardSceneCacheImpl";
 import {BattleFieldCardAttributeMarkStoreImpl} from "../../card/attribute_mark/store/BattleFieldCardAttributeMarkStoreImpl";
 import {BattleFieldCardAttributeMarkSceneCacheImpl} from "../../card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCacheImpl";
 import {OpponentFieldCardSceneCacheImpl} from "../../field/opponent/card_scene/cache/OpponentFieldCardSceneCacheImpl";
-import {OpponentFieldRepositoryImpl} from "../../field/opponent/repository/OpponentFieldRepositoryImpl";
 import {OpponentFieldCardAttributeMarkRepositoryImpl} from "../../field/opponent/attribute_mark/repository/OpponentFieldCardAttributeMarkRepositoryImpl";
 import {OpponentFieldCardAttributeMarkSceneRepositoryImpl} from "../../field/opponent/attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepositoryImpl";
 import {LeftClickHandDetectRepositoryImpl} from "../../../left_click_detect/repository/LeftClickHandDetectRepositoryImpl";
@@ -16,12 +15,10 @@ import {ActivePanelAreaCacheImpl} from "../cache/ActivePanelAreaCacheImpl";
 import {NeonBorderRepositoryImpl} from "../../../neon_border/repository/NeonBorderRepositoryImpl";
 import {NeonBorderLineSceneRepositoryImpl} from "../../../neon_border_line_scene/repository/NeonBorderLineSceneRepositoryImpl";
 import {DragMoveRepository} from "../../../drag_move/repository/DragMoveRepository";
-import {YourFieldRepository} from "../../field/your/repository/YourFieldRepository";
 import {YourFieldCardSceneCache} from "../../field/your/card_scene/cache/YourFieldCardSceneCache";
 import {BattleFieldCardAttributeMarkStore} from "../../card/attribute_mark/store/BattleFieldCardAttributeMarkStore";
 import {BattleFieldCardAttributeMarkSceneCache} from "../../card/attribute_mark_scene/cache/BattleFieldCardAttributeMarkSceneCache";
 import {OpponentFieldCardSceneCache} from "../../field/opponent/card_scene/cache/OpponentFieldCardSceneCache";
-import {OpponentFieldRepository} from "../../field/opponent/repository/OpponentFieldRepository";
 import {OpponentFieldCardAttributeMarkRepository} from "../../field/opponent/attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
 import {OpponentFieldCardAttributeMarkSceneRepository} from "../../field/opponent/attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
 import {LeftClickHandDetectRepository} from "../../../left_click_detect/repository/LeftClickHandDetectRepository";
@@ -37,12 +34,10 @@ export class SecondSkillHandler {
     private static instance: SecondSkillHandler;
 
     private dragMoveRepository: DragMoveRepository;
-    private yourFieldRepository: YourFieldRepository;
     private yourFieldCardSceneCache: YourFieldCardSceneCache;
     private battleFieldCardAttributeMarkStore: BattleFieldCardAttributeMarkStore;
     private battleFieldCardAttributeMarkSceneCache: BattleFieldCardAttributeMarkSceneCache;
     private opponentFieldCardSceneCache: OpponentFieldCardSceneCache;
-    private opponentFieldRepository: OpponentFieldRepository;
     private opponentFieldCardAttributeMarkRepository: OpponentFieldCardAttributeMarkRepository;
     private opponentFieldCardAttributeMarkSceneRepository: OpponentFieldCardAttributeMarkSceneRepository;
 
@@ -64,12 +59,10 @@ export class SecondSkillHandler {
 
     private constructor(private camera: THREE.Camera, private scene: THREE.Scene) {
         this.dragMoveRepository = DragMoveRepositoryImpl.getInstance();
-        this.yourFieldRepository = YourFieldRepositoryImpl.getInstance();
         this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance();
         this.battleFieldCardAttributeMarkStore = BattleFieldCardAttributeMarkStoreImpl.getInstance();
         this.battleFieldCardAttributeMarkSceneCache = BattleFieldCardAttributeMarkSceneCacheImpl.getInstance();
         this.opponentFieldCardSceneCache = OpponentFieldCardSceneCacheImpl.getInstance();
-        this.opponentFieldRepository = OpponentFieldRepositoryImpl.getInstance();
         this.opponentFieldCardAttributeMarkRepository = OpponentFieldCardAttributeMarkRepositoryImpl.getInstance();
         this.opponentFieldCardAttributeMarkSceneRepository = OpponentFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
 
@@ -137,19 +130,19 @@ export class SecondSkillHandler {
         // 넣는 값이 화면 카드 번호이므로 그것으로 찾는 길을 쓴다.
         // 전에는 필드 카드 자신의 번호로 찾는 길에 화면 카드 번호를 넣고 있었다.
         // 두 번호가 각자 0부터 나란히 세어져서 우연히 맞아떨어졌을 뿐이다.
-        const yourFieldCard = this.yourFieldRepository.findByCardSceneId(yourFieldCardId);
+        const yourFieldCard = BattleRepositoryImpl.getInstance().getCurrentOrThrow().findOnYourField(yourFieldCardId);
         if (!yourFieldCard) throw new Error("공격자 카드 찾기 실패");
 
         const cardId = yourFieldCard.getCardId();
         if (!cardId) throw new Error("공격자 카드 ID 없음");
 
-        const attributeMarkIdList = yourFieldCard.getAttributeMarkIdList();
+        const attributeMarkIdList = yourFieldCard.getAttributeMarkIds();
         const attributeMarkList = await Promise.all(
             attributeMarkIdList.map(id => this.battleFieldCardAttributeMarkStore.findById(id))
         );
         const validMarkList = attributeMarkList.filter((mark): mark is BattleFieldCardAttributeMark => mark !== null);
 
-        const cardSceneId = yourFieldCard.getCardSceneId();
+        const cardSceneId = yourFieldCard.getBattleCardId();
         if (cardSceneId == null) throw new Error("공격자 SceneId 없음");
 
         const yourFieldCardScene = this.yourFieldCardSceneCache.findById(cardSceneId);

@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import {FieldCard} from "../../battle/domain/FieldCard";
+import {BattleRepositoryImpl} from "../../battle/repository/BattleRepositoryImpl";
 
 import {CardKind} from "../../card/kind";
 import {BattleFieldCardScene} from "../../battle/card/scene/entity/BattleFieldCardScene";
@@ -13,21 +15,16 @@ import {YourFieldCardSceneCache} from "../../battle/field/your/card_scene/cache/
 import {
     YourFieldCardSceneCacheImpl
 } from "../../battle/field/your/card_scene/cache/YourFieldCardSceneCacheImpl";
-import {YourFieldRepository} from "../../battle/field/your/repository/YourFieldRepository";
-import {YourFieldRepositoryImpl} from "../../battle/field/your/repository/YourFieldRepositoryImpl";
-import {YourField} from "../../battle/field/your/entity/YourField";
 
 export class MouseDropHandler {
     private static instance: MouseDropHandler;
 
     private battleFieldHandRepository: BattleFieldHandRepository;
     private battleFieldCardSceneCache: BattleFieldCardSceneCache;
-
-    private yourFieldRepository: YourFieldRepository;
     private yourFieldCardSceneCache: YourFieldCardSceneCache;
 
     private handlers: Record<CardKind,
-        (selectedObject: BattleFieldCardScene) => Promise<YourField | null>> = {
+        (selectedObject: BattleFieldCardScene) => Promise<FieldCard | null>> = {
         [CardKind.UNIT]: this.handleCardKindUnit.bind(this),
         [CardKind.ITEM]: this.handleCardKindItem.bind(this),
         [CardKind.TRAP]: this.handleCardKindTrap.bind(this),
@@ -41,8 +38,6 @@ export class MouseDropHandler {
     private constructor() {
         this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance();
         this.battleFieldCardSceneCache = BattleFieldCardSceneCacheImpl.getInstance();
-
-        this.yourFieldRepository = YourFieldRepositoryImpl.getInstance();
         this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance();
     }
 
@@ -56,7 +51,7 @@ export class MouseDropHandler {
     public async execute(
         type: CardKind,
         selectedObject: BattleFieldCardScene,
-    ): Promise<YourField | null> {
+    ): Promise<FieldCard | null> {
         const handler = this.handlers[type];
         if (!handler) {
             console.warn(`CardKind 타입이 존재하지 않음: ${type}`);
@@ -66,7 +61,7 @@ export class MouseDropHandler {
         return await handler(selectedObject);
     }
 
-    private async handleCardKindUnit(selectedObject: BattleFieldCardScene): Promise<YourField | null> {
+    private async handleCardKindUnit(selectedObject: BattleFieldCardScene): Promise<FieldCard | null> {
         console.log(`유닛 타입 카드 사용`);
 
         const cardSceneId = selectedObject.getId();
@@ -100,14 +95,14 @@ export class MouseDropHandler {
 
         const yourFieldCardScene = await this.yourFieldCardSceneCache.create(willBePlaceYourFieldCardSceneMesh);
 
-        const createdYourField = this.yourFieldRepository.save(
+        // 필드에 놓는다. 맨 뒤에 붙는다.
+        const createdYourField = new FieldCard(
             yourFieldCardScene.getId(),
-            positionId,
+            cardId,
             attributeMarkIdList,
-            cardId
+            positionId,
         );
-
-        console.log(`handleCardKindUnit() yourFieldRepository saved: ${JSON.stringify(createdYourField, null, 2)}`);
+        BattleRepositoryImpl.getInstance().getCurrentOrThrow().placeOnYourField(createdYourField);
 
         // handCard 삭제
         const handCardId = willBePlacedYourFieldHandCard.getId();
@@ -119,31 +114,31 @@ export class MouseDropHandler {
         return createdYourField;
     }
 
-    private async handleCardKindItem(selectedObject: BattleFieldCardScene): Promise<YourField | null> {
+    private async handleCardKindItem(selectedObject: BattleFieldCardScene): Promise<FieldCard | null> {
         console.log(`아이템 타입 카드 사용`);
         
         return null
     }
 
-    private async handleCardKindTrap(selectedObject: BattleFieldCardScene): Promise<YourField | null> {
+    private async handleCardKindTrap(selectedObject: BattleFieldCardScene): Promise<FieldCard | null> {
         console.log(`함정 타입 카드 사용`);
 
         return null
     }
     
-    private async handleCardKindSupport(selectedObject: BattleFieldCardScene): Promise<YourField | null> {
+    private async handleCardKindSupport(selectedObject: BattleFieldCardScene): Promise<FieldCard | null> {
         console.log(`서포트 타입 카드 사용`);
 
         return null
     }
 
-    private async handleCardKindTool(selectedObject: BattleFieldCardScene): Promise<YourField | null> {
+    private async handleCardKindTool(selectedObject: BattleFieldCardScene): Promise<FieldCard | null> {
         console.log(`도구 타입 카드 사용`);
 
         return null
     }
 
-    private async handleCardKindEnergy(selectedObject: BattleFieldCardScene): Promise<YourField | null> {
+    private async handleCardKindEnergy(selectedObject: BattleFieldCardScene): Promise<FieldCard | null> {
         console.log(`에너지 타입 카드 사용`);
 
         const selectedObjectMesh = selectedObject.getMesh();
@@ -154,13 +149,13 @@ export class MouseDropHandler {
         return null
     }
 
-    private async handleCardKindEnvironment(selectedObject: BattleFieldCardScene): Promise<YourField | null> {
+    private async handleCardKindEnvironment(selectedObject: BattleFieldCardScene): Promise<FieldCard | null> {
         console.log(`환경 타입 카드 사용`);
 
         return null
     }
 
-    private async handleCardKindToken(selectedObject: BattleFieldCardScene): Promise<YourField | null> {
+    private async handleCardKindToken(selectedObject: BattleFieldCardScene): Promise<FieldCard | null> {
         console.log(`토큰 타입 카드 사용`);
 
         return null

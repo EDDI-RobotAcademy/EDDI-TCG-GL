@@ -1,4 +1,6 @@
 import {TextureManager} from "../../../../texture_manager/TextureManager";
+import {FieldCard} from "../../../domain/FieldCard";
+import {BattleRepositoryImpl} from "../../../../battle/repository/BattleRepositoryImpl";
 import { markOwnedTexture } from "../../../../core/lifecycle/DisposableMeshStore";
 import {CardJob} from "../../../../card/job";
 import * as THREE from "three";
@@ -15,8 +17,6 @@ import {CardKind} from "../../../../card/kind";
 import {Texture} from "three";
 import {MeshGenerator} from "../../../../mesh/generator";
 import {Card} from "../../../../card/types";
-import {OpponentFieldRepositoryImpl} from "../repository/OpponentFieldRepositoryImpl";
-import {OpponentFieldRepository} from "../repository/OpponentFieldRepository";
 import {OpponentFieldCardAttributeMarkPositionRepository} from "../attribute_mark_position/repository/OpponentFieldCardAttributeMarkPositionRepository";
 import {OpponentFieldCardAttributeMarkSceneRepository} from "../attribute_mark_scene/repository/OpponentFieldCardAttributeMarkSceneRepository";
 import {OpponentFieldCardAttributeMarkRepository} from "../attribute_mark/repository/OpponentFieldCardAttributeMarkRepository";
@@ -35,8 +35,6 @@ export class OpponentFieldServiceImpl implements OpponentFieldService {
 
     private opponentFieldCardPositionStore: OpponentFieldCardPositionStore
     private opponentFieldCardSceneCache: OpponentFieldCardSceneCache
-    private opponentFieldRepository: OpponentFieldRepository
-
     private opponentFieldCardAttributeMarkPositionRepository: OpponentFieldCardAttributeMarkPositionRepository
     private opponentFieldCardAttributeMarkSceneRepository: OpponentFieldCardAttributeMarkSceneRepository
     private opponentFieldCardAttributeMarkRepository: OpponentFieldCardAttributeMarkRepository
@@ -63,7 +61,6 @@ export class OpponentFieldServiceImpl implements OpponentFieldService {
     private constructor() {
         this.opponentFieldCardPositionStore = OpponentFieldCardPositionStoreImpl.getInstance()
         this.opponentFieldCardSceneCache = OpponentFieldCardSceneCacheImpl.getInstance()
-        this.opponentFieldRepository = OpponentFieldRepositoryImpl.getInstance()
 
         this.opponentFieldCardAttributeMarkPositionRepository = OpponentFieldCardAttributeMarkPositionRepositoryImpl.getInstance()
         this.opponentFieldCardAttributeMarkSceneRepository = OpponentFieldCardAttributeMarkSceneRepositoryImpl.getInstance()
@@ -230,7 +227,10 @@ export class OpponentFieldServiceImpl implements OpponentFieldService {
         }
 
         const attributeMarkIdList = attributeMarks.map((mark) => mark.getId())
-        this.opponentFieldRepository.save(mainCardScene.getId(), createdHandPosition.getId(), attributeMarkIdList, cardId)
+        // 상대 필드에 놓는다. 맨 뒤에 붙는다.
+        BattleRepositoryImpl.getInstance().getCurrentOrThrow().placeOnOpponentField(
+            new FieldCard(mainCardScene.getId(), cardId, attributeMarkIdList, createdHandPosition.getId()),
+        )
     }
 
     private calculateWeaponPosition(handPosition: Vector2d): Vector2d {
