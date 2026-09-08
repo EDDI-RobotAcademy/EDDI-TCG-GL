@@ -81,7 +81,6 @@ import { MoraleConvertEffect } from "../../src/battle/animation/card/item/035_mo
 import { OverflowMoraleEffect } from "../../src/battle/animation/card/support/002_overflow_morale/OverflowMoraleEffect";
 import { SwampEffect } from "../../src/battle/animation/card/support/020_swamp/SwampEffect";
 
-import { YourLostZoneRepositoryImpl } from "../../src/battle/zone/your_lost_zone/repository/YourLostZoneRepositoryImpl";
 import {
     createDefaultYourLostZonePanelFrame,
     computeYourLostZonePanelBounds,
@@ -119,7 +118,6 @@ import { OpponentFieldEnergyAreaRendererV2 } from "../../src/battle/field_energy
 import { OpponentFieldEnergyHudRendererV2 } from "../../src/battle/field_energy/opponent/renderer/OpponentFieldEnergyHudRendererV2";
 import { createDefaultOpponentLostZonePopupFrame } from "../../src/battle/zone/opponent_lost_zone/frame/OpponentLostZonePopupFrame";
 import { OpponentLostZonePanelRendererV2 } from "../../src/battle/zone/opponent_lost_zone/renderer/OpponentLostZonePanelRendererV2";
-import { OpponentLostZoneRepositoryImpl } from "../../src/battle/zone/opponent_lost_zone/repository/OpponentLostZoneRepositoryImpl";
 
 import {
     createDefaultTurnEndButtonFrame,
@@ -421,10 +419,9 @@ async function main(container: HTMLElement): Promise<void> {
     scene.add(opponentGroup);
 
     // ── Your Lost Zone — clickable panel at bottom-left + modal popup of ally cards.
-    const lostZoneRepo = YourLostZoneRepositoryImpl.getInstance();
     // Seed with 12 test cards — exactly two full rows at 6 columns. Exercises horizontal
     // spacing (vs. hand layout) AND vertical row spacing / aspect ratio of the popup grid.
-    for (const id of [31, 32, 26, 27, 93, 19, 2, 8, 9, 20, 25, 33]) lostZoneRepo.addCard(id);
+    for (const id of [31, 32, 26, 27, 93, 19, 2, 8, 9, 20, 25, 33]) battle.sendToYourLostZone(id);
 
     const lostZonePanelFrame = createDefaultYourLostZonePanelFrame();
     const lostZonePopupFrame = createDefaultYourLostZonePopupFrame();
@@ -443,9 +440,8 @@ async function main(container: HTMLElement): Promise<void> {
     const opponentLostZonePanelGroup = await opponentLostZonePanelRenderer.build(opponentLostZonePanelFrame);
     scene.add(opponentLostZonePanelGroup);
 
-    const opponentLostZoneRepo = OpponentLostZoneRepositoryImpl.getInstance();
     // Seed opponent repo with 12 test cards so pagination (2 pages at 10/page) is exercised.
-    for (const id of [31, 32, 26, 27, 93, 19, 2, 8, 9, 20, 25, 33]) opponentLostZoneRepo.addCard(id);
+    for (const id of [31, 32, 26, 27, 93, 19, 2, 8, 9, 20, 25, 33]) battle.sendToOpponentLostZone(id);
 
     // ── Turn-end button — right-side click zone that hands control to the opponent.
     const turnEndButtonFrame = createDefaultTurnEndButtonFrame();
@@ -494,7 +490,7 @@ async function main(container: HTMLElement): Promise<void> {
         opponentLostZonePopupFrame.cardColumns * opponentLostZonePopupFrame.rowsPerPage;
 
     const buildOpponentLostZonePopupForCurrentPage = async (): Promise<THREE.Group> => {
-        const all = [...opponentLostZoneRepo.getCards()];
+        const all = [...battle.getOpponentLostZoneCards()];
         const start = opponentLostZonePage * opponentLostZoneCardsPerPage;
         const slice = all.slice(start, start + opponentLostZoneCardsPerPage);
         const resolved = resolveCards(slice, 'opponent-lost-zone');
@@ -528,7 +524,7 @@ async function main(container: HTMLElement): Promise<void> {
     };
 
     const opponentLostZoneTotalPages = (): number =>
-        Math.max(1, Math.ceil(opponentLostZoneRepo.getCards().length / opponentLostZoneCardsPerPage));
+        Math.max(1, Math.ceil(battle.getOpponentLostZoneCards().length / opponentLostZoneCardsPerPage));
 
     // ── Your Tomb — gravestone-shaped panel + popup (same as Your Lost Zone). ─────────
     const tombPanelFrame = createDefaultYourTombPanelFrame();
@@ -653,7 +649,7 @@ async function main(container: HTMLElement): Promise<void> {
     const lostZoneCardsPerPage = lostZonePopupFrame.cardColumns * lostZonePopupFrame.rowsPerPage;
 
     const buildLostZonePopupForCurrentPage = async (): Promise<THREE.Group> => {
-        const all = [...lostZoneRepo.getCards()];
+        const all = [...battle.getYourLostZoneCards()];
         const start = lostZonePage * lostZoneCardsPerPage;
         const slice = all.slice(start, start + lostZoneCardsPerPage);
         const resolved = resolveCards(slice, 'lost-zone');
@@ -688,7 +684,7 @@ async function main(container: HTMLElement): Promise<void> {
     };
 
     const lostZoneTotalPages = (): number =>
-        Math.max(1, Math.ceil(lostZoneRepo.getCards().length / lostZoneCardsPerPage));
+        Math.max(1, Math.ceil(battle.getYourLostZoneCards().length / lostZoneCardsPerPage));
 
     // Opponent HP state + alive order for reflow on death
     const opponentHpState = new Map<number, number>();
@@ -2373,7 +2369,7 @@ async function main(container: HTMLElement): Promise<void> {
 
         const drawn = battle.drawFromOpponentDeck();
         if (drawn != null) {
-            OpponentLostZoneRepositoryImpl.getInstance().addCard(drawn);
+            battle.sendToOpponentLostZone(drawn);
             console.log(`  opponent deck → opponent lost zone: cardId ${drawn} (opp deck remaining: ${battle.getOpponentDeckRemainingCount()})`);
         } else {
             console.log(`  opponent deck empty — nothing to send to lost zone`);
