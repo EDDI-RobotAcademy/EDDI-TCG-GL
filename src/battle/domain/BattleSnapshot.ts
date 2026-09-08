@@ -1,13 +1,13 @@
 import {TurnOwner} from "./TurnOwner";
 import {BattleFieldUnitSnapshot} from "./BattleFieldUnitSnapshot";
 import {FieldCardSnapshot} from "./FieldCardSnapshot";
+import {HandCardSnapshot} from "./HandCardSnapshot";
 
 // 전투 한 판의 상태를 통째로 적어 둔 것이다.
 //
 // 재접속했을 때 이것 하나만 있으면 전투를 그대로 되돌릴 수 있어야 한다.
 // 그래서 화면에 그려지는 것은 여기에 들어오지 않는다. 값만 들어온다.
 //
-// 손패가 R2-57 에 여기에 붙는다.
 export interface BattleSnapshot {
     readonly battleId: number;
     readonly turnOwner: TurnOwner;
@@ -25,4 +25,6 @@ export interface BattleSnapshot {
     // 필드에 놓인 카드. 놓인 차례가 그대로여야 한다.
     readonly yourFieldCards: readonly FieldCardSnapshot[];
     readonly opponentFieldCards: readonly FieldCardSnapshot[];
+    // 손패에 든 카드. 든 차례가 그대로여야 한다.
+    readonly handCards: readonly HandCardSnapshot[];
 }

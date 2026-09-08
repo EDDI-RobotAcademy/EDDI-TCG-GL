@@ -12,7 +12,7 @@
 
 import * as THREE from "three";
 
-import { HandCard } from "../../hand/entity/HandCard";
+import { CardFace } from "../../hand/entity/CardFace";
 import { HandCardFrame, createDefaultHandCardFrame } from "../../hand/frame/HandCardFrame";
 import { HandCardRendererV2 } from "../../hand/renderer/HandCardRendererV2";
 
@@ -38,7 +38,7 @@ export class CardGridPopupRenderer {
 
     public async build(
         frame: CardGridPopupFrame,
-        cards: readonly HandCard[],
+        cards: readonly CardFace[],
     ): Promise<THREE.Group> {
         const bounds = computeCardGridPopupBounds(frame, window.innerWidth, window.innerHeight);
         const baseWidth = bounds.width;

@@ -1,5 +1,10 @@
 import * as THREE from 'three';
 
+// 손패의 시작 카드다. 실제 대전에서는 서버가 준다.
+// 전에는 저장소가 이 넉 장을 스스로 들고 있어서, 값을 담는 곳이 시나리오를 정하고 있었다.
+const HAND_START_CARD_IDS = [2, 19, 93, 26];
+
+
 // 상대 필드의 시작 배치다. 실제 대전에서는 서버가 준다.
 // 전에는 저장소가 이 다섯 줄을 스스로 들고 있어서, 값을 담는 곳이 시나리오를 정하고 있었다.
 const OPPONENT_FIELD_START_CARD_IDS = [31, 32, 32, 26, 27];
@@ -16,7 +21,6 @@ import {UnitCardGenerator} from "../../src/card/unit/generate";
 import {SupportCardGenerator} from "../../src/card/support/generate";
 import {ItemCardGenerator} from "../../src/card/item/generate";
 import {EnergyCardGenerator} from "../../src/card/energy/generate";
-import {BattleFieldHandMapRepositoryImpl} from "../../src/battle/hand/repository/BattleFieldHandMapRepositoryImpl";
 
 import {EffectComposer} from 'three/examples/jsm/postprocessing/EffectComposer';
 import {RenderPass} from 'three/examples/jsm/postprocessing/RenderPass';
@@ -64,7 +68,6 @@ export class TCGJustTestBattleFieldView {
     private backgroundService = BackgroundServiceImpl.getInstance()
 
     private battleFieldHandService = BattleFieldHandServiceImpl.getInstance()
-    private battleFieldHandMapRepository = BattleFieldHandMapRepositoryImpl.getInstance()
     private battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance()
     private opponentFieldService = OpponentFieldServiceImpl.getInstance()
 
@@ -291,7 +294,7 @@ export class TCGJustTestBattleFieldView {
     }
 
     private async addYourHandUnitList(): Promise<void> {
-        const battleFieldHandList = this.battleFieldHandMapRepository.getBattleFieldHandList()
+        const battleFieldHandList = HAND_START_CARD_IDS
 
         for (const handCardId of battleFieldHandList) {
             const createdHand = await this.battleFieldHandService.createHand(handCardId)

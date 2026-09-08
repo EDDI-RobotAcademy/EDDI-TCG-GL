@@ -1,4 +1,9 @@
 import * as THREE from 'three';
+
+// 손패의 시작 카드다. 실제 대전에서는 서버가 준다.
+// 전에는 저장소가 이 넉 장을 스스로 들고 있어서, 값을 담는 곳이 시나리오를 정하고 있었다.
+const HAND_START_CARD_IDS = [2, 19, 93, 26];
+
 import battleFieldMusic from '@resource/music/battle_field/battle-field.mp3';
 
 import {TextureManager} from "../../src/texture_manager/TextureManager";
@@ -26,7 +31,6 @@ import {CameraRepositoryImpl} from "../../src/camera/repository/CameraRepository
 import {BackgroundServiceImpl} from "../../src/background/service/BackgroundServiceImpl";
 import {BackgroundRepositoryImpl} from "../../src/background/repository/BackgroundRepositoryImpl";
 import {BattleFieldHandServiceImpl} from "../../src/battle/hand/service/BattleFieldHandServiceImpl";
-import {BattleFieldHandMapRepositoryImpl} from "../../src/battle/hand/repository/BattleFieldHandMapRepositoryImpl";
 import {CardGenerationHandler} from "../../src/card/handler";
 import {LegacyDragAndDropManager} from "../../src/drag_and_drop/LegacyDragAndDropManager";
 import {LeftClickDetectServiceImpl} from "../../src/left_click_detect/service/LeftClickDetectServiceImpl";
@@ -61,7 +65,6 @@ export class TCGJustTestBattleFieldView {
 
     private battleFieldHandService = BattleFieldHandServiceImpl.getInstance()
     // private battleFieldHandRepository = BattleFieldHandRepository.getInstance()
-    private battleFieldHandMapRepository = BattleFieldHandMapRepositoryImpl.getInstance()
     private battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance()
     private battleFieldHandPositionRepository = BattleFieldHandPositionRepository.getInstance()
 
@@ -229,7 +232,7 @@ export class TCGJustTestBattleFieldView {
     }
 
     private async addYourHandUnitList(): Promise<void> {
-        const battleFieldHandList = this.battleFieldHandMapRepository.getBattleFieldHandList()
+        const battleFieldHandList = HAND_START_CARD_IDS
 
         for (const handCardId of battleFieldHandList) {
             const createdHand = await this.battleFieldHandService.createHand(handCardId)

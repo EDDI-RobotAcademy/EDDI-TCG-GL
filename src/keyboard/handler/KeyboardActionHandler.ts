@@ -1,8 +1,6 @@
 import { KeyboardAction } from "../entity/KeyboardAction";
-import {BattleFieldHandMapRepository} from "../../battle/hand/repository/BattleFieldHandMapRepository";
-import {BattleFieldHandMapRepositoryImpl} from "../../battle/hand/repository/BattleFieldHandMapRepositoryImpl";
-import {BattleFieldHandRepository} from "../../battle/hand/repository/BattleFieldHandRepository";
-import {BattleFieldHandRepositoryImpl} from "../../battle/hand/repository/BattleFieldHandRepositoryImpl";
+import {HandCard} from "../../battle/domain/HandCard";
+import {BattleRepositoryImpl} from "../../battle/repository/BattleRepositoryImpl";
 import * as THREE from "three";
 import {CardJob} from "../../card/job";
 import {CardKind} from "../../card/kind";
@@ -68,9 +66,6 @@ export class KeyboardActionHandler {
     private actionTable: Map<KeyboardAction, () => void>;
 
     private scene: THREE.Scene;
-
-    private battleFieldHandMapRepository: BattleFieldHandMapRepository;
-    private battleFieldHandRepository: BattleFieldHandRepository;
     private battleFieldCardPositionStore: BattleFieldCardPositionStore;
     private battleFieldHandSceneRepository: BattleFieldHandSceneRepository;
 
@@ -92,8 +87,6 @@ export class KeyboardActionHandler {
     };
 
     private constructor(scene: THREE.Scene) {
-        this.battleFieldHandMapRepository = BattleFieldHandMapRepositoryImpl.getInstance();
-        this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance();
         this.battleFieldCardPositionStore = BattleFieldCardPositionStoreImpl.getInstance();
         this.battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance();
 
@@ -118,9 +111,8 @@ export class KeyboardActionHandler {
             [KeyboardAction.DRAW, async () => {
                 console.log("Handler: Drawing a card...");
                 const handCardId: number = 27
-                this.battleFieldHandMapRepository.addBattleFieldHand(handCardId)
 
-                const currentActiveHandNumber = this.battleFieldHandRepository.countActiveCards();
+                const currentActiveHandNumber = BattleRepositoryImpl.getInstance().getCurrentOrThrow().getHandCount();
 
                 const createdHand = await this.createHand(handCardId)
 
@@ -153,7 +145,7 @@ export class KeyboardActionHandler {
         const cardGroup = new THREE.Group();
         const card = this.getCardByIdOrThrowError(cardId);
 
-        const currentActiveHandNumber = this.battleFieldHandRepository.countActiveCards();
+        const currentActiveHandNumber = BattleRepositoryImpl.getInstance().getCurrentOrThrow().getHandCount();
         const quotient = Math.floor(currentActiveHandNumber / BattleFieldConstants.MAX_HAND_REPRESENTATION) + 1;
         const remainder = currentActiveHandNumber % BattleFieldConstants.MAX_HAND_REPRESENTATION; // 나머지 (페이지 내 위치)
 
@@ -328,11 +320,9 @@ export class KeyboardActionHandler {
         }
 
         const attributeMarkIdList = attributeMarks.map((mark) => mark.getId());
-        this.battleFieldHandRepository.save(
-            mainCardScene.getId(),
-            createdHandPosition.getId(),
-            attributeMarkIdList,
-            cardId
+        // 손패에 넣는다. 맨 뒤에 붙는다.
+        BattleRepositoryImpl.getInstance().getCurrentOrThrow().addToHand(
+            new HandCard(mainCardScene.getId(), cardId, attributeMarkIdList, createdHandPosition.getId()),
         );
     }
 

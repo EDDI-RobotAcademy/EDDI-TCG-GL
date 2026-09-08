@@ -1,16 +1,13 @@
 import {BattleFieldHandService} from "./BattleFieldHandService";
+import {HandCard} from "../../../battle/domain/HandCard";
+import {BattleRepositoryImpl} from "../../../battle/repository/BattleRepositoryImpl";
 import { markOwnedTexture } from "../../../core/lifecycle/DisposableMeshStore";
-import {BattleFieldHandRepository} from "../repository/BattleFieldHandRepository";
-import {BattleFieldHandRepositoryImpl} from "../repository/BattleFieldHandRepositoryImpl";
 import {BattleFieldCardSceneCache} from "../../card/scene/cache/BattleFieldCardSceneCache";
 import {BattleFieldCardSceneCacheImpl} from "../../card/scene/cache/BattleFieldCardSceneCacheImpl";
 import {BattleFieldCardPositionStore} from "../../card/position/store/BattleFieldCardPositionStore";
 import {BattleFieldCardPositionStoreImpl} from "../../card/position/store/BattleFieldCardPositionStoreImpl";
 import {BattleFieldCardPosition} from "../../card/position/entity/BattleFieldCardPosition";
 import {Vector2d} from "../../../common/math/Vector2d";
-import {BattleFieldHand} from "../entity/BattleFieldHand";
-import {BattleFieldHandMapRepository} from "../repository/BattleFieldHandMapRepository";
-import {BattleFieldHandMapRepositoryImpl} from "../repository/BattleFieldHandMapRepositoryImpl";
 import {getCardById} from "../../../card/utility";
 import * as THREE from "three";
 import {BattleFieldCardScene} from "../../card/scene/entity/BattleFieldCardScene";
@@ -34,9 +31,6 @@ import {BattleFieldConstants} from "../../../common/BattleFieldConstants";
 
 export class BattleFieldHandServiceImpl implements BattleFieldHandService {
     private static instance: BattleFieldHandServiceImpl;
-
-    private battleFieldHandRepository: BattleFieldHandRepository;
-    private battleFieldHandMapRepository: BattleFieldHandMapRepository;
     private battleFieldCardSceneCache: BattleFieldCardSceneCache;
     private battleFieldCardPositionStore: BattleFieldCardPositionStore;
 
@@ -63,8 +57,6 @@ export class BattleFieldHandServiceImpl implements BattleFieldHandService {
     };
 
     private constructor() {
-        this.battleFieldHandRepository = BattleFieldHandRepositoryImpl.getInstance();
-        this.battleFieldHandMapRepository = BattleFieldHandMapRepositoryImpl.getInstance();
         this.battleFieldCardSceneCache = BattleFieldCardSceneCacheImpl.getInstance();
         this.battleFieldCardPositionStore = BattleFieldCardPositionStoreImpl.getInstance();
 
@@ -233,7 +225,10 @@ export class BattleFieldHandServiceImpl implements BattleFieldHandService {
         }
 
         const attributeMarkIdList = attributeMarks.map((mark) => mark.getId())
-        this.battleFieldHandRepository.save(mainCardScene.getId(), createdHandPosition.getId(), attributeMarkIdList, cardId)
+        // 손패에 넣는다. 맨 뒤에 붙는다.
+        BattleRepositoryImpl.getInstance().getCurrentOrThrow().addToHand(
+            new HandCard(mainCardScene.getId(), cardId, attributeMarkIdList, createdHandPosition.getId()),
+        )
     }
 
     private calculateWeaponPosition(handPosition: Vector2d): Vector2d {
