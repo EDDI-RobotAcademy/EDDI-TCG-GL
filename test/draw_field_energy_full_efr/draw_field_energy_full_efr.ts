@@ -104,7 +104,6 @@ import {
 } from "../../src/battle/zone/your_tomb/frame/YourTombPanelFrame";
 import { createDefaultYourTombPopupFrame } from "../../src/battle/zone/your_tomb/frame/YourTombPopupFrame";
 import { YourTombPanelRendererV2 } from "../../src/battle/zone/your_tomb/renderer/YourTombPanelRendererV2";
-import { YourTombRepositoryImpl } from "../../src/battle/zone/your_tomb/repository/YourTombRepositoryImpl";
 
 import {
     createDefaultOpponentTombPanelFrame,
@@ -118,7 +117,6 @@ import {
 } from "../../src/battle/field_energy/opponent/frame/OpponentFieldEnergyAreaFrame";
 import { OpponentFieldEnergyAreaRendererV2 } from "../../src/battle/field_energy/opponent/renderer/OpponentFieldEnergyAreaRendererV2";
 import { OpponentFieldEnergyHudRendererV2 } from "../../src/battle/field_energy/opponent/renderer/OpponentFieldEnergyHudRendererV2";
-import { OpponentTombRepositoryImpl } from "../../src/battle/zone/opponent_tomb/repository/OpponentTombRepositoryImpl";
 import { createDefaultOpponentLostZonePopupFrame } from "../../src/battle/zone/opponent_lost_zone/frame/OpponentLostZonePopupFrame";
 import { OpponentLostZonePanelRendererV2 } from "../../src/battle/zone/opponent_lost_zone/renderer/OpponentLostZonePanelRendererV2";
 import { OpponentLostZoneRepositoryImpl } from "../../src/battle/zone/opponent_lost_zone/repository/OpponentLostZoneRepositoryImpl";
@@ -541,16 +539,15 @@ async function main(container: HTMLElement): Promise<void> {
     const tombPanelGroup = await tombPanelRenderer.build(tombPanelFrame);
     scene.add(tombPanelGroup);
 
-    const tombRepo = YourTombRepositoryImpl.getInstance();
     // Pilot-only dummy seed for testing pagination; production seed will come from network.
-    for (const id of [31, 32, 33, 35, 36, 26, 27, 25, 30, 20, 2, 8]) tombRepo.addCard(id);
+    for (const id of [31, 32, 33, 35, 36, 26, 27, 25, 30, 20, 2, 8]) battle.sendToYourTomb(id);
 
     let tombPopupGroup: THREE.Group | null = null;
     let tombPage = 0;
     const tombCardsPerPage = tombPopupFrame.cardColumns * tombPopupFrame.rowsPerPage;
 
     const buildTombPopupForCurrentPage = async (): Promise<THREE.Group> => {
-        const all = [...tombRepo.getCards()];
+        const all = [...battle.getYourTombCards()];
         const start = tombPage * tombCardsPerPage;
         const slice = all.slice(start, start + tombCardsPerPage);
         const resolved = resolveCards(slice, 'tomb');
@@ -584,7 +581,7 @@ async function main(container: HTMLElement): Promise<void> {
     };
 
     const tombTotalPages = (): number =>
-        Math.max(1, Math.ceil(tombRepo.getCards().length / tombCardsPerPage));
+        Math.max(1, Math.ceil(battle.getYourTombCards().length / tombCardsPerPage));
 
     // ── Opponent Tomb — 180° mirror of Your Tomb. Same popup reuse pattern as opp LZ. ──
     const opponentTombPanelFrame = createDefaultOpponentTombPanelFrame();
@@ -594,9 +591,8 @@ async function main(container: HTMLElement): Promise<void> {
     const opponentTombPanelGroup = await opponentTombPanelRenderer.build(opponentTombPanelFrame);
     scene.add(opponentTombPanelGroup);
 
-    const opponentTombRepo = OpponentTombRepositoryImpl.getInstance();
     // Pilot-only dummy seed for testing pagination (12 cards = 2 pages).
-    for (const id of [31, 32, 33, 35, 36, 26, 27, 25, 30, 20, 2, 8]) opponentTombRepo.addCard(id);
+    for (const id of [31, 32, 33, 35, 36, 26, 27, 25, 30, 20, 2, 8]) battle.sendToOpponentTomb(id);
 
     let opponentTombPopupGroup: THREE.Group | null = null;
     let opponentTombPage = 0;
@@ -604,7 +600,7 @@ async function main(container: HTMLElement): Promise<void> {
         opponentTombPopupFrame.cardColumns * opponentTombPopupFrame.rowsPerPage;
 
     const buildOpponentTombPopupForCurrentPage = async (): Promise<THREE.Group> => {
-        const all = [...opponentTombRepo.getCards()];
+        const all = [...battle.getOpponentTombCards()];
         const start = opponentTombPage * opponentTombCardsPerPage;
         const slice = all.slice(start, start + opponentTombCardsPerPage);
         const resolved = resolveCards(slice, 'opponent-tomb');
@@ -638,7 +634,7 @@ async function main(container: HTMLElement): Promise<void> {
     };
 
     const opponentTombTotalPages = (): number =>
-        Math.max(1, Math.ceil(opponentTombRepo.getCards().length / opponentTombCardsPerPage));
+        Math.max(1, Math.ceil(battle.getOpponentTombCards().length / opponentTombCardsPerPage));
 
     // Burial helper — whenever an opponent unit dies on the field (HP ≤ 0), look up its
     // cardId by cardIndex and push it into the Opponent Tomb repo. Call at every death
@@ -647,7 +643,7 @@ async function main(container: HTMLElement): Promise<void> {
     const buryOpponentUnit = (cardIndex: number): void => {
         const card = opponentCards[cardIndex];
         if (!card) return;
-        opponentTombRepo.addCard(card.cardId);
+        battle.sendToOpponentTomb(card.cardId);
         console.log(`[tomb] opponent cardId=${card.cardId} (idx=${cardIndex}) → opponent tomb`);
     };
 
@@ -2340,7 +2336,7 @@ async function main(container: HTMLElement): Promise<void> {
     // into Your Tomb before the mesh is disposed. All current call sites are ITEM drops
     // (scythe, energy burn, doom contract, morale convert), so the burial is unconditional.
     const consumeHandCard = (entry: HandEntry, idx: number): void => {
-        tombRepo.addCard(entry.card.cardId);
+        battle.sendToYourTomb(entry.card.cardId);
         console.log(`[tomb] your cardId=${entry.card.cardId} → your tomb (used from hand)`);
         handOrder.splice(idx, 1);
         handGroup.remove(entry.group);
@@ -2498,7 +2494,7 @@ async function main(container: HTMLElement): Promise<void> {
 
         // Remove target mesh immediately — the aura will bloom where it was. Target goes
         // to the tomb up front; the energy gain is deferred to mote arrivals.
-        tombRepo.addCard(target.card.cardId);
+        battle.sendToYourTomb(target.card.cardId);
         const placedIdx = placedOrder.indexOf(target);
         if (placedIdx >= 0) {
             placedOrder.splice(placedIdx, 1);
@@ -2567,7 +2563,7 @@ async function main(container: HTMLElement): Promise<void> {
         });
 
         // Consumed energy cards go to the tomb after the flow resolves.
-        for (const energyId of pulled) tombRepo.addCard(energyId);
+        for (const energyId of pulled) battle.sendToYourTomb(energyId);
     };
 
     // ─── 시체 폭발 (Corpse Explosion) — sacrifice + 2-pick targeting state ──────
@@ -2621,7 +2617,7 @@ async function main(container: HTMLElement): Promise<void> {
         // stays in handGroup at its slot position (orphan from reflow) so the
         // CorpseExplosionEffect can animate it from there. The OTHER placed
         // allies reflow to fill the empty slot in the same frame.
-        tombRepo.addCard(sacrificed.card.cardId);
+        battle.sendToYourTomb(sacrificed.card.cardId);
         const sIdx = placedOrder.indexOf(sacrificed);
         if (sIdx >= 0) placedOrder.splice(sIdx, 1);
         reflowHandAndPlaced();
