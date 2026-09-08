@@ -3,6 +3,7 @@ import {TurnOwner} from "./TurnOwner";
 import {Deck} from "./Deck";
 import {Tomb} from "./Tomb";
 import {LostZone} from "./LostZone";
+import {BattleFieldUnit} from "./BattleFieldUnit";
 
 // 전투 한 판이다.
 //
@@ -27,6 +28,9 @@ export class Battle {
     private readonly yourLostZone = new LostZone();
     private readonly opponentLostZone = new LostZone();
 
+    // 필드에 나온 유닛이다. 나온 차례대로 담긴다.
+    private deployedUnits: BattleFieldUnit[] = [];
+
     private constructor(private readonly battleId: number) {}
 
     // 전투를 새로 시작한다.
@@ -44,6 +48,7 @@ export class Battle {
         battle.opponentTomb.restoreFrom(snapshot.opponentTombCards);
         battle.yourLostZone.restoreFrom(snapshot.yourLostZoneCards);
         battle.opponentLostZone.restoreFrom(snapshot.opponentLostZoneCards);
+        battle.deployedUnits = snapshot.deployedUnits.map((it) => BattleFieldUnit.restore(it));
         return battle;
     }
 
@@ -168,6 +173,21 @@ export class Battle {
         this.opponentLostZone.clear();
     }
 
+    /* ── 필드에 나온 유닛 ── */
+
+    // 유닛이 필드에 나온다.
+    deployUnit(unit: BattleFieldUnit): void {
+        this.deployedUnits.push(unit);
+    }
+
+    getDeployedUnits(): readonly BattleFieldUnit[] {
+        return this.deployedUnits;
+    }
+
+    getDeployedUnitCount(): number {
+        return this.deployedUnits.length;
+    }
+
     // 지금 상태를 통째로 적는다.
     toSnapshot(): BattleSnapshot {
         return {
@@ -179,6 +199,7 @@ export class Battle {
             opponentTombCards: [...this.opponentTomb.getCards()],
             yourLostZoneCards: [...this.yourLostZone.getCards()],
             opponentLostZoneCards: [...this.opponentLostZone.getCards()],
+            deployedUnits: this.deployedUnits.map((it) => it.toSnapshot()),
         };
     }
 }

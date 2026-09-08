@@ -9,9 +9,8 @@ import {TextureManager} from "../../src/texture_manager/TextureManager";
 import {NonBackgroundImage} from "../../src/shape/image/NonBackgroundImage";
 import {AudioController} from "../../src/audio/AudioController";
 import {MouseController} from "../../src/mouse/MouseController";
-import {BattleFieldUnitRepository} from "../../src/battle/unit/repository/BattleFieldUnitRepository";
 import {Vector2d} from "../../src/common/math/Vector2d";
-import {BattleFieldUnit} from "../../src/battle/unit/entity/BattleFieldUnit";
+import {BattleFieldUnit} from "../../src/battle/domain/BattleFieldUnit";
 import {BattleFieldUnitScene} from "../../src/battle/unit/scene/BattleFieldUnitScene";
 import {ResourceManager} from "../../src/resouce_manager/ResourceManager";
 import {BattleFieldUnitRenderer} from "../../src/battle/unit/renderer/BattleFieldUnitRenderer";
@@ -41,8 +40,6 @@ export class TCGJustTestBattleFieldView {
     private buttonInitialInfo: Map<string, { positionPercent: THREE.Vector2, widthPercent: number, heightPercent: number }> = new Map();
     private audioController: AudioController;
     private mouseController: MouseController;
-
-    private battleFieldUnitRepository = BattleFieldUnitRepository.getInstance();
     private battleFieldUnitScene = new BattleFieldUnitScene();
     private battleFieldResourceManager = new ResourceManager()
     private battleFieldUnitRenderer?: BattleFieldUnitRenderer;
@@ -205,7 +202,6 @@ export class TCGJustTestBattleFieldView {
         // console.log("BattleFieldUnitRenderer initialized:", this.battleFieldUnitRenderer);
         //
         // const battleFieldUnit = new BattleFieldUnit(cardId, weaponId, hpId, energyId, raceId, position);
-        // this.battleFieldUnitRepository.addBattleFieldUnit(battleFieldUnit);
         // console.log("BattleFieldUnit created and added to the deprecated_repository:", battleFieldUnit);
         //
         // this.scene.add(this.battleFieldUnitScene.getScene());

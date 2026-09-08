@@ -78,7 +78,7 @@
 | **R2-51** | Rule | Battle Deck | [덱을 전투 상태 안으로 옮긴다](R2-51-move-deck-into-battle.md) | R2-50 | **완료** |
 | **R2-52** | Rule | Battle Tomb | [무덤을 전투 상태 안으로 옮긴다](R2-52-move-tomb-into-battle.md) | R2-51 | **완료** |
 | **R2-53** | Rule | Battle LostZone | [로스트 존을 전투 상태 안으로 옮긴다](R2-53-move-lost-zone-into-battle.md) | R2-52 | **완료** |
-| **R2-54** | Rule | Battle Unit | 필드에 나온 유닛을 전투 상태 안으로 옮긴다 | R2-53 | 예정 |
+| **R2-54** | Rule | Battle Unit | [필드에 나온 유닛을 전투 상태 안으로 옮긴다](R2-54-move-unit-into-battle.md) | R2-53 | **완료** |
 | **R2-55** | Rule | Battle Field | 필드에 놓인 카드를 전투 상태 안으로 옮긴다 | R2-54 | 예정 |
 | **R2-56** | Rule | Battle Hand | 손패를 전투 상태 안으로 옮긴다 | R2-55 | 예정 |
 | **R2-57** | Rule | Battle | 재접속 시 어떤 유닛의 상태를 복원할지 식별할 수 있도록 식별자 통합 | R2-56 | 예정 |
@@ -101,6 +101,7 @@
 | **R2-74** | Rendering | Battle Animation | 연출들이 각자 가진 정리 함수를 한 곳으로 모은다 | R2-46 | 예정 |
 | **R2-75** | Structure | Platform | 기본 실행 명령이 없는 화면을 가리키는 것을 고친다 | — | 예정 |
 | **R2-76** | Structure | Battle Active Panel | 액티브 패널을 닫는 일곱 곳을 하나로 묶는다 | R2-48 | 예정 |
+| **R2-77** | Structure | Battle Unit | 옛 드래그로 필드에 놓는 길을 정리한다 | R2-54 | 예정 |
 
 ### Type — 무엇을 바꾸는 작업인가
 

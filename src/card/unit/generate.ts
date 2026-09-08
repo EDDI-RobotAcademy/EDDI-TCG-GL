@@ -6,7 +6,7 @@ import { CardJob } from "../job";
 import { UserWindowSize } from "../../window_size/WindowSize";
 import {CardState} from "../state";
 import {CardStateManager} from "../CardStateManager";
-import {BattleFieldUnitRepository} from "../../battle/unit/repository/BattleFieldUnitRepository";
+import {BattleRepositoryImpl} from "../../battle/repository/BattleRepositoryImpl";
 import {LegacyDragAndDropManager} from "../../drag_and_drop/LegacyDragAndDropManager";
 
 // interface CardInitialInfo {
@@ -217,8 +217,7 @@ export class UnitCardGenerator {
 
     // TODO: 이거 개선해야함
     static adjustFieldCardPositions(): void {
-        const repository = BattleFieldUnitRepository.getInstance();
-        const currentUnitCount = repository.getBattleFieldUnitList().length
+        const currentUnitCount = BattleRepositoryImpl.getInstance().getCurrentOrThrow().getDeployedUnitCount()
 
         const dragAndDropManager = LegacyDragAndDropManager.getExistingInstance()
         const targetShape = dragAndDropManager?.getTargetShape();

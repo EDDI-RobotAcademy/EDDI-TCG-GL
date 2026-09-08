@@ -9,9 +9,9 @@ import {TextureManager} from "../../src/texture_manager/TextureManager";
 import {NonBackgroundImage} from "../../src/shape/image/NonBackgroundImage";
 import {AudioController} from "../../src/audio/AudioController";
 import {MouseController} from "../../src/mouse/MouseController";
-import {BattleFieldUnitRepository} from "../../src/battle/unit/repository/BattleFieldUnitRepository";
+import {BattleRepositoryImpl} from "../../src/battle/repository/BattleRepositoryImpl";
 import {Vector2d} from "../../src/common/math/Vector2d";
-import {BattleFieldUnit} from "../../src/battle/unit/entity/BattleFieldUnit";
+import {BattleFieldUnit} from "../../src/battle/domain/BattleFieldUnit";
 import {BattleFieldUnitScene} from "../../src/battle/unit/scene/BattleFieldUnitScene";
 import {ResourceManager} from "../../src/resouce_manager/ResourceManager";
 import {BattleFieldUnitRenderer} from "../../src/battle/unit/renderer/BattleFieldUnitRenderer";
@@ -30,7 +30,7 @@ export class TCGJustTestBattleFieldView {
     private audioController: AudioController;
     private mouseController: MouseController;
 
-    private battleFieldUnitRepository = BattleFieldUnitRepository.getInstance();
+    private battle = BattleRepositoryImpl.getInstance().start();
     private battleFieldUnitScene = new BattleFieldUnitScene();
     private battleFieldResourceManager = new ResourceManager()
     private battleFieldUnitRenderer?: BattleFieldUnitRenderer;
@@ -162,7 +162,9 @@ export class TCGJustTestBattleFieldView {
         console.log("BattleFieldUnitRenderer initialized:", this.battleFieldUnitRenderer);
 
         const battleFieldUnit = new BattleFieldUnit(cardId, weaponId, hpId, energyId, raceId, position);
-        this.battleFieldUnitRepository.addBattleFieldUnit(battleFieldUnit);
+        // 전투에 담고, 그리라고 시킨다.
+        this.battle.deployUnit(battleFieldUnit);
+        this.battleFieldUnitRenderer.addUnit(battleFieldUnit);
         console.log("BattleFieldUnit created and added to the deprecated_repository:", battleFieldUnit);
 
         this.scene.add(this.battleFieldUnitScene.getScene());
