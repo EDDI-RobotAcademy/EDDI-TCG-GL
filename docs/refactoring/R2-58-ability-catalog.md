@@ -1,6 +1,6 @@
 # [ETWGL-R2-58] 카드를 추가할 때 코드 수정 없이 데이터로 정의할 수 있도록 능력 정의 구조 도입
 
-선행: R2-57 │ 후행: R2-59 │ 산출물: [카드 능력 판정표](R2-58-ability-catalog-table.md) │ Type: Strategy │ Domain: Battle
+선행: R2-57 │ 후행: R2-59 │ 산출물: [카드 능력 판정표](R2-58-ability-catalog-table.md) │ Type: Strategy │ Domain: Battle Ability
 
 # Success criteria
 

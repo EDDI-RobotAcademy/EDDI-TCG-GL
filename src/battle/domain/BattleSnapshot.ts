@@ -27,4 +27,7 @@ export interface BattleSnapshot {
     readonly opponentFieldCards: readonly FieldCardSnapshot[];
     // 손패에 든 카드. 든 차례가 그대로여야 한다.
     readonly handCards: readonly HandCardSnapshot[];
+    // 본체 체력. 0 이 되면 그 판을 진다
+    readonly yourMasterHp: number;
+    readonly opponentMasterHp: number;
 }

@@ -1,6 +1,6 @@
 # [ETWGL-R2-59] 카드가 적용되는 대상과 수치 정리
 
-선행: R2-58 │ 후행: R2-60 │ 산출물: CardAbility, AbilityTarget │ Type: Rule │ Domain: Battle
+선행: R2-58 │ 후행: R2-60 │ 산출물: CardAbility, AbilityTarget │ Type: Rule │ Domain: Battle Ability
 
 # Success criteria
 
