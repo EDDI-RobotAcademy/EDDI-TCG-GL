@@ -1,6 +1,7 @@
 import {BattleSnapshot} from "./BattleSnapshot";
 import {TurnOwner} from "./TurnOwner";
 import {Deck} from "./Deck";
+import {Tomb} from "./Tomb";
 
 // 전투 한 판이다.
 //
@@ -19,6 +20,9 @@ export class Battle {
     private readonly yourDeck = new Deck();
     private readonly opponentDeck = new Deck();
 
+    private readonly yourTomb = new Tomb();
+    private readonly opponentTomb = new Tomb();
+
     private constructor(private readonly battleId: number) {}
 
     // 전투를 새로 시작한다.
@@ -32,6 +36,8 @@ export class Battle {
         battle.turnOwner = snapshot.turnOwner;
         battle.yourDeck.seed(snapshot.yourDeckCards);
         battle.opponentDeck.seed(snapshot.opponentDeckCards);
+        battle.yourTomb.restoreFrom(snapshot.yourTombCards);
+        battle.opponentTomb.restoreFrom(snapshot.opponentTombCards);
         return battle;
     }
 
@@ -102,6 +108,33 @@ export class Battle {
         return this.opponentDeck.getCards();
     }
 
+    /* ── 무덤 ── */
+    // 무덤은 쓰러진 카드가 쌓이는 곳이다. 부활할 수 있다.
+
+    sendToYourTomb(cardId: number): void {
+        this.yourTomb.add(cardId);
+    }
+
+    getYourTombCards(): readonly number[] {
+        return this.yourTomb.getCards();
+    }
+
+    clearYourTomb(): void {
+        this.yourTomb.clear();
+    }
+
+    sendToOpponentTomb(cardId: number): void {
+        this.opponentTomb.add(cardId);
+    }
+
+    getOpponentTombCards(): readonly number[] {
+        return this.opponentTomb.getCards();
+    }
+
+    clearOpponentTomb(): void {
+        this.opponentTomb.clear();
+    }
+
     // 지금 상태를 통째로 적는다.
     toSnapshot(): BattleSnapshot {
         return {
@@ -109,6 +142,8 @@ export class Battle {
             turnOwner: this.turnOwner,
             yourDeckCards: [...this.yourDeck.getCards()],
             opponentDeckCards: [...this.opponentDeck.getCards()],
+            yourTombCards: [...this.yourTomb.getCards()],
+            opponentTombCards: [...this.opponentTomb.getCards()],
         };
     }
 }
