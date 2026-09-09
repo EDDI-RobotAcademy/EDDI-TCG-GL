@@ -8,8 +8,9 @@ module.exports = merge(common, {
     devServer: {
         static: [
             { directory: path.join(__dirname, "../") },
-            { directory: path.join(__dirname, "../../../") },
-            { directory: path.join(__dirname, "../../../resource") },
+            // 저장소 전체다. 지켜보지 않는다. 안의 무엇이 바뀌든 화면이 다시 뜬다.
+            { directory: path.join(__dirname, "../../../"), watch: false },
+            { directory: path.join(__dirname, "../../../resource"), watch: false },
         ],
         hot: true,
         historyApiFallback: true,

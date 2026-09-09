@@ -66,7 +66,8 @@ function disposeMaterial(material: THREE.Material): void {
 
 // 덩어리 하나를 통째로 놓아준다. 안에 든 메시를 다 훑는다.
 //
-// 화면 조각을 치울 때 쓴다. 렌더러가 만든 것은 덩어리로 오고, 그 안에 메시가 여럿이다.
+// 화면에 그렸던 것을 다 쓰고 놓아줄 때 쓴다. 렌더러가 만든 것은 덩어리로 오고,
+// 그 안에 메시가 여럿이다.
 // 각자 훑으면 글자로 만든 그림을 놓아주는 것을 빠뜨리기 쉽다.
 export function disposeGroup(group: THREE.Group): void {
     // 부모에서도 뺀다. 이미 빠져 있으면 아무 일도 안 한다.

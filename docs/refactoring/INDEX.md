@@ -105,14 +105,15 @@
 | **R2-78** | Structure | Battle Hand | [낡은 손패 화면 덩어리 저장소를 지운다](R2-78-delete-deprecated-hand-scene.md) | R2-77 | **완료** |
 | **R2-79** | Rendering | Battle Animation | [새 카드의 연출을 어디에 쓸지 정한다](R2-79-extract-veln-aoe.md) | R2-40 | **완료** |
 | **R2-80** | Rendering | Battle Animation | [창 크기를 바꿔도 카드가 알맞은 자리로 올라가게 한다](R2-80-measure-skill-slot-on-use.md) | R2-43 | **완료** |
-| **R2-81** | Rendering | Battle 공용 | [화면 조각을 치우는 방법을 한 곳에서 정한다](R2-81-unify-dispose.md) | R2-46 | **완료** |
-| **R2-82** | Structure | Platform | 기본 실행 명령이 없는 화면을 가리키는 것을 고친다 | — | 예정 |
+| **R2-81** | Rendering | Platform | [화면에 그렸던 것을 놓아주는 방법을 한 곳에서 정한다](R2-81-unify-dispose.md) | R2-46 | **완료** |
+| **R2-82** | Structure | Platform | [기본 실행 명령으로 게임이 뜨게 한다](R2-82-dev-command-starts-game.md) | — | **완료** |
 | **R2-83** | Structure | Battle Active Panel | 액티브 패널을 닫는 일곱 곳을 하나로 묶는다 | R2-48 | 예정 |
 | **R2-84** | Structure | Battle Unit | 옛 드래그로 필드에 놓는 길을 정리한다 | R2-54 | 예정 |
 | **R2-85** | Strategy | Battle Ability | 한 번에 안 끝나는 카드 넷을 다룰 모양을 정한다 | R2-68 | 예정 |
 | **R2-86** | Rendering | Battle 공용 | 창 크기가 바뀔 때 다시 안 재는 화면 조각을 잇는다 | R2-72 | 예정 |
 | **R2-87** | Rule | Battle | 멀리건을 더해 1대1 대전이 되게 한다 | R2-75 | 예정 |
-| **R2-88** | Rendering | Battle 공용 | 체력과 무기 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정. **숫자 없는 바탕 그림 셋이 있어야 한다** |
+| **R2-88** | Structure | Platform | 사용자에게 내보낼 것을 만드는 명령을 만든다 | R2-82 | 예정 |
+| **R2-89** | Rendering | Battle 공용 | 체력과 무기 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정. **숫자 없는 바탕 그림 셋이 있어야 한다** |
 
 ### Type — 무엇을 바꾸는 작업인가
 
