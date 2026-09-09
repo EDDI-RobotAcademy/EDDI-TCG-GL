@@ -168,6 +168,11 @@ export class SimulationBattleFieldView implements Component {
     private readonly teardown: Array<() => void> = [];
     // 그리기를 멈추고 다시 돌리려면 이것이 있어야 한다.
     private animationLoop: AnimationLoop | null = null;
+    // 이 화면의 그림판. 감출 때 이것을 감춘다.
+    //
+    // 화면을 붙이는 자리는 로비, 상점, 보유 카드가 함께 쓴다. 그것을 감추면
+    // 다음 화면이 보일 때 함께 보이면서 이 화면의 그림판이 그 위에 남는다.
+    private canvas: HTMLElement | null = null;
 
     private constructor(private readonly container: HTMLElement) {}
 
@@ -190,6 +195,8 @@ export class SimulationBattleFieldView implements Component {
     }
 
     public show(): void {
+        // 자기 그림판과 함께 쓰는 자리를 둘 다 보이게 한다. 다른 화면도 같은 모양이다.
+        if (this.canvas) this.canvas.style.display = 'block';
         this.container.style.display = 'block';
         for (const it of this.appended) it.element.style.display = it.display;
 
@@ -202,6 +209,9 @@ export class SimulationBattleFieldView implements Component {
     }
 
     public hide(): void {
+        // 자기 그림판을 반드시 감춘다. 함께 쓰는 자리만 감추면 다음 화면이 보일 때
+        // 이 화면의 그림판이 그 위에 그대로 남는다.
+        if (this.canvas) this.canvas.style.display = 'none';
         this.container.style.display = 'none';
         // 화면 밖에 붙인 것을 함께 감춘다. 안 감추면 로비 위에 남는다.
         for (const it of this.appended) it.element.style.display = 'none';
@@ -254,6 +264,8 @@ export class SimulationBattleFieldView implements Component {
         battle.setFieldEnergy(19);
 
         const rendererManager = new RendererManager(container);
+        // 감출 때 이것만 감춘다. 함께 쓰는 자리를 감추면 다른 화면까지 사라진다.
+        this.canvas = rendererManager.getDomElement();
         const sceneManager = new SceneManager();
         const cameraManager = CameraManager.getInstance();
 

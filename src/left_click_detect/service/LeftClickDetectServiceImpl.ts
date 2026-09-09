@@ -357,10 +357,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         console.log(`prevYourFieldCard: ${prevYourFieldCard}`)
 
         if (prevYourFieldCard !== null) {
-            this.neonBorderHandler.deactivateEveryExistOpponentNeonBorder()
-            this.neonBorderHandler.deactivateExistNeonBorder(prevYourFieldCard)
-            this.neonBorderHandler.deactivateOpponentMasterNeonBorder()
-            this.activePanelAreaCache.close(this.scene);
+            this.neonBorderHandler.clearSelection(prevYourFieldCard);
         }
 
         this.dragMoveRepository.setSelectedObject(clickedHandCard);
@@ -394,10 +391,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         prevYourFieldCard = this.dragMoveRepository.getSelectedObject() as unknown as YourFieldCardScene;
         console.log(`prevYourFieldCard: ${prevYourFieldCard}`)
 
-        // this.activateExistNeonBorder(clickedYourFieldCard);
-        this.neonBorderHandler.deactivateEveryExistNeonBorder()
-        this.activePanelAreaCache.close(this.scene);
-        this.neonBorderHandler.activateExistNeonBorder(clickedYourFieldCard);
+        this.neonBorderHandler.selectYourFieldCard(clickedYourFieldCard);
 
         if (prevYourFieldCard && prevYourFieldCard.getId() === clickedYourFieldCard.getId()) {
             console.log('같은 카드를 선택하였습니다!')
@@ -405,10 +399,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         }
 
         if (prevYourFieldCard !== null) {
-            this.neonBorderHandler.deactivateEveryExistOpponentNeonBorder()
-            this.neonBorderHandler.deactivateExistNeonBorder(prevYourFieldCard)
-            this.neonBorderHandler.deactivateOpponentMasterNeonBorder()
-            this.activePanelAreaCache.close(this.scene);
+            this.neonBorderHandler.clearSelection(prevYourFieldCard);
         }
 
         this.dragMoveRepository.setSelectedObject(clickedYourFieldCard);
@@ -454,9 +445,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             prevOpponentFieldCard = this.dragMoveRepository.getSelectedObject() as unknown as OpponentFieldCardScene;
             console.log(`prevOpponentFieldCard: ${prevOpponentFieldCard}`)
 
-            this.neonBorderHandler.deactivateEveryExistNeonBorder()
-            this.activePanelAreaCache.close(this.scene);
-            this.neonBorderHandler.activateExistOpponentNeonBorder(clickedOpponentFieldCard);
+            this.neonBorderHandler.selectOpponentFieldCard(clickedOpponentFieldCard);
 
             if (prevOpponentFieldCard && prevOpponentFieldCard.getId() === clickedOpponentFieldCard.getId()) {
                 console.log('같은 카드를 선택하였습니다!')
@@ -464,10 +453,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             }
 
             if (prevOpponentFieldCard !== null) {
-                this.neonBorderHandler.deactivateEveryExistOpponentNeonBorder()
-                this.neonBorderHandler.deactivateExistNeonBorder(prevOpponentFieldCard)
-                this.neonBorderHandler.deactivateOpponentMasterNeonBorder()
-                this.activePanelAreaCache.close(this.scene);
+                this.neonBorderHandler.clearSelection(prevOpponentFieldCard);
             }
 
             this.dragMoveRepository.setSelectedObject(clickedOpponentFieldCard);
