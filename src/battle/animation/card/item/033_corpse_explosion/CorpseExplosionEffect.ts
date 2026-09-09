@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {EffectLayer} from "../../../common/EffectLayer";
 import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // 시체 폭발 (Corpse Explosion) — the sacrificed undead corpse hurls itself toward the
@@ -26,6 +27,14 @@ import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 //                         keeping in sync with the visible impact.
 export class CorpseExplosionEffect {
     constructor(private readonly scene: THREE.Scene) {}
+
+    // 그리는 것을 담는 겹. 도중에 창 크기가 바뀌면 겹이 함께 늘고 준다.
+    private readonly layer = new EffectLayer();
+
+    // 창 크기가 바뀌었을 때.
+    public resize(viewportWidth: number, viewportHeight: number): void {
+        this.layer.resize(viewportWidth, viewportHeight);
+    }
 
     public async play(
         corpseGroup: THREE.Group,
@@ -190,14 +199,14 @@ export class CorpseExplosionEffect {
         const projectile = this.createProjectileMesh(PROJECTILE_SIZE);
         projectile.position.copy(sourcePos);
         projectile.renderOrder = 540;
-        this.scene.add(projectile);
+        this.layer.add(this.scene, projectile);
         const mat = projectile.material as THREE.ShaderMaterial;
         tickClocks.add(mat);
 
         const halo = this.createProjectileHaloMesh(PROJECTILE_SIZE * 1.7);
         halo.position.copy(sourcePos);
         halo.renderOrder = 539;  // behind the dense body so the body sits inside the glow
-        this.scene.add(halo);
+        this.layer.add(this.scene, halo);
         const haloMat = halo.material as THREE.ShaderMaterial;
         tickClocks.add(haloMat);
 
@@ -251,9 +260,9 @@ export class CorpseExplosionEffect {
 
         tickClocks.delete(mat);
         tickClocks.delete(haloMat);
-        this.scene.remove(projectile);
+        projectile.removeFromParent();
         disposeMesh(projectile);
-        this.scene.remove(halo);
+        halo.removeFromParent();
         disposeMesh(halo);
     }
 
@@ -269,7 +278,7 @@ export class CorpseExplosionEffect {
         const ring = this.createShockwaveRingMesh(size);
         ring.position.copy(origin);
         ring.renderOrder = 535;
-        this.scene.add(ring);
+        this.layer.add(this.scene, ring);
         const mat = ring.material as THREE.ShaderMaterial;
         tickClocks.add(mat);
 
@@ -282,7 +291,7 @@ export class CorpseExplosionEffect {
                 requestAnimationFrame(step);
             } else {
                 tickClocks.delete(mat);
-                this.scene.remove(ring);
+                ring.removeFromParent();
                 disposeMesh(ring);
             }
         };
@@ -298,7 +307,7 @@ export class CorpseExplosionEffect {
         const flash = this.createImpactFlashMesh(size);
         flash.position.copy(origin);
         flash.renderOrder = 542;
-        this.scene.add(flash);
+        this.layer.add(this.scene, flash);
         const mat = flash.material as THREE.ShaderMaterial;
         tickClocks.add(mat);
 
@@ -310,7 +319,7 @@ export class CorpseExplosionEffect {
                 requestAnimationFrame(step);
             } else {
                 tickClocks.delete(mat);
-                this.scene.remove(flash);
+                flash.removeFromParent();
                 disposeMesh(flash);
             }
         };
@@ -329,7 +338,7 @@ export class CorpseExplosionEffect {
         const shard = this.createFragmentMesh(size);
         shard.position.copy(origin);
         shard.renderOrder = 538;
-        this.scene.add(shard);
+        this.layer.add(this.scene, shard);
         const mat = shard.material as THREE.ShaderMaterial;
         tickClocks.add(mat);
 
@@ -349,7 +358,7 @@ export class CorpseExplosionEffect {
                 requestAnimationFrame(step);
             } else {
                 tickClocks.delete(mat);
-                this.scene.remove(shard);
+                shard.removeFromParent();
                 disposeMesh(shard);
             }
         };
@@ -363,7 +372,7 @@ export class CorpseExplosionEffect {
         const puff = this.createTrailPuffMesh(28);
         puff.position.copy(pos);
         puff.renderOrder = 537;
-        this.scene.add(puff);
+        this.layer.add(this.scene, puff);
         const mat = puff.material as THREE.ShaderMaterial;
         tickClocks.add(mat);
 
@@ -377,7 +386,7 @@ export class CorpseExplosionEffect {
                 requestAnimationFrame(step);
             } else {
                 tickClocks.delete(mat);
-                this.scene.remove(puff);
+                puff.removeFromParent();
                 disposeMesh(puff);
             }
         };

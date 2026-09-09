@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import {moveCard, CardMoveEasing} from "../../../animation/motion/CardMove";
+import {moveCard, CardMoveEasing, CardMovePoint} from "../../../animation/motion/CardMove";
 import {installTween} from "../../../core/tween/Tween";
 
 declare const TWEEN: { Tween: any; Easing: any; update: (time?: number) => void };
@@ -43,6 +43,11 @@ export class AnimationBasics {
 
     public moveCardTo(group: THREE.Group, x: number, y: number, z: number, duration: number): Promise<void> {
         return moveCard(group, { x, y, z }, duration, CardMoveEasing.inOut);
+    }
+
+    // 갈 곳을 가는 내내 다시 묻는다. 창 크기가 바뀌면 갈 곳도 달라지는 자리에 쓴다.
+    public moveCardToLive(group: THREE.Group, to: () => CardMovePoint, duration: number): Promise<void> {
+        return moveCard(group, to, duration, CardMoveEasing.inOut);
     }
 
     public shakeScene(cardW: number, duration: number, onDone: () => void): void {

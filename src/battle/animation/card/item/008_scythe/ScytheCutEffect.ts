@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {EffectLayer} from "../../../common/EffectLayer";
 import { markOwnedTexture, disposeMesh } from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // Scythe (죽음의 낫) — dark-power cut effect.
@@ -12,6 +13,14 @@ import { markOwnedTexture, disposeMesh } from "../../../../../core/lifecycle/Dis
 // All effect meshes are scene-local and disposed on completion.
 export class ScytheCutEffect {
     constructor(private readonly scene: THREE.Scene) {}
+
+    // 그리는 것을 담는 겹. 도중에 창 크기가 바뀌면 겹이 함께 늘고 준다.
+    private readonly layer = new EffectLayer();
+
+    // 창 크기가 바뀌었을 때.
+    public resize(viewportWidth: number, viewportHeight: number): void {
+        this.layer.resize(viewportWidth, viewportHeight);
+    }
 
     public async play(
         targetGroup: THREE.Group,
@@ -56,7 +65,7 @@ export class ScytheCutEffect {
         // Screen darken + summoning pulse along the staff (slightly above its midpoint) —
         // the void bleeds out of the weapon shaft as the scythe materializes.
         const darkenPlane = this.createScreenDarken();
-        this.scene.add(darkenPlane);
+        this.layer.add(this.scene, darkenPlane);
         const darkenMat = darkenPlane.material as THREE.ShaderMaterial;
 
         // Pulse is sized to the scythe, not the card — the scythe is ~4.5*cw wide, so inflate
@@ -81,7 +90,7 @@ export class ScytheCutEffect {
         const scytheGroup = new THREE.Group();
         scytheGroup.add(scythe);
         scytheGroup.renderOrder = 520;
-        this.scene.add(scytheGroup);
+        this.layer.add(this.scene, scytheGroup);
         scytheGroup.position.set(PIVOT_X, PIVOT_Y, 4);
 
         // Scale variation — subtle
@@ -125,11 +134,11 @@ export class ScytheCutEffect {
         slash.position.set(targetPos.x, targetPos.y, 5);
         slash.rotation.z = 0;
         (slash.material as THREE.ShaderMaterial).uniforms.u_alpha.value = 0;
-        this.scene.add(slash);
+        this.layer.add(this.scene, slash);
 
         const ring = this.createShockwaveRing(cw);
         ring.position.set(targetPos.x, targetPos.y, 2);
-        this.scene.add(ring);
+        this.layer.add(this.scene, ring);
 
         let slashStarted = false;
         await this.tweenLoop(520, 'easeInOutCubic', (v) => {
@@ -158,7 +167,7 @@ export class ScytheCutEffect {
             const halves = this.createCutHalves(cardTexture, cw, ch);
             for (const h of halves) {
                 h.position.set(targetPos.x, targetPos.y, 3);
-                this.scene.add(h);
+                this.layer.add(this.scene, h);
             }
 
             await Promise.all([
@@ -169,7 +178,7 @@ export class ScytheCutEffect {
             ]);
 
             for (const h of halves) {
-                this.scene.remove(h);
+                h.removeFromParent();
                 disposeMesh(h);
             }
         } else {
@@ -189,10 +198,10 @@ export class ScytheCutEffect {
 
         // Cleanup
         clockRunning = false;
-        this.scene.remove(slash);
-        this.scene.remove(ring);
-        this.scene.remove(scytheGroup);
-        this.scene.remove(darkenPlane);
+        slash.removeFromParent();
+        ring.removeFromParent();
+        scytheGroup.removeFromParent();
+        darkenPlane.removeFromParent();
         disposeMesh(slash);
         disposeMesh(ring);
         disposeMesh(scythe);
@@ -881,23 +890,23 @@ export class ScytheCutEffect {
         // Dark vortex at spawn point — swirling core that materializes first
         const vortex = this.createDarkVortex(cw);
         vortex.position.copy(pulseCenter);
-        this.scene.add(vortex);
+        this.layer.add(this.scene, vortex);
 
         // Lightning cracks radiating outward — animated stroke lines
         const cracks = this.createSummonCracks(cw);
         cracks.position.copy(pulseCenter);
-        this.scene.add(cracks);
+        this.layer.add(this.scene, cracks);
 
         // Three concentric shockwaves with staggered timing
         const wave1 = this.createShockwaveRing(cw);
         wave1.position.copy(pulseCenter);
-        this.scene.add(wave1);
+        this.layer.add(this.scene, wave1);
         const wave2 = this.createShockwaveRing(cw);
         wave2.position.copy(pulseCenter);
-        this.scene.add(wave2);
+        this.layer.add(this.scene, wave2);
         const wave3 = this.createShockwaveRing(cw);
         wave3.position.copy(pulseCenter);
-        this.scene.add(wave3);
+        this.layer.add(this.scene, wave3);
 
         const vortexMat = vortex.material as THREE.ShaderMaterial;
         const cracksMat = cracks.material as THREE.ShaderMaterial;
@@ -955,11 +964,11 @@ export class ScytheCutEffect {
         // Vortex stays for the reaper's entrance — fades during the reaper fade-in.
         void this.tweenUniform(vortexMat.uniforms.u_alpha, 0, 420, 'easeInQuad').then(() => {
             clockRunning = false;
-            this.scene.remove(vortex);
-            this.scene.remove(cracks);
-            this.scene.remove(wave1);
-            this.scene.remove(wave2);
-            this.scene.remove(wave3);
+            vortex.removeFromParent();
+            cracks.removeFromParent();
+            wave1.removeFromParent();
+            wave2.removeFromParent();
+            wave3.removeFromParent();
             disposeMesh(vortex);
             disposeMesh(cracks);
             disposeMesh(wave1);

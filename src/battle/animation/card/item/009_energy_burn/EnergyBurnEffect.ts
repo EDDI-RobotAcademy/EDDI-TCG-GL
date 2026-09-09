@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {EffectLayer} from "../../../common/EffectLayer";
 import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // Energy Burn — "mana in the air, consumed by dark flame".
@@ -11,6 +12,14 @@ import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 // All effect meshes are scene-local and disposed on completion.
 export class EnergyBurnEffect {
     constructor(private readonly scene: THREE.Scene) {}
+
+    // 그리는 것을 담는 겹. 도중에 창 크기가 바뀌면 겹이 함께 늘고 준다.
+    private readonly layer = new EffectLayer();
+
+    // 창 크기가 바뀌었을 때.
+    public resize(viewportWidth: number, viewportHeight: number): void {
+        this.layer.resize(viewportWidth, viewportHeight);
+    }
 
     public async play(
         targetGroup: THREE.Group,
@@ -49,7 +58,7 @@ export class EnergyBurnEffect {
         // Plane centered slightly above the card so flames fully engulf it vertically.
         burn.position.set(targetPos.x, targetPos.y + ch * 0.25, 3);
         burn.renderOrder = 510;
-        this.scene.add(burn);
+        this.layer.add(this.scene, burn);
 
         const mat = burn.material as THREE.ShaderMaterial;
 
@@ -109,7 +118,7 @@ export class EnergyBurnEffect {
         ]);
 
         clockRunning = false;
-        this.scene.remove(burn);
+        burn.removeFromParent();
         disposeMesh(burn);
         targetGroup.remove(surfaceFlame);
         disposeMesh(surfaceFlame);
@@ -588,7 +597,7 @@ export class EnergyBurnEffect {
         // Anchor the bolt so its BOTTOM lands at the card's centre and it climbs offscreen.
         bolt.position.set(targetPos.x, targetPos.y + planeH * 0.5 - ch * 0.1, 4);
         bolt.renderOrder = 520;
-        this.scene.add(bolt);
+        this.layer.add(this.scene, bolt);
 
         const mat = bolt.material as THREE.ShaderMaterial;
         const clockStart = performance.now();
@@ -612,7 +621,7 @@ export class EnergyBurnEffect {
         await this.tweenUniform(mat.uniforms.u_alpha, 0.0, 90, 'easeInQuad');
 
         clockRunning = false;
-        this.scene.remove(bolt);
+        bolt.removeFromParent();
         disposeMesh(bolt);
     }
 

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {EffectLayer} from "../../../common/EffectLayer";
 import { markOwnedTexture, disposeMesh } from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // 파멸의 계약 (Contract of Doom) — visual effect with TRUE screen-space warp.
@@ -16,6 +17,16 @@ import { markOwnedTexture, disposeMesh } from "../../../../../core/lifecycle/Dis
 //
 // After play() the override is uninstalled and rendering reverts to a single pass.
 export class DoomContractEffect {
+    // 그리는 것을 담는 겹. 도중에 창 크기가 바뀌면 겹이 함께 늘고 준다.
+    //
+    // 이 연출은 제 화면을 따로 만들어 그 위에 그린다. 겹은 그 화면 안에 놓인다.
+    private readonly layer = new EffectLayer();
+
+    // 창 크기가 바뀌었을 때.
+    public resize(viewportWidth: number, viewportHeight: number): void {
+        this.layer.resize(viewportWidth, viewportHeight);
+    }
+
     constructor(
         private readonly scene: THREE.Scene,
         private readonly renderer: THREE.WebGLRenderer,
@@ -42,7 +53,7 @@ export class DoomContractEffect {
         const book = this.createBookMesh(bookW, bookH);
         book.position.set(0, 0, 0);
         book.renderOrder = 2;
-        overlayScene.add(book);
+        this.layer.add(overlayScene, book);
         const bookMat = book.material as THREE.ShaderMaterial;
 
         // ── Vortex (swirling dark energy halo behind the book).
@@ -50,14 +61,14 @@ export class DoomContractEffect {
         const vortex = this.createVortexMesh(vortexSize, vortexSize);
         vortex.position.set(0, 0, -0.5);
         vortex.renderOrder = 1;
-        overlayScene.add(vortex);
+        this.layer.add(overlayScene, vortex);
         const vortexMat = vortex.material as THREE.ShaderMaterial;
 
         // ── Flash/boom overlay (full-screen; explodes outward on impact).
         const flash = this.createFlashMesh(w * 2.5, h * 2.5);
         flash.position.set(0, 0, 0.5);
         flash.renderOrder = 3;
-        overlayScene.add(flash);
+        this.layer.add(overlayScene, flash);
         const flashMat = flash.material as THREE.ShaderMaterial;
 
         // ── Render target + warp quad.
@@ -191,9 +202,9 @@ export class DoomContractEffect {
             this.animationLoop.setRenderOverride(null);
             clockRunning = false;
 
-            overlayScene.remove(book);
-            overlayScene.remove(vortex);
-            overlayScene.remove(flash);
+            book.removeFromParent();
+            vortex.removeFromParent();
+            flash.removeFromParent();
             disposeMesh(book);
             disposeMesh(vortex);
             disposeMesh(flash);

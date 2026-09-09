@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {EffectLayer} from "../../../common/EffectLayer";
 import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // 사기 전환 (Morale Conversion) — death-energy transfer effect.
@@ -15,6 +16,14 @@ import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 //      impacts.
 export class MoraleConvertEffect {
     constructor(private readonly scene: THREE.Scene) {}
+
+    // 그리는 것을 담는 겹. 도중에 창 크기가 바뀌면 겹이 함께 늘고 준다.
+    private readonly layer = new EffectLayer();
+
+    // 창 크기가 바뀌었을 때.
+    public resize(viewportWidth: number, viewportHeight: number): void {
+        this.layer.resize(viewportWidth, viewportHeight);
+    }
 
     public async play(
         sourcePos: THREE.Vector3,
@@ -48,13 +57,13 @@ export class MoraleConvertEffect {
         const aura = this.createAuraMesh(auraSize);
         aura.position.copy(sourcePos);
         aura.renderOrder = 500;
-        this.scene.add(aura);
+        this.layer.add(this.scene, aura);
         const auraMat = aura.material as THREE.ShaderMaterial;
 
         // ─── Beam ─────────────────────────────────────────────────────────────────
         const beam = this.createBeamMesh(curve);
         beam.renderOrder = 505;
-        this.scene.add(beam);
+        this.layer.add(this.scene, beam);
         const beamMat = beam.material as THREE.ShaderMaterial;
 
         // Shared clock for shader time uniforms.
@@ -92,8 +101,8 @@ export class MoraleConvertEffect {
         ]);
 
         clockRunning = false;
-        this.scene.remove(aura);
-        this.scene.remove(beam);
+        aura.removeFromParent();
+        beam.removeFromParent();
         disposeMesh(aura);
         disposeMesh(beam);
     }
@@ -110,7 +119,7 @@ export class MoraleConvertEffect {
         const mote = this.createMoteMesh(45);
         mote.renderOrder = 520;
         mote.position.copy(curve.v0);
-        this.scene.add(mote);
+        this.layer.add(this.scene, mote);
         const mat = mote.material as THREE.ShaderMaterial;
 
         const PUFF_INTERVAL = 40;
@@ -143,7 +152,7 @@ export class MoraleConvertEffect {
         await this.tween(mat.uniforms.u_arrival, 1.0, 130, 'easeOutQuad');
         await this.tween(mat.uniforms.u_alpha, 0.0, 220, 'easeInQuad');
 
-        this.scene.remove(mote);
+        mote.removeFromParent();
         disposeMesh(mote);
     }
 
@@ -154,7 +163,7 @@ export class MoraleConvertEffect {
         const puff = this.createPuffMesh(30);
         puff.position.copy(pos);
         puff.renderOrder = 515;
-        this.scene.add(puff);
+        this.layer.add(this.scene, puff);
         const mat = puff.material as THREE.ShaderMaterial;
         mat.uniforms.u_progress.value = progress;
 
@@ -168,7 +177,7 @@ export class MoraleConvertEffect {
             if (t < 1) {
                 requestAnimationFrame(step);
             } else {
-                this.scene.remove(puff);
+                puff.removeFromParent();
                 disposeMesh(puff);
             }
         };
