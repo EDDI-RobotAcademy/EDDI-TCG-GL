@@ -28,6 +28,7 @@ const SWAMP_OF_DEAD = 20;
 const OVERFLOW_MORALE = 2;
 const DEATH_ENERGY = 93;
 const LEONIK_SUMMON = 30;
+const COLD_DARK_ENERGY = 151;
 
 // 사용자가 한 일 하나를 받아 끝까지 처리하고, 무슨 일이 일어났는지 차례대로 돌려준다.
 //
@@ -37,6 +38,10 @@ export class BattleCommandHandler {
 
     handle(battle: Battle, command: BattleCommand): BattleEvent[] {
         switch (command.type) {
+            case 'endYourTurn':
+                return this.endYourTurn(battle);
+            case 'beginYourTurn':
+                return this.beginYourTurn(battle);
             case 'drawCard':
                 return this.drawCard(battle);
             case 'playCardToField':
@@ -70,6 +75,78 @@ export class BattleCommandHandler {
                     battle, command.damage, true, command.attackerBattleCardId,
                 );
         }
+    }
+
+    /* ── 턴 ── */
+
+    // 내 턴을 끝내고 상대에게 넘긴다.
+    //
+    // 넘어가는 그 자리에서 암흑 화염이 정산된다. 상대 턴이 시작되는 시점이다.
+    private endYourTurn(battle: Battle): BattleEvent[] {
+        if (!battle.endYourTurn()) {
+            return [{type: 'rejected', reason: '내 턴이 아닙니다.'}];
+        }
+
+        const events: BattleEvent[] = [{type: 'turnPassed', to: 'opponent'}];
+        events.push(...this.settleDarkFlame(battle));
+        return events;
+    }
+
+    // 상대 턴을 끝내고 내 차례로 돌아온다.
+    //
+    // 턴이 하나 오르고 필드 에너지가 하나 늘고 한 장 뽑는다.
+    // 빙결은 상대 턴 내내 유지되다가 여기서 풀린다.
+    private beginYourTurn(battle: Battle): BattleEvent[] {
+        const turnBefore = battle.getTurnNumber();
+        const energyBefore = battle.getFieldEnergy();
+        if (!battle.beginYourTurn()) {
+            return [{type: 'rejected', reason: '이미 내 턴입니다.'}];
+        }
+
+        const events: BattleEvent[] = [
+            {type: 'turnPassed', to: 'your'},
+            {type: 'valueChanged', what: 'turnNumber',
+             before: turnBefore, after: battle.getTurnNumber()},
+            {type: 'valueChanged', what: 'fieldEnergy',
+             before: energyBefore, after: battle.getFieldEnergy()},
+        ];
+        events.push(...this.thawFrozenUnits(battle));
+        events.push(...this.drawCard(battle));
+        return events;
+    }
+
+    // 암흑 화염이 붙은 유닛이 정해진 만큼 깎인다. 0 이 되면 무덤으로 간다.
+    private settleDarkFlame(battle: Battle): BattleEvent[] {
+        const damage = findCardAbility(COLD_DARK_ENERGY)?.numbers.darkFlameTurnDamage ?? 0;
+        if (damage <= 0) return [];
+
+        const events: BattleEvent[] = [];
+        // 도는 중에 빠지므로 미리 베껴 둔다.
+        for (const unit of [...battle.getOpponentFieldCards()]) {
+            if (!unit.hasDarkFlame()) continue;
+            events.push(...this.damageOpponentUnit(
+                battle, unit.getBattleCardId(), unit.getCardId(), damage,
+            ));
+        }
+        return events;
+    }
+
+    // 얼어 있던 유닛이 풀린다. 풀린 유닛은 이번 턴에 다시 안 언다.
+    private thawFrozenUnits(battle: Battle): BattleEvent[] {
+        const events: BattleEvent[] = [];
+        for (const unit of battle.getOpponentFieldCards()) {
+            if (!unit.isFrozen()) {
+                unit.clearFreezeImmune();
+                continue;
+            }
+            unit.thaw();
+            events.push({
+                type: 'statusCleared',
+                battleCardId: unit.getBattleCardId(),
+                what: 'frozen',
+            });
+        }
+        return events;
     }
 
     // 덱에서 한 장 뽑아 손패에 넣는다.

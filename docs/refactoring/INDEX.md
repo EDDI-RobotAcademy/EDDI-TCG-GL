@@ -95,7 +95,7 @@
 | **R2-68** | Rule | Battle Ability | [남은 카드 일곱을 전투 상태가 처리하게 한다](R2-68-remaining-card-abilities.md) | R2-67 | **완료** |
 | **R2-69** | Rule | Battle Energy | [필드 에너지를 유닛에 붙이는 일을 전투 상태가 처리한다](R2-69-screen-reads-only-events.md) | R2-68 | **완료** |
 | **R2-70** | Rule | Battle Unit | [유닛이 움직일 수 있는지를 전투 상태가 판단한다](R2-70-can-unit-act.md) | R2-69 | **완료** |
-| **R2-71** | Rule | Battle Unit | 턴이 넘어갈 때 유닛에 붙은 것을 전투 상태가 정산한다 | R2-70 | 예정 |
+| **R2-71** | Rule | Battle Unit | [턴이 넘어갈 때 유닛에 붙은 것을 전투 상태가 정산한다](R2-71-settle-on-turn-pass.md) | R2-70 | **완료** |
 | **R2-72** | Rule | Battle Active Panel | 액티브 패널이 화면과 카메라를 들지 않게 한다 | R2-44 | 예정 |
 | **R2-73** | Rendering | Battle Active Panel | 액티브 패널 버튼을 만드는 일을 렌더러로 옮긴다 | R2-72 | 예정 |
 | **R2-74** | Rule | Lobby | 로비의 게임 입장 버튼이 눌리도록 등록되지 않은 경로 정리 | — | 예정 |

@@ -2066,49 +2066,6 @@ async function main(container: HTMLElement): Promise<void> {
     }
 
     // 내 턴 시작 훅 — 빙결 해제 + 재빙결 면역 갱신.
-    // 빙결은 상대 유닛의 행동을 막는 것이므로 상대 턴 내내 유지되어야 한다. 따라서
-    // 상대 턴이 끝나고 내 턴이 시작될 때 녹는다 (화상 정산과는 시점이 다르다).
-    function tickFreezeExpiry(): void {
-        // 지난 턴의 면역은 만료되고, 이번에 녹은 대상이 새 면역을 얻는다.
-        // 그래야 "다음 턴에 공격 받더라도 빙결 당하지 않음"이 정확히 1턴만 유지된다.
-        for (const unit of battle.getOpponentFieldCards()) {
-            const wasFrozen = unit.isFrozen();
-            if (!wasFrozen) {
-                unit.clearFreezeImmune();
-                continue;
-            }
-            unit.thaw();
-            frozenBurningEffect.setState(unit.getBattleCardId(), { freeze: false });
-            console.log(`[cold-dark-energy] idx=${unit.getBattleCardId()} 빙결 해제 — 이번 턴 재빙결 불가`);
-        }
-    }
-
-    // 상대 턴 시작 훅 — 암흑 화염 화상 피해. 화염에 휩싸인 상대 유닛은 자기 턴을
-    // 시작하는 순간 5의 피해를 받는다.
-    function tickDarkFlameDamage(): void {
-        // 누가 타고 있는지는 전투가 안다.
-        const burning = battle.getOpponentFieldCards().filter((it) => it.hasDarkFlame());
-        if (burning.length === 0) return;
-
-        const dead: number[] = [];
-        for (const unit of [...burning]) {
-            const idx = unit.getBattleCardId();
-            const target = opponentEntries.find((oe) => oe.cardIndex === idx);
-            if (!target || !target.group.visible) { clearColdDarkStatus(idx); continue; }
-            const prev = unit.getHp();
-            const newHp = unit.setHp(prev - DARK_FLAME_TURN_DAMAGE);
-            console.log(`[cold-dark-energy] 암흑 화염 → idx=${idx} HP ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
-            if (newHp <= 0) dead.push(idx);
-        }
-        for (const idx of dead) {
-            defeatOpponentUnit(idx);
-            const target = opponentEntries.find((oe) => oe.cardIndex === idx);
-            if (target) target.group.visible = false;
-            clearColdDarkStatus(idx);
-        }
-        if (dead.length > 0) reflowOpponentField();
-    }
-
     async function attachEnergyToCard(entry: HandEntry): Promise<void> {
         if (!placedOrder.includes(entry)) return;
 
@@ -3576,13 +3533,19 @@ async function main(container: HTMLElement): Promise<void> {
 
     // 카드 한 장을 뽑고 화면에 붙인다. 뽑을 수 있는지는 전투가 판단한다.
     const drawOneCard = async (reason: string): Promise<boolean> => {
-        const events = send({type: 'drawCard'});
+        return appendDrawnCardsToScreen(send({type: 'drawCard'}), reason);
+    };
+
+    // 전투가 뽑아 준 카드를 화면 손패에 붙인다. 뽑는 것은 이미 끝났다.
+    const appendDrawnCardsToScreen = async (
+        events: readonly BattleEvent[], reason: string,
+    ): Promise<boolean> => {
         for (const ev of events) {
             if (ev.type === 'rejected') {
                 console.log(`[deck] ${reason} — ${ev.reason}`);
                 return false;
             }
-            if (ev.type === 'cardMoved' && ev.to === 'hand') {
+            if (ev.type === 'cardMoved' && ev.from === 'yourDeck' && ev.to === 'hand') {
                 const resolved = resolveCards([ev.cardId], reason);
                 if (resolved.length === 0) return false;
                 // 전투가 매긴 번호를 그대로 쓴다. 안 그러면 나중에 이 카드를 못 찾는다.
@@ -3823,13 +3786,32 @@ async function main(container: HTMLElement): Promise<void> {
     // your → opponent. Triggers: 턴 종료 버튼 클릭, 모래시계 만료.
     // No-op unless it's currently your turn (idempotent).
     function endYourTurn(reason: string): void {
-        // 넘어갈 수 있는지는 전투가 판단한다. 내 턴이 아니면 아무 일도 안 한다.
-        if (!battle.endYourTurn()) return;
+        // 넘어갈 수 있는지도, 암흑 화염을 정산하는 것도 전투가 한다.
+        const events = send({type: 'endYourTurn'});
+        if (events.some((ev) => ev.type === 'rejected')) return;
+
         timerRenderer.reset(timerElement);
         guideRenderer.show(guideElement, '상대방의 턴입니다.', 3000);
         console.log(`[turn-state] your → opponent (${reason}) · TURN ${battle.getTurnNumber()}`);
-        // 상대 턴 시작 시점 — 암흑 화염 화상 피해를 여기서 정산한다.
-        tickDarkFlameDamage();
+        applyDarkFlameToScreen(events);
+    }
+
+    // 암흑 화염으로 깎이고 쓰러진 것을 화면에 옮긴다. 값은 이미 다 바뀌었다.
+    function applyDarkFlameToScreen(events: readonly BattleEvent[]): void {
+        let anyDefeated = false;
+        for (const ev of events) {
+            if (ev.type === 'damaged' && ev.target.kind === 'unit') {
+                const idx = ev.target.battleCardId;
+                console.log(`[cold-dark-energy] 암흑 화염 → idx=${idx} HP ${ev.hpBefore} → ${ev.hpAfter}${ev.hpAfter <= 0 ? ' (defeated)' : ''}`);
+            } else if (ev.type === 'defeated' && ev.target.kind === 'unit') {
+                const idx = ev.target.battleCardId;
+                const target = opponentEntries.find((oe) => oe.cardIndex === idx);
+                if (target) target.group.visible = false;
+                frozenBurningEffect.detach(idx);
+                anyDefeated = true;
+            }
+        }
+        if (anyDefeated) reflowOpponentField();
     }
 
     // opponent → your. Triggers: 'f' 키, 모래시계 만료. Each full opponent→your cycle counts
@@ -3838,8 +3820,10 @@ async function main(container: HTMLElement): Promise<void> {
     // turn-start draw), plus (e) announce the handback on the guide banner. No-op unless it's
     // currently the opponent's turn (idempotent).
     async function beginYourTurn(reason: string): Promise<void> {
-        // 턴이 오르는 것과 필드 에너지가 느는 것도 전투가 함께 한다.
-        if (!battle.beginYourTurn()) {
+        // 턴이 오르는 것, 필드 에너지가 느는 것, 빙결이 풀리는 것, 한 장 뽑는 것을
+        // 전투가 한 번에 한다.
+        const events = send({type: 'beginYourTurn'});
+        if (events.some((ev) => ev.type === 'rejected')) {
             console.log(`[turn-state] ${reason} ignored — already your turn`);
             return;
         }
@@ -3856,12 +3840,14 @@ async function main(container: HTMLElement): Promise<void> {
 
         timerRenderer.reset(timerElement);
 
-        // 턴이 시작될 때 한 장 뽑는다. 'd' 키와 같은 길을 지난다.
-        await drawOneCard('turn-start');
-
-        // 빙결 해제 — 상대 턴 내내 얼어 있던 유닛이 이 시점에 녹는다.
-        // 화상 피해는 여기가 아니라 상대 턴 시작(endYourTurn)에서 정산한다.
-        tickFreezeExpiry();
+        // 뽑은 카드와 풀린 빙결을 화면에 옮긴다. 값은 이미 다 바뀌었다.
+        await appendDrawnCardsToScreen(events, 'turn-start');
+        for (const ev of events) {
+            if (ev.type === 'statusCleared' && ev.what === 'frozen') {
+                frozenBurningEffect.setState(ev.battleCardId, { freeze: false });
+                console.log(`[cold-dark-energy] idx=${ev.battleCardId} 빙결 해제 — 이번 턴 재빙결 불가`);
+            }
+        }
 
         console.log(`[turn-state] opponent → your (${reason}) · TURN ${battle.getTurnNumber()} · field energy ${battle.getFieldEnergy()}`);
 

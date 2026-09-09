@@ -19,7 +19,11 @@ export type BattleEvent =
     // 값이 이만큼 바뀌었다
     | {type: 'valueChanged'; what: ChangedValue; before: number; after: number}
     // 유닛에 에너지가 붙었다
-    | {type: 'energyAttached'; battleCardId: number; race: CardRace; countAfter: number};
+    | {type: 'energyAttached'; battleCardId: number; race: CardRace; countAfter: number}
+    // 턴이 넘어갔다
+    | {type: 'turnPassed'; to: 'your' | 'opponent'}
+    // 유닛에 붙어 있던 것이 풀렸다
+    | {type: 'statusCleared'; battleCardId: number; what: UnitStatus};
 
 // 카드가 있을 수 있는 자리
 export type CardPlace = 'yourDeck' | 'opponentDeck' | 'hand' | 'yourField' | 'opponentField'
@@ -33,6 +37,9 @@ export type DamageTarget =
 
 // 종족은 카드 쪽에 있는 것을 그대로 쓴다
 export type {CardRace} from "../../card/race";
+
+// 유닛에 붙는 것
+export type UnitStatus = 'frozen' | 'darkFlame';
 
 // 숫자로 세는 것
 export type ChangedValue = 'turnNumber' | 'fieldEnergy' | 'opponentFieldEnergy';
