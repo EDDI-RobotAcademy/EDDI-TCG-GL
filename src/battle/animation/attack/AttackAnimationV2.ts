@@ -35,22 +35,26 @@ export class AttackAnimationV2 {
     }
 
     // Unified entry — routes to weapon animation or skill projectile based on attackType
+    // home 을 주면 그것을 돌아갈 자리로 쓴다. 연출이 도는 동안 창 크기가 바뀌면 카드의
+    // 제자리도 달라지는데, 나갈 때 적어 둔 자리로 돌아가면 엉뚱한 데 선다. 제자리를 아는
+    // 쪽이 이 값을 고쳐 주면 연출은 돌아갈 때 그 값을 다시 읽는다.
     public async playAttack(
         attackerGroup: THREE.Group,
         targetGroup: THREE.Group,
         attackType: string = 'general',
+        home?: THREE.Vector3,
     ): Promise<void> {
         if (this.animating) return;
 
         if (attackType.startsWith('skill')) {
-            await this.playSkillProjectile(attackerGroup, targetGroup, attackType);
+            await this.playSkillProjectile(attackerGroup, targetGroup, attackType, home);
         } else {
-            await this.playWeaponAttack(attackerGroup, targetGroup);
+            await this.playWeaponAttack(attackerGroup, targetGroup, home);
         }
     }
 
     // === AoE skill (Sea of Specter) — magic circle → specters → scream ===
-    private async playWeaponAttack(attackerGroup: THREE.Group, targetGroup: THREE.Group): Promise<void> {
+    private async playWeaponAttack(attackerGroup: THREE.Group, targetGroup: THREE.Group, home?: THREE.Vector3): Promise<void> {
         this.animating = true;
         const { mesh: weaponMesh, type: weaponType } = this.findWeaponMesh(attackerGroup);
         if (!weaponMesh) { this.animating = false; return; }
@@ -82,7 +86,9 @@ export class AttackAnimationV2 {
 
         await this.phase3(attackerGroup, weaponMesh, weaponMesh.position.clone(), weaponOrigPos, weaponMesh.rotation.z, weaponOrigRot, attackerOrigY, 800);
 
-        attackerGroup.position.y = attackerOrigY;
+        // 흔들기를 끝내고 제자리 높이로 되돌린다. 도는 동안 창 크기가 바뀌었으면 제자리도
+        // 달라졌으므로, 밖에서 준 자리가 있으면 그것을 쓴다.
+        attackerGroup.position.y = home ? home.y : attackerOrigY;
         weaponMesh.position.copy(weaponOrigPos);
         weaponMesh.rotation.z = weaponOrigRot;
         this.scene.position.set(0, 0, 0);
@@ -94,6 +100,7 @@ export class AttackAnimationV2 {
         attackerGroup: THREE.Group,
         targetGroup: THREE.Group,
         skillType: string,
+        home?: THREE.Vector3,
     ): Promise<void> {
         this.animating = true;
         const cardW = CWR * window.innerWidth;
@@ -101,7 +108,7 @@ export class AttackAnimationV2 {
         // Legacy: card moves to skill panel position (center-bottom, near ally base)
         const { x: skillPositionX, y: skillPositionY } = createCardSkillPositionFrame(window.innerHeight);
 
-        const origPos = attackerGroup.position.clone();
+        const origPos = home ?? attackerGroup.position.clone();
 
         targetGroup.updateMatrixWorld(true);
         const targetWorld = targetGroup.getWorldPosition(new THREE.Vector3());
