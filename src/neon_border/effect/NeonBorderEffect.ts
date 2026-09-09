@@ -38,6 +38,9 @@ interface ActiveBorder {
 interface BorderEntry {
     border: ActiveBorder;
     group: THREE.Group;
+    // 이 테두리를 그릴 때 읽었던 대상의 크기. 대상이 그새 달라졌는지 보는 데 쓴다.
+    builtWidth: number;
+    builtHeight: number;
 }
 
 export class NeonBorderEffect {
@@ -92,7 +95,27 @@ export class NeonBorderEffect {
         this.activeBorders.set(entityId, {
             border: { meshes: [mesh], materials: [mat] },
             group,
+            builtWidth: cardWidth,
+            builtHeight: cardHeight,
         });
+    }
+
+    // 붙어 있는 테두리를 지금 크기로 다시 그린다.
+    //
+    // 테두리 크기는 붙일 때 그 대상의 크기를 읽어서 정해진다. 창 크기가 바뀌면 대상은
+    // 새 크기가 되는데 테두리는 붙일 때 크기 그대로라, 대상을 감싸지 못하고 어긋난다.
+    // 붙어 있던 것을 그대로 다시 붙이면 새 크기를 다시 읽는다.
+    //
+    // 카드처럼 통째로 늘었다 줄었다 하는 대상은 테두리도 함께 따라가므로 읽어 둔 크기가
+    // 안 달라진다. 그런 것까지 다시 만들면 창을 끄는 동안 헛일이 쌓이므로 건너뛴다.
+    public refreshSizes(): void {
+        for (const [entityId, entry] of [...this.activeBorders.entries()]) {
+            const userData = entry.group.userData as { baseCardWidth?: number; baseCardHeight?: number };
+            const width = userData.baseCardWidth ?? 100;
+            const height = userData.baseCardHeight ?? 160;
+            if (width === entry.builtWidth && height === entry.builtHeight) continue;
+            this.attach(entityId, entry.group);
+        }
     }
 
     public detach(entityId: number): void {
