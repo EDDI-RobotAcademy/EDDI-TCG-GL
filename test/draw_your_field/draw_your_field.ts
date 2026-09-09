@@ -31,7 +31,6 @@ import {BackgroundServiceImpl} from "../../src/background/service/BackgroundServ
 import {BackgroundRepositoryImpl} from "../../src/background/repository/BackgroundRepositoryImpl";
 import {BattleFieldHandServiceImpl} from "../../src/battle/hand/service/BattleFieldHandServiceImpl";
 import {CardGenerationHandler} from "../../src/card/handler";
-import {LegacyDragAndDropManager} from "../../src/drag_and_drop/LegacyDragAndDropManager";
 import {LeftClickDetectServiceImpl} from "../../src/left_click_detect/service/LeftClickDetectServiceImpl";
 import {LeftClickDetectService} from "../../src/left_click_detect/service/LeftClickDetectService";
 import {DragMoveServiceImpl} from "../../src/drag_move/service/DragMoveServiceImpl";

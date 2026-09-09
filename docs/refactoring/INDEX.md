@@ -107,8 +107,8 @@
 | **R2-80** | Rendering | Battle Animation | [창 크기를 바꿔도 카드가 알맞은 자리로 올라가게 한다](R2-80-measure-skill-slot-on-use.md) | R2-43 | **완료** |
 | **R2-81** | Rendering | Platform | [화면에 그렸던 것을 놓아주는 방법을 한 곳에서 정한다](R2-81-unify-dispose.md) | R2-46 | **완료** |
 | **R2-82** | Structure | Platform | [기본 실행 명령으로 게임이 뜨게 한다](R2-82-dev-command-starts-game.md) | — | **완료** |
-| **R2-83** | Structure | Battle Active Panel | 액티브 패널을 닫는 일곱 곳을 하나로 묶는다 | R2-48 | 예정 |
-| **R2-84** | Structure | Battle Unit | 옛 드래그로 필드에 놓는 길을 정리한다 | R2-54 | 예정 |
+| **R2-83** | Structure | Battle Card | [카드 선택 시 이전 카드의 선택 해제](R2-83-clear-selection.md) | R2-48 | **완료** |
+| **R2-84** | Structure | Battle Hand | [사용하지 않는 손패 내보내기 방식 제거](R2-84-remove-legacy-drag.md) | R2-54 | **완료** |
 | **R2-85** | Strategy | Battle Ability | 한 번에 안 끝나는 카드 넷을 다룰 모양을 정한다 | R2-68 | 예정 |
 | **R2-86** | Rendering | Battle 공용 | 창 크기가 바뀔 때 다시 안 재는 화면 조각을 잇는다 | R2-72 | 예정 |
 | **R2-87** | Rule | Battle | 멀리건을 더해 1대1 대전이 되게 한다 | R2-75 | 예정 |

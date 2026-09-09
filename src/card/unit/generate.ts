@@ -7,7 +7,6 @@ import { UserWindowSize } from "../../window_size/WindowSize";
 import {CardState} from "../state";
 import {CardStateManager} from "../CardStateManager";
 import {BattleRepositoryImpl} from "../../battle/repository/BattleRepositoryImpl";
-import {LegacyDragAndDropManager} from "../../drag_and_drop/LegacyDragAndDropManager";
 
 // interface CardInitialInfo {
 //     cardMesh: THREE.Mesh;
@@ -201,90 +200,6 @@ export class UnitCardGenerator {
 
             } else if (textureId === "energyTextureId") {
                 // 에너지 텍스처 크기 및 위치 조정
-                const energyWidth = cardWidth * 0.39;
-                const energyHeight = energyWidth * 1.344907;
-
-                // position.getX() - cardWidth * 0.5, position.getY() + cardHeight * 0.5
-                const energyPositionX = mainCardPositionX - cardWidth * 0.5;
-                const energyPositionY = mainCardPositionY + cardHeight * 0.5;
-
-                cardMesh.geometry.dispose();
-                cardMesh.geometry = new THREE.PlaneGeometry(energyWidth, energyHeight);
-                cardMesh.position.set(energyPositionX, energyPositionY, 0);
-            }
-        });
-    }
-
-    // TODO: 이거 개선해야함
-    static adjustFieldCardPositions(): void {
-        const currentUnitCount = BattleRepositoryImpl.getInstance().getCurrentOrThrow().getDeployedUnitCount()
-
-        const dragAndDropManager = LegacyDragAndDropManager.getExistingInstance()
-        const targetShape = dragAndDropManager?.getTargetShape();
-        if (!targetShape) {
-            console.log("No targetShape found.");
-            return;
-        }
-
-        const targetData = targetShape.userData;
-
-        const fieldCardList = CardStateManager.getAllFieldCards();
-        fieldCardList.forEach(({ cardMesh, initialPosition, textureId, cardIndex }) => {
-
-            const cardWidth = 0.06493506493 * window.innerWidth
-            const cardHeight = cardWidth * 1.615
-
-            console.log('adjustFieldCardPositions() fieldCardList cardIndex:', cardIndex)
-            // targetData.width = window.innerWidth * 0.7
-            // -targetData.width / 2 + 0.044056 * window.innerWidth + 200 * currentUnitCount
-            const mainCardPositionX = -(window.innerWidth * 0.7) / 2 + 0.044056 * window.innerWidth + 0.094696 * window.innerWidth * cardIndex;
-            const mainCardPositionY = -(window.innerHeight / 2) + (0.024 * 3 + 0.11 * 2.5) * window.innerHeight;
-
-            if (textureId === "mainCardTextureId") {
-                cardMesh.geometry.dispose(); // 기존 geometry 삭제
-                cardMesh.geometry = new THREE.PlaneGeometry(cardWidth, cardHeight);
-                // cardMesh.position.set(initialPosition.getX() * newScaleX, initialPosition.getY() * newScaleY, 0);
-                // cardMesh.position.set(initialPosition.getX(), (0.5 - 0.972107) * window.innerHeight + (0.06493506493 * 1.615 * 0.5 * window.innerWidth), 0);
-                cardMesh.position.set(mainCardPositionX, mainCardPositionY, 0);
-            } else if (textureId === "weaponTextureId") {
-                const weaponWidth = cardWidth * 0.63;
-                const weaponHeight = weaponWidth * 1.651;
-
-                // position.getX() + cardWidth * 0.44, position.getY() - cardHeight * 0.45666
-                // const weaponPositionX = initialPosition.getX() + cardWidth * 0.44;
-                const weaponPositionX = mainCardPositionX + cardWidth * 0.44;
-                // const weaponPositionY = initialPosition.getY() - cardWidth * 0.45666;
-                const weaponPositionY = mainCardPositionY - cardHeight * 0.45666;
-
-                cardMesh.geometry.dispose();
-                cardMesh.geometry = new THREE.PlaneGeometry(weaponWidth, weaponHeight);
-                cardMesh.position.set(weaponPositionX, weaponPositionY, 0);
-
-            } else if (textureId === "raceTextureId") {
-                const raceWidth = cardWidth * 0.4;
-                const raceHeight = raceWidth;
-
-                // position.getX() + cardWidth * 0.5, position.getY() + cardHeight * 0.5
-                const racePositionX = mainCardPositionX + cardWidth * 0.5;
-                const racePositionY = mainCardPositionY + cardHeight * 0.5;
-
-                cardMesh.geometry.dispose();
-                cardMesh.geometry = new THREE.PlaneGeometry(raceWidth, raceHeight);
-                cardMesh.position.set(racePositionX, racePositionY, 0);
-
-            } else if (textureId === "hpTextureId") {
-                const hpWidth = cardWidth * 0.31;
-                const hpHeight = hpWidth * 1.65454;
-
-                // position.getX() - cardWidth * 0.5, position.getY() - cardHeight * 0.43438
-                const hpPositionX = mainCardPositionX - cardWidth * 0.5;
-                const hpPositionY = mainCardPositionY - cardHeight * 0.43438;
-
-                cardMesh.geometry.dispose();
-                cardMesh.geometry = new THREE.PlaneGeometry(hpWidth, hpHeight);
-                cardMesh.position.set(hpPositionX, hpPositionY, 0);
-
-            } else if (textureId === "energyTextureId") {
                 const energyWidth = cardWidth * 0.39;
                 const energyHeight = energyWidth * 1.344907;
 
