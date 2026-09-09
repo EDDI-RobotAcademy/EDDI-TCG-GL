@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {disposeGroup} from "../../../../core/lifecycle/DisposableMeshStore";
 
 import { FrameRenderer } from "../../../../core/renderer/FrameRenderer";
 import {
@@ -46,15 +47,7 @@ export class OpponentTombPanelRendererV2 implements FrameRenderer<OpponentTombPa
     }
 
     public dispose(group: THREE.Group): void {
-        group.traverse((object) => {
-            if (object instanceof THREE.Mesh) {
-                object.geometry?.dispose();
-                const material = object.material;
-                if (Array.isArray(material)) material.forEach((m) => m.dispose());
-                else material?.dispose();
-            }
-        });
-        group.clear();
+        disposeGroup(group);
     }
 
     private buildTombGeometry(

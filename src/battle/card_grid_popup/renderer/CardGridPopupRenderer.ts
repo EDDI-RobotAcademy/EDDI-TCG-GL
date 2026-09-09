@@ -1,4 +1,5 @@
 // 카드를 격자로 늘어놓고 페이지를 넘기는 팝업을 그린다.
+import {disposeGroup} from "../../../core/lifecycle/DisposableMeshStore";
 //
 // 여러 화면이 쓰는 부품이다. 특정 화면의 것이 아니다.
 //   내 로스트존, 상대 로스트존, 내 무덤, 상대 무덤, 레오닉의 부름(내 덱에서 고르기)
@@ -155,14 +156,6 @@ export class CardGridPopupRenderer {
     }
 
     public dispose(group: THREE.Group): void {
-        group.traverse((object) => {
-            if (object instanceof THREE.Mesh) {
-                object.geometry?.dispose();
-                const material = object.material;
-                if (Array.isArray(material)) material.forEach((m) => m.dispose());
-                else material?.dispose();
-            }
-        });
-        group.clear();
+        disposeGroup(group);
     }
 }

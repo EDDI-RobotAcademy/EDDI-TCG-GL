@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // 레오닉의 부름 (Leonik's Summon) — "the Gate of Truth opens, the world quakes,
 // cards pass through the forbidden door from the deck into the player's hand."
@@ -180,10 +181,10 @@ export class LeonikSummonEffect {
         canvasElement.style.transform = origTransform;
 
         clockRunning = false;
-        this.scene.remove(vignette);   this.disposeMesh(vignette);
-        this.scene.remove(leftDoor);   this.disposeMesh(leftDoor);
-        this.scene.remove(rightDoor);  this.disposeMesh(rightDoor);
-        this.scene.remove(voidMesh);   this.disposeMesh(voidMesh);
+        this.scene.remove(vignette);   disposeMesh(vignette);
+        this.scene.remove(leftDoor);   disposeMesh(leftDoor);
+        this.scene.remove(rightDoor);  disposeMesh(rightDoor);
+        this.scene.remove(voidMesh);   disposeMesh(voidMesh);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -249,7 +250,7 @@ export class LeonikSummonEffect {
         await this.tween(mat.uniforms.u_alpha, 0.0, 220, 'easeInQuad');
         tickClocks.delete(mat);
         this.scene.remove(card);
-        this.disposeMesh(card);
+        disposeMesh(card);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -283,7 +284,7 @@ export class LeonikSummonEffect {
                 requestAnimationFrame(step);
             } else {
                 this.scene.remove(crack);
-                this.disposeMesh(crack);
+                disposeMesh(crack);
             }
         };
         requestAnimationFrame(step);
@@ -319,7 +320,7 @@ export class LeonikSummonEffect {
             } else {
                 tickClocks.delete(mat);
                 this.scene.remove(tendril);
-                this.disposeMesh(tendril);
+                disposeMesh(tendril);
             }
         };
         requestAnimationFrame(step);
@@ -853,10 +854,4 @@ export class LeonikSummonEffect {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    private disposeMesh(mesh: THREE.Mesh): void {
-        mesh.geometry?.dispose();
-        const material = mesh.material;
-        if (Array.isArray(material)) material.forEach((m) => m.dispose());
-        else material?.dispose();
-    }
 }

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // 사기 전환 (Morale Conversion) — death-energy transfer effect.
 //
@@ -93,8 +94,8 @@ export class MoraleConvertEffect {
         clockRunning = false;
         this.scene.remove(aura);
         this.scene.remove(beam);
-        this.disposeMesh(aura);
-        this.disposeMesh(beam);
+        disposeMesh(aura);
+        disposeMesh(beam);
     }
 
     // Fly one mote along the shared bezier curve, LEAVING A TRAIL OF SMOKE PUFFS behind.
@@ -143,7 +144,7 @@ export class MoraleConvertEffect {
         await this.tween(mat.uniforms.u_alpha, 0.0, 220, 'easeInQuad');
 
         this.scene.remove(mote);
-        this.disposeMesh(mote);
+        disposeMesh(mote);
     }
 
     // Self-managed smoke puff — creates, animates alpha-fade + slight growth, removes +
@@ -168,7 +169,7 @@ export class MoraleConvertEffect {
                 requestAnimationFrame(step);
             } else {
                 this.scene.remove(puff);
-                this.disposeMesh(puff);
+                disposeMesh(puff);
             }
         };
         requestAnimationFrame(step);
@@ -525,10 +526,4 @@ export class MoraleConvertEffect {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    private disposeMesh(mesh: THREE.Mesh): void {
-        mesh.geometry?.dispose();
-        const material = mesh.material;
-        if (Array.isArray(material)) material.forEach((m) => m.dispose());
-        else material?.dispose();
-    }
 }

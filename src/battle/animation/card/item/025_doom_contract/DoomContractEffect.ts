@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { markOwnedTexture } from "../../../../../core/lifecycle/DisposableMeshStore";
+import { markOwnedTexture, disposeMesh } from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // 파멸의 계약 (Contract of Doom) — visual effect with TRUE screen-space warp.
 //
@@ -194,10 +194,10 @@ export class DoomContractEffect {
             overlayScene.remove(book);
             overlayScene.remove(vortex);
             overlayScene.remove(flash);
-            this.disposeMesh(book);
-            this.disposeMesh(vortex);
-            this.disposeMesh(flash);
-            this.disposeMesh(warpQuad);
+            disposeMesh(book);
+            disposeMesh(vortex);
+            disposeMesh(flash);
+            disposeMesh(warpQuad);
             target.dispose();
         }
     }
@@ -595,16 +595,4 @@ export class DoomContractEffect {
         });
     }
 
-    private disposeMesh(mesh: THREE.Mesh): void {
-        mesh.geometry?.dispose();
-        const material = mesh.material;
-        // 글자를 그려 만든 그림은 이 메시만 쓴다. 표시가 있으면 함께 놓아준다.
-        const disposeOne = (m: THREE.Material) => {
-            const map = (m as THREE.Material & { map?: THREE.Texture | null }).map;
-            if (map?.userData?.ownedByMesh) map.dispose();
-            m.dispose();
-        };
-        if (Array.isArray(material)) material.forEach(disposeOne);
-        else if (material) disposeOne(material);
-    }
 }

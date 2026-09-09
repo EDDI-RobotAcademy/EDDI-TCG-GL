@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // Energy Burn — "mana in the air, consumed by dark flame".
 //   1) Energy motes (cyan/blue mana wisps) fade in around the card at preset positions.
@@ -109,9 +110,9 @@ export class EnergyBurnEffect {
 
         clockRunning = false;
         this.scene.remove(burn);
-        this.disposeMesh(burn);
+        disposeMesh(burn);
         targetGroup.remove(surfaceFlame);
-        this.disposeMesh(surfaceFlame);
+        disposeMesh(surfaceFlame);
     }
 
     private createBurnMesh(planeW: number, planeH: number, drainedCount: number): THREE.Mesh {
@@ -612,7 +613,7 @@ export class EnergyBurnEffect {
 
         clockRunning = false;
         this.scene.remove(bolt);
-        this.disposeMesh(bolt);
+        disposeMesh(bolt);
     }
 
     private createLightningMesh(planeW: number, planeH: number): THREE.Mesh {
@@ -1016,10 +1017,4 @@ export class EnergyBurnEffect {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    private disposeMesh(mesh: THREE.Mesh): void {
-        mesh.geometry?.dispose();
-        const material = mesh.material;
-        if (Array.isArray(material)) material.forEach((m) => m.dispose());
-        else material?.dispose();
-    }
 }

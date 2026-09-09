@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { disposeMesh, markOwnedTexture } from "../../../core/lifecycle/DisposableMeshStore";
+import { disposeMesh, markOwnedTexture, disposeGroup } from "../../../core/lifecycle/DisposableMeshStore";
 
 import { CardJob } from "../../../card/job";
 import { CardKind } from "../../../card/kind";
@@ -91,18 +91,7 @@ export class HandCardRendererV2 {
     }
 
     public dispose(group: THREE.Group): void {
-        group.traverse((object) => {
-            if (object instanceof THREE.Mesh) {
-                object.geometry?.dispose();
-                const material = object.material;
-                if (Array.isArray(material)) {
-                    material.forEach((m) => m.dispose());
-                } else {
-                    material?.dispose();
-                }
-            }
-        });
-        group.clear();
+        disposeGroup(group);
     }
 
     // Updates the attached-energy display on an already-built card Group IN PLACE:

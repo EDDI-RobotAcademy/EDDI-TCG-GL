@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // 넘쳐흐르는 사기 (Overflowing Morale) — powerful dark-essence transfer from the deck
 // into the target ally. This is ONE OF THE STRONGER support cards (it effectively skips
@@ -102,7 +103,7 @@ export class OverflowMoraleEffect {
 
         clockRunning = false;
         this.scene.remove(aura);
-        this.disposeMesh(aura);
+        disposeMesh(aura);
     }
 
     // Direct hand→unit attach variant (used by 죽음의 에너지). No deck, no motes, no
@@ -156,7 +157,7 @@ export class OverflowMoraleEffect {
 
         clockRunning = false;
         this.scene.remove(aura);
-        this.disposeMesh(aura);
+        disposeMesh(aura);
     }
 
     // One mote along the bezier. On arrival: onArrive() + outward triple shockwave +
@@ -209,7 +210,7 @@ export class OverflowMoraleEffect {
 
         await this.tween(mat.uniforms.u_alpha, 0.0, 120, 'easeInQuad');
         this.scene.remove(mote);
-        this.disposeMesh(mote);
+        disposeMesh(mote);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -236,7 +237,7 @@ export class OverflowMoraleEffect {
                 requestAnimationFrame(step);
             } else {
                 this.scene.remove(ring);
-                this.disposeMesh(ring);
+                disposeMesh(ring);
             }
         };
         requestAnimationFrame(step);
@@ -262,7 +263,7 @@ export class OverflowMoraleEffect {
                 requestAnimationFrame(step);
             } else {
                 this.scene.remove(burst);
-                this.disposeMesh(burst);
+                disposeMesh(burst);
             }
         };
         requestAnimationFrame(step);
@@ -295,7 +296,7 @@ export class OverflowMoraleEffect {
                     requestAnimationFrame(step);
                 } else {
                     this.scene.remove(ring);
-                    this.disposeMesh(ring);
+                    disposeMesh(ring);
                 }
             };
             requestAnimationFrame(step);
@@ -322,7 +323,7 @@ export class OverflowMoraleEffect {
                 requestAnimationFrame(step);
             } else {
                 this.scene.remove(flash);
-                this.disposeMesh(flash);
+                disposeMesh(flash);
             }
         };
         requestAnimationFrame(step);
@@ -347,7 +348,7 @@ export class OverflowMoraleEffect {
                 requestAnimationFrame(step);
             } else {
                 this.scene.remove(halo);
-                this.disposeMesh(halo);
+                disposeMesh(halo);
             }
         };
         requestAnimationFrame(step);
@@ -370,7 +371,7 @@ export class OverflowMoraleEffect {
                 requestAnimationFrame(step);
             } else {
                 this.scene.remove(ring);
-                this.disposeMesh(ring);
+                disposeMesh(ring);
             }
         };
         requestAnimationFrame(step);
@@ -394,7 +395,7 @@ export class OverflowMoraleEffect {
                 requestAnimationFrame(step);
             } else {
                 this.scene.remove(puff);
-                this.disposeMesh(puff);
+                disposeMesh(puff);
             }
         };
         requestAnimationFrame(step);
@@ -965,10 +966,4 @@ export class OverflowMoraleEffect {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    private disposeMesh(mesh: THREE.Mesh): void {
-        mesh.geometry?.dispose();
-        const material = mesh.material;
-        if (Array.isArray(material)) material.forEach((m) => m.dispose());
-        else material?.dispose();
-    }
 }

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {disposeGroup} from "../../../core/lifecycle/DisposableMeshStore";
 import { ActivePanelFrame, ActivePanelButtonSpec } from "../frame/ActivePanelFrame";
 
 interface PanelUserData {
@@ -63,16 +64,7 @@ export class ActivePanelRendererV2 {
     }
 
     public dispose(group: THREE.Group): void {
-        group.traverse((object) => {
-            if (object instanceof THREE.Mesh) {
-                object.geometry?.dispose();
-                const material = object.material;
-                if (Array.isArray(material)) material.forEach((m) => m.dispose());
-                else material?.dispose();
-            }
-        });
-        group.removeFromParent();
-        group.clear();
+        disposeGroup(group);
     }
 
     private loadTexture(imageSrc: string): Promise<THREE.Texture> {
