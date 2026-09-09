@@ -20,6 +20,14 @@ export class FieldCard {
         // 스킬 비용이 종족별로 정해져 있고, 앞으로 여러 종족을 함께 요구하는 스킬이
         // 나올 수 있어 총량만으로는 판정할 수 없다.
         private energyByRace: Map<CardRace, number> = new Map(),
+        // 이 유닛이 나온 턴. 나온 턴에는 못 움직인다
+        private deployedTurn: number = 0,
+        // 이번 한 번 못 움직인다. 빙결
+        private frozen: boolean = false,
+        // 빙결이 풀린 직후 한 턴은 다시 안 언다
+        private freezeImmune: boolean = false,
+        // 매 턴 깎이는 피해. 암흑 화염
+        private darkFlame: boolean = false,
     ) {}
 
     static restore(snapshot: FieldCardSnapshot): FieldCard {
@@ -30,6 +38,10 @@ export class FieldCard {
             snapshot.positionId,
             snapshot.hp,
             new Map(snapshot.energyByRace.map((it) => [it.race, it.count])),
+            snapshot.deployedTurn,
+            snapshot.frozen,
+            snapshot.freezeImmune,
+            snapshot.darkFlame,
         );
     }
 
@@ -97,6 +109,53 @@ export class FieldCard {
         return amount - left;
     }
 
+    /* ── 유닛에 붙은 것 ── */
+
+    getDeployedTurn(): number {
+        return this.deployedTurn;
+    }
+
+    setDeployedTurn(turn: number): void {
+        this.deployedTurn = turn;
+    }
+
+    isFrozen(): boolean {
+        return this.frozen;
+    }
+
+    // 얼린다. 방금 풀린 유닛은 다시 안 언다. 얼었으면 true 다.
+    freeze(): boolean {
+        if (this.freezeImmune) return false;
+        this.frozen = true;
+        return true;
+    }
+
+    // 빙결이 풀린다. 풀린 직후 한 턴은 다시 안 언다.
+    thaw(): void {
+        this.freezeImmune = this.frozen;
+        this.frozen = false;
+    }
+
+    // 다시 얼 수 있게 한다. 안 얼어 있던 턴이 한 번 지나면 부른다.
+    clearFreezeImmune(): void {
+        this.freezeImmune = false;
+    }
+
+    hasDarkFlame(): boolean {
+        return this.darkFlame;
+    }
+
+    setDarkFlame(on: boolean): void {
+        this.darkFlame = on;
+    }
+
+    // 붙은 것을 다 뗀다. 유닛이 쓰러지거나 되살아날 때 쓴다.
+    clearStatus(): void {
+        this.frozen = false;
+        this.freezeImmune = false;
+        this.darkFlame = false;
+    }
+
     toSnapshot(): FieldCardSnapshot {
         return {
             battleCardId: this.battleCardId,
@@ -105,6 +164,10 @@ export class FieldCard {
             positionId: this.positionId,
             hp: this.hp,
             energyByRace: [...this.energyByRace].map(([race, count]) => ({race, count})),
+            deployedTurn: this.deployedTurn,
+            frozen: this.frozen,
+            freezeImmune: this.freezeImmune,
+            darkFlame: this.darkFlame,
         };
     }
 }

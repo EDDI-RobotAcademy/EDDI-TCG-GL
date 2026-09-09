@@ -1,6 +1,6 @@
-# [ETWGL-R2-69] 화면이 전투 상태에서 돌려받은 것만 보고 그리게 한다
+# [ETWGL-R2-69] 필드 에너지를 유닛에 붙이는 일을 전투 상태가 처리한다
 
-선행: R2-68 │ 후행: R2-70 │ 산출물: 화면이 전투를 직접 고치는 곳이 준다 │ Type: Rendering │ Domain: Battle
+선행: R2-68 │ 후행: R2-70 │ 산출물: 화면이 전투를 직접 고치는 곳이 준다 │ Type: Rule │ Domain: Battle Energy
 
 # Success criteria
 

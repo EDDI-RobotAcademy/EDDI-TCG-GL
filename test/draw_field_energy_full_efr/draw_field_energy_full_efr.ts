@@ -411,10 +411,6 @@ async function main(container: HTMLElement): Promise<void> {
 
     const handOrder: HandEntry[] = [...entries];
     const placedOrder: HandEntry[] = [];
-    // 출격 멀미(summoning sickness) — 유닛이 필드에 나온 턴 번호. 같은 턴에는 공격/스킬을
-    // 쓸 수 없다. HandEntry로 키잉해 중복 cardId 사본이 서로의 상태를 공유하지 않게 한다
-    // (카드에 붙은 에너지를 HandEntry 로 가리키는 것과 같은 이유다).
-    const deployedTurn = new Map<HandEntry, number>();
     const MAX_PER_PAGE = 4;
     let currentPage = 1;
 
@@ -498,8 +494,7 @@ async function main(container: HTMLElement): Promise<void> {
     const turnEndButtonGroup = await turnEndButtonRenderer.build(turnEndButtonFrame);
     scene.add(turnEndButtonGroup);
     // Declared here (not next to the 'f' handler that increments it) because the drop
-    // handler stamps deployedTurn with it and the right-click handler compares against it —
-    // both run earlier in the file.
+    // handler runs earlier in the file.
 
     // Hover → show the red blinking neon border around the hex. Cheap per-mousemove
     // point-in-hex test + a uniform flip on the shader material.
@@ -1866,7 +1861,7 @@ async function main(container: HTMLElement): Promise<void> {
 
         // 출격 멀미 — 이번 턴에 출격한 유닛은 공격도 스킬도 쓸 수 없으므로 액티브 패널
         // 자체를 열지 않는다. 이유를 알 수 없으면 무반응처럼 보이므로 배너로 알린다.
-        if (deployedTurn.get(selectedEntry) === battle.getTurnNumber()) {
+        if (!battle.canYourUnitAct(selectedEntry.cardIndex)) {
             guideRenderer.show(guideElement, '이번 턴에 출격한 유닛으로 공격할 수 없습니다.', 3000);
             console.log(`[summoning-sickness] cardId=${selectedEntry.card.cardId} deployed on TURN ${battle.getTurnNumber()} — panel blocked`);
             return;
@@ -2034,9 +2029,7 @@ async function main(container: HTMLElement): Promise<void> {
 
     // 유닛이 죽거나 필드를 떠날 때 상태·오버레이를 모두 걷어낸다.
     function clearColdDarkStatus(cardIndex: number): void {
-        darkFlameTargets.delete(cardIndex);
-        frozenTargets.delete(cardIndex);
-        freezeImmuneTargets.delete(cardIndex);
+        battle.findOnOpponentField(cardIndex)?.clearStatus();
         frozenBurningEffect.detach(cardIndex);
     }
 
@@ -2048,15 +2041,16 @@ async function main(container: HTMLElement): Promise<void> {
         if (!target || !target.group.visible) return;
         if (!ensureFrozenBurningOverlay(targetIdx)) return;
 
-        darkFlameTargets.add(targetIdx);
-
-        // 연속 빙결 불가 — 직전 턴에 빙결이 풀린 대상은 이번 턴엔 걸리지 않는다.
-        const immune = freezeImmuneTargets.has(targetIdx);
-        if (!immune) frozenTargets.add(targetIdx);
+        // 붙이는 것은 전투가 한다. 연속 빙결 불가도 전투가 안다.
+        const unit = battle.findOnOpponentField(targetIdx);
+        if (!unit) return;
+        unit.setDarkFlame(true);
+        const froze = unit.freeze();
+        const immune = !froze;
 
         frozenBurningEffect.setState(targetIdx, {
             flame: true,
-            freeze: frozenTargets.has(targetIdx),
+            freeze: unit.isFrozen(),
         });
         console.log(
             `[cold-dark-energy] idx=${targetIdx} 암흑 화염 부여` +
@@ -2066,8 +2060,9 @@ async function main(container: HTMLElement): Promise<void> {
 
     // 상대 유닛이 지금 행동할 수 있는지. 빙결 중이면 불가.
     // (상대 행동 로직이 아직 없어 호출부가 없다 — 상태의 단일 판정 지점으로 먼저 둔다.)
+    // 얼어 있는지는 전투가 안다.
     function isOpponentFrozen(cardIndex: number): boolean {
-        return frozenTargets.has(cardIndex);
+        return !battle.canOpponentUnitAct(cardIndex);
     }
 
     // 내 턴 시작 훅 — 빙결 해제 + 재빙결 면역 갱신.
@@ -2076,34 +2071,37 @@ async function main(container: HTMLElement): Promise<void> {
     function tickFreezeExpiry(): void {
         // 지난 턴의 면역은 만료되고, 이번에 녹은 대상이 새 면역을 얻는다.
         // 그래야 "다음 턴에 공격 받더라도 빙결 당하지 않음"이 정확히 1턴만 유지된다.
-        freezeImmuneTargets.clear();
-        for (const idx of frozenTargets) {
-            freezeImmuneTargets.add(idx);
-            frozenBurningEffect.setState(idx, { freeze: false });
-            console.log(`[cold-dark-energy] idx=${idx} 빙결 해제 — 이번 턴 재빙결 불가`);
+        for (const unit of battle.getOpponentFieldCards()) {
+            const wasFrozen = unit.isFrozen();
+            if (!wasFrozen) {
+                unit.clearFreezeImmune();
+                continue;
+            }
+            unit.thaw();
+            frozenBurningEffect.setState(unit.getBattleCardId(), { freeze: false });
+            console.log(`[cold-dark-energy] idx=${unit.getBattleCardId()} 빙결 해제 — 이번 턴 재빙결 불가`);
         }
-        frozenTargets.clear();
     }
 
     // 상대 턴 시작 훅 — 암흑 화염 화상 피해. 화염에 휩싸인 상대 유닛은 자기 턴을
     // 시작하는 순간 5의 피해를 받는다.
     function tickDarkFlameDamage(): void {
-        if (darkFlameTargets.size === 0) return;
+        // 누가 타고 있는지는 전투가 안다.
+        const burning = battle.getOpponentFieldCards().filter((it) => it.hasDarkFlame());
+        if (burning.length === 0) return;
+
         const dead: number[] = [];
-        for (const idx of [...darkFlameTargets]) {
+        for (const unit of [...burning]) {
+            const idx = unit.getBattleCardId();
             const target = opponentEntries.find((oe) => oe.cardIndex === idx);
             if (!target || !target.group.visible) { clearColdDarkStatus(idx); continue; }
-            const prev = opponentHpOf(idx);
-            const newHp = Math.max(0, prev - DARK_FLAME_TURN_DAMAGE);
-            setOpponentHp(idx, newHp);
+            const prev = unit.getHp();
+            const newHp = unit.setHp(prev - DARK_FLAME_TURN_DAMAGE);
             console.log(`[cold-dark-energy] 암흑 화염 → idx=${idx} HP ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
             if (newHp <= 0) dead.push(idx);
         }
         for (const idx of dead) {
-            const aliveIdx = opponentAliveIndexOf(idx);
-            if (aliveIdx >= 0) {
-                defeatOpponentUnit(idx);
-            }
+            defeatOpponentUnit(idx);
             const target = opponentEntries.find((oe) => oe.cardIndex === idx);
             if (target) target.group.visible = false;
             clearColdDarkStatus(idx);
@@ -2206,10 +2204,7 @@ async function main(container: HTMLElement): Promise<void> {
     // 이 에너지를 보유한 아군 유닛. 보유 개수가 아니라 보유 여부만 의미가 있다.
     const coldDarkEnergyHolders = new Set<HandEntry>();
 
-    // 상대 유닛의 상태이상 — 키는 opponentEntries와 같은 cardIndex.
-    const darkFlameTargets = new Set<number>();     // 암흑 화염: 매 턴 5 데미지 (지속)
-    const frozenTargets = new Set<number>();        // 빙결: 이번 1회만 행동 불가
-    const freezeImmuneTargets = new Set<number>();  // 빙결이 풀린 직후 1턴간 재빙결 불가
+    // 상대 유닛의 상태이상은 전투가 든다. 암흑 화염, 빙결, 재빙결 불가.
 
     const ALLY_TARGETING_ITEM_IDS: readonly number[] = cardIdsTargeting(AbilityTarget.ALLY_UNIT);
 
@@ -3465,7 +3460,7 @@ async function main(container: HTMLElement): Promise<void> {
                     handOrder.splice(handIndex, 1);
                     placedOrder.push(droppedEntry);
                     // 출격한 턴을 기록 — 이번 턴에는 공격/스킬 패널이 열리지 않는다.
-                    deployedTurn.set(droppedEntry, battle.getTurnNumber());
+                    // 나온 턴은 전투가 적어 둔다.
                     // 출격 시 — entrance scene → passive chain. Fire-and-forget; the
                     // placement reflow at the bottom of onDrop runs synchronously first.
                     // The entrance is deploy-ONLY (no replay on turn-start).

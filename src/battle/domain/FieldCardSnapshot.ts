@@ -10,4 +10,9 @@ export interface FieldCardSnapshot {
     readonly hp: number;
     // 붙은 에너지. 종족마다 따로 센다
     readonly energyByRace: readonly {readonly race: CardRace; readonly count: number}[];
+    // 유닛에 붙은 것
+    readonly deployedTurn: number;
+    readonly frozen: boolean;
+    readonly freezeImmune: boolean;
+    readonly darkFlame: boolean;
 }
