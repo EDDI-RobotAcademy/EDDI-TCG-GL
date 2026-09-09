@@ -16,7 +16,6 @@ import {TextureManager} from "../../src/texture_manager/TextureManager";
 import {NonBackgroundImage} from "../../src/shape/image/NonBackgroundImage";
 import {AudioController} from "../../src/audio/AudioController";
 import {MouseController} from "../../src/mouse/MouseController";
-import {BattleFieldHandSceneRepository} from "../../src/battle_field_hand/deprecated_repository/BattleFieldHandSceneRepository";
 
 import {UserWindowSize} from "../../src/window_size/WindowSize"
 import {UnitCardGenerator} from "../../src/card/unit/generate";
@@ -75,7 +74,6 @@ export class TCGJustTestBattleFieldView {
     private backgroundService = BackgroundServiceImpl.getInstance()
 
     private battleFieldHandService = BattleFieldHandServiceImpl.getInstance()
-    private battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance()
     private opponentFieldService = OpponentFieldServiceImpl.getInstance()
 
     private neonShape: NeonShape
@@ -330,7 +328,6 @@ export class TCGJustTestBattleFieldView {
             const createdHand = await this.battleFieldHandService.createHand(handCardId)
 
             if (createdHand) {
-                this.battleFieldHandSceneRepository.addBattleFieldHandScene(createdHand);
                 this.scene.add(createdHand);
             }
         }
@@ -499,7 +496,6 @@ export class TCGJustTestBattleFieldView {
             // 창 크기 변경에 따라 배틀 필드도 리사이징
             this.userWindowSize.calculateScaleFactors(newWidth, newHeight);
             const { scaleX, scaleY } = this.userWindowSize.getScaleFactors();
-            // this.battleFieldHandSceneRepository.resizeHandSceneList(scaleX, scaleY);
             UnitCardGenerator.adjustHandCardPositions();
             SupportCardGenerator.adjustCardPositions()
             ItemCardGenerator.adjustCardPositions()
