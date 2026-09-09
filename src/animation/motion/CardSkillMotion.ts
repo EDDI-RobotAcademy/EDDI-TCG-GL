@@ -10,10 +10,6 @@ import { CardMoveEasing, moveCard } from "./CardMove";
 //
 // 옮기는 일 자체는 moveCard 가 한다. 여기는 어디로 갈지와 어떤 곡선으로 갈지만 정한다.
 export class CardSkillMotion {
-    // 파일을 읽을 때 한 번 잰다. 창 크기를 바꿔도 다시 재지 않는다.
-    private static readonly SLOT = createCardSkillPositionFrame(window.innerHeight);
-    private static readonly SKILL_POSITION_X = CardSkillMotion.SLOT.x;
-    private static readonly SKILL_POSITION_Y = CardSkillMotion.SLOT.y;
 
     // 카드를 스킬 자리로 옮긴다. 원위치는 userData.originPos 에 남긴다.
     public static async moveToSkillPosition(cardGroup: THREE.Group, duration: number): Promise<void> {
@@ -21,11 +17,14 @@ export class CardSkillMotion {
             cardGroup.userData.originPos = cardGroup.position.clone();
         }
 
+        // 갈 때마다 잰다. 파일을 읽을 때 한 번 재면 창 크기를 바꾼 뒤 옛 자리로 간다.
+        const slot = createCardSkillPositionFrame(window.innerHeight);
+
         return moveCard(
             cardGroup,
             {
-                x: this.SKILL_POSITION_X,
-                y: this.SKILL_POSITION_Y,
+                x: slot.x,
+                y: slot.y,
                 z: cardGroup.position.z + 1,
             },
             duration,
