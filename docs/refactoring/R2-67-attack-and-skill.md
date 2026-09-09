@@ -1,6 +1,6 @@
 # [ETWGL-R2-67] 공격과 스킬을 전투 상태가 처리한다
 
-선행: R2-66 │ 후행: R2-68 │ 산출물: 공격 넷을 전투가 처리한다 │ Type: Rule │ Domain: Battle
+선행: R2-66 │ 후행: R2-68 │ 산출물: 공격 넷을 전투가 처리한다 │ Type: Rule │ Domain: Battle Unit
 
 # Success criteria
 

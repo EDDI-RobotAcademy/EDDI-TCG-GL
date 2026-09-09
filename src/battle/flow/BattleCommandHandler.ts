@@ -3,6 +3,7 @@ import {HandCard} from "../domain/HandCard";
 import {FieldCard} from "../domain/FieldCard";
 import {CardKind} from "../../card/kind";
 import {CardGrade} from "../../card/grade";
+import {CardRace} from "../../card/race";
 import {findCardAbility} from "../ability/CardAbility";
 import {BattleCommand} from "./BattleCommand";
 import {BattleEvent} from "./BattleEvent";
@@ -15,6 +16,7 @@ export interface CardCatalog {
     getKind(cardId: number): CardKind | null;
     getHp(cardId: number): number;
     getGrade(cardId: number): CardGrade | null;
+    getRace(cardId: number): CardRace | null;
 }
 
 // 전투가 지금 처리하는 카드들. 값으로 다 적히는 것부터 옮겼다.
@@ -23,6 +25,9 @@ const MORALE_CONVERT = 35;
 const DOOM_CONTRACT = 25;
 const DEAD_LANDS = 36;
 const SWAMP_OF_DEAD = 20;
+const OVERFLOW_MORALE = 2;
+const DEATH_ENERGY = 93;
+const LEONIK_SUMMON = 30;
 
 // 사용자가 한 일 하나를 받아 끝까지 처리하고, 무슨 일이 일어났는지 차례대로 돌려준다.
 //
@@ -39,7 +44,10 @@ export class BattleCommandHandler {
             case 'useCardOnUnit':
                 return this.useCardOnUnit(battle, command.battleCardId, command.targetBattleCardId);
             case 'useCardOnField':
-                return this.useCardOnField(battle, command.battleCardId, command.side);
+                return this.useCardOnField(
+                    battle, command.battleCardId, command.side,
+                    command.pickedDeckIndexes, command.shuffleSeed,
+                );
             case 'attackUnit':
                 return this.attackUnit(battle, command.targetBattleCardId, command.damage);
             case 'attackOpponentMaster':
@@ -91,7 +99,6 @@ export class BattleCommandHandler {
             handCard.getAttributeMarkIds(),
             handCard.getPositionId(),
             this.catalog.getHp(cardId),
-            0,
         ));
 
         return [{
@@ -121,6 +128,10 @@ export class BattleCommandHandler {
                 return this.useScythe(battle, battleCardId, cardId, targetBattleCardId);
             case MORALE_CONVERT:
                 return this.useMoraleConvert(battle, battleCardId, cardId, targetBattleCardId);
+            case OVERFLOW_MORALE:
+                return this.useOverflowMorale(battle, battleCardId, cardId, targetBattleCardId);
+            case DEATH_ENERGY:
+                return this.attachEnergyCard(battle, battleCardId, cardId, targetBattleCardId);
             default:
                 return [{type: 'rejected', reason: '아직 전투가 처리하지 않는 카드입니다.'}];
         }
@@ -178,9 +189,94 @@ export class BattleCommandHandler {
         return events;
     }
 
+    // 넘쳐 흐르는 사기 — 덱에서 정해진 카드를 꺼내 유닛에 붙인다.
+    private useOverflowMorale(
+        battle: Battle, battleCardId: number, cardId: number, targetId: number,
+    ): BattleEvent[] {
+        const target = battle.findOnYourField(targetId);
+        if (!target) return [{type: 'rejected', reason: '내 필드에 없는 유닛입니다.'}];
+
+        const n = findCardAbility(cardId)!.numbers;
+        const pulled = battle.drawMatchingFromYourDeck(n.pullCardId, n.maxPull);
+
+        const race = this.catalog.getRace(n.pullCardId) ?? CardRace.UNDEAD;
+        const events: BattleEvent[] = [];
+        for (const energyId of pulled) {
+            const countAfter = target.addEnergy(race, 1);
+            events.push({type: 'energyAttached', battleCardId: targetId, race, countAfter});
+            // 쓴 에너지 카드는 무덤으로 간다.
+            battle.sendToYourTomb(energyId);
+            events.push({
+                type: 'cardMoved', battleCardId: -1, cardId: energyId,
+                from: 'yourDeck', to: 'yourTomb',
+            });
+        }
+
+        events.push(...this.spendHandCard(battle, battleCardId, cardId));
+        return events;
+    }
+
+    // 에너지 카드를 유닛에 붙인다. 붙는 종족은 그 카드의 종족이다.
+    private attachEnergyCard(
+        battle: Battle, battleCardId: number, cardId: number, targetId: number,
+    ): BattleEvent[] {
+        const target = battle.findOnYourField(targetId);
+        if (!target) return [{type: 'rejected', reason: '내 필드에 없는 유닛입니다.'}];
+
+        const n = findCardAbility(cardId)!.numbers;
+        const race = this.catalog.getRace(cardId) ?? CardRace.UNDEAD;
+        const countAfter = target.addEnergy(race, n.attachEnergy);
+
+        return [
+            {type: 'energyAttached', battleCardId: targetId, race, countAfter},
+            ...this.spendHandCard(battle, battleCardId, cardId),
+        ];
+    }
+
+    // 레오닉의 부름 — 덱에서 고른 것을 손패로, 이 카드는 무덤으로, 덱을 섞는다.
+    //
+    // 무엇을 고를지는 사용자가 정한다. 고른 자리가 함께 온다.
+    private useLeonikSummon(
+        battle: Battle, battleCardId: number, cardId: number,
+        pickedDeckIndexes: readonly number[],
+        shuffleSeed?: number,
+    ): BattleEvent[] {
+        const n = findCardAbility(cardId)!.numbers;
+        if (pickedDeckIndexes.length > n.maxPick) {
+            return [{type: 'rejected', reason: `${n.maxPick}장까지만 고를 수 있습니다.`}];
+        }
+
+        const events: BattleEvent[] = [];
+        // 앞에서부터 빼면 뒤엣것의 자리가 밀린다. 뒤에서부터 뺀다.
+        const sorted = [...pickedDeckIndexes].sort((a, b) => b - a);
+        const pulled: number[] = [];
+        for (const index of sorted) {
+            const id = battle.removeFromYourDeckAt(index);
+            if (id !== null) pulled.push(id);
+        }
+        // 고른 차례대로 손패에 넣는다.
+        for (const id of pulled.reverse()) {
+            const newId = battle.issueCardId();
+            battle.addToHand(new HandCard(newId, id, [], 0));
+            events.push({
+                type: 'cardMoved', battleCardId: newId, cardId: id,
+                from: 'yourDeck', to: 'hand',
+            });
+        }
+
+        events.push(...this.spendHandCard(battle, battleCardId, cardId));
+
+        // 고르고 나면 덱을 섞는다. 무엇을 골랐는지가 남은 덱의 순서로 드러나면 안 된다.
+        if (shuffleSeed !== undefined) battle.shuffleYourDeck(shuffleSeed);
+
+        return events;
+    }
+
     // 손패의 카드를 필드 전체에 쓴다.
     private useCardOnField(
         battle: Battle, battleCardId: number, side: 'your' | 'opponent',
+        pickedDeckIndexes?: readonly number[],
+        shuffleSeed?: number,
     ): BattleEvent[] {
         const handCard = battle.findInHand(battleCardId);
         if (!handCard) return [{type: 'rejected', reason: '손패에 없는 카드입니다.'}];
@@ -199,6 +295,11 @@ export class BattleCommandHandler {
             case SWAMP_OF_DEAD:
                 if (side !== 'your') return [{type: 'rejected', reason: '내 필드에 써야 합니다.'}];
                 return this.useSwampOfDead(battle, battleCardId, cardId);
+            case LEONIK_SUMMON:
+                if (side !== 'your') return [{type: 'rejected', reason: '내 필드에 써야 합니다.'}];
+                return this.useLeonikSummon(
+                    battle, battleCardId, cardId, pickedDeckIndexes ?? [], shuffleSeed,
+                );
             default:
                 return [{type: 'rejected', reason: '아직 전투가 처리하지 않는 카드입니다.'}];
         }
