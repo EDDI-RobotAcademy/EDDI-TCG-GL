@@ -3912,6 +3912,9 @@ async function main(container: HTMLElement): Promise<void> {
         }
         reflowOpponentField();
         handPageButtonsRenderer.resize(handPageButtonsFrame, handPageButtonsGroup, width, height);
+        // 턴 종료 버튼도 다시 잰다. 육각형 자리가 창 크기에서 나오므로,
+        // 안 다시 재면 네온 테두리와 누름 자리가 처음 크기에 남는다.
+        turnEndButtonRenderer.resize(turnEndButtonFrame, turnEndButtonGroup, width, height);
 
         energyRenderer.update(energyFrame, energyElement, width, height);
         opponentEnergyRenderer.resize(opponentFieldEnergyAreaFrame, opponentEnergyGroup, width, height);

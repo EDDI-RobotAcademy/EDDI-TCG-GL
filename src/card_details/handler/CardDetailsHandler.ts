@@ -67,7 +67,7 @@ export class CardDetailsHandler {
         this.opponentFieldCardAttributeMarkSceneRepository = OpponentFieldCardAttributeMarkSceneRepositoryImpl.getInstance();
 
         this.leftClickHandDetectRepository = LeftClickHandDetectRepositoryImpl.getInstance();
-        this.activePanelAreaCache = ActivePanelAreaCacheImpl.getInstance(camera, scene);
+        this.activePanelAreaCache = ActivePanelAreaCacheImpl.getInstance();
 
         this.neonBorderRepository = NeonBorderRepositoryImpl.getInstance();
         this.neonBorderLineSceneRepository = NeonBorderLineSceneRepositoryImpl.getInstance();

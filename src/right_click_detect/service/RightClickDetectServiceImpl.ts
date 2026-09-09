@@ -31,12 +31,14 @@ export class RightClickDetectServiceImpl implements RightClickDetectService {
     private rightMouseDown: boolean = false;
 
     private constructor(
-    private camera: THREE.Camera, scene: THREE.Scene) {
+        private camera: THREE.Camera,
+        private scene: THREE.Scene,
+    ) {
         this.cameraRepository = CameraRepositoryImpl.getInstance()
         this.dragMoveRepository = DragMoveRepositoryImpl.getInstance()
         this.yourFieldCardSceneCache = YourFieldCardSceneCacheImpl.getInstance()
         this.mouseCursorDetectRepository = MouseCursorDetectRepositoryImpl.getInstance()
-        this.activePanelAreaCache = ActivePanelAreaCacheImpl.getInstance(camera, scene);
+        this.activePanelAreaCache = ActivePanelAreaCacheImpl.getInstance();
     }
 
     static getInstance(camera: THREE.Camera, scene: THREE.Scene): RightClickDetectServiceImpl {
@@ -65,7 +67,7 @@ export class RightClickDetectServiceImpl implements RightClickDetectService {
 
         if (this.activePanelAreaCache.exists()) {
             console.log("기존 Active Panel 삭제");
-            this.activePanelAreaCache.delete();
+            this.activePanelAreaCache.close(this.scene);
             return;
         }
 
@@ -90,7 +92,7 @@ export class RightClickDetectServiceImpl implements RightClickDetectService {
 
         // 새 패널 생성
         // console.log("새로운 Active Panel 생성");
-        await this.activePanelAreaCache.create(clickPoint.x, clickPoint.y, cardId);
+        await this.activePanelAreaCache.open(this.scene, this.camera, clickPoint.x, clickPoint.y, cardId);
     }
 
     setRightMouseDown(state: boolean): void {

@@ -80,7 +80,7 @@ export class NeonBorderHandler {
         this.neonBorderLineSceneRepository = NeonBorderLineSceneRepositoryImpl.getInstance();
         this.neonBorderLinePositionRepository = NeonBorderLinePositionRepositoryImpl.getInstance();
 
-        this.activePanelAreaCache = ActivePanelAreaCacheImpl.getInstance(camera, scene);
+        this.activePanelAreaCache = ActivePanelAreaCacheImpl.getInstance();
 
         this.dragMoveRepository = DragMoveRepositoryImpl.getInstance();
     }
@@ -93,7 +93,7 @@ export class NeonBorderHandler {
     }
 
     public cleanupAfterAction(selectedYourFieldCard: YourFieldCardScene) {
-        this.activePanelAreaCache.delete();
+        this.activePanelAreaCache.close(this.scene);
         this.deactivateExistNeonBorder(selectedYourFieldCard);
         this.deactivateEveryExistOpponentNeonBorder();
         this.deactivateOpponentMasterNeonBorder();
