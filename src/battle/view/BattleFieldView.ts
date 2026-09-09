@@ -260,6 +260,14 @@ export class BattleFieldView {
         }
     }
 
+    // 라우터가 화면을 바꿀 때 부른다. 이 화면은 애니메이션을 스스로 돌리므로
+    // 여기서는 돌기 시작한 것을 확인만 한다.
+    public animate(): void {
+        if (this.isAnimating) return;
+        this.isAnimating = true;
+        this.animationLoop.start();
+    }
+
     public hide(): void {
         console.log('Hiding BattleFieldView...');
         this.isAnimating = false;
