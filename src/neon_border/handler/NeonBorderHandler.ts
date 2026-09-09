@@ -92,11 +92,37 @@ export class NeonBorderHandler {
         return NeonBorderHandler.instance;
     }
 
-    public cleanupAfterAction(selectedYourFieldCard: YourFieldCardScene) {
-        this.activePanelAreaCache.close(this.scene);
-        this.deactivateExistNeonBorder(selectedYourFieldCard);
+    // 앞서 고른 카드의 고르기를 그만둔다.
+    //
+    // 테두리를 다 끄고 액티브 패널을 닫는다. 이 넷은 늘 함께 일어난다.
+    // 하나라도 빠뜨리면 고른 것이 없는데 테두리가 남거나 패널이 열려 있다.
+    public clearSelection(selectedCard: ClickableCard): void {
         this.deactivateEveryExistOpponentNeonBorder();
+        this.deactivateExistNeonBorder(selectedCard);
         this.deactivateOpponentMasterNeonBorder();
+        this.activePanelAreaCache.close(this.scene);
+    }
+
+    // 내 필드 카드를 새로 고른다.
+    //
+    // 앞서 켜 둔 테두리를 다 끄고 액티브 패널을 닫은 뒤 새 것을 켠다.
+    // 닫지 않으면 앞 카드의 패널이 열린 채로 다른 카드가 골라진다.
+    public selectYourFieldCard(card: ClickableCard): void {
+        this.deactivateEveryExistNeonBorder();
+        this.activePanelAreaCache.close(this.scene);
+        this.activateExistNeonBorder(card);
+    }
+
+    // 상대 필드 카드를 새로 고른다. 내 쪽과 켜는 테두리가 다르다.
+    public selectOpponentFieldCard(card: ClickableCard): void {
+        this.deactivateEveryExistNeonBorder();
+        this.activePanelAreaCache.close(this.scene);
+        this.activateExistOpponentNeonBorder(card);
+    }
+
+    // 무엇을 하고 난 뒤 정리한다. 고르기를 그만두고, 고른 것도 잊는다.
+    public cleanupAfterAction(selectedYourFieldCard: YourFieldCardScene) {
+        this.clearSelection(selectedYourFieldCard);
         this.dragMoveRepository.deleteSelectedObject();
     }
 
