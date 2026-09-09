@@ -22,14 +22,40 @@ export class SeaOfSpecterEffect {
     private readonly basics: AnimationBasics;
     private animating = false;
 
+    // 이 연출이 그리는 것을 전부 담는 겹.
+    //
+    // 연출은 시작할 때 창 크기를 재서 그림의 크기와 자리를 정하고, 도는 동안 다시 재지
+    // 않는다. 도중에 창이 바뀌면 연출만 옛 크기로 남는다. 그리는 자리마다 고치는 대신
+    // 전부 이 겹에 담아 두고, 겹 하나를 창 크기에 맞춰 늘리거나 줄인다.
+    //
+    // 자리는 전부 [화면 가운데에서 창 크기의 몇 분의 얼마] 로 잡혀 있어서, 겹을 가로세로
+    // 비율만큼 늘리면 새로 그린 것과 같은 자리에 온다.
+    private readonly root = new THREE.Group();
+    private builtWidth = 0;
+    private builtHeight = 0;
+
     constructor(scene: THREE.Scene) {
         this.scene = scene;
         this.basics = new AnimationBasics(scene);
+        this.scene.add(this.root);
     }
 
     public setScene(scene: THREE.Scene): void {
+        this.root.removeFromParent();
         this.scene = scene;
         this.basics.setScene(scene);
+        this.scene.add(this.root);
+    }
+
+    // 창 크기가 바뀌었을 때. 도는 중이 아니면 할 일이 없다.
+    public resize(viewportWidth: number, viewportHeight: number): void {
+        if (!this.animating) return;
+        if (this.builtWidth <= 0 || this.builtHeight <= 0) return;
+        this.root.scale.set(
+            viewportWidth / this.builtWidth,
+            viewportHeight / this.builtHeight,
+            1,
+        );
     }
 
     public isAnimating(): boolean {
@@ -274,15 +300,23 @@ export class SeaOfSpecterEffect {
             gl_FragColor = vec4(col, alpha);
         }`;
 
-    public async play(attackerGroup: THREE.Group): Promise<void> {
+    // home 을 주면 그것을 돌아갈 자리로 쓴다. 연출이 도는 동안 창 크기가 바뀌면 카드의
+    // 제자리도 달라지는데, 나갈 때 적어 둔 자리로 돌아가면 엉뚱한 데 선다. 제자리를 아는
+    // 쪽이 이 값을 고쳐 주면 연출은 돌아갈 때 그 값을 다시 읽는다.
+    public async play(attackerGroup: THREE.Group, home?: THREE.Vector3): Promise<void> {
         if (this.animating) return;
         this.animating = true;
         const cardW = CWR * window.innerWidth;
         const w = window.innerWidth;
         const h = window.innerHeight;
 
+        // 이번 연출을 어떤 크기로 그렸는지 적어 둔다. 도중에 창이 바뀌면 이것과 견준다.
+        this.builtWidth = w;
+        this.builtHeight = h;
+        this.root.scale.set(1, 1, 1);
+
         const { x: skillPositionX, y: skillPositionY } = createCardSkillPositionFrame(h);
-        const origPos = attackerGroup.position.clone();
+        const origPos = home ?? attackerGroup.position.clone();
 
         // Phase 1: Card moves to skill panel
         await this.basics.moveCardTo(attackerGroup, skillPositionX, skillPositionY, origPos.z + 1, 800);
@@ -293,17 +327,17 @@ export class SeaOfSpecterEffect {
 
         // Stage 1: Darkness condenses — slow, ominous
         const darkAura = this.createDarkCondenseAura(casterWorld, cardW);
-        this.scene.add(darkAura);
+        this.root.add(darkAura);
         // Screen edges darken slightly — darkness creeping inward
         const edgeDarken = this.createEdgeDarken(w, h);
-        this.scene.add(edgeDarken);
+        this.root.add(edgeDarken);
 
         this.basics.shakeScenePromise(cardW * 0.05, 800);
         await this.basics.delay(600);
 
         // Stage 2: Magic circle ignites
         const magicCircle = this.createMagicCircle(casterWorld, cardW);
-        this.scene.add(magicCircle);
+        this.root.add(magicCircle);
         this.spawnColdWavePulse(casterWorld, cardW, 0);
 
         this.basics.shakeScenePromise(cardW * 0.1, 600);
@@ -350,7 +384,7 @@ export class SeaOfSpecterEffect {
 
         // Phase 3: Progressive darkening — overlaps with magic circle fade
         const darken = this.createProgressiveDarken();
-        this.scene.add(darken);
+        this.root.add(darken);
         await this.animateProgressiveDarken(darken, 600);
 
         // Phase 4: Dementors fly — no gap after darken
@@ -371,7 +405,7 @@ export class SeaOfSpecterEffect {
 
         // Cleanup
         for (const d of dementors) {
-            if (d.parent) { this.scene.remove(d); d.geometry.dispose(); (d.material as THREE.ShaderMaterial).dispose(); }
+            if (d.parent) { d.removeFromParent(); d.geometry.dispose(); (d.material as THREE.ShaderMaterial).dispose(); }
         }
         this.basics.fadeAndDispose(darken, darken.material as THREE.ShaderMaterial, darken.geometry, 600);
         await this.basics.delay(400);
@@ -458,7 +492,7 @@ export class SeaOfSpecterEffect {
             const mesh = new THREE.Mesh(geo, mat);
             mesh.position.set(px, py, 2.5);
             mesh.renderOrder = 9;
-            this.scene.add(mesh);
+            this.root.add(mesh);
 
             // Spiral inward
             const pStart = performance.now();
@@ -473,7 +507,7 @@ export class SeaOfSpecterEffect {
                 mesh.position.y = center.y + Math.sin(curAngle) * curDist;
                 mesh.scale.set(1 - t * 0.5, 1 - t * 0.5, 1);
                 if (t < 1) requestAnimationFrame(tick);
-                else { this.scene.remove(mesh); geo.dispose(); mat.dispose(); }
+                else { mesh.removeFromParent(); geo.dispose(); mat.dispose(); }
             };
             requestAnimationFrame(tick);
 
@@ -630,7 +664,7 @@ export class SeaOfSpecterEffect {
             const mesh = new THREE.Mesh(geo, mat);
             mesh.position.set(center.x, center.y, 2.2);
             mesh.renderOrder = 9;
-            this.scene.add(mesh);
+            this.root.add(mesh);
             this.basics.fadeAndDispose(mesh, mat, geo, 800);
         }, delay);
     }
@@ -666,7 +700,7 @@ export class SeaOfSpecterEffect {
             mesh.position.set(center.x + Math.cos(angle) * len * 0.4, center.y + Math.sin(angle) * len * 0.4 - cardW * 0.5, 1.9);
             mesh.rotation.z = angle;
             mesh.renderOrder = 8;
-            this.scene.add(mesh);
+            this.root.add(mesh);
             this.basics.fadeAndDispose(mesh, mat, geo, 1200);
         }
     }
@@ -725,7 +759,7 @@ export class SeaOfSpecterEffect {
                 const mesh = new THREE.Mesh(geo, mat);
                 mesh.position.set(center.x + (Math.random() - 0.5) * cardW, center.y + bh * 0.3, 2.5);
                 mesh.renderOrder = 9;
-                this.scene.add(mesh);
+                this.root.add(mesh);
                 this.basics.fadeAndDispose(mesh, mat, geo, 800);
             }, i * 200);
         }
@@ -761,7 +795,7 @@ export class SeaOfSpecterEffect {
             const mesh = new THREE.Mesh(geo, mat);
             mesh.position.set(cfg.fromX, cfg.fromY, 5);
             mesh.renderOrder = 14;
-            this.scene.add(mesh);
+            this.root.add(mesh);
             dementors.push(mesh);
 
             // Staggered entry — first one starts immediately, others delayed
@@ -859,7 +893,7 @@ export class SeaOfSpecterEffect {
                     if (t < 1) {
                         requestAnimationFrame(tick);
                     } else {
-                        this.scene.remove(dm);
+                        dm.removeFromParent();
                         dm.geometry.dispose();
                         (dm.material as THREE.ShaderMaterial).dispose();
                         done++;
@@ -893,7 +927,7 @@ export class SeaOfSpecterEffect {
         mesh.position.set(side * w * 0.8, (Math.random() - 0.5) * h * 0.3, 5);
         mesh.rotation.z = 0;
         mesh.renderOrder = 14;
-        this.scene.add(mesh);
+        this.root.add(mesh);
         return mesh;
     }
 
@@ -964,7 +998,7 @@ export class SeaOfSpecterEffect {
         // Phase B: Freeze — face fills screen, eyes burning, 공포의 순간 (600ms)
         // Frost creeps in during this freeze
         const frostMesh = this.createFrostOverlay(w, h);
-        this.scene.add(frostMesh);
+        this.root.add(frostMesh);
         const frostMat = frostMesh.material as THREE.ShaderMaterial;
         const frostStart = performance.now();
         const frostTick = () => {
@@ -996,7 +1030,7 @@ export class SeaOfSpecterEffect {
 
         // Soul stream overlay
         const soulStream = this.createSoulStreamOverlay(w, h);
-        this.scene.add(soulStream);
+        this.root.add(soulStream);
         const soulMat = soulStream.material as THREE.ShaderMaterial;
 
         const sceneOrigX = this.scene.position.x;
@@ -1042,7 +1076,7 @@ export class SeaOfSpecterEffect {
         this.scene.position.set(sceneOrigX, sceneOrigY, 0);
 
         // Dispose soul stream
-        this.scene.remove(soulStream);
+        soulStream.removeFromParent();
         soulStream.geometry.dispose();
         soulMat.dispose();
 
@@ -1060,7 +1094,7 @@ export class SeaOfSpecterEffect {
         const fadeMesh = new THREE.Mesh(fadeGeo, fadeMat);
         fadeMesh.position.set(0, 0, 6);
         fadeMesh.renderOrder = 18;
-        this.scene.add(fadeMesh);
+        this.root.add(fadeMesh);
 
         await new Promise<void>(resolve => {
             const startT = performance.now();
@@ -1076,7 +1110,7 @@ export class SeaOfSpecterEffect {
         });
 
         // Clean up dementor (hidden behind black overlay now)
-        if (dm.parent) { this.scene.remove(dm); dm.geometry.dispose(); mat.dispose(); }
+        if (dm.parent) { dm.removeFromParent(); dm.geometry.dispose(); mat.dispose(); }
 
         // Phase F: Hold darkness briefly, then fade out — return to reality
         await this.basics.delay(500);
@@ -1094,7 +1128,7 @@ export class SeaOfSpecterEffect {
             requestAnimationFrame(tick);
         });
 
-        this.scene.remove(fadeMesh);
+        fadeMesh.removeFromParent();
         fadeGeo.dispose();
         fadeMat.dispose();
         await this.basics.delay(200);
@@ -1266,7 +1300,7 @@ export class SeaOfSpecterEffect {
             const t = Math.min((performance.now() - startT) / duration, 1);
             mat.uniforms.u_intensity.value = startIntensity * (1 - t);
             if (t < 1) requestAnimationFrame(tick);
-            else { this.scene.remove(mesh); mesh.geometry.dispose(); mat.dispose(); }
+            else { mesh.removeFromParent(); mesh.geometry.dispose(); mat.dispose(); }
         };
         requestAnimationFrame(tick);
     }
