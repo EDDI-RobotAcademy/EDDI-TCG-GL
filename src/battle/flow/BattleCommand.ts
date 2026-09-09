@@ -1,3 +1,5 @@
+import {CardRace} from "../../card/race";
+
 // 사용자가 하는 일.
 //
 // 하나만 보낸다. 여러 줄로 나눠 시키지 않는다.
@@ -20,6 +22,8 @@ export type BattleCommand =
         // 덱을 섞는 카드에만 온다. 도메인 안에서는 무작위를 못 쓰므로 씨앗을 받는다
         shuffleSeed?: number;
     }
+    // 필드 에너지 하나를 내 유닛에 붙인다. 어느 종족으로 붙일지는 사용자가 고른다
+    | {type: 'attachFieldEnergyToUnit'; targetBattleCardId: number; race: CardRace}
     // 내 유닛으로 상대 유닛 하나를 때린다
     | {type: 'attackUnit'; attackerBattleCardId: number; targetBattleCardId: number; damage: number}
     // 내 유닛으로 상대 본체를 때린다
