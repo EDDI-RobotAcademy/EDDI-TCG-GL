@@ -99,7 +99,7 @@
 | **R2-72** | Rendering | Battle Active Panel | [액티브 패널을 만드는 일을 렌더러로 옮긴다](R2-72-active-panel-to-renderer.md) | R2-44 | **완료** |
 | **R2-73** | Rule | Lobby | [아직 못 만든 화면으로 가는 버튼이 준비 중임을 알리게 한다](R2-73-unregistered-routes.md) | — | **완료** |
 | **R2-74** | Rendering | Battle | [로비에서 들어간 전투 화면이 실제 전투를 띄우게 한다](R2-74-router-shows-battle.md) | R2-29 | **완료** |
-| **R2-75** | Rendering | Battle | 로비에서 들어간 전투가 확인용 화면과 같은 것을 띄우게 한다 | R2-74 | 예정 |
+| **R2-75** | Rendering | Battle | [로비에서 들어간 전투가 확인용 화면과 같은 것을 띄우게 한다](R2-75-battle-screen-from-lobby.md) | R2-74 | **완료** |
 | **R2-76** | Rule | Battle | 멀리건을 더해 1대1 대전이 되게 한다 | R2-75 | 예정 |
 | **R2-77** | Structure | Battle Hand | 확인용 화면 다섯이 손패 카드 번호를 새 방식으로 읽게 한다 | R2-38 | 예정 |
 | **R2-78** | Structure | Battle Hand | 확인용 화면 일곱이 손패 카드 자리를 새 방식으로 읽게 한다 | R2-77 | 예정 |

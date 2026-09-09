@@ -1,10 +1,15 @@
 import * as THREE from "three";
+import {installTween} from "../../core/tween/Tween";
 
 declare const TWEEN: {
     Tween: any;
     Easing: any;
     update: (time?: number) => void;
 };
+
+// 값 바꾸기를 얹는다. 전에는 화면마다 index.html 이 인터넷에서 받아 왔고,
+// 그 줄이 없는 화면에서는 연출 도중에 멈췄다.
+installTween();
 
 // 카드를 한 자리에서 다른 자리로 옮긴다. 아무것도 그리지 않는다.
 //
