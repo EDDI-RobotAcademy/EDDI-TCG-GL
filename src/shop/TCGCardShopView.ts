@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import {GuideMessageHudRendererV2} from "../common/guide_message/renderer/GuideMessageHudRendererV2";
+import {createDefaultGuideMessageHudFrame} from "../common/guide_message/frame/GuideMessageHudFrame";
 import { TextureManager } from "../texture_manager/TextureManager";
 import { NonBackgroundImage } from "../shape/image/NonBackgroundImage";
 import { AudioController } from "../audio/AudioController";
@@ -169,6 +171,14 @@ export class TCGCardShopView implements Component {
     public hide(): void {
         console.log('Hiding TCGCardShopView...');
         this.isAnimating = false;
+
+        // 상점을 떠날 때 안내 문구도 함께 치운다.
+        if (this.guideElement) {
+            this.guideRenderer.dispose(this.guideElement);
+            this.guideElement.remove();
+            this.guideElement = null;
+        }
+
         this.renderer.domElement.style.display = 'none';
         this.shopContainer.style.display = 'none';
 
@@ -295,24 +305,34 @@ export class TCGCardShopView implements Component {
         this.rectInitialInfo.set(id, { positionPercent: new THREE.Vector2(positionXPercent - 0.5, 0.5 - positionYPercent), widthPercent, heightPercent });
     }
 
+    // 아직 못 가는 곳을 눌렀을 때 알려 준다.
+    private readonly guideRenderer = new GuideMessageHudRendererV2();
+    private readonly guideFrame = createDefaultGuideMessageHudFrame();
+    private guideElement: HTMLElement | null = null;
+
     private onButtonClick(type: ShopButtonType): void {
         console.log('Button clicked:', type);
+        // 카드 뽑기 화면이 아직 없다. 없는 길로 보내면 로비로 되돌아와서
+        // 상점에서 튕겨 나간 것처럼 보인다. 그래서 알려 준다.
         switch (type) {
             case ShopButtonType.ALL:
-                this.routeMap.navigate("/draw/all");
-                break;
             case ShopButtonType.UNDEAD:
-                this.routeMap.navigate("/draw/undead");
-                break;
             case ShopButtonType.TRENT:
-                this.routeMap.navigate("/draw/trent");
-                break;
             case ShopButtonType.HUMAN:
-                this.routeMap.navigate("/draw/human");
+                void this.showGuide('카드 뽑기는 준비 중입니다.');
                 break;
             default:
                 console.error("Unknown button type:", type);
         }
+    }
+
+    // 안내 문구를 띄운다. 처음 부를 때 만든다.
+    private async showGuide(message: string): Promise<void> {
+        if (!this.guideElement) {
+            this.guideElement = await this.guideRenderer.build(this.guideFrame);
+            document.body.appendChild(this.guideElement);
+        }
+        this.guideRenderer.show(this.guideElement, message, 3000);
     }
 
     private onWindowResize(): void {
