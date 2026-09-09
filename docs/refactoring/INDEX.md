@@ -104,7 +104,7 @@
 | **R2-77** | Structure | Battle Hand | [낡은 손패 자리 계산을 없애고 본편과 같은 자리에 서게 한다](R2-77-delete-deprecated-hand-position.md) | R2-76 | **완료** |
 | **R2-78** | Structure | Battle Hand | [낡은 손패 화면 덩어리 저장소를 지운다](R2-78-delete-deprecated-hand-scene.md) | R2-77 | **완료** |
 | **R2-79** | Rendering | Battle Animation | [새 카드의 연출을 어디에 쓸지 정한다](R2-79-extract-veln-aoe.md) | R2-40 | **완료** |
-| **R2-80** | Rendering | Battle Animation | 카드가 서는 자리를 재는 시점을 맞춘다 | R2-43 | 예정 |
+| **R2-80** | Rendering | Battle Animation | [창 크기를 바꿔도 카드가 알맞은 자리로 올라가게 한다](R2-80-measure-skill-slot-on-use.md) | R2-43 | **완료** |
 | **R2-81** | Rendering | Battle 공용 | 체력, 무기, 에너지 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정 |
 | **R2-82** | Rendering | Battle Animation | 연출들이 각자 가진 정리 함수를 한 곳으로 모은다 | R2-46 | 예정 |
 | **R2-83** | Structure | Platform | 기본 실행 명령이 없는 화면을 가리키는 것을 고친다 | — | 예정 |
