@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {EffectLayer} from "../../../common/EffectLayer";
 import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // 망자의 늪 (Swamp of the Dead) — draw-3 visual.
@@ -19,6 +20,14 @@ import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 export class SwampEffect {
     constructor(private readonly scene: THREE.Scene) {}
 
+    // 그리는 것을 담는 겹. 도중에 창 크기가 바뀌면 겹이 함께 늘고 준다.
+    private readonly layer = new EffectLayer();
+
+    // 창 크기가 바뀌었을 때.
+    public resize(viewportWidth: number, viewportHeight: number): void {
+        this.layer.resize(viewportWidth, viewportHeight);
+    }
+
     public async play(
         fieldCenter: THREE.Vector3,
         fieldWidth: number,
@@ -37,7 +46,7 @@ export class SwampEffect {
         const pool = this.createSwampMesh(poolW, poolH);
         pool.position.copy(fieldCenter);
         pool.renderOrder = 480;
-        this.scene.add(pool);
+        this.layer.add(this.scene, pool);
         const poolMat = pool.material as THREE.ShaderMaterial;
 
         // Shared clock drives all shader u_time uniforms.
@@ -70,7 +79,7 @@ export class SwampEffect {
         const wraith = this.createWraithMesh(wraithW, wraithH);
         wraith.position.set(wraithX, wraithY - wraithH * 0.30, fieldCenter.z + 0.5);
         wraith.renderOrder = 490;
-        this.scene.add(wraith);
+        this.layer.add(this.scene, wraith);
         const wraithMat = wraith.material as THREE.ShaderMaterial;
         extraClockTargets.push(wraithMat);
 
@@ -79,7 +88,7 @@ export class SwampEffect {
         const eyeStart = new THREE.Vector3(wraithX, eyeY, fieldCenter.z + 0.6);
         const beam = this.createGazeBeamMesh(eyeStart, deckPos);
         beam.renderOrder = 495;
-        this.scene.add(beam);
+        this.layer.add(this.scene, beam);
         const beamMat = beam.material as THREE.ShaderMaterial;
         extraClockTargets.push(beamMat);
 
@@ -105,7 +114,7 @@ export class SwampEffect {
             const card = this.createSpectralCardMesh(cardW, cardH);
             card.position.set(spawnCardX, spawnCardY, fieldCenter.z + 0.7);
             card.renderOrder = 500;
-            this.scene.add(card);
+            this.layer.add(this.scene, card);
             const cardMat = card.material as THREE.ShaderMaterial;
             extraClockTargets.push(cardMat);
             cards.push({ card, cardMat });
@@ -155,10 +164,10 @@ export class SwampEffect {
         ]);
 
         clockRunning = false;
-        this.scene.remove(wraith);
-        this.scene.remove(beam);
-        for (const c of cards) this.scene.remove(c.card);
-        this.scene.remove(pool);
+        wraith.removeFromParent();
+        beam.removeFromParent();
+        for (const c of cards) c.card.removeFromParent();
+        pool.removeFromParent();
         disposeMesh(wraith);
         disposeMesh(beam);
         for (const c of cards) disposeMesh(c.card);

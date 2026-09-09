@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {EffectLayer} from "../../../common/EffectLayer";
 import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // 레오닉의 부름 (Leonik's Summon) — "the Gate of Truth opens, the world quakes,
@@ -27,6 +28,14 @@ import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 export class LeonikSummonEffect {
     constructor(private readonly scene: THREE.Scene) {}
 
+    // 그리는 것을 담는 겹. 도중에 창 크기가 바뀌면 겹이 함께 늘고 준다.
+    private readonly layer = new EffectLayer();
+
+    // 창 크기가 바뀌었을 때.
+    public resize(viewportWidth: number, viewportHeight: number): void {
+        this.layer.resize(viewportWidth, viewportHeight);
+    }
+
     public async play(
         gateCenter: THREE.Vector3,
         handDestinations: readonly THREE.Vector3[],
@@ -47,7 +56,7 @@ export class LeonikSummonEffect {
         const vignette = this.createVignetteMesh(vw, vh);
         vignette.position.set(0, 0, 4);
         vignette.renderOrder = 580;
-        this.scene.add(vignette);
+        this.layer.add(this.scene, vignette);
         const vignetteMat = vignette.material as THREE.ShaderMaterial;
 
         // Shared clock loop driving every shader's u_time uniform — cheaper than
@@ -91,8 +100,8 @@ export class LeonikSummonEffect {
         rightDoor.position.set(gateCenter.x + halfW / 2, gateCenter.y, gateCenter.z + 0.5);
         leftDoor.renderOrder = 590;
         rightDoor.renderOrder = 590;
-        this.scene.add(leftDoor);
-        this.scene.add(rightDoor);
+        this.layer.add(this.scene, leftDoor);
+        this.layer.add(this.scene, rightDoor);
         const leftDoorMat  = leftDoor.material  as THREE.ShaderMaterial;
         const rightDoorMat = rightDoor.material as THREE.ShaderMaterial;
         tickClocks.add(leftDoorMat);
@@ -103,7 +112,7 @@ export class LeonikSummonEffect {
         const voidMesh = this.createDarkVoidMesh(gateW * 1.05, gateH * 1.05);
         voidMesh.position.set(gateCenter.x, gateCenter.y, gateCenter.z + 0.4);
         voidMesh.renderOrder = 585;
-        this.scene.add(voidMesh);
+        this.layer.add(this.scene, voidMesh);
         const voidMat = voidMesh.material as THREE.ShaderMaterial;
         tickClocks.add(voidMat);
 
@@ -181,10 +190,10 @@ export class LeonikSummonEffect {
         canvasElement.style.transform = origTransform;
 
         clockRunning = false;
-        this.scene.remove(vignette);   disposeMesh(vignette);
-        this.scene.remove(leftDoor);   disposeMesh(leftDoor);
-        this.scene.remove(rightDoor);  disposeMesh(rightDoor);
-        this.scene.remove(voidMesh);   disposeMesh(voidMesh);
+        vignette.removeFromParent();   disposeMesh(vignette);
+        leftDoor.removeFromParent();   disposeMesh(leftDoor);
+        rightDoor.removeFromParent();  disposeMesh(rightDoor);
+        voidMesh.removeFromParent();   disposeMesh(voidMesh);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -219,7 +228,7 @@ export class LeonikSummonEffect {
         card.position.copy(gatePos);
         card.renderOrder = 595;
         card.scale.set(0.001, 0.001, 1);
-        this.scene.add(card);
+        this.layer.add(this.scene, card);
         const mat = card.material as THREE.ShaderMaterial;
         tickClocks.add(mat);
 
@@ -249,7 +258,7 @@ export class LeonikSummonEffect {
 
         await this.tween(mat.uniforms.u_alpha, 0.0, 220, 'easeInQuad');
         tickClocks.delete(mat);
-        this.scene.remove(card);
+        card.removeFromParent();
         disposeMesh(card);
     }
 
@@ -271,7 +280,7 @@ export class LeonikSummonEffect {
         );
         crack.rotation.z = angle;
         crack.renderOrder = 583;
-        this.scene.add(crack);
+        this.layer.add(this.scene, crack);
         const mat = crack.material as THREE.ShaderMaterial;
 
         const startMs = performance.now();
@@ -283,7 +292,7 @@ export class LeonikSummonEffect {
             if (t < 1) {
                 requestAnimationFrame(step);
             } else {
-                this.scene.remove(crack);
+                crack.removeFromParent();
                 disposeMesh(crack);
             }
         };
@@ -306,7 +315,7 @@ export class LeonikSummonEffect {
         );
         tendril.rotation.z = angle;
         tendril.renderOrder = 588;
-        this.scene.add(tendril);
+        this.layer.add(this.scene, tendril);
         const mat = tendril.material as THREE.ShaderMaterial;
         tickClocks.add(mat);
 
@@ -319,7 +328,7 @@ export class LeonikSummonEffect {
                 requestAnimationFrame(step);
             } else {
                 tickClocks.delete(mat);
-                this.scene.remove(tendril);
+                tendril.removeFromParent();
                 disposeMesh(tendril);
             }
         };

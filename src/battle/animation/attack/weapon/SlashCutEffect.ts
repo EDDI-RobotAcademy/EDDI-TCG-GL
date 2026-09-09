@@ -129,6 +129,14 @@ export class SlashCutEffect {
         this.overlayCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 10);
     }
 
+    // 창 크기가 바뀌었을 때.
+    //
+    // 이 연출은 지금 화면을 판에 한 번 담은 다음 그 판을 둘로 갈라 어긋나게 민다. 판 크기를
+    // 처음 한 번만 잡아 두면, 창이 바뀐 뒤 담기는 그림이 눌리거나 늘어난 채로 갈린다.
+    public resize(viewportWidth: number, viewportHeight: number): void {
+        this.renderTarget.setSize(viewportWidth, viewportHeight);
+    }
+
     public static initialize(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera): SlashCutEffect {
         if (!SlashCutEffect.instance) SlashCutEffect.instance = new SlashCutEffect(renderer, scene, camera);
         return SlashCutEffect.instance;

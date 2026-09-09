@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {EffectLayer} from "../../../../common/EffectLayer";
 import { markOwnedTexture } from "../../../../../../core/lifecycle/DisposableMeshStore";
 
 import { NetherBladeChargeVisual } from "./NetherBladeChargeVisual";
@@ -30,6 +31,14 @@ import { NetherBladeChargeVisual } from "./NetherBladeChargeVisual";
 // ignored (fullscreen, screen-centre anchored).
 export class NetherBladeFirstPassiveEffect {
     constructor(private readonly scene: THREE.Scene) {}
+
+    // 그리는 것을 담는 겹. 도중에 창 크기가 바뀌면 겹이 함께 늘고 준다.
+    private readonly layer = new EffectLayer();
+
+    // 창 크기가 바뀌었을 때.
+    public resize(viewportWidth: number, viewportHeight: number): void {
+        this.layer.resize(viewportWidth, viewportHeight);
+    }
 
     public async play(
         _originPos: THREE.Vector3,
@@ -307,7 +316,7 @@ export class NetherBladeFirstPassiveEffect {
         const overlay = new THREE.Mesh(overlayGeom, overlayMaterial);
         overlay.position.set(0, 0, 8);
         overlay.renderOrder = 9999;
-        this.scene.add(overlay);
+        this.layer.add(this.scene, overlay);
 
         // Wave-1 slash mesh — fullscreen, reference-style. Slashes fly TOWARD
         // the camera (z: +30 → -60). Triggered later when release phase begins.
@@ -316,7 +325,7 @@ export class NetherBladeFirstPassiveEffect {
         const slashMesh = new THREE.Mesh(slashGeom, slashMaterial);
         slashMesh.position.set(0, 0, 8);
         slashMesh.renderOrder = 10000;
-        this.scene.add(slashMesh);
+        this.layer.add(this.scene, slashMesh);
 
         // ─── Phase durations (frames @ 60 Hz, dt-normalised) ────────────────
         const GATHER_DURATION = 8;     // ~0.13 s — single flash
@@ -563,7 +572,7 @@ export class NetherBladeFirstPassiveEffect {
                     );
                     rectSlashMesh.position.set(0, 0, 8.5);
                     rectSlashMesh.renderOrder = 10002;
-                    this.scene.add(rectSlashMesh);
+                    this.layer.add(this.scene, rectSlashMesh);
                     phase = 'rectSlash';
                     phaseTimer = 0;
                     cameraShake = 18;
@@ -602,7 +611,7 @@ export class NetherBladeFirstPassiveEffect {
                     );
                     panelBackdrop.position.set(0, 0, 8.05);
                     panelBackdrop.renderOrder = 10000;     // BELOW fragments (10001)
-                    this.scene.add(panelBackdrop);
+                    this.layer.add(this.scene, panelBackdrop);
 
                     const minDim = Math.min(vw, vh);
                     // Seed polygon list with the full viewport.
@@ -725,7 +734,7 @@ export class NetherBladeFirstPassiveEffect {
                         const mesh = new THREE.Mesh(geom, mat);
                         mesh.position.set(pcx, pcy, 8.2);
                         mesh.renderOrder = 10001;
-                        this.scene.add(mesh);
+                        this.layer.add(this.scene, mesh);
 
                         fragments.push({
                             origCx: pcx, origCy: pcy,
@@ -818,28 +827,28 @@ export class NetherBladeFirstPassiveEffect {
 
         // ─── Cleanup ────────────────────────────────────────────────────────
         canvasElement.style.transform = origTransform;
-        this.scene.remove(overlay);
+        overlay.removeFromParent();
         overlayGeom.dispose();
         overlayMaterial.dispose();
         tex.dispose();
-        this.scene.remove(slashMesh);
+        slashMesh.removeFromParent();
         slashGeom.dispose();
         slashMaterial.dispose();
         for (const f of fragments) {
-            this.scene.remove(f.mesh);
+            f.mesh.removeFromParent();
             f.mesh.geometry.dispose();
             f.material.dispose();
         }
         fragments.length = 0;
         if (panelBackdrop !== null) {
             const m = panelBackdrop as THREE.Mesh;
-            this.scene.remove(m);
+            m.removeFromParent();
             m.geometry.dispose();
             (m.material as THREE.Material).dispose();
         }
         if (rectSlashMesh !== null) {
             const m = rectSlashMesh as THREE.Mesh;
-            this.scene.remove(m);
+            m.removeFromParent();
             m.geometry.dispose();
         }
         if (rectSlashMaterial !== null) {

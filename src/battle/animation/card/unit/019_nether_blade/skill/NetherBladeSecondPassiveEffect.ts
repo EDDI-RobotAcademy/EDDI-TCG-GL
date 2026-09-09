@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {EffectLayer} from "../../../../common/EffectLayer";
 import { markOwnedTexture } from "../../../../../../core/lifecycle/DisposableMeshStore";
 
 import { NetherBladeChargeVisual } from "./NetherBladeChargeVisual";
@@ -83,6 +84,14 @@ export class NetherBladeSecondPassiveEffect {
 
     constructor(private readonly scene: THREE.Scene) {}
 
+    // 그리는 것을 담는 겹. 도중에 창 크기가 바뀌면 겹이 함께 늘고 준다.
+    private readonly layer = new EffectLayer();
+
+    // 창 크기가 바뀌었을 때.
+    public resize(viewportWidth: number, viewportHeight: number): void {
+        this.layer.resize(viewportWidth, viewportHeight);
+    }
+
     // targetPos     — 지정된 대상의 월드 좌표 (검풍이 모여드는 지점)
     // targetGroup   — 잘려 나갈 대상 그룹. 조각이 흩날리는 동안 숨겼다가 되돌린다
     // canvasElement — 화면 흔들림을 걸 캔버스
@@ -152,7 +161,7 @@ export class NetherBladeSecondPassiveEffect {
         );
         overlay.position.set(0, 0, 8);
         overlay.renderOrder = 9999;
-        this.scene.add(overlay);
+        this.layer.add(this.scene, overlay);
 
         const origTransform = canvasElement.style.transform;
         const applyShake = (sx: number, sy: number) => {
@@ -292,7 +301,7 @@ export class NetherBladeSecondPassiveEffect {
                             fragments = this.buildFragments(
                                 captureRT.texture, returnSlashes, targetBounds, vw, vh,
                             );
-                            for (const f of fragments) this.scene.add(f.mesh);
+                            for (const f of fragments) this.layer.add(this.scene, f.mesh);
                             // 원본을 숨긴다 — 조각 밑에 멀쩡한 대상이 남아 있으면
                             // 잘려 나간 것으로 보이지 않는다.
                             hiddenChildren = targetGroup.children.filter((c) => c.visible);
@@ -453,13 +462,13 @@ export class NetherBladeSecondPassiveEffect {
         // 죽는 일격이면 숨긴 채로 둔다 — 조각이 흩어진 자리가 곧 사망이다.
         if (!lethal) for (const c of hiddenChildren) c.visible = true;
         for (const f of fragments) {
-            this.scene.remove(f.mesh);
+            f.mesh.removeFromParent();
             f.mesh.geometry.dispose();
             f.material.dispose();
         }
         // 루프 클로저 안에서 대입되므로 TS의 흐름 분석이 null 로 좁혀 둔다.
         if (captureRT !== null) (captureRT as THREE.WebGLRenderTarget).dispose();
-        this.scene.remove(overlay);
+        overlay.removeFromParent();
         overlay.geometry.dispose();
         (overlay.material as THREE.MeshBasicMaterial).dispose();
         tex.dispose();

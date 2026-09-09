@@ -28,26 +28,64 @@ export const CardMoveEasing = {
     inOut: () => TWEEN.Easing.Quadratic.InOut,
 };
 
+export interface CardMovePoint {
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+}
+
+// 갈 곳을 값으로 줘도 되고, 물어보는 방법으로 줘도 된다.
+//
+// 값으로 주면 떠날 때 정해진 자리로 간다. 가는 동안 그 자리가 달라질 일이 없을 때 쓴다.
+//
+// 물어보는 방법으로 주면 가는 내내 매번 다시 묻는다. 창 크기가 바뀌면 가야 할 자리도
+// 달라지는데, 값으로 굳혀 두면 옛 자리로 끝까지 가 버린다. 그럴 수 있는 자리에 쓴다.
+export type CardMoveTarget = CardMovePoint | (() => CardMovePoint);
+
 export function moveCard(
     cardGroup: THREE.Object3D,
-    to: { x: number; y: number; z: number },
+    to: CardMoveTarget,
     durationMs: number,
     easing: () => unknown = CardMoveEasing.inOut,
 ): Promise<void> {
     return new Promise((resolve) => {
-        const from = {
+        const target = typeof to === 'function' ? to : () => to;
+
+        // 떠난 자리. 가는 동안 창 크기가 바뀌면 이 자리도 그만큼 옮겨 준다. 안 그러면
+        // 남은 길의 시작점만 옛 화면 기준으로 남아 가는 길이 휜다.
+        const start = {
             x: cardGroup.position.x,
             y: cardGroup.position.y,
             z: cardGroup.position.z,
         };
+        let seenWidth = window.innerWidth;
+        let seenHeight = window.innerHeight;
 
-        new TWEEN.Tween(from)
-            .to({ x: to.x, y: to.y, z: to.z }, durationMs)
+        // 0 에서 1 로 가는 것 하나만 굴린다. 어디쯤인지는 매번 다시 물어서 잰다.
+        const progress = { t: 0 };
+
+        new TWEEN.Tween(progress)
+            .to({ t: 1 }, durationMs)
             .easing(easing())
             .onUpdate(() => {
-                cardGroup.position.set(from.x, from.y, from.z);
+                if (window.innerWidth !== seenWidth || window.innerHeight !== seenHeight) {
+                    start.x *= window.innerWidth / seenWidth;
+                    start.y *= window.innerHeight / seenHeight;
+                    seenWidth = window.innerWidth;
+                    seenHeight = window.innerHeight;
+                }
+                const end = target();
+                cardGroup.position.set(
+                    start.x + (end.x - start.x) * progress.t,
+                    start.y + (end.y - start.y) * progress.t,
+                    start.z + (end.z - start.z) * progress.t,
+                );
             })
-            .onComplete(() => resolve())
+            .onComplete(() => {
+                const end = target();
+                cardGroup.position.set(end.x, end.y, end.z);
+                resolve();
+            })
             .start();
     });
 }

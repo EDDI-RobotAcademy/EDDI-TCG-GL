@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {EffectLayer} from "../../../common/EffectLayer";
 import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // 넘쳐흐르는 사기 (Overflowing Morale) — powerful dark-essence transfer from the deck
@@ -20,6 +21,14 @@ import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 //   6) FADE (~360 ms).
 export class OverflowMoraleEffect {
     constructor(private readonly scene: THREE.Scene) {}
+
+    // 그리는 것을 담는 겹. 도중에 창 크기가 바뀌면 겹이 함께 늘고 준다.
+    private readonly layer = new EffectLayer();
+
+    // 창 크기가 바뀌었을 때.
+    public resize(viewportWidth: number, viewportHeight: number): void {
+        this.layer.resize(viewportWidth, viewportHeight);
+    }
 
     public async play(
         deckPos: THREE.Vector3,
@@ -48,7 +57,7 @@ export class OverflowMoraleEffect {
         const aura = this.createGatherAuraMesh(AURA_SIZE);
         aura.position.copy(deckPos);
         aura.renderOrder = 500;
-        this.scene.add(aura);
+        this.layer.add(this.scene, aura);
         const auraMat = aura.material as THREE.ShaderMaterial;
 
         const clockStart = performance.now();
@@ -102,7 +111,7 @@ export class OverflowMoraleEffect {
         await this.tween(auraMat.uniforms.u_alpha, 0.0, 360, 'easeInQuad');
 
         clockRunning = false;
-        this.scene.remove(aura);
+        aura.removeFromParent();
         disposeMesh(aura);
     }
 
@@ -122,7 +131,7 @@ export class OverflowMoraleEffect {
         const aura = this.createGatherAuraMesh(AURA_SIZE);
         aura.position.copy(targetPos);
         aura.renderOrder = 500;
-        this.scene.add(aura);
+        this.layer.add(this.scene, aura);
         const auraMat = aura.material as THREE.ShaderMaterial;
 
         const clockStart = performance.now();
@@ -156,7 +165,7 @@ export class OverflowMoraleEffect {
         await this.tween(auraMat.uniforms.u_alpha, 0.0, 300, 'easeInQuad');
 
         clockRunning = false;
-        this.scene.remove(aura);
+        aura.removeFromParent();
         disposeMesh(aura);
     }
 
@@ -171,7 +180,7 @@ export class OverflowMoraleEffect {
         const mote = this.createMoteMesh(64);
         mote.renderOrder = 520;
         mote.position.copy(curve.v0);
-        this.scene.add(mote);
+        this.layer.add(this.scene, mote);
         const mat = mote.material as THREE.ShaderMaterial;
 
         const PUFF_INTERVAL = 38;
@@ -209,7 +218,7 @@ export class OverflowMoraleEffect {
         this.spawnShrinkRing(targetPos, 150, 380);
 
         await this.tween(mat.uniforms.u_alpha, 0.0, 120, 'easeInQuad');
-        this.scene.remove(mote);
+        mote.removeFromParent();
         disposeMesh(mote);
     }
 
@@ -223,7 +232,7 @@ export class OverflowMoraleEffect {
         const ring = this.createChargeRingMesh(startSize);
         ring.position.copy(pos);
         ring.renderOrder = 505;
-        this.scene.add(ring);
+        this.layer.add(this.scene, ring);
         const mat = ring.material as THREE.ShaderMaterial;
 
         const startMs = performance.now();
@@ -236,7 +245,7 @@ export class OverflowMoraleEffect {
             if (t < 1) {
                 requestAnimationFrame(step);
             } else {
-                this.scene.remove(ring);
+                ring.removeFromParent();
                 disposeMesh(ring);
             }
         };
@@ -249,7 +258,7 @@ export class OverflowMoraleEffect {
         const burst = this.createLaunchBurstMesh(maxSize);
         burst.position.copy(pos);
         burst.renderOrder = 510;
-        this.scene.add(burst);
+        this.layer.add(this.scene, burst);
         const mat = burst.material as THREE.ShaderMaterial;
 
         const startMs = performance.now();
@@ -262,7 +271,7 @@ export class OverflowMoraleEffect {
             if (t < 1) {
                 requestAnimationFrame(step);
             } else {
-                this.scene.remove(burst);
+                burst.removeFromParent();
                 disposeMesh(burst);
             }
         };
@@ -282,7 +291,7 @@ export class OverflowMoraleEffect {
             const ring = this.createShockwaveRingMesh(baseSize);
             ring.position.copy(pos);
             ring.renderOrder = 527;
-            this.scene.add(ring);
+            this.layer.add(this.scene, ring);
             const mat = ring.material as THREE.ShaderMaterial;
 
             const startMs = performance.now();
@@ -295,7 +304,7 @@ export class OverflowMoraleEffect {
                 if (t < 1) {
                     requestAnimationFrame(step);
                 } else {
-                    this.scene.remove(ring);
+                    ring.removeFromParent();
                     disposeMesh(ring);
                 }
             };
@@ -310,7 +319,7 @@ export class OverflowMoraleEffect {
         const flash = this.createImpactFlashMesh(180);
         flash.position.copy(pos);
         flash.renderOrder = 530;
-        this.scene.add(flash);
+        this.layer.add(this.scene, flash);
         const mat = flash.material as THREE.ShaderMaterial;
 
         const startMs = performance.now();
@@ -322,7 +331,7 @@ export class OverflowMoraleEffect {
             if (t < 1) {
                 requestAnimationFrame(step);
             } else {
-                this.scene.remove(flash);
+                flash.removeFromParent();
                 disposeMesh(flash);
             }
         };
@@ -335,7 +344,7 @@ export class OverflowMoraleEffect {
         const halo = this.createHaloPulseMesh(size);
         halo.position.copy(pos);
         halo.renderOrder = 518;
-        this.scene.add(halo);
+        this.layer.add(this.scene, halo);
         const mat = halo.material as THREE.ShaderMaterial;
 
         const startMs = performance.now();
@@ -347,7 +356,7 @@ export class OverflowMoraleEffect {
             if (t < 1) {
                 requestAnimationFrame(step);
             } else {
-                this.scene.remove(halo);
+                halo.removeFromParent();
                 disposeMesh(halo);
             }
         };
@@ -358,7 +367,7 @@ export class OverflowMoraleEffect {
         const ring = this.createShrinkRingMesh(size);
         ring.position.copy(pos);
         ring.renderOrder = 525;
-        this.scene.add(ring);
+        this.layer.add(this.scene, ring);
         const mat = ring.material as THREE.ShaderMaterial;
 
         const startMs = performance.now();
@@ -370,7 +379,7 @@ export class OverflowMoraleEffect {
             if (t < 1) {
                 requestAnimationFrame(step);
             } else {
-                this.scene.remove(ring);
+                ring.removeFromParent();
                 disposeMesh(ring);
             }
         };
@@ -381,7 +390,7 @@ export class OverflowMoraleEffect {
         const puff = this.createPuffMesh(34);
         puff.position.copy(pos);
         puff.renderOrder = 515;
-        this.scene.add(puff);
+        this.layer.add(this.scene, puff);
         const mat = puff.material as THREE.ShaderMaterial;
 
         const DURATION = 500;
@@ -394,7 +403,7 @@ export class OverflowMoraleEffect {
             if (t < 1) {
                 requestAnimationFrame(step);
             } else {
-                this.scene.remove(puff);
+                puff.removeFromParent();
                 disposeMesh(puff);
             }
         };

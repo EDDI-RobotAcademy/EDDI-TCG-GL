@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import {EffectLayer} from "../common/EffectLayer";
+import {SkillTripHandle} from "../common/SkillTripHandle";
 import {AnimationBasics} from "../common/AnimationBasics";
 import {installTween} from "../../../core/tween/Tween";
 import { CardMoveEasing, moveCard } from "../../../animation/motion/CardMove";
@@ -25,9 +27,17 @@ export class AttackAnimationV2 {
     private readonly basics: AnimationBasics;
     private animating = false;
 
+    // 그리는 것을 담는 겹. 도중에 창 크기가 바뀌면 겹이 함께 늘고 준다.
+    private readonly layer = new EffectLayer();
+
     constructor(scene: THREE.Scene) {
         this.scene = scene;
         this.basics = new AnimationBasics(scene);
+    }
+
+    // 창 크기가 바뀌었을 때.
+    public resize(viewportWidth: number, viewportHeight: number): void {
+        this.layer.resize(viewportWidth, viewportHeight);
     }
 
     public isAnimating(): boolean {
@@ -35,26 +45,24 @@ export class AttackAnimationV2 {
     }
 
     // Unified entry — routes to weapon animation or skill projectile based on attackType
-    // home 을 주면 그것을 돌아갈 자리로 쓴다. 연출이 도는 동안 창 크기가 바뀌면 카드의
-    // 제자리도 달라지는데, 나갈 때 적어 둔 자리로 돌아가면 엉뚱한 데 선다. 제자리를 아는
-    // 쪽이 이 값을 고쳐 주면 연출은 돌아갈 때 그 값을 다시 읽는다.
+    // trip 을 주면 나갔다 오는 일을 화면과 함께 다룬다. 안 주면 지금 자리로 돌아온다.
     public async playAttack(
         attackerGroup: THREE.Group,
         targetGroup: THREE.Group,
         attackType: string = 'general',
-        home?: THREE.Vector3,
+        trip?: SkillTripHandle,
     ): Promise<void> {
         if (this.animating) return;
 
         if (attackType.startsWith('skill')) {
-            await this.playSkillProjectile(attackerGroup, targetGroup, attackType, home);
+            await this.playSkillProjectile(attackerGroup, targetGroup, attackType, trip);
         } else {
-            await this.playWeaponAttack(attackerGroup, targetGroup, home);
+            await this.playWeaponAttack(attackerGroup, targetGroup, trip);
         }
     }
 
     // === AoE skill (Sea of Specter) — magic circle → specters → scream ===
-    private async playWeaponAttack(attackerGroup: THREE.Group, targetGroup: THREE.Group, home?: THREE.Vector3): Promise<void> {
+    private async playWeaponAttack(attackerGroup: THREE.Group, targetGroup: THREE.Group, trip?: SkillTripHandle): Promise<void> {
         this.animating = true;
         const { mesh: weaponMesh, type: weaponType } = this.findWeaponMesh(attackerGroup);
         if (!weaponMesh) { this.animating = false; return; }
@@ -88,7 +96,7 @@ export class AttackAnimationV2 {
 
         // 흔들기를 끝내고 제자리 높이로 되돌린다. 도는 동안 창 크기가 바뀌었으면 제자리도
         // 달라졌으므로, 밖에서 준 자리가 있으면 그것을 쓴다.
-        attackerGroup.position.y = home ? home.y : attackerOrigY;
+        attackerGroup.position.y = trip ? trip.home.y : attackerOrigY;
         weaponMesh.position.copy(weaponOrigPos);
         weaponMesh.rotation.z = weaponOrigRot;
         this.scene.position.set(0, 0, 0);
@@ -100,21 +108,24 @@ export class AttackAnimationV2 {
         attackerGroup: THREE.Group,
         targetGroup: THREE.Group,
         skillType: string,
-        home?: THREE.Vector3,
+        trip?: SkillTripHandle,
     ): Promise<void> {
         this.animating = true;
         const cardW = CWR * window.innerWidth;
 
-        // Legacy: card moves to skill panel position (center-bottom, near ally base)
-        const { x: skillPositionX, y: skillPositionY } = createCardSkillPositionFrame(window.innerHeight);
-
-        const origPos = home ?? attackerGroup.position.clone();
+        const origPos = trip?.home ?? attackerGroup.position.clone();
 
         targetGroup.updateMatrixWorld(true);
         const targetWorld = targetGroup.getWorldPosition(new THREE.Vector3());
 
         // Phase 1: Card moves to skill panel position (1000ms)
-        await this.basics.moveCardTo(attackerGroup, skillPositionX, skillPositionY, origPos.z + 1, 1000);
+        // 가는 내내 갈 곳을 다시 묻는다. 도중에 창 크기가 바뀌면 스킬 자리도 달라진다.
+        await this.basics.moveCardToLive(attackerGroup, () => {
+            const slot = createCardSkillPositionFrame(window.innerHeight);
+            return { x: slot.x, y: slot.y, z: origPos.z + 1 };
+        }, 1000);
+        // 여기부터 돌아가기 전까지는 스킬 자리에 서 있다.
+        trip?.parked(true);
 
         // Phase 2: Charge shadow ball at skill panel position
         attackerGroup.updateMatrixWorld(true);
@@ -123,7 +134,7 @@ export class AttackAnimationV2 {
         const orbSize = cardW * 1.6;
         const orb = this.createShadowBallMesh(orbSize);
         orb.position.set(castWorld.x, castWorld.y + cardW * 0.6, 3);
-        this.scene.add(orb);
+        this.layer.add(this.scene, orb);
 
         await this.animateShadowBallCharge(orb, orbSize, 500);
 
@@ -131,7 +142,7 @@ export class AttackAnimationV2 {
         await this.animateShadowBallFlight(orb, targetWorld, cardW, 700);
 
         // Impact — explosion
-        this.scene.remove(orb);
+        orb.removeFromParent();
         orb.geometry.dispose();
         (orb.material as THREE.ShaderMaterial).dispose();
 
@@ -146,7 +157,9 @@ export class AttackAnimationV2 {
         await this.basics.delay(600);
 
         // Phase 4: Card returns to original position (1000ms)
-        await this.basics.moveCardTo(attackerGroup, origPos.x, origPos.y, origPos.z, 1000);
+        trip?.parked(false);
+        // 돌아갈 자리도 가는 내내 다시 묻는다. 화면이 이 값을 고칠 수 있다.
+        await this.basics.moveCardToLive(attackerGroup, () => origPos, 1000);
         attackerGroup.position.copy(origPos);
 
         this.scene.position.set(0, 0, 0);
@@ -281,7 +294,7 @@ export class AttackAnimationV2 {
         const mesh = new THREE.Mesh(geo, mat);
         mesh.position.set(startX, startY, center.z - 0.1);
         mesh.renderOrder = 9;
-        this.scene.add(mesh);
+        this.layer.add(this.scene, mesh);
 
         const startT = performance.now();
         const dur = 350;
@@ -292,7 +305,7 @@ export class AttackAnimationV2 {
             mesh.position.y = startY + (endY - startY) * t;
             mesh.scale.set(1 - t * 0.3, 1 - t * 0.3, 1);
             if (t < 1) requestAnimationFrame(tick);
-            else { this.scene.remove(mesh); geo.dispose(); mat.dispose(); }
+            else { mesh.removeFromParent(); geo.dispose(); mat.dispose(); }
         };
         requestAnimationFrame(tick);
     }
@@ -317,7 +330,7 @@ export class AttackAnimationV2 {
         mesh.position.x += (Math.random() - 0.5) * size;
         mesh.position.y += (Math.random() - 0.5) * size;
         mesh.renderOrder = 9;
-        this.scene.add(mesh);
+        this.layer.add(this.scene, mesh);
         this.basics.fadeAndDispose(mesh, mat, geo, 300);
     }
 
@@ -342,7 +355,7 @@ export class AttackAnimationV2 {
         const coreMesh = new THREE.Mesh(coreGeo, coreMat);
         coreMesh.position.set(pos.x, pos.y, 2.5);
         coreMesh.renderOrder = 10;
-        this.scene.add(coreMesh);
+        this.layer.add(this.scene, coreMesh);
         this.basics.fadeAndDispose(coreMesh, coreMat, coreGeo, 600);
 
         // 2. Purple shockwave ring (additive)
@@ -366,7 +379,7 @@ export class AttackAnimationV2 {
         const ringMesh = new THREE.Mesh(ringGeo, ringMat);
         ringMesh.position.set(pos.x, pos.y, 2.6);
         ringMesh.renderOrder = 11;
-        this.scene.add(ringMesh);
+        this.layer.add(this.scene, ringMesh);
         this.basics.fadeAndDispose(ringMesh, ringMat, ringGeo, 700);
 
         // 3. Dark debris particles (larger, more, opaque dark)
@@ -390,7 +403,7 @@ export class AttackAnimationV2 {
             const pMesh = new THREE.Mesh(pGeo, pMat);
             pMesh.position.set(pos.x, pos.y, 2.5);
             pMesh.renderOrder = 10;
-            this.scene.add(pMesh);
+            this.layer.add(this.scene, pMesh);
 
             const startP = performance.now();
             const dur = 500;
@@ -404,7 +417,7 @@ export class AttackAnimationV2 {
                 pMesh.position.y = oy + dy * tp * tp;
                 pMesh.scale.set(1 + tp * 0.5, 1 + tp * 0.5, 1);
                 if (tp < 1) requestAnimationFrame(tickP);
-                else { this.scene.remove(pMesh); pGeo.dispose(); pMat.dispose(); }
+                else { pMesh.removeFromParent(); pGeo.dispose(); pMat.dispose(); }
             };
             requestAnimationFrame(tickP);
         }
@@ -421,7 +434,7 @@ export class AttackAnimationV2 {
         const flashMesh = new THREE.Mesh(flashGeo, flashMat);
         flashMesh.position.set(0, 0, 4);
         flashMesh.renderOrder = 13;
-        this.scene.add(flashMesh);
+        this.layer.add(this.scene, flashMesh);
         this.basics.fadeAndDispose(flashMesh, flashMat, flashGeo, 500);
     }
 
@@ -451,7 +464,7 @@ export class AttackAnimationV2 {
         mesh.position.set(targetWorld.x, targetWorld.y, 2);
         mesh.rotation.z = angle;
         mesh.renderOrder = 10;
-        this.scene.add(mesh);
+        this.layer.add(this.scene, mesh);
         this.basics.fadeAndDispose(mesh, mat, geo, 400);
     }
 
@@ -516,7 +529,7 @@ export class AttackAnimationV2 {
             mesh.position.set((a.x + b.x) / 2, (a.y + b.y) / 2, 2);
             mesh.rotation.z = Math.atan2(dy, dx);
             mesh.renderOrder = 10;
-            this.scene.add(mesh);
+            this.layer.add(this.scene, mesh);
             this.basics.fadeAndDispose(mesh, mat, geo, duration);
         }
     }
@@ -541,7 +554,7 @@ export class AttackAnimationV2 {
         });
         const mesh = new THREE.Mesh(geo, mat);
         mesh.position.copy(pos); mesh.renderOrder = 11;
-        this.scene.add(mesh);
+        this.layer.add(this.scene, mesh);
         this.basics.fadeAndDispose(mesh, mat, geo, 400);
     }
 

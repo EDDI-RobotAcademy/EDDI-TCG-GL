@@ -73,6 +73,7 @@ import { ActivePanelRendererV2 } from "../../battle/active_panel/renderer/Active
 import { AttackAnimationV2 } from "../../battle/animation/attack/AttackAnimationV2";
 import { createCardSkillPositionFrame } from "../../animation/skill/frame/CardSkillPositionFrame";
 import { CardMoveEasing, moveCard } from "../../animation/motion/CardMove";
+import { SkillTripHandle } from "../../battle/animation/common/SkillTripHandle";
 import { FrozenBurningOverlayEffect } from "../../battle/animation/card/energy/151_cold_dark_energy/FrozenBurningOverlayEffect";
 import { ColdDarkTraitMarkEffect } from "../../battle/animation/card/energy/151_cold_dark_energy/ColdDarkTraitMarkEffect";
 import { ScytheCutEffect } from "../../battle/animation/card/item/008_scythe/ScytheCutEffect";
@@ -522,18 +523,28 @@ export class SimulationBattleFieldView implements Component {
         // 그래서 나가 있는 동안에는 카드를 세우는 대신 돌아갈 자리를 고쳐 둔다.
         const skillTripHome = new Map<THREE.Group, THREE.Vector3>();
 
+        // 지금 스킬 자리에 서 있는 카드. 창 크기가 바뀌면 스킬 자리도 달라지므로 옮겨 준다.
+        const skillTripParked = new Set<THREE.Group>();
+
         // 카드를 내보내는 연출을 돌리는 동안 제자리를 맡아 둔다. 도는 중에 창 크기가 바뀌면
         // 제자리를 다시 세는 쪽이 맡아 둔 값을 고치고, 연출은 돌아갈 때 그 값을 읽는다.
         const withSkillTripHome = async (
             group: THREE.Group,
-            play: (home: THREE.Vector3) => Promise<void>,
+            play: (trip: SkillTripHandle) => Promise<void>,
         ): Promise<void> => {
             const home = group.position.clone();
             skillTripHome.set(group, home);
             try {
-                await play(home);
+                await play({
+                    home,
+                    parked: (parked: boolean) => {
+                        if (parked) skillTripParked.add(group);
+                        else skillTripParked.delete(group);
+                    },
+                });
             } finally {
                 skillTripHome.delete(group);
+                skillTripParked.delete(group);
             }
         };
 
@@ -1081,6 +1092,41 @@ export class SimulationBattleFieldView implements Component {
         const moraleConvertEffect = new MoraleConvertEffect(scene);
         const overflowMoraleEffect = new OverflowMoraleEffect(scene);
         const swampEffect = new SwampEffect(scene);
+        // 창 크기가 바뀌면 도는 중인 연출도 함께 늘고 줄어야 한다. 한 자리에 모아 두고
+        // 한꺼번에 알린다. 안 돌고 있는 연출은 알려도 아무 일도 안 한다.
+        //
+        // 카드에 직접 얹히는 것은 여기 없다. 카드가 늘고 줄 때 함께 따라간다.
+        const resizableEffects: Array<{ resize(w: number, h: number): void }> = [
+            attackAnimation,
+            seaOfSpecterEffect,
+            scytheCutEffect,
+            energyBurnEffect,
+            doomContractEffect,
+            corpseExplosionEffect,
+            deadLandsEffect,
+            leonikSummonEffect,
+            netherBladeEntranceEffect,
+            moraleConvertEffect,
+            overflowMoraleEffect,
+            swampEffect,
+        ];
+
+        // 쓸 때마다 새로 만드는 연출은 위 목록에 못 넣는다. 도는 동안만 여기 담아 두고,
+        // 끝나면 뺀다. 창 크기가 바뀌면 여기 담긴 것에도 알린다.
+        const runningEffects = new Set<{ resize(w: number, h: number): void }>();
+
+        const whileRunning = async (
+            effect: { resize(w: number, h: number): void },
+            run: () => Promise<void>,
+        ): Promise<void> => {
+            runningEffects.add(effect);
+            try {
+                await run();
+            } finally {
+                runningEffects.delete(effect);
+            }
+        };
+
         // 빙결 / 암흑 화염 지속 오버레이 — 상대 유닛 카드 그룹에 직접 얹힌다.
         const frozenBurningEffect = new FrozenBurningOverlayEffect();
         // 보유 유닛에 붙는 두 상태 마크 — 셰이더 배지라 매 프레임 갱신이 필요하다.
@@ -1463,21 +1509,30 @@ export class SimulationBattleFieldView implements Component {
             group: THREE.Group,
             effectCallback?: (panelPos: THREE.Vector3) => Promise<void>,
         ): Promise<void> => {
-            const h = window.innerHeight;
-            const { x: skillPositionX, y: skillPositionY } = createCardSkillPositionFrame(h);
             const origPos = group.position.clone();
             skillTripHome.set(group, origPos);
 
             // 옮기는 일은 moveCard 가 한다. 예전에는 여기서 직접 계산했는데,
             // 그 식이 TWEEN 의 Quadratic.InOut 과 같은 곡선이라 값이 바뀌지 않는다.
-            const moveTo = (tx: number, ty: number, tz: number, durMs: number): Promise<void> =>
-                moveCard(group, { x: tx, y: ty, z: tz }, durMs, CardMoveEasing.inOut);
+            //
+            // 갈 곳을 값이 아니라 물어보는 방법으로 준다. 가는 도중에 창 크기가 바뀌면
+            // 갈 곳도 달라지는데, 값으로 굳혀 두면 옛 자리로 끝까지 가 버린다.
+            const moveToLive = (to: () => { x: number; y: number; z: number }, durMs: number): Promise<void> =>
+                moveCard(group, to, durMs, CardMoveEasing.inOut);
 
-            // Forward: lift z by +1 so the card draws above other field meshes during travel.
-            await moveTo(skillPositionX, skillPositionY, origPos.z + 1, 700);
+            const skillSlot = () => {
+                const slot = createCardSkillPositionFrame(window.innerHeight);
+                // Forward: lift z by +1 so the card draws above other field meshes during travel.
+                return { x: slot.x, y: slot.y, z: origPos.z + 1 };
+            };
+
+            await moveToLive(skillSlot, 700);
+            // 여기부터 돌아가기 전까지는 스킬 자리에 서 있다.
+            skillTripParked.add(group);
             // Cast — run the effect at the panel slot, or just hold briefly.
             if (effectCallback) {
-                const panelPos = new THREE.Vector3(skillPositionX, skillPositionY, origPos.z + 1);
+                const at = skillSlot();
+                const panelPos = new THREE.Vector3(at.x, at.y, at.z);
                 try {
                     await effectCallback(panelPos);
                 } catch (err) {
@@ -1487,10 +1542,12 @@ export class SimulationBattleFieldView implements Component {
                 await new Promise<void>((r) => setTimeout(r, 300));
             }
             // Return to original slot.
-            await moveTo(origPos.x, origPos.y, origPos.z, 700);
+            skillTripParked.delete(group);
+            await moveToLive(() => origPos, 700);
             // Snap to exact original to avoid sub-pixel drift.
             group.position.copy(origPos);
             skillTripHome.delete(group);
+            skillTripParked.delete(group);
         };
 
         // 출격 시 두번째 패시브 (단일기) — auto-entered after passive 1 resolves. User picks
@@ -1574,7 +1631,7 @@ export class SimulationBattleFieldView implements Component {
                 // 단일기 — gather/hold는 광역기와 공유하고, 그 뒤로 화면 전체를 가로지르는
                 // 검풍이 날아간 다음 지정한 카드로 모여들어 그 카드를 조각낸다.
                 const effect = new NetherBladeSecondPassiveEffect(scene);
-                await effect.play(
+                await whileRunning(effect, () => effect.play(
                     singleTarget,
                     ripTarget ? ripTarget.group : null,
                     canvasEl,
@@ -1582,7 +1639,7 @@ export class SimulationBattleFieldView implements Component {
                     camera,
                     undefined,
                     lethal,
-                );
+                ));
             });
 
             const dmg = NETHER_BLADE_PASSIVE2_DAMAGE;
@@ -1656,10 +1713,10 @@ export class SimulationBattleFieldView implements Component {
                 // — same scale as wave 1 — so the cuts tear across the whole
                 // field, not just the opponent's row.
                 const effect = new NetherBladeFirstPassiveEffect(scene);
-                await effect.play(
+                await whileRunning(effect, () => effect.play(
                     panelPos, aoeTargets, canvasEl, () => { /* per-strike SFX hook */ },
                     rendererManager.getRenderer(), camera,
-                );
+                ));
             });
 
             const dmg = NETHER_BLADE_PASSIVE_DAMAGE;
@@ -1775,8 +1832,8 @@ export class SimulationBattleFieldView implements Component {
                                 if (atkEntry.card.cardId === NETHER_BLADE_CARD_ID) {
                                     await playSkillPanelMoveOnly(atkEntry.group);
                                 } else {
-                                    await withSkillTripHome(atkEntry.group, (home) =>
-                                        seaOfSpecterEffect.play(atkEntry.group, home));
+                                    await withSkillTripHome(atkEntry.group, (trip) =>
+                                        seaOfSpecterEffect.play(atkEntry.group, trip));
                                 }
                             }
 
@@ -1885,8 +1942,8 @@ export class SimulationBattleFieldView implements Component {
                     });
 
                     if (attackerEntry) {
-                        await withSkillTripHome(attackerEntry.group, (home) =>
-                            attackAnimation.playAttack(attackerEntry.group, masterGroup, pendingAttackType, home));
+                        await withSkillTripHome(attackerEntry.group, (trip) =>
+                            attackAnimation.playAttack(attackerEntry.group, masterGroup, pendingAttackType, trip));
                     }
 
                     for (const ev of events) {
@@ -1938,8 +1995,8 @@ export class SimulationBattleFieldView implements Component {
                     });
 
                     if (attackerEntry) {
-                        await withSkillTripHome(attackerEntry.group, (home) =>
-                            attackAnimation.playAttack(attackerEntry.group, targetEntry.group, pendingAttackType, home));
+                        await withSkillTripHome(attackerEntry.group, (trip) =>
+                            attackAnimation.playAttack(attackerEntry.group, targetEntry.group, pendingAttackType, trip));
                     }
                     const hit = attackEvents.find((ev) => ev.type === 'damaged');
                     const currentHp = hit && hit.type === 'damaged' ? hit.hpBefore : 0;
@@ -4160,8 +4217,18 @@ export class SimulationBattleFieldView implements Component {
             allyTargetNeonEffect.refreshSizes();
             neonEffect.refreshSizes();
 
+            // 스킬 자리에 서 있는 카드를 새 스킬 자리로 옮긴다. 그 자리도 창 높이에서 나온다.
+            if (skillTripParked.size > 0) {
+                const slot = createCardSkillPositionFrame(height);
+                for (const group of skillTripParked) {
+                    group.position.set(slot.x, slot.y, group.position.z);
+                }
+
+            }
+
             // 도는 중인 연출도 창 크기에 맞춘다. 안 돌고 있으면 아무것도 안 한다.
-            seaOfSpecterEffect.resize(width, height);
+            for (const effect of resizableEffects) effect.resize(width, height);
+            for (const effect of runningEffects) effect.resize(width, height);
 
             // 액티브 패널을 카드 따라 옮긴다. 카드가 새 자리로 간 뒤라야 하므로 맨 마지막에 한다.
             if (activePanelGroup && activePanelAnchorOnCard) {

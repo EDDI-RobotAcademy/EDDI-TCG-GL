@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {EffectLayer} from "../../../../common/EffectLayer";
 import { markOwnedTexture, disposeMesh } from "../../../../../../core/lifecycle/DisposableMeshStore";
 
 // 마검의 지배자 네더 블레이드 — DEPLOY entrance scene. Plays ONCE on initial deployment,
@@ -45,6 +46,14 @@ export class NetherBladeEntranceEffect {
     private _burnRef: { value: number } = { value: 0 };
     constructor(private readonly scene: THREE.Scene) {}
 
+    // 그리는 것을 담는 겹. 도중에 창 크기가 바뀌면 겹이 함께 늘고 준다.
+    private readonly layer = new EffectLayer();
+
+    // 창 크기가 바뀌었을 때.
+    public resize(viewportWidth: number, viewportHeight: number): void {
+        this.layer.resize(viewportWidth, viewportHeight);
+    }
+
     public async play(canvasElement: HTMLElement): Promise<void> {
         const vw = window.innerWidth;
         const vh = window.innerHeight;
@@ -85,7 +94,7 @@ export class NetherBladeEntranceEffect {
         // can be scaled together during phase 3 (camera rushing into the pillar).
         // Demon face is added to this.scene directly so it stays at fixed scale.
         const fxGroup = new THREE.Group();
-        this.scene.add(fxGroup);
+        this.layer.add(this.scene, fxGroup);
         this._fxParent = fxGroup;
 
         // ─── PHASE 1: bloody SKY (top 5/6) + tessellated GROUND (bottom 1/6) ─────
@@ -144,7 +153,7 @@ export class NetherBladeEntranceEffect {
             this.createPillarParticleMesh(vw * 1.20, vh * 1.20);
         particles.position.set(0, 0, 6.5);   // between pillar (z=6) and face (z=7)
         particles.renderOrder = 610;
-        this.scene.add(particles);
+        this.layer.add(this.scene, particles);
         const particlesMat = particles.material as THREE.ShaderMaterial;
         tickHooks.add((_t, dtMs) => particlesTick(dtMs));
         void this.tween(particlesMat.uniforms.u_alpha, 1.0, 600, 'easeOutQuad');
@@ -225,7 +234,7 @@ export class NetherBladeEntranceEffect {
         const aura = this.createDarkAuraMesh(faceSize * 2.4);
         aura.position.set(0, 0, 6.8);   // behind face (z=7)
         aura.renderOrder = 614;          // draw before face (615) but after pillar (605)
-        this.scene.add(aura);
+        this.layer.add(this.scene, aura);
         const auraMat = aura.material as THREE.ShaderMaterial;
         tickClocks.add(auraMat);
         auraMat.uniforms.u_alpha.value = 0.0;
@@ -234,7 +243,7 @@ export class NetherBladeEntranceEffect {
         face.position.set(0, 0, 7);
         face.renderOrder = 615;
         face.scale.set(1.0, 1.0, 1);
-        this.scene.add(face);
+        this.layer.add(this.scene, face);
         const faceMat = face.material as THREE.ShaderMaterial;
         tickClocks.add(faceMat);
         faceMat.uniforms.u_alpha.value = 0.0;
@@ -277,12 +286,12 @@ export class NetherBladeEntranceEffect {
             fxGroup.remove(child);
             if (child instanceof THREE.Mesh) disposeMesh(child);
         }
-        this.scene.remove(fxGroup);
-        this.scene.remove(face);
+        fxGroup.removeFromParent();
+        face.removeFromParent();
         disposeMesh(face);
-        this.scene.remove(aura);
+        aura.removeFromParent();
         disposeMesh(aura);
-        this.scene.remove(particles);
+        particles.removeFromParent();
         disposeMesh(particles);
         this._swordTex?.dispose();
         this._swordTex = null;

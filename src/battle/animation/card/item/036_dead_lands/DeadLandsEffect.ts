@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {EffectLayer} from "../../../common/EffectLayer";
 import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // 죽음의 대지 (Dead Lands) — "dark essence converges from all sides, TEARS APART, and
@@ -37,6 +38,14 @@ export interface DeadLandsTarget {
 export class DeadLandsEffect {
     constructor(private readonly scene: THREE.Scene) {}
 
+    // 그리는 것을 담는 겹. 도중에 창 크기가 바뀌면 겹이 함께 늘고 준다.
+    private readonly layer = new EffectLayer();
+
+    // 창 크기가 바뀌었을 때.
+    public resize(viewportWidth: number, viewportHeight: number): void {
+        this.layer.resize(viewportWidth, viewportHeight);
+    }
+
     public async play(
         targetPos: THREE.Vector3,
         targetBounds: { width: number; height: number },
@@ -64,7 +73,7 @@ export class DeadLandsEffect {
         const vignette = this.createVignetteMesh(vw, vh);
         vignette.position.set(0, 0, 4);  // slightly in front of the scene, behind effects
         vignette.renderOrder = 495;
-        this.scene.add(vignette);
+        this.layer.add(this.scene, vignette);
         const vignetteMat = vignette.material as THREE.ShaderMaterial;
         const vignetteClockStart = performance.now();
         let vignetteClockRunning = true;
@@ -107,7 +116,7 @@ export class DeadLandsEffect {
         orb.position.copy(targetPos);
         orb.renderOrder = 540;
         orb.scale.set(0.001, 0.001, 1);
-        this.scene.add(orb);
+        this.layer.add(this.scene, orb);
         const orbMat = orb.material as THREE.ShaderMaterial;
 
         const orbClockStart = performance.now();
@@ -188,11 +197,11 @@ export class DeadLandsEffect {
 
         // Clean up orb (was faded but still in scene).
         orbClockRunning = false;
-        this.scene.remove(orb);
+        orb.removeFromParent();
         disposeMesh(orb);
 
         vignetteClockRunning = false;
-        this.scene.remove(vignette);
+        vignette.removeFromParent();
         disposeMesh(vignette);
     }
 
@@ -222,7 +231,7 @@ export class DeadLandsEffect {
         const mote = this.createConvergingMoteMesh(54);
         mote.renderOrder = 530;
         mote.position.copy(sourcePos);
-        this.scene.add(mote);
+        this.layer.add(this.scene, mote);
         const mat = mote.material as THREE.ShaderMaterial;
 
         const startMs = performance.now();
@@ -243,7 +252,7 @@ export class DeadLandsEffect {
 
         // Disappear into the coalescing orb — quick fade.
         await this.tween(mat.uniforms.u_alpha, 0.0, 80, 'easeInQuad');
-        this.scene.remove(mote);
+        mote.removeFromParent();
         disposeMesh(mote);
     }
 
@@ -268,7 +277,7 @@ export class DeadLandsEffect {
         );
         rift.rotation.z = angle;
         rift.renderOrder = 535;
-        this.scene.add(rift);
+        this.layer.add(this.scene, rift);
         const mat = rift.material as THREE.ShaderMaterial;
 
         const startMs = performance.now();
@@ -281,7 +290,7 @@ export class DeadLandsEffect {
             if (t < 1) {
                 requestAnimationFrame(step);
             } else {
-                this.scene.remove(rift);
+                rift.removeFromParent();
                 disposeMesh(rift);
             }
         };
@@ -302,7 +311,7 @@ export class DeadLandsEffect {
         const shard = this.createShardMesh(size);
         shard.position.copy(origin);
         shard.renderOrder = 538;
-        this.scene.add(shard);
+        this.layer.add(this.scene, shard);
         const mat = shard.material as THREE.ShaderMaterial;
 
         const vx = Math.cos(angle) * speed;
@@ -322,7 +331,7 @@ export class DeadLandsEffect {
             if (t < 1) {
                 requestAnimationFrame(step);
             } else {
-                this.scene.remove(shard);
+                shard.removeFromParent();
                 disposeMesh(shard);
             }
         };
@@ -336,7 +345,7 @@ export class DeadLandsEffect {
         const ring = this.createShockwaveRingMesh(baseSize);
         ring.position.copy(origin);
         ring.renderOrder = 537;
-        this.scene.add(ring);
+        this.layer.add(this.scene, ring);
         const mat = ring.material as THREE.ShaderMaterial;
 
         const startMs = performance.now();
@@ -348,7 +357,7 @@ export class DeadLandsEffect {
             if (t < 1) {
                 requestAnimationFrame(step);
             } else {
-                this.scene.remove(ring);
+                ring.removeFromParent();
                 disposeMesh(ring);
             }
         };
@@ -359,7 +368,7 @@ export class DeadLandsEffect {
         const flash = this.createImpactFlashMesh(size);
         flash.position.copy(origin);
         flash.renderOrder = 539;
-        this.scene.add(flash);
+        this.layer.add(this.scene, flash);
         const mat = flash.material as THREE.ShaderMaterial;
 
         const startMs = performance.now();
@@ -370,7 +379,7 @@ export class DeadLandsEffect {
             if (t < 1) {
                 requestAnimationFrame(step);
             } else {
-                this.scene.remove(flash);
+                flash.removeFromParent();
                 disposeMesh(flash);
             }
         };
@@ -430,7 +439,7 @@ export class DeadLandsEffect {
         const ring = this.createContractingRingMesh(planeSize, startRadius, endRadius);
         ring.position.copy(origin);
         ring.renderOrder = 498;
-        this.scene.add(ring);
+        this.layer.add(this.scene, ring);
         const mat = ring.material as THREE.ShaderMaterial;
 
         const startMs = performance.now();
@@ -443,7 +452,7 @@ export class DeadLandsEffect {
             if (t < 1) {
                 requestAnimationFrame(step);
             } else {
-                this.scene.remove(ring);
+                ring.removeFromParent();
                 disposeMesh(ring);
             }
         };
