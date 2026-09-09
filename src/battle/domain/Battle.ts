@@ -33,6 +33,7 @@ export class Battle {
 
     // 이번 판에 쓸 수 있는 필드 에너지. 내 턴이 시작될 때마다 하나 는다.
     private fieldEnergy: number = 0;
+    private opponentFieldEnergy: number = 0;
 
     private readonly yourDeck = new Deck();
     private readonly opponentDeck = new Deck();
@@ -54,6 +55,12 @@ export class Battle {
     private readonly yourMaster = new Master();
     private readonly opponentMaster = new Master();
 
+    // 카드에 붙일 다음 번호. 한 번 쓴 번호는 다시 안 쓴다.
+    //
+    // 쓰거나 무덤에 간 카드의 번호를 다시 쓰면, 화면이 그 번호로 가리키던 것과
+    // 전투가 그 번호로 찾는 것이 서로 다른 카드가 된다.
+    private nextCardId: number = 0;
+
     private constructor(private readonly battleId: number) {}
 
     // 전투를 새로 시작한다.
@@ -67,6 +74,7 @@ export class Battle {
         battle.turnOwner = snapshot.turnOwner;
         battle.turnNumber = snapshot.turnNumber;
         battle.fieldEnergy = snapshot.fieldEnergy;
+        battle.opponentFieldEnergy = snapshot.opponentFieldEnergy;
         battle.yourDeck.seed(snapshot.yourDeckCards);
         battle.opponentDeck.seed(snapshot.opponentDeckCards);
         battle.yourTomb.restoreFrom(snapshot.yourTombCards);
@@ -84,6 +92,16 @@ export class Battle {
 
     getId(): number {
         return this.battleId;
+    }
+
+    // 카드 하나에 붙일 번호를 준다. 한 번 준 번호는 다시 안 준다.
+    issueCardId(): number {
+        return this.nextCardId++;
+    }
+
+    // 밖에서 번호를 정해 넣은 경우 그 다음부터 주도록 맞춘다.
+    private markCardIdUsed(cardId: number): void {
+        if (cardId >= this.nextCardId) this.nextCardId = cardId + 1;
     }
 
     /* ── 턴 ── */
@@ -144,6 +162,23 @@ export class Battle {
         if (amount <= 0) return this.fieldEnergy;
         this.fieldEnergy += amount;
         return this.fieldEnergy;
+    }
+
+    getOpponentFieldEnergy(): number {
+        return this.opponentFieldEnergy;
+    }
+
+    setOpponentFieldEnergy(next: number): number {
+        this.opponentFieldEnergy = Math.max(0, next);
+        return this.opponentFieldEnergy;
+    }
+
+    // 상대 필드 에너지를 깎는다. 0 아래로는 안 내려간다. 실제로 깎인 양을 준다.
+    drainOpponentFieldEnergy(amount: number): number {
+        if (amount <= 0) return 0;
+        const before = this.opponentFieldEnergy;
+        this.opponentFieldEnergy = Math.max(0, before - amount);
+        return before - this.opponentFieldEnergy;
     }
 
     /* ── 내 덱 ── */
@@ -268,6 +303,7 @@ export class Battle {
     /* ── 내 필드 ── */
 
     placeOnYourField(card: FieldCard): void {
+        this.markCardIdUsed(card.getBattleCardId());
         this.yourField.place(card);
     }
 
@@ -290,6 +326,7 @@ export class Battle {
     /* ── 상대 필드 ── */
 
     placeOnOpponentField(card: FieldCard): void {
+        this.markCardIdUsed(card.getBattleCardId());
         this.opponentField.place(card);
     }
 
@@ -313,6 +350,7 @@ export class Battle {
     // 몇 장씩 나눠 보여줄지는 화면이 정한다. 여기는 목록만 준다.
 
     addToHand(card: HandCard): void {
+        this.markCardIdUsed(card.getBattleCardId());
         this.hand.add(card);
     }
 
@@ -365,6 +403,7 @@ export class Battle {
             turnOwner: this.turnOwner,
             turnNumber: this.turnNumber,
             fieldEnergy: this.fieldEnergy,
+            opponentFieldEnergy: this.opponentFieldEnergy,
             yourDeckCards: [...this.yourDeck.getCards()],
             opponentDeckCards: [...this.opponentDeck.getCards()],
             yourTombCards: [...this.yourTomb.getCards()],
