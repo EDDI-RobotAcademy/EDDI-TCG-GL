@@ -644,10 +644,15 @@ async function main(container: HTMLElement): Promise<void> {
     // cardId by cardIndex and push it into the Opponent Tomb repo. Call at every death
     // site (scythe, energy-burn, doom-contract, AoE skill, single-target attack) right
     // next to the existing battle.removeFromOpponentField(...).
-    const buryOpponentUnit = (cardIndex: number): void => {
+    // 상대 유닛이 쓰러진다. 무덤으로 보내는 것과 필드에서 빼는 것은 한 가지 일이다.
+    //
+    // 전에는 두 줄이 늘 붙어 다녔다. 둘 사이에서 화면이 닫히면 무덤에는 있는데
+    // 필드에도 남아 있는 상태가 된다.
+    const defeatOpponentUnit = (cardIndex: number): void => {
         const card = opponentCards[cardIndex];
         if (!card) return;
         battle.sendToOpponentTomb(card.cardId);
+        battle.removeFromOpponentField(cardIndex);
         console.log(`[tomb] opponent cardId=${card.cardId} (idx=${cardIndex}) → opponent tomb`);
     };
 
@@ -1422,8 +1427,7 @@ async function main(container: HTMLElement): Promise<void> {
                 if (newHp > 0) applyColdDarkTraits(state.deployedEntry, pick.cardIndex);
                 console.log(`[nether-blade] passive 2 → opponent idx=${pick.cardIndex} cardId=${target.card.cardId} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
                 if (newHp <= 0) {
-                    buryOpponentUnit(pick.cardIndex);
-                    battle.removeFromOpponentField(pick.cardIndex);
+                    defeatOpponentUnit(pick.cardIndex);
                     target.group.visible = false;
                     reflowOpponentField();
                 }
@@ -1492,8 +1496,7 @@ async function main(container: HTMLElement): Promise<void> {
             if (newHp > 0) applyColdDarkTraits(deployedEntry, idx);
             console.log(`[nether-blade] AoE → opponent idx=${idx} cardId=${target.card.cardId} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
             if (newHp <= 0) {
-                buryOpponentUnit(idx);
-                battle.removeFromOpponentField(idx);
+                defeatOpponentUnit(idx);
                 deadIndices.push(idx);
             }
         }
@@ -1632,8 +1635,7 @@ async function main(container: HTMLElement): Promise<void> {
                                 setTimeout(() => {
                                     const aliveIdx = opponentAliveIndexOf(capturedIdx);
                                     if (aliveIdx >= 0) {
-                                        buryOpponentUnit(capturedIdx);
-                                        battle.removeFromOpponentField(capturedIdx);
+                                        defeatOpponentUnit(capturedIdx);
                                     }
                                     reflowOpponentField();
                                 }, 450);
@@ -1755,8 +1757,7 @@ async function main(container: HTMLElement): Promise<void> {
                     setTimeout(() => {
                         const aliveIdx = opponentAliveIndexOf(targetIdx);
                         if (aliveIdx >= 0) {
-                            buryOpponentUnit(targetIdx);
-                            battle.removeFromOpponentField(targetIdx);
+                            defeatOpponentUnit(targetIdx);
                         }
                         reflowOpponentField();
                         console.log(`Opponent idx=${targetIdx} defeated! Remaining: ${battle.getOpponentFieldCount()}`);
@@ -2048,8 +2049,7 @@ async function main(container: HTMLElement): Promise<void> {
         for (const idx of dead) {
             const aliveIdx = opponentAliveIndexOf(idx);
             if (aliveIdx >= 0) {
-                buryOpponentUnit(idx);
-                battle.removeFromOpponentField(idx);
+                defeatOpponentUnit(idx);
             }
             const target = opponentEntries.find((oe) => oe.cardIndex === idx);
             if (target) target.group.visible = false;
@@ -2206,16 +2206,17 @@ async function main(container: HTMLElement): Promise<void> {
 
         console.log(`[scythe] target cardId=${target.card.cardId} grade=${grade}${isMythic ? ' (MYTHICAL → 30 dmg)' : ' (instant kill)'} HP: ${currentHp} → ${newHp}`);
 
+        // 상태는 연출을 기다리기 전에 다 바꾼다. 기다리는 동안 화면이 닫혀도
+        // 체력만 0 이고 필드에 남아 있는 어중간한 상태가 안 생긴다.
+        if (killing) {
+            defeatOpponentUnit(targetIdx);
+        }
+
         // Play the cut animation. For killing hits it hides the target and plays the split
         // halves; for mythic-survives it plays a dark flash without splitting.
         await scytheCutEffect.play(target.group, target.card.cardId, killing);
 
         if (killing) {
-            const aliveIdx = opponentAliveIndexOf(targetIdx);
-            if (aliveIdx >= 0) {
-                buryOpponentUnit(targetIdx);
-                battle.removeFromOpponentField(targetIdx);
-            }
             reflowOpponentField();
             console.log(`[scythe] opponent idx=${targetIdx} defeated. Remaining: ${battle.getOpponentFieldCount()}`);
         }
@@ -2276,6 +2277,11 @@ async function main(container: HTMLElement): Promise<void> {
             console.log(`[energy-burn] target cardId=${target.card.cardId} energy: ${currentEnergy} → ${newEnergy} (drained ${energyDrained}) no damage`);
         }
 
+        // 상태는 연출을 기다리기 전에 다 바꾼다.
+        if (killing) {
+            defeatOpponentUnit(targetIdx);
+        }
+
         // Play the effect (passes killing so the card dissolves inside the flame) + damage
         // feedback in parallel. The icon refreshes ~1s in AFTER motes visually consume, but
         // ONLY on survive — a killing hit dissolves the whole card, so updating its energy
@@ -2301,11 +2307,6 @@ async function main(container: HTMLElement): Promise<void> {
         ]);
 
         if (killing) {
-            const aliveIdx = opponentAliveIndexOf(targetIdx);
-            if (aliveIdx >= 0) {
-                buryOpponentUnit(targetIdx);
-                battle.removeFromOpponentField(targetIdx);
-            }
             reflowOpponentField();
         }
     };
@@ -2340,8 +2341,7 @@ async function main(container: HTMLElement): Promise<void> {
             if (newHp <= 0) {
                 const aliveIdx = opponentAliveIndexOf(idx);
                 if (aliveIdx >= 0) {
-                    buryOpponentUnit(idx);
-                    battle.removeFromOpponentField(idx);
+                    defeatOpponentUnit(idx);
                 }
             }
         }
@@ -2535,13 +2535,14 @@ async function main(container: HTMLElement): Promise<void> {
         // plays the gather aura (deck "searched", nothing found) and fades — no motes.
         // 덱에서 뽑은 에너지 카드(죽음의 에너지)의 종족이 그대로 부착된다.
         const pulledRace = cardRaceOf(DEATH_ENERGY_CARD_ID) ?? CardRace.UNDEAD;
+        // 덱에서 이미 빠진 카드다. 연출을 기다리기 전에 무덤에 넣는다.
+        // 기다리는 동안 화면이 닫히면 덱에도 무덤에도 없는 카드가 생긴다.
+        for (const energyId of pulled) battle.sendToYourTomb(energyId);
+
         await overflowMoraleEffect.play(deckPos, targetPos, attached, () => {
             const newCount = addCardEnergy(target, pulledRace, 1);
             void updateCardEnergyVisual(target, newCount);
         });
-
-        // Consumed energy cards go to the tomb after the flow resolves.
-        for (const energyId of pulled) battle.sendToYourTomb(energyId);
     };
 
     // ─── 시체 폭발 (Corpse Explosion) — sacrifice + 2-pick targeting state ──────
@@ -2638,6 +2639,9 @@ async function main(container: HTMLElement): Promise<void> {
                 setOpponentHp(pick.cardIndex, newHp);
                 const entry = opponentEntries.find((oe) => oe.cardIndex === pick.cardIndex);
                 console.log(`[corpse-explosion] projectile → opponent idx=${pick.cardIndex}${entry ? ` cardId=${entry.card.cardId}` : ''} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
+                // 상태는 여기서 다 바꾼다. 연출이 다 끝날 때까지 미루면 그 사이에
+                // 체력만 0 이고 필드에 남아 있는 상태가 된다. 화면 정리는 뒤에서 한다.
+                if (newHp <= 0) defeatOpponentUnit(pick.cardIndex);
             }
         };
 
@@ -2658,17 +2662,12 @@ async function main(container: HTMLElement): Promise<void> {
         }
 
         const masterDied = masterPicked && battle.getOpponentMasterHp() <= 0 && masterGroup.visible;
+        // 여기부터는 화면 정리만 한다. 무덤과 필드에서 빼는 것은 이미 끝났다.
         const deadOpponentIndices: number[] = [];
         for (const idx of uniqueOpponentIdxs) {
-            const hp = opponentHpOf(idx);
-            if (hp > 0) continue;
+            if (isOpponentAlive(idx)) continue;
             const entry = opponentEntries.find((oe) => oe.cardIndex === idx);
             if (!entry || !entry.group.visible) continue;
-            const aliveIdx = opponentAliveIndexOf(idx);
-            if (aliveIdx >= 0) {
-                buryOpponentUnit(idx);
-                battle.removeFromOpponentField(idx);
-            }
             deadOpponentIndices.push(idx);
         }
         for (const idx of deadOpponentIndices) {
