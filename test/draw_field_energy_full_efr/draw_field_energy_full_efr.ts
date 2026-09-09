@@ -1610,6 +1610,18 @@ async function main(container: HTMLElement): Promise<void> {
                         // AoE — play animation first, then apply damage
                         console.log(`${btnType} (AoE, damage=${damage}) → hitting all opponents`);
                         const atkEntry = selectedAttackerEntry;
+
+                        // 때리는 것과 쓰러뜨리는 것은 전투가 한다. 본체까지 갈지도 여기서 정한다.
+                        // 연출을 기다리기 전에 값을 다 바꾼다. 기다리는 동안 화면이 닫혀도
+                        // 체력만 0 이고 필드에 남아 있는 어중간한 상태가 안 생긴다.
+                        const aoeEvents = send({
+                            type: skillType === SkillType.EveryField
+                                ? 'attackEveryOpponent'
+                                : 'attackEveryOpponentUnit',
+                            attackerBattleCardId: atkEntry?.cardIndex ?? -1,
+                            damage,
+                        });
+
                         if (atkEntry) {
                             clearAllSelection();
                             // 네더 블레이드 — only the bare move-to-panel + return motion
@@ -1623,13 +1635,14 @@ async function main(container: HTMLElement): Promise<void> {
                             }
                         }
 
-                        for (const idx of opponentAliveIds()) {
+                        for (const ev of aoeEvents) {
+                            if (ev.type !== 'damaged' || ev.target.kind !== 'unit') continue;
+                            const idx = ev.target.battleCardId;
                             const entry = opponentEntries.find((oe) => oe.cardIndex === idx);
                             if (!entry) continue;
 
-                            const currentHp = opponentHpOf(idx);
-                            const newHp = currentHp - damage;
-                            setOpponentHp(idx, newHp);
+                            const currentHp = ev.hpBefore;
+                            const newHp = ev.hpAfter;
 
                             // 차갑게 불타는 암흑 에너지 보유자의 광역기 — 맞은 전원에게 부여.
                             if (newHp > 0) applyColdDarkTraits(atkEntry, idx);
@@ -1665,12 +1678,9 @@ async function main(container: HTMLElement): Promise<void> {
                             }, 30);
 
                             if (newHp <= 0) {
-                                const capturedIdx = idx;
+                                // 무덤에 넣는 것은 전투가 이미 했다. 화면 정리만 늦춘다.
                                 setTimeout(() => {
-                                    const aliveIdx = opponentAliveIndexOf(capturedIdx);
-                                    if (aliveIdx >= 0) {
-                                        defeatOpponentUnit(capturedIdx);
-                                    }
+                                    entry.group.visible = false;
                                     reflowOpponentField();
                                 }, 450);
                             }
@@ -1678,11 +1688,12 @@ async function main(container: HTMLElement): Promise<void> {
                             console.log(`  opponent idx=${idx} HP: ${currentHp} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
                         }
 
-                        // EveryField also hits master
-                        if (skillType === SkillType.EveryField && battle.getOpponentMasterHp() > 0) {
-                            setOpponentMasterHp(battle.getOpponentMasterHp() - damage, `${btnType} (AoE EveryField)`);
-                            // 본체 피격 표현 없음 (투명 유지)
-                            if (battle.getOpponentMasterHp() <= 0) {
+                        // 본체까지 가는 광역기라면 그 결과도 함께 온다.
+                        for (const ev of aoeEvents) {
+                            if (ev.type === 'damaged' && ev.target.kind === 'opponentMaster') {
+                                opponentMasterHpRenderer.setHp(opponentMasterHpGroup, opponentMasterHpFrame, ev.hpAfter);
+                                console.log(`[opponent-master-hp] ${btnType} (AoE EveryField) → ${ev.hpBefore} → ${ev.hpAfter}`);
+                            } else if (ev.type === 'defeated' && ev.target.kind === 'opponentMaster') {
                                 setTimeout(() => { masterGroup.visible = false; }, 300);
                             }
                         }
@@ -1721,14 +1732,24 @@ async function main(container: HTMLElement): Promise<void> {
 
                 clearAllSelection();
 
+                // 때리는 것은 전투가 한다. 연출을 기다리기 전에 값을 다 바꾼다.
+                const events = send({
+                    type: 'attackOpponentMaster',
+                    attackerBattleCardId: attackerEntry?.cardIndex ?? -1,
+                    damage: atkPower,
+                });
+
                 if (attackerEntry) {
                     await attackAnimation.playAttack(attackerEntry.group, masterGroup, pendingAttackType);
                 }
 
-                setOpponentMasterHp(battle.getOpponentMasterHp() - atkPower, `attack on MASTER (ATK=${atkPower})`);
-
-                if (battle.getOpponentMasterHp() <= 0) {
-                    setTimeout(() => { masterGroup.visible = false; console.log('Opponent MASTER defeated!'); }, 300);
+                for (const ev of events) {
+                    if (ev.type === 'damaged' && ev.target.kind === 'opponentMaster') {
+                        opponentMasterHpRenderer.setHp(opponentMasterHpGroup, opponentMasterHpFrame, ev.hpAfter);
+                        console.log(`[opponent-master-hp] attack on MASTER (ATK=${atkPower}) → ${ev.hpBefore} → ${ev.hpAfter}`);
+                    } else if (ev.type === 'defeated' && ev.target.kind === 'opponentMaster') {
+                        setTimeout(() => { masterGroup.visible = false; console.log('Opponent MASTER defeated!'); }, 300);
+                    }
                 }
                 return;
             }
@@ -1760,15 +1781,22 @@ async function main(container: HTMLElement): Promise<void> {
 
                 clearAllSelection();
 
-                // Play attack animation before applying damage
+                const targetIdx = targetEntry.cardIndex;
+                // 때리는 것과 쓰러뜨리는 것은 전투가 한다.
+                // 연출을 기다리기 전에 값을 다 바꾼다.
+                const attackEvents = send({
+                    type: 'attackUnit',
+                    attackerBattleCardId: attackerEntry?.cardIndex ?? -1,
+                    targetBattleCardId: targetIdx,
+                    damage: attackPower,
+                });
+
                 if (attackerEntry) {
                     await attackAnimation.playAttack(attackerEntry.group, targetEntry.group, pendingAttackType);
                 }
-
-                const targetIdx = targetEntry.cardIndex;
-                const currentHp = opponentHpOf(targetIdx);
-                const newHp = currentHp - attackPower;
-                setOpponentHp(targetIdx, newHp);
+                const hit = attackEvents.find((ev) => ev.type === 'damaged');
+                const currentHp = hit && hit.type === 'damaged' ? hit.hpBefore : 0;
+                const newHp = hit && hit.type === 'damaged' ? hit.hpAfter : 0;
 
                 // 차갑게 불타는 암흑 에너지 보유자의 공격/단일기 — 맞은 대상에게 부여.
                 if (newHp > 0) applyColdDarkTraits(attackerEntry, targetIdx);
@@ -1788,11 +1816,9 @@ async function main(container: HTMLElement): Promise<void> {
                 });
 
                 if (newHp <= 0) {
+                    // 무덤에 넣는 것은 전투가 이미 했다. 화면 정리만 늦춘다.
                     setTimeout(() => {
-                        const aliveIdx = opponentAliveIndexOf(targetIdx);
-                        if (aliveIdx >= 0) {
-                            defeatOpponentUnit(targetIdx);
-                        }
+                        targetEntry.group.visible = false;
                         reflowOpponentField();
                         console.log(`Opponent idx=${targetIdx} defeated! Remaining: ${battle.getOpponentFieldCount()}`);
                     }, 300);
