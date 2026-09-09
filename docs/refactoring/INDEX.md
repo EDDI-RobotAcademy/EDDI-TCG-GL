@@ -112,10 +112,14 @@
 | **R2-85** | Strategy | Battle Ability | [카드 사용 시 선택이 여러 단계로 나뉘는 경우의 처리 방법 결정](R2-85-multi-step-abilities.md) | R2-68 | **완료** |
 | **R2-86** | Rendering | Battle 공용 | [창 크기 변경 시 무덤과 로스트 존 다시 그리기](R2-86-resize-zone-panels.md) | R2-72 | **완료** |
 | **R2-87** | Rendering | Battle Field | [창 크기 변경 시 상대 필드 다시 그리기를 렌더러가 맡게 한다](R2-87-opponent-field-layout-to-renderer.md) | R2-86 | **완료** |
-| **R2-88** | Rendering | Battle 공용 | 창 크기 변경 시 액티브 패널 닫기 | R2-86 | 예정 |
-| **R2-89** | Rule | Battle | 멀리건을 더해 1대1 대전이 되게 한다 | R2-75 | 예정 |
-| **R2-90** | Structure | Platform | 사용자에게 내보낼 것을 만드는 명령을 만든다 | R2-82 | 예정 |
-| **R2-91** | Rendering | Battle 공용 | 체력과 무기 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정. **숫자 없는 바탕 그림 셋이 있어야 한다** |
+| **R2-88** | Rendering | Battle 공용 | [창 크기 변경 시 액티브 패널을 카드 따라 옮기기](R2-88-move-active-panel-with-card.md) | R2-86 | **완료** |
+| **R2-89** | Rendering | Battle 공용 | [창 크기 변경 시 본체와 필드 겨냥 표시 자리 맞추기](R2-89-resize-targeting-areas.md) | R2-88 | **완료** |
+| **R2-90** | Rendering | Battle Unit | [연출 도중 창 크기가 바뀌어도 카드가 제자리로 돌아오게 한다](R2-90-skill-trip-home.md) | R2-89 | **완료** |
+| **R2-91** | Rendering | Battle 공용 | [연출 도중 창 크기가 바뀌어도 연출이 함께 커지고 작아지게 한다](R2-91-effect-follows-viewport.md) | R2-90 | **완료** |
+| **R2-92** | Rendering | Battle 공용 | 나머지 연출 열하나도 창 크기를 따라가게 한다 | R2-91 | 예정 |
+| **R2-93** | Rendering | Battle 공용 | 체력과 무기 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정. **숫자 없는 바탕 그림 셋이 있어야 한다** |
+| **R2-94** | Rule | Battle | 멀리건을 더해 1대1 대전이 되게 한다 | R2-75 | 예정 |
+| **R2-95** | Structure | Platform | 사용자에게 내보낼 것을 만드는 명령을 만든다 | R2-82 | 예정 |
 
 ### Type — 무엇을 바꾸는 작업인가
 

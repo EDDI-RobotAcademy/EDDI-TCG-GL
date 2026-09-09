@@ -34,7 +34,9 @@ export class AnimationBasics {
             const t = Math.min((performance.now() - start) / duration, 1);
             mat.uniforms.u_time.value = t;
             if (t < 1) requestAnimationFrame(tick);
-            else { this.scene.remove(mesh); geo.dispose(); mat.dispose(); }
+            // 붙어 있는 곳에서 뺀다. 연출을 한 겹으로 묶어 두면 그 겹에서 빼야 하므로
+            // 화면에서 빼는 것으로 정해 두면 안 빠진다.
+            else { mesh.removeFromParent(); geo.dispose(); mat.dispose(); }
         };
         requestAnimationFrame(tick);
     }
