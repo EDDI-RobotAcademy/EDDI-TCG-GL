@@ -48,6 +48,10 @@ export class BattleCommandHandler {
                     battle, command.battleCardId, command.side,
                     command.pickedDeckIndexes, command.shuffleSeed,
                 );
+            case 'attachFieldEnergyToUnit':
+                return this.attachFieldEnergyToUnit(
+                    battle, command.targetBattleCardId, command.race,
+                );
             case 'attackUnit':
                 return this.attackUnit(battle, command.targetBattleCardId, command.damage);
             case 'attackOpponentMaster':
@@ -382,6 +386,28 @@ export class BattleCommandHandler {
 
         events.push(...this.spendHandCard(battle, battleCardId, cardId));
         return events;
+    }
+
+    // 필드 에너지 하나를 내 유닛에 붙인다.
+    //
+    // 필드 에너지는 내 턴이 시작될 때마다 하나씩 는 것이고, 그것을 유닛에 옮겨 담는다.
+    // 카드를 쓰는 것이 아니므로 손패에서 빠지는 카드가 없다.
+    private attachFieldEnergyToUnit(
+        battle: Battle, targetId: number, race: CardRace,
+    ): BattleEvent[] {
+        const target = battle.findOnYourField(targetId);
+        if (!target) return [{type: 'rejected', reason: '내 필드에 없는 유닛입니다.'}];
+
+        const before = battle.getFieldEnergy();
+        if (!battle.spendFieldEnergy(1)) {
+            return [{type: 'rejected', reason: '쓸 수 있는 필드 에너지가 없습니다.'}];
+        }
+        const countAfter = target.addEnergy(race, 1);
+
+        return [
+            {type: 'valueChanged', what: 'fieldEnergy', before, after: battle.getFieldEnergy()},
+            {type: 'energyAttached', battleCardId: targetId, race, countAfter},
+        ];
     }
 
     /* ── 공격과 스킬 ── */

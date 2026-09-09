@@ -413,7 +413,7 @@ async function main(container: HTMLElement): Promise<void> {
     const placedOrder: HandEntry[] = [];
     // 출격 멀미(summoning sickness) — 유닛이 필드에 나온 턴 번호. 같은 턴에는 공격/스킬을
     // 쓸 수 없다. HandEntry로 키잉해 중복 cardId 사본이 서로의 상태를 공유하지 않게 한다
-    // (placedCardEnergy와 동일한 이유).
+    // (카드에 붙은 에너지를 HandEntry 로 가리키는 것과 같은 이유다).
     const deployedTurn = new Map<HandEntry, number>();
     const MAX_PER_PAGE = 4;
     let currentPage = 1;
@@ -859,8 +859,10 @@ async function main(container: HTMLElement): Promise<void> {
         entry: HandEntry,
         cost: Map<CardRace, number>,
     ): { race: CardRace; need: number; have: number } | null {
+        // 붙은 에너지는 전투가 든다. 화면이 따로 세던 것을 지웠다.
+        const unit = battle.findOnYourField(entry.cardIndex);
         for (const [race, need] of cost) {
-            const have = cardEnergyOfRace(entry, race);
+            const have = unit?.getEnergyOfRace(race) ?? 0;
             if (have < need) return { race, need, have };
         }
         return null;
@@ -1901,11 +1903,11 @@ async function main(container: HTMLElement): Promise<void> {
     });
 
     // Field energy → card attachment. Intercepts clicks BEFORE bridge when fieldEnergyActive.
-    // 카드에 붙은 에너지를 **종족별로** 보관한다. 스킬 비용이 종족별 3개 열
+    //
+    // 카드에 붙은 에너지는 전투가 든다. 종족마다 따로 센다 — 스킬 비용이 종족별 3개 열
     // (스킬N 언데드/휴먼/트런트필요에너지)로 정의되어 있고, 앞으로 여러 종족을 동시에
     // 요구하는 스킬이 추가될 예정이라 총량만으로는 판정할 수 없다.
-    // 바깥 Map은 HandEntry 키 — 중복 cardId 사본이 카운터/메쉬를 공유하지 않게 한다.
-    const placedCardEnergy = new Map<HandEntry, Map<CardRace, number>>();
+    // 화면은 그 위에 얹은 그림만 든다.
     const cardEnergyMeshes = new Map<HandEntry, { iconMesh: THREE.Mesh; textMesh: THREE.Mesh }>();
 
     // Race HUD에서 선택 중인 종족. 필드 에너지를 카드에 붙일 때 이 값이 그대로 기록되므로
@@ -1915,27 +1917,7 @@ async function main(container: HTMLElement): Promise<void> {
 
     // 카드 UI(아이콘 위 숫자)와 Count HUD는 종족 구분 없이 총합 하나만 보여준다.
     function totalCardEnergy(entry: HandEntry): number {
-        const byRace = placedCardEnergy.get(entry);
-        if (!byRace) return 0;
-        let sum = 0;
-        for (const v of byRace.values()) sum += v;
-        return sum;
-    }
-
-    function cardEnergyOfRace(entry: HandEntry, race: CardRace): number {
-        return placedCardEnergy.get(entry)?.get(race) ?? 0;
-    }
-
-    // 에너지 부착의 유일한 기록 지점. 갱신된 총합을 돌려주므로 호출부는 그대로
-    // updateCardEnergyVisual에 넘기면 된다.
-    function addCardEnergy(entry: HandEntry, race: CardRace, amount: number): number {
-        let byRace = placedCardEnergy.get(entry);
-        if (!byRace) {
-            byRace = new Map<CardRace, number>();
-            placedCardEnergy.set(entry, byRace);
-        }
-        byRace.set(race, (byRace.get(race) ?? 0) + amount);
-        return totalCardEnergy(entry);
+        return battle.findOnYourField(entry.cardIndex)?.getEnergyCount() ?? 0;
     }
 
     // cardData의 "종족" 열은 문자열("1"~"3")이다. 알 수 없는 값이면 null.
@@ -1970,7 +1952,7 @@ async function main(container: HTMLElement): Promise<void> {
     // Used by attachEnergyToCard (field-energy → card) AND by the overflow-morale flow
     // (deck-energy → card). Source-of-energy tracking is the CALLER's responsibility.
     async function updateCardEnergyVisual(entry: HandEntry, newCount: number): Promise<void> {
-        // 저장은 addCardEnergy가 담당한다 — 여기서는 아이콘/숫자/HUD만 갱신.
+        // 저장은 전투가 한다 — 여기서는 아이콘/숫자/HUD만 갱신.
         countRenderer.setCount(newCount);
         countRenderer.update(countFrame, countElement, window.innerWidth, window.innerHeight);
 
@@ -2130,13 +2112,20 @@ async function main(container: HTMLElement): Promise<void> {
     }
 
     async function attachEnergyToCard(entry: HandEntry): Promise<void> {
-        if (battle.getFieldEnergy() <= 0) return;
         if (!placedOrder.includes(entry)) return;
 
-        battle.spendFieldEnergy(1);
         // 붙는 에너지의 종족 = Race HUD에서 선택 중인 종족.
+        // 쓸 수 있는지 보고 깎고 붙이는 것은 전투가 한다.
         const race = currentRaceId as CardRace;
-        const cardEnergy = addCardEnergy(entry, race, 1);
+        const events = send({
+            type: 'attachFieldEnergyToUnit',
+            targetBattleCardId: entry.cardIndex,
+            race,
+        });
+        const attached = events.find((ev) => ev.type === 'energyAttached');
+        if (!attached || attached.type !== 'energyAttached') return;
+
+        const cardEnergy = attached.countAfter;
 
         energyRenderer.setEnergy(battle.getFieldEnergy());
         energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
@@ -2623,7 +2612,6 @@ async function main(container: HTMLElement): Promise<void> {
         await overflowMoraleEffect.play(deckPos, targetPos, attached, () => {
             const ev = attachedEvents[overflowArrival++];
             const newCount = ev && ev.type === 'energyAttached' ? ev.countAfter : 0;
-            addCardEnergy(target, pulledRace, 1);
             void updateCardEnergyVisual(target, newCount);
         });
     };
@@ -3562,11 +3550,15 @@ async function main(container: HTMLElement): Promise<void> {
                         const droppedRace = cardRaceOf(cardId) ?? CardRace.UNDEAD;
                         const isColdDark = cardId === COLD_DARK_ENERGY_CARD_ID;
                         void overflowMoraleEffect.playDirectAttach(targetWorld, () => {
+                            // 죽음의 에너지는 전투가 붙였다. 암흑 에너지는 아직 화면이 붙인다.
                             const attached = attachEvents?.find((ev) => ev.type === 'energyAttached');
-                            addCardEnergy(allyTarget, droppedRace, 1);
-                            const newCount = attached && attached.type === 'energyAttached'
-                                ? attached.countAfter
-                                : cardEnergyOfRace(allyTarget, droppedRace);
+                            let newCount: number;
+                            if (attached && attached.type === 'energyAttached') {
+                                newCount = attached.countAfter;
+                            } else {
+                                const unit = battle.findOnYourField(allyTarget.cardIndex);
+                                newCount = unit ? unit.addEnergy(droppedRace, 1) : 0;
+                            }
                             void updateCardEnergyVisual(allyTarget, newCount);
                             if (isColdDark) {
                                 // 종족 에너지 부여에 더해 암흑 화염 + 빙결 부여 능력이 붙는다.

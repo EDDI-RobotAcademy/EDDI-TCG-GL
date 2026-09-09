@@ -93,7 +93,7 @@
 | **R2-66** | Rule | Battle Ability | [카드 능력을 쓰는 일을 전투 상태가 처리한다](R2-66-use-card-ability.md) | R2-65 | **완료** |
 | **R2-67** | Rule | Battle Unit | [공격과 스킬을 전투 상태가 처리한다](R2-67-attack-and-skill.md) | R2-66 | **완료** |
 | **R2-68** | Rule | Battle Ability | [남은 카드 일곱을 전투 상태가 처리하게 한다](R2-68-remaining-card-abilities.md) | R2-67 | **완료** |
-| **R2-69** | Rendering | Battle | 화면이 전투 상태에서 돌려받은 것만 보고 그리게 한다 | R2-68 | 예정 |
+| **R2-69** | Rendering | Battle | [화면이 전투 상태에서 돌려받은 것만 보고 그리게 한다](R2-69-screen-reads-only-events.md) | R2-68 | **완료** |
 | **R2-70** | Rendering | Battle | 화면 표시가 상태를 들고 있지 않게 한다 | R2-57 | 예정 |
 | **R2-71** | Rule | Battle Active Panel | 액티브 패널이 화면과 카메라를 들지 않게 한다 | R2-44 | 예정 |
 | **R2-72** | Rendering | Battle Active Panel | 액티브 패널 버튼을 만드는 일을 렌더러로 옮긴다 | R2-71 | 예정 |
