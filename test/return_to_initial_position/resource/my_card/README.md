@@ -1,1 +1,0 @@
-# Place Every My Card Resource to here

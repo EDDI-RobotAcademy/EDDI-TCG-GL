@@ -1,1 +1,0 @@
-# Place Your Hand Next / Prev Button Resource to here
