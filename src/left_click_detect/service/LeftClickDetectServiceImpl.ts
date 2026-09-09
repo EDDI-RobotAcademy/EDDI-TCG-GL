@@ -194,7 +194,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
         this.yourHandAttributeMarkManager = YourHandAttributeMarkManager.getInstance();
         this.yourFieldAttributeMarkManager = YourFieldAttributeMarkManager.getInstance()
 
-        this.activePanelAreaCache = ActivePanelAreaCacheImpl.getInstance(camera, scene)
+        this.activePanelAreaCache = ActivePanelAreaCacheImpl.getInstance()
         this.selectedActivePanelButtonStore = SelectedActivePanelButtonStoreImpl.getInstance()
         this.activePanelButtonHandler = ActivePanelButtonHandler.getInstance(camera, scene)
     }
@@ -360,7 +360,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             this.neonBorderHandler.deactivateEveryExistOpponentNeonBorder()
             this.neonBorderHandler.deactivateExistNeonBorder(prevYourFieldCard)
             this.neonBorderHandler.deactivateOpponentMasterNeonBorder()
-            this.activePanelAreaCache.delete();
+            this.activePanelAreaCache.close(this.scene);
         }
 
         this.dragMoveRepository.setSelectedObject(clickedHandCard);
@@ -396,7 +396,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
 
         // this.activateExistNeonBorder(clickedYourFieldCard);
         this.neonBorderHandler.deactivateEveryExistNeonBorder()
-        this.activePanelAreaCache.delete();
+        this.activePanelAreaCache.close(this.scene);
         this.neonBorderHandler.activateExistNeonBorder(clickedYourFieldCard);
 
         if (prevYourFieldCard && prevYourFieldCard.getId() === clickedYourFieldCard.getId()) {
@@ -408,7 +408,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             this.neonBorderHandler.deactivateEveryExistOpponentNeonBorder()
             this.neonBorderHandler.deactivateExistNeonBorder(prevYourFieldCard)
             this.neonBorderHandler.deactivateOpponentMasterNeonBorder()
-            this.activePanelAreaCache.delete();
+            this.activePanelAreaCache.close(this.scene);
         }
 
         this.dragMoveRepository.setSelectedObject(clickedYourFieldCard);
@@ -455,7 +455,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
             console.log(`prevOpponentFieldCard: ${prevOpponentFieldCard}`)
 
             this.neonBorderHandler.deactivateEveryExistNeonBorder()
-            this.activePanelAreaCache.delete();
+            this.activePanelAreaCache.close(this.scene);
             this.neonBorderHandler.activateExistOpponentNeonBorder(clickedOpponentFieldCard);
 
             if (prevOpponentFieldCard && prevOpponentFieldCard.getId() === clickedOpponentFieldCard.getId()) {
@@ -467,7 +467,7 @@ export class LeftClickDetectServiceImpl implements LeftClickDetectService {
                 this.neonBorderHandler.deactivateEveryExistOpponentNeonBorder()
                 this.neonBorderHandler.deactivateExistNeonBorder(prevOpponentFieldCard)
                 this.neonBorderHandler.deactivateOpponentMasterNeonBorder()
-                this.activePanelAreaCache.delete();
+                this.activePanelAreaCache.close(this.scene);
             }
 
             this.dragMoveRepository.setSelectedObject(clickedOpponentFieldCard);

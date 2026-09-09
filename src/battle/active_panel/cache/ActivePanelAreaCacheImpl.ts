@@ -1,110 +1,41 @@
 import * as THREE from "three";
 import {ActivePanelAreaCache} from "./ActivePanelAreaCache";
-import {TextureManager} from "../../../texture_manager/TextureManager";
-import {MeshGenerator} from "../../../mesh/generator";
 import {Vector2d} from "../../../common/math/Vector2d";
 import {getCardById} from "../../../card/utility";
-import {BattleFieldConstants} from "../../../common/BattleFieldConstants";
 import {SelectedActivePanelButtonStore} from "../store/SelectedActivePanelButtonStore";
 import {SelectedActivePanelButtonStoreImpl} from "../store/SelectedActivePanelButtonStoreImpl";
+import {createLegacyActivePanelFrame} from "../frame/LegacyActivePanelFrame";
+import {LegacyActivePanelRenderer, LegacyActivePanelParts} from "../renderer/LegacyActivePanelRenderer";
 
 export class ActivePanelAreaCacheImpl implements ActivePanelAreaCache {
     private static instance: ActivePanelAreaCacheImpl | null = null;
-    private activePanel: THREE.Mesh | null = null;
-    private scene: THREE.Scene;
-    private camera: THREE.Camera;
 
-    private textureManager = TextureManager.getInstance();
+    private parts: LegacyActivePanelParts | null = null;
 
-    private activeButtons: THREE.Mesh[] = []; // 추가: 버튼들 추적용 배열
-
-    private readonly ACTIVE_PANEL_WIDTH_RATIO = BattleFieldConstants.ACTIVE_PANEL_WIDTH_RATIO;
-    private readonly ACTIVE_PANEL_HEIGHT_RATIO = BattleFieldConstants.ACTIVE_PANEL_HEIGHT_RATIO;
-
-    private readonly ACTIVE_PANEL_BUTTON_WIDTH_RATIO = BattleFieldConstants.ACTIVE_PANEL_BUTTON_WIDTH_RATIO;
-    private readonly ACTIVE_PANEL_BUTTON_HEIGHT_RATIO = BattleFieldConstants.ACTIVE_PANEL_BUTTON_HEIGHT_RATIO;
-
-    private readonly FIRST_SKILL = 1;
-    private readonly SECOND_SKILL = 2;
+    // 만드는 일은 렌더러가 한다. 그래서 여기는 화면과 카메라를 안 든다.
+    //
+    // 전에는 이 곳이 버튼을 만들어 화면에 붙였다. 그러려면 화면과 카메라가 필요했고,
+    // 혼자만 있는 것이라 처음 만든 화면에 묶였다. 화면이 둘이면 뒤엣것에 안 그려진다.
+    private readonly renderer = new LegacyActivePanelRenderer();
+    private readonly frame = createLegacyActivePanelFrame();
 
     // 고른 버튼 값의 주인은 이쪽이 아니다. 패널을 치울 때 함께 처음으로 돌리기만 한다.
-    private selectedActivePanelButtonStore: SelectedActivePanelButtonStore =
+    private readonly selectedActivePanelButtonStore: SelectedActivePanelButtonStore =
         SelectedActivePanelButtonStoreImpl.getInstance();
 
-    private constructor(camera: THREE.Camera, scene: THREE.Scene) {
-        this.camera = camera;
-        this.scene = scene;
-    }
+    private constructor() {}
 
-    static getInstance(camera: THREE.Camera, scene: THREE.Scene): ActivePanelAreaCacheImpl {
+    static getInstance(): ActivePanelAreaCacheImpl {
         if (!ActivePanelAreaCacheImpl.instance) {
-            ActivePanelAreaCacheImpl.instance = new ActivePanelAreaCacheImpl(camera, scene);
+            ActivePanelAreaCacheImpl.instance = new ActivePanelAreaCacheImpl();
         }
         return ActivePanelAreaCacheImpl.instance;
     }
 
-    private async createButton(
-        type: 'general' | 'details' | 'firstSkill' | 'secondSkill',
-        cardId: number,
-        width: number,
-        height: number,
-        pos: Vector2d,
-        panelHeight: number,
-        margin: number,
-        skillCount: number
-    ): Promise<THREE.Mesh | null> {
-        let texture: THREE.Texture | null | undefined = null;
-
-        if (type === 'general') {
-            texture = await this.textureManager.getTexture("active_panel_general", 1);
-        } else if (type === 'details') {
-            texture = await this.textureManager.getTexture("active_panel_details", 1);
-        } else if (type === 'firstSkill' && skillCount > 0) {
-            texture = await this.textureManager.getSkillButtonTexture(cardId, 1);
-        } else if (type === 'secondSkill' && skillCount > 1) {
-            texture = await this.textureManager.getSkillButtonTexture(cardId, 2);
-        }
-
-        if (!texture) {
-            console.warn(`${type} 버튼 텍스처 없음`);
-            return null;
-        }
-
-        const mesh = MeshGenerator.createMesh(texture, width, height, pos);
-        mesh.renderOrder = 4;
-
-        const generalY = panelHeight * 0.5 - height * 0.5 - margin * 0.5;
-        const detailsY = panelHeight * 0.5 - height * (1.5 + skillCount) - margin * (skillCount + 1.75);
-
-        const step = skillCount > 0
-            ? (generalY - detailsY) / (skillCount + 1)
-            : 0;
-
-        const yOffset = (() => {
-            switch (type) {
-                case 'general':
-                    return generalY;
-
-                case 'details':
-                    return detailsY;
-
-                case 'firstSkill':
-                    if (skillCount >= 1) return generalY - step * this.FIRST_SKILL;
-                    return 0;
-
-                case 'secondSkill':
-                    if (skillCount >= 2) return generalY - step * this.SECOND_SKILL;
-                    return 0;
-            }
-        })();
-
-        mesh.position.set(pos.getX(), pos.getY() + yOffset, mesh.position.z);
-        mesh.userData.type = type;
-        return mesh;
-    }
-
-    async create(x: number, y: number, cardId: number): Promise<void> {
-        if (this.activePanel) {
+    async open(
+        scene: THREE.Scene, camera: THREE.Camera, x: number, y: number, cardId: number,
+    ): Promise<void> {
+        if (this.parts) {
             console.warn("이미 Active Panel이 존재합니다.");
             return;
         }
@@ -114,86 +45,49 @@ export class ActivePanelAreaCacheImpl implements ActivePanelAreaCache {
 
         const skillCount = Number(card["스킬 개수" as keyof typeof card]) || 0;
 
-        const width = this.ACTIVE_PANEL_WIDTH_RATIO * window.innerWidth;
-        const height = this.ACTIVE_PANEL_HEIGHT_RATIO * window.innerWidth * (skillCount + 2);
-        const heightMargin = (this.ACTIVE_PANEL_HEIGHT_RATIO - this.ACTIVE_PANEL_BUTTON_HEIGHT_RATIO) * window.innerWidth;
+        // 누른 자리를 화면 좌표로 옮긴다. 패널의 가운데가 된다.
+        const center = this.resolveCenter(camera, x, y, skillCount);
 
-        const geometry = new THREE.PlaneGeometry(width, height + heightMargin);
-        const material = new THREE.MeshBasicMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.6,
-            depthTest: false
-        });
-
-        this.activePanel = new THREE.Mesh(geometry, material);
-        this.activePanel.renderOrder = 2;
-
-        const mouse = new THREE.Vector3(
-            ((x + width * 0.5) / window.innerWidth) * 2 - 1,
-            -((y + height * 0.5) / window.innerHeight) * 2 + 1,
-            0
-        );
-        mouse.unproject(this.camera);
-        this.activePanel.position.copy(mouse);
-        this.scene.add(this.activePanel);
-
-        const buttonWidth = this.ACTIVE_PANEL_BUTTON_WIDTH_RATIO * window.innerWidth;
-        const buttonHeight = this.ACTIVE_PANEL_BUTTON_HEIGHT_RATIO * window.innerWidth;
-        const buttonPos = new Vector2d(mouse.x, mouse.y);
-
-        const buttons: Array<'general' | 'details' | 'firstSkill' | 'secondSkill'> = [
-            'general',
-            'details',
-            'firstSkill',
-            'secondSkill'
-        ];
-
-        for (const type of buttons) {
-            const button = await this.createButton(type, cardId, buttonWidth, buttonHeight, buttonPos, height, heightMargin, skillCount);
-            if (button) {
-                this.scene.add(button);
-                this.activeButtons.push(button);
-                console.log(`${type} 버튼 추가 완료`, button.position);
-            }
+        this.parts = await this.renderer.build(this.frame, center, cardId, skillCount);
+        scene.add(this.parts.panel);
+        for (const button of this.parts.buttons) {
+            scene.add(button);
+            console.log(`${button.userData.type} 버튼 추가 완료`, button.position);
         }
     }
 
-    delete(): void {
-        if (this.activePanel) {
-            this.scene.remove(this.activePanel);
-            this.activePanel.geometry.dispose();
-            if (this.activePanel.material instanceof THREE.Material) {
-                this.activePanel.material.dispose();
-            }
-            this.activePanel = null;
-        } else {
+    close(scene: THREE.Scene): void {
+        if (!this.parts) {
             console.warn("삭제할 Active Panel 없음");
+        } else {
+            scene.remove(this.parts.panel);
+            for (const button of this.parts.buttons) scene.remove(button);
+            this.renderer.dispose(this.parts);
+            this.parts = null;
         }
-
-        // 추가: 버튼들 제거
-        this.activeButtons.forEach((button) => {
-            this.scene.remove(button);
-
-            for (const key in button.userData) {
-                delete button.userData[key];
-            }
-
-            button.geometry.dispose();
-            if (button.material instanceof THREE.Material) {
-                button.material.dispose();
-            }
-        });
-        this.activeButtons = []; // 참조 초기화
         this.selectedActivePanelButtonStore.clear();
     }
 
     exists(): boolean {
-        return this.activePanel !== null;
+        return this.parts !== null;
     }
 
     getActiveButtons(): THREE.Mesh[] {
-        return this.activeButtons;
+        return this.parts?.buttons ?? [];
+    }
+
+    // 누른 자리에서 패널 가운데를 잡는다. 옛 방식 그대로다.
+    private resolveCenter(
+        camera: THREE.Camera, x: number, y: number, skillCount: number,
+    ): Vector2d {
+        const width = this.frame.panelWidthRatio * window.innerWidth;
+        const height = this.frame.panelHeightRatio * window.innerWidth * (skillCount + 2);
+        const point = new THREE.Vector3(
+            ((x + width * 0.5) / window.innerWidth) * 2 - 1,
+            -((y + height * 0.5) / window.innerHeight) * 2 + 1,
+            0,
+        );
+        point.unproject(camera);
+        return new Vector2d(point.x, point.y);
     }
 }
-
