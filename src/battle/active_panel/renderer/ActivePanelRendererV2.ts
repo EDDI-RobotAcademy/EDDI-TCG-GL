@@ -4,6 +4,7 @@ import { ActivePanelFrame, ActivePanelButtonSpec } from "../frame/ActivePanelFra
 
 interface PanelUserData {
     buttons: THREE.Mesh[];
+    background: THREE.Mesh;
 }
 
 export class ActivePanelRendererV2 {
@@ -58,9 +59,45 @@ export class ActivePanelRendererV2 {
             buttons.push(mesh);
         }
 
-        const userData: PanelUserData = { buttons };
+        const userData: PanelUserData = { buttons, background: bgMesh };
         group.userData = userData;
         return group;
+    }
+
+    // 창 크기가 바뀌었을 때. 버튼 크기가 창 너비에서 나오므로 크기와 자리를 다시 잡는다.
+    //
+    // 어디에 설지는 밖에서 받는다. 이 패널은 처음에 우클릭한 자리에 뜨는데, 창이 바뀌면
+    // 그 카드가 다른 자리로 가기 때문에 카드를 따라온 자리를 화면이 재서 준다.
+    //
+    // 그림은 그대로 두고 크기와 자리만 고친다. 다시 만들면 누를 것이 통째로 바뀌어
+    // 열려 있는 패널을 누르던 중에 놓친다.
+    public resize(
+        frame: ActivePanelFrame,
+        group: THREE.Group,
+        anchor: { x: number; y: number },
+        viewportWidth: number,
+    ): void {
+        const { buttons, background } = group.userData as PanelUserData;
+        if (buttons.length === 0) return;
+
+        const btnW = frame.buttonWidthRatio * viewportWidth;
+        const btnH = frame.buttonHeightRatio * viewportWidth;
+        const gap = frame.buttonGapRatio * viewportWidth;
+        const padding = btnW * 0.15;
+
+        const totalHeight = buttons.length * btnH + (buttons.length - 1) * gap;
+        const startY = anchor.y + totalHeight / 2 - btnH / 2;
+
+        background.geometry?.dispose();
+        background.geometry = new THREE.PlaneGeometry(btnW + padding * 2, totalHeight + padding * 2);
+        background.position.set(anchor.x, anchor.y, 0.4);
+
+        for (let i = 0; i < buttons.length; i++) {
+            const mesh = buttons[i];
+            mesh.geometry?.dispose();
+            mesh.geometry = new THREE.PlaneGeometry(btnW, btnH);
+            mesh.position.set(anchor.x, startY - i * (btnH + gap), 0.5);
+        }
     }
 
     public dispose(group: THREE.Group): void {
