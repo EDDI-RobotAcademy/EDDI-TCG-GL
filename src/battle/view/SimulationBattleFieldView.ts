@@ -1,4 +1,5 @@
 import { CameraManager } from "../../core/camera/CameraManager";
+import { SeaOfSpecterEffect } from "../animation/skill/veln/SeaOfSpecterEffect";
 import { installTween } from "../../core/tween/Tween";
 import { HandCard } from "../../battle/domain/HandCard";
 import { BattleCommandHandler, CardCatalog } from "../../battle/flow/BattleCommandHandler";
@@ -1004,6 +1005,8 @@ export class SimulationBattleFieldView implements Component {
         // 화면을 감출 때 멈추려면 밖에서도 잡을 수 있어야 한다.
         this.animationLoop = animationLoop;
         const attackAnimation = new AttackAnimationV2(scene);
+        // 벨른의 광역기. 공격 연출과 다른 카드의 것이라 따로 든다.
+        const seaOfSpecterEffect = new SeaOfSpecterEffect(scene);
         const scytheCutEffect = new ScytheCutEffect(scene);
         const energyBurnEffect = new EnergyBurnEffect(scene);
         // DoomContract takes extra deps: it uses a render-target + warp shader pipeline, which
@@ -1714,7 +1717,7 @@ export class SimulationBattleFieldView implements Component {
                                 if (atkEntry.card.cardId === NETHER_BLADE_CARD_ID) {
                                     await playSkillPanelMoveOnly(atkEntry.group);
                                 } else {
-                                    await attackAnimation.playAoESkill(atkEntry.group);
+                                    await seaOfSpecterEffect.play(atkEntry.group);
                                 }
                             }
 
