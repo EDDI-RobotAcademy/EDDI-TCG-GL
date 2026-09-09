@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import {GuideMessageHudRendererV2} from "../common/guide_message/renderer/GuideMessageHudRendererV2";
+import {createDefaultGuideMessageHudFrame} from "../common/guide_message/frame/GuideMessageHudFrame";
 import { TextureManager } from "../texture_manager/TextureManager";
 import { NonBackgroundImage } from "../shape/image/NonBackgroundImage";
 import { LobbyButtonConfigList } from "./LobbyButtonConfigList";
@@ -23,6 +25,11 @@ export class TCGMainLobbyView implements Component {
     private audioController: AudioController;
     private mouseController: MouseController;
     private routeMap: RouteMap;
+
+    // 아직 못 가는 곳을 눌렀을 때 알려 준다.
+    private readonly guideRenderer = new GuideMessageHudRendererV2();
+    private readonly guideFrame = createDefaultGuideMessageHudFrame();
+    private guideElement: HTMLElement | null = null;
 
     private initialized = false;
     private isAnimating = false;
@@ -124,6 +131,14 @@ export class TCGMainLobbyView implements Component {
     public hide(): void {
         console.log('Hiding TCGMainLobbyView...');
         this.isAnimating = false;
+
+        // 로비를 떠날 때 안내 문구도 함께 치운다.
+        if (this.guideElement) {
+            this.guideRenderer.dispose(this.guideElement);
+            this.guideElement.remove();
+            this.guideElement = null;
+        }
+
         this.renderer.domElement.style.display = 'none';
         this.lobbyContainer.style.display = 'none';
 
@@ -192,7 +207,9 @@ export class TCGMainLobbyView implements Component {
         console.log('Button clicked:', type);
         switch (type) {
             case LobbyButtonType.OneVsOne:
-                this.routeMap.navigate("/one-vs-one");
+                // 상대를 찾는 화면이 아직 없다. 없는 길로 보내면 로비로 되돌아와서
+                // 아무 일도 안 일어난 것처럼 보인다. 그래서 알려 준다.
+                void this.showGuide('1대1 대전은 준비 중입니다.');
                 break;
             case LobbyButtonType.MyCards:
                 this.routeMap.navigate("/tcg-my-card");
@@ -207,6 +224,15 @@ export class TCGMainLobbyView implements Component {
             default:
                 console.error("Unknown button type:", type);
         }
+    }
+
+    // 안내 문구를 띄운다. 처음 부를 때 만든다.
+    private async showGuide(message: string): Promise<void> {
+        if (!this.guideElement) {
+            this.guideElement = await this.guideRenderer.build(this.guideFrame);
+            document.body.appendChild(this.guideElement);
+        }
+        this.guideRenderer.show(this.guideElement, message, 3000);
     }
 
     private onWindowResize(): void {
