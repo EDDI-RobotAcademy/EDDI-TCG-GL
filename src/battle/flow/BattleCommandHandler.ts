@@ -40,6 +40,14 @@ export class BattleCommandHandler {
                 return this.useCardOnUnit(battle, command.battleCardId, command.targetBattleCardId);
             case 'useCardOnField':
                 return this.useCardOnField(battle, command.battleCardId, command.side);
+            case 'attackUnit':
+                return this.attackUnit(battle, command.targetBattleCardId, command.damage);
+            case 'attackOpponentMaster':
+                return this.attackOpponentMaster(battle, command.damage);
+            case 'attackEveryOpponentUnit':
+                return this.attackEveryOpponent(battle, command.damage, false);
+            case 'attackEveryOpponent':
+                return this.attackEveryOpponent(battle, command.damage, true);
         }
     }
 
@@ -272,6 +280,69 @@ export class BattleCommandHandler {
         }
 
         events.push(...this.spendHandCard(battle, battleCardId, cardId));
+        return events;
+    }
+
+    /* ── 공격과 스킬 ── */
+    //
+    // 얼마나 때리는지는 밖에서 온다. 무기 힘과 스킬 값을 어떻게 읽는지는
+    // 아직 카드 정보 쪽에 있어서, 전투가 그것까지 정하려면 그 길을 먼저 내야 한다.
+
+    // 상대 유닛 하나를 때린다.
+    private attackUnit(battle: Battle, targetId: number, damage: number): BattleEvent[] {
+        const target = battle.findOnOpponentField(targetId);
+        if (!target) return [{type: 'rejected', reason: '상대 필드에 없는 유닛입니다.'}];
+        return this.damageOpponentUnit(battle, target.getBattleCardId(), target.getCardId(), damage);
+    }
+
+    // 상대 본체를 때린다.
+    private attackOpponentMaster(battle: Battle, damage: number): BattleEvent[] {
+        const hpBefore = battle.getOpponentMasterHp();
+        if (hpBefore <= 0) return [{type: 'rejected', reason: '이미 쓰러진 본체입니다.'}];
+
+        const hpAfter = battle.setOpponentMasterHp(hpBefore - damage);
+        const events: BattleEvent[] = [{
+            type: 'damaged', target: {kind: 'opponentMaster'},
+            amount: damage, hpBefore, hpAfter,
+        }];
+        if (hpAfter <= 0) events.push({type: 'defeated', target: {kind: 'opponentMaster'}});
+        return events;
+    }
+
+    // 상대 유닛 전부를 때린다. withMaster 면 본체도 함께 때린다.
+    private attackEveryOpponent(
+        battle: Battle, damage: number, withMaster: boolean,
+    ): BattleEvent[] {
+        const events: BattleEvent[] = [];
+        // 목록이 도는 중에 빠지므로 미리 베껴 둔다.
+        for (const unit of [...battle.getOpponentFieldCards()]) {
+            events.push(...this.damageOpponentUnit(
+                battle, unit.getBattleCardId(), unit.getCardId(), damage,
+            ));
+        }
+        if (withMaster && battle.getOpponentMasterHp() > 0) {
+            events.push(...this.attackOpponentMaster(battle, damage));
+        }
+        return events;
+    }
+
+    // 상대 유닛 하나에 피해를 준다. 쓰러지면 무덤으로 보낸다.
+    private damageOpponentUnit(
+        battle: Battle, battleCardId: number, cardId: number, damage: number,
+    ): BattleEvent[] {
+        const unit = battle.findOnOpponentField(battleCardId);
+        if (!unit) return [];
+
+        const hpBefore = unit.getHp();
+        const hpAfter = unit.setHp(hpBefore - damage);
+        const events: BattleEvent[] = [{
+            type: 'damaged',
+            target: {kind: 'unit', battleCardId},
+            amount: damage, hpBefore, hpAfter,
+        }];
+        if (hpAfter <= 0) {
+            events.push(...this.defeatOpponentUnit(battle, battleCardId, cardId));
+        }
         return events;
     }
 

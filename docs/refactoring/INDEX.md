@@ -91,7 +91,7 @@
 | **R2-64** | Strategy | Battle | [사용자가 하는 일과 그 결과로 일어나는 일을 정한다](R2-64-battle-command-catalog.md) | R2-63 | **완료** |
 | **R2-65** | Rule | Battle Hand | [손패에서 필드로 카드를 내는 일을 전투 상태가 처리한다](R2-65-play-card-to-field.md) | R2-64 | **완료** |
 | **R2-66** | Rule | Battle Ability | [카드 능력을 쓰는 일을 전투 상태가 처리한다](R2-66-use-card-ability.md) | R2-65 | **완료** |
-| **R2-67** | Rule | Battle | 공격과 스킬을 전투 상태가 처리한다 | R2-66 | 예정 |
+| **R2-67** | Rule | Battle | [공격과 스킬을 전투 상태가 처리한다](R2-67-attack-and-skill.md) | R2-66 | **완료** |
 | **R2-68** | Rendering | Battle | 화면이 전투 상태에서 돌려받은 것만 보고 그리게 한다 | R2-67 | 예정 |
 | **R2-69** | Rendering | Battle | 화면 표시가 상태를 들고 있지 않게 한다 | R2-57 | 예정 |
 | **R2-70** | Rule | Battle Active Panel | 액티브 패널이 화면과 카메라를 들지 않게 한다 | R2-44 | 예정 |
