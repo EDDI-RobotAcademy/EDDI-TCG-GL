@@ -6,6 +6,10 @@ import {CardRace} from "../../card/race";
 // 되는지 안 되는지는 전투 상태가 판단한다.
 //
 export type BattleCommand =
+    // 내 턴을 끝내고 상대에게 넘긴다
+    | {type: 'endYourTurn'}
+    // 상대 턴을 끝내고 내 차례로 돌아온다
+    | {type: 'beginYourTurn'}
     // 덱에서 한 장 뽑아 손패에 넣는다
     | {type: 'drawCard'}
     // 손패의 카드를 내 필드에 낸다
