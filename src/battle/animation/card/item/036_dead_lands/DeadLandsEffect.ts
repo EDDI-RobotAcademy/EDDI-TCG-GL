@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // 죽음의 대지 (Dead Lands) — "dark essence converges from all sides, TEARS APART, and
 // SHATTERS the opponent's Field Energy." Five phases:
@@ -188,11 +189,11 @@ export class DeadLandsEffect {
         // Clean up orb (was faded but still in scene).
         orbClockRunning = false;
         this.scene.remove(orb);
-        this.disposeMesh(orb);
+        disposeMesh(orb);
 
         vignetteClockRunning = false;
         this.scene.remove(vignette);
-        this.disposeMesh(vignette);
+        disposeMesh(vignette);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -243,7 +244,7 @@ export class DeadLandsEffect {
         // Disappear into the coalescing orb — quick fade.
         await this.tween(mat.uniforms.u_alpha, 0.0, 80, 'easeInQuad');
         this.scene.remove(mote);
-        this.disposeMesh(mote);
+        disposeMesh(mote);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -281,7 +282,7 @@ export class DeadLandsEffect {
                 requestAnimationFrame(step);
             } else {
                 this.scene.remove(rift);
-                this.disposeMesh(rift);
+                disposeMesh(rift);
             }
         };
         requestAnimationFrame(step);
@@ -322,7 +323,7 @@ export class DeadLandsEffect {
                 requestAnimationFrame(step);
             } else {
                 this.scene.remove(shard);
-                this.disposeMesh(shard);
+                disposeMesh(shard);
             }
         };
         requestAnimationFrame(step);
@@ -348,7 +349,7 @@ export class DeadLandsEffect {
                 requestAnimationFrame(step);
             } else {
                 this.scene.remove(ring);
-                this.disposeMesh(ring);
+                disposeMesh(ring);
             }
         };
         requestAnimationFrame(step);
@@ -370,7 +371,7 @@ export class DeadLandsEffect {
                 requestAnimationFrame(step);
             } else {
                 this.scene.remove(flash);
-                this.disposeMesh(flash);
+                disposeMesh(flash);
             }
         };
         requestAnimationFrame(step);
@@ -443,7 +444,7 @@ export class DeadLandsEffect {
                 requestAnimationFrame(step);
             } else {
                 this.scene.remove(ring);
-                this.disposeMesh(ring);
+                disposeMesh(ring);
             }
         };
         requestAnimationFrame(step);
@@ -965,10 +966,4 @@ export class DeadLandsEffect {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    private disposeMesh(mesh: THREE.Mesh): void {
-        mesh.geometry?.dispose();
-        const material = mesh.material;
-        if (Array.isArray(material)) material.forEach((m) => m.dispose());
-        else material?.dispose();
-    }
 }

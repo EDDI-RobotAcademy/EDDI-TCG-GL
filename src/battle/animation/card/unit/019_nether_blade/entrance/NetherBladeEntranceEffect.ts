@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { markOwnedTexture } from "../../../../../../core/lifecycle/DisposableMeshStore";
+import { markOwnedTexture, disposeMesh } from "../../../../../../core/lifecycle/DisposableMeshStore";
 
 // 마검의 지배자 네더 블레이드 — DEPLOY entrance scene. Plays ONCE on initial deployment,
 // before the passive chain (AoE → single-target picker) starts. Per the user's spec
@@ -275,21 +275,21 @@ export class NetherBladeEntranceEffect {
         // directly, so they need explicit removal.
         for (const child of fxGroup.children.slice()) {
             fxGroup.remove(child);
-            if (child instanceof THREE.Mesh) this.disposeMesh(child);
+            if (child instanceof THREE.Mesh) disposeMesh(child);
         }
         this.scene.remove(fxGroup);
         this.scene.remove(face);
-        this.disposeMesh(face);
+        disposeMesh(face);
         this.scene.remove(aura);
-        this.disposeMesh(aura);
+        disposeMesh(aura);
         this.scene.remove(particles);
-        this.disposeMesh(particles);
+        disposeMesh(particles);
         this._swordTex?.dispose();
         this._swordTex = null;
         this._particleTex?.dispose();
         this._particleTex = null;
         this._fxParent = null;
-        this.disposeMesh(sky); this.disposeMesh(ground); this.disposeMesh(pillar);
+        disposeMesh(sky); disposeMesh(ground); disposeMesh(pillar);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -361,7 +361,7 @@ export class NetherBladeEntranceEffect {
                         else {
                             tickClocks.delete(mat);
                             sword.parent?.remove(sword);
-                            this.disposeMesh(sword);
+                            disposeMesh(sword);
                         }
                     };
                     requestAnimationFrame(fadeStep);
@@ -421,7 +421,7 @@ export class NetherBladeEntranceEffect {
                 if (t >= 1) {
                     tickClocks.delete(mat);
                     rock.parent?.remove(rock);
-                    this.disposeMesh(rock);
+                    disposeMesh(rock);
                     return;
                 }
                 // Projectile motion — initial velocity + gravity acceleration.
@@ -454,7 +454,7 @@ export class NetherBladeEntranceEffect {
             else {
                 tickClocks.delete(mat);
                 flash.parent?.remove(flash);
-                this.disposeMesh(flash);
+                disposeMesh(flash);
             }
         };
         requestAnimationFrame(step);
@@ -481,7 +481,7 @@ export class NetherBladeEntranceEffect {
             else {
                 tickClocks.delete(mat);
                 cracks.parent?.remove(cracks);
-                this.disposeMesh(cracks);
+                disposeMesh(cracks);
             }
         };
         requestAnimationFrame(step);
@@ -506,7 +506,7 @@ export class NetherBladeEntranceEffect {
             else {
                 tickClocks.delete(mat);
                 dust.parent?.remove(dust);
-                this.disposeMesh(dust);
+                disposeMesh(dust);
             }
         };
         requestAnimationFrame(step);
@@ -2273,16 +2273,4 @@ export class NetherBladeEntranceEffect {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    private disposeMesh(mesh: THREE.Mesh): void {
-        mesh.geometry?.dispose();
-        const material = mesh.material;
-        // 글자를 그려 만든 그림은 이 메시만 쓴다. 표시가 있으면 함께 놓아준다.
-        const disposeOne = (m: THREE.Material) => {
-            const map = (m as THREE.Material & { map?: THREE.Texture | null }).map;
-            if (map?.userData?.ownedByMesh) map.dispose();
-            m.dispose();
-        };
-        if (Array.isArray(material)) material.forEach(disposeOne);
-        else if (material) disposeOne(material);
-    }
 }

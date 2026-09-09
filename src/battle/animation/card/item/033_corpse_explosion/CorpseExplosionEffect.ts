@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // 시체 폭발 (Corpse Explosion) — the sacrificed undead corpse hurls itself toward the
 // opponent field, the world rumbles, then it explodes; explosion projectiles fly out
@@ -251,9 +252,9 @@ export class CorpseExplosionEffect {
         tickClocks.delete(mat);
         tickClocks.delete(haloMat);
         this.scene.remove(projectile);
-        this.disposeMesh(projectile);
+        disposeMesh(projectile);
         this.scene.remove(halo);
-        this.disposeMesh(halo);
+        disposeMesh(halo);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -282,7 +283,7 @@ export class CorpseExplosionEffect {
             } else {
                 tickClocks.delete(mat);
                 this.scene.remove(ring);
-                this.disposeMesh(ring);
+                disposeMesh(ring);
             }
         };
         requestAnimationFrame(step);
@@ -310,7 +311,7 @@ export class CorpseExplosionEffect {
             } else {
                 tickClocks.delete(mat);
                 this.scene.remove(flash);
-                this.disposeMesh(flash);
+                disposeMesh(flash);
             }
         };
         requestAnimationFrame(step);
@@ -349,7 +350,7 @@ export class CorpseExplosionEffect {
             } else {
                 tickClocks.delete(mat);
                 this.scene.remove(shard);
-                this.disposeMesh(shard);
+                disposeMesh(shard);
             }
         };
         requestAnimationFrame(step);
@@ -377,7 +378,7 @@ export class CorpseExplosionEffect {
             } else {
                 tickClocks.delete(mat);
                 this.scene.remove(puff);
-                this.disposeMesh(puff);
+                disposeMesh(puff);
             }
         };
         requestAnimationFrame(step);
@@ -790,10 +791,4 @@ export class CorpseExplosionEffect {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    private disposeMesh(mesh: THREE.Mesh): void {
-        mesh.geometry?.dispose();
-        const material = mesh.material;
-        if (Array.isArray(material)) material.forEach((m) => m.dispose());
-        else material?.dispose();
-    }
 }

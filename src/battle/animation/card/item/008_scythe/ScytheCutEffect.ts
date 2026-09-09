@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { markOwnedTexture } from "../../../../../core/lifecycle/DisposableMeshStore";
+import { markOwnedTexture, disposeMesh } from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // Scythe (죽음의 낫) — dark-power cut effect.
 // Phases:
@@ -170,7 +170,7 @@ export class ScytheCutEffect {
 
             for (const h of halves) {
                 this.scene.remove(h);
-                this.disposeMesh(h);
+                disposeMesh(h);
             }
         } else {
             this.applyDarkFlash(targetGroup);
@@ -193,10 +193,10 @@ export class ScytheCutEffect {
         this.scene.remove(ring);
         this.scene.remove(scytheGroup);
         this.scene.remove(darkenPlane);
-        this.disposeMesh(slash);
-        this.disposeMesh(ring);
-        this.disposeMesh(scythe);
-        this.disposeMesh(darkenPlane);
+        disposeMesh(slash);
+        disposeMesh(ring);
+        disposeMesh(scythe);
+        disposeMesh(darkenPlane);
     }
 
     // === Reaper: canvas MASK (3-color channel encoding) + heavy shader atmosphere ===
@@ -960,11 +960,11 @@ export class ScytheCutEffect {
             this.scene.remove(wave1);
             this.scene.remove(wave2);
             this.scene.remove(wave3);
-            this.disposeMesh(vortex);
-            this.disposeMesh(cracks);
-            this.disposeMesh(wave1);
-            this.disposeMesh(wave2);
-            this.disposeMesh(wave3);
+            disposeMesh(vortex);
+            disposeMesh(cracks);
+            disposeMesh(wave1);
+            disposeMesh(wave2);
+            disposeMesh(wave3);
         });
     }
 
@@ -1476,16 +1476,4 @@ export class ScytheCutEffect {
         });
     }
 
-    private disposeMesh(mesh: THREE.Mesh): void {
-        mesh.geometry.dispose();
-        const mat = mesh.material;
-        // 글자를 그려 만든 그림은 이 메시만 쓴다. 표시가 있으면 함께 놓아준다.
-        const disposeOne = (m: THREE.Material) => {
-            const map = (m as THREE.Material & { map?: THREE.Texture | null }).map;
-            if (map?.userData?.ownedByMesh) map.dispose();
-            m.dispose();
-        };
-        if (Array.isArray(mat)) mat.forEach(disposeOne);
-        else disposeOne(mat as THREE.Material);
-    }
 }

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {disposeMesh} from "../../../../../core/lifecycle/DisposableMeshStore";
 
 // 망자의 늪 (Swamp of the Dead) — draw-3 visual.
 //
@@ -158,10 +159,10 @@ export class SwampEffect {
         this.scene.remove(beam);
         for (const c of cards) this.scene.remove(c.card);
         this.scene.remove(pool);
-        this.disposeMesh(wraith);
-        this.disposeMesh(beam);
-        for (const c of cards) this.disposeMesh(c.card);
-        this.disposeMesh(pool);
+        disposeMesh(wraith);
+        disposeMesh(beam);
+        for (const c of cards) disposeMesh(c.card);
+        disposeMesh(pool);
     }
 
     // Fly a spectral card from its hover position to the hand destination. Resolves once
@@ -580,10 +581,4 @@ export class SwampEffect {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    private disposeMesh(mesh: THREE.Mesh): void {
-        mesh.geometry?.dispose();
-        const material = mesh.material;
-        if (Array.isArray(material)) material.forEach((m) => m.dispose());
-        else material?.dispose();
-    }
 }
