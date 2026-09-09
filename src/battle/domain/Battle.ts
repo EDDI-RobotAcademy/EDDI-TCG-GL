@@ -396,6 +396,24 @@ export class Battle {
         return this.opponentMaster.isDefeated();
     }
 
+    /* ── 유닛이 움직일 수 있는가 ── */
+
+    // 내 유닛이 이번 턴에 움직일 수 있는가.
+    //
+    // 나온 턴에는 못 움직인다. 나오자마자 때리는 것을 막는 규칙이다.
+    canYourUnitAct(battleCardId: number): boolean {
+        const unit = this.yourField.findById(battleCardId);
+        if (!unit) return false;
+        return unit.getDeployedTurn() !== this.turnNumber;
+    }
+
+    // 상대 유닛이 이번 턴에 움직일 수 있는가. 얼어 있으면 못 움직인다.
+    canOpponentUnitAct(battleCardId: number): boolean {
+        const unit = this.opponentField.findById(battleCardId);
+        if (!unit) return false;
+        return !unit.isFrozen();
+    }
+
     // 지금 상태를 통째로 적는다.
     toSnapshot(): BattleSnapshot {
         return {

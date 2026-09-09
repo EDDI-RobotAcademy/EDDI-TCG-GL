@@ -1,6 +1,6 @@
 # [ETWGL-R2-17] 내 필드 에너지, 상대 필드 에너지 패키지 조정
 
-선행: R2-16 │ 후행: R2-18 │ 산출물: src/battle/field_energy/ │ Type: Structure │ Domain: Battle Field Energy
+선행: R2-16 │ 후행: R2-18 │ 산출물: src/battle/field_energy/ │ Type: Structure │ Domain: Battle Energy
 
 # Success criteria
 

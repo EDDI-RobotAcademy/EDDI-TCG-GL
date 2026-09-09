@@ -53,13 +53,22 @@ export class BattleCommandHandler {
                     battle, command.targetBattleCardId, command.race,
                 );
             case 'attackUnit':
-                return this.attackUnit(battle, command.targetBattleCardId, command.damage);
+                return this.attackUnit(
+                    battle, command.attackerBattleCardId,
+                    command.targetBattleCardId, command.damage,
+                );
             case 'attackOpponentMaster':
-                return this.attackOpponentMaster(battle, command.damage);
+                return this.attackOpponentMaster(
+                    battle, command.damage, command.attackerBattleCardId,
+                );
             case 'attackEveryOpponentUnit':
-                return this.attackEveryOpponent(battle, command.damage, false);
+                return this.attackEveryOpponent(
+                    battle, command.damage, false, command.attackerBattleCardId,
+                );
             case 'attackEveryOpponent':
-                return this.attackEveryOpponent(battle, command.damage, true);
+                return this.attackEveryOpponent(
+                    battle, command.damage, true, command.attackerBattleCardId,
+                );
         }
     }
 
@@ -103,6 +112,9 @@ export class BattleCommandHandler {
             handCard.getAttributeMarkIds(),
             handCard.getPositionId(),
             this.catalog.getHp(cardId),
+            new Map(),
+            // 나온 턴을 적어 둔다. 나온 턴에는 못 움직인다
+            battle.getTurnNumber(),
         ));
 
         return [{
@@ -416,14 +428,36 @@ export class BattleCommandHandler {
     // 아직 카드 정보 쪽에 있어서, 전투가 그것까지 정하려면 그 길을 먼저 내야 한다.
 
     // 상대 유닛 하나를 때린다.
-    private attackUnit(battle: Battle, targetId: number, damage: number): BattleEvent[] {
+    private attackUnit(
+        battle: Battle, attackerId: number, targetId: number, damage: number,
+    ): BattleEvent[] {
+        const blocked = this.blockedReason(battle, attackerId);
+        if (blocked) return [{type: 'rejected', reason: blocked}];
+
         const target = battle.findOnOpponentField(targetId);
         if (!target) return [{type: 'rejected', reason: '상대 필드에 없는 유닛입니다.'}];
         return this.damageOpponentUnit(battle, target.getBattleCardId(), target.getCardId(), damage);
     }
 
+    // 때리는 유닛이 못 움직이면 왜 못 움직이는지를 준다. 움직일 수 있으면 null 이다.
+    //
+    // 때리는 유닛이 없는 경우도 있다. 카드가 때리는 것이 그렇다. 그때는 안 막는다.
+    private blockedReason(battle: Battle, attackerId: number): string | null {
+        if (attackerId < 0) return null;
+        const attacker = battle.findOnYourField(attackerId);
+        if (!attacker) return null;
+        if (attacker.isFrozen()) return '얼어 있어 움직일 수 없습니다.';
+        if (!battle.canYourUnitAct(attackerId)) return '나온 턴에는 움직일 수 없습니다.';
+        return null;
+    }
+
     // 상대 본체를 때린다.
-    private attackOpponentMaster(battle: Battle, damage: number): BattleEvent[] {
+    private attackOpponentMaster(
+        battle: Battle, damage: number, attackerId: number = -1,
+    ): BattleEvent[] {
+        const blocked = this.blockedReason(battle, attackerId);
+        if (blocked) return [{type: 'rejected', reason: blocked}];
+
         const hpBefore = battle.getOpponentMasterHp();
         if (hpBefore <= 0) return [{type: 'rejected', reason: '이미 쓰러진 본체입니다.'}];
 
@@ -438,8 +472,11 @@ export class BattleCommandHandler {
 
     // 상대 유닛 전부를 때린다. withMaster 면 본체도 함께 때린다.
     private attackEveryOpponent(
-        battle: Battle, damage: number, withMaster: boolean,
+        battle: Battle, damage: number, withMaster: boolean, attackerId: number = -1,
     ): BattleEvent[] {
+        const blocked = this.blockedReason(battle, attackerId);
+        if (blocked) return [{type: 'rejected', reason: blocked}];
+
         const events: BattleEvent[] = [];
         // 목록이 도는 중에 빠지므로 미리 베껴 둔다.
         for (const unit of [...battle.getOpponentFieldCards()]) {

@@ -1,6 +1,6 @@
 # [ETWGL-R2-23] 죽음의 대지 연출이 상대 필드 에너지 앞에서 보이도록 패널을 캔버스 안으로 옮긴다
 
-선행: 없음 │ 후행: R2-54 │ 산출물: src/battle/field_energy/opponent/renderer/OpponentFieldEnergyHudRendererV2.ts │ Type: Rendering │ Domain: Battle Field Energy
+선행: 없음 │ 후행: R2-54 │ 산출물: src/battle/field_energy/opponent/renderer/OpponentFieldEnergyHudRendererV2.ts │ Type: Rendering │ Domain: Battle Energy
 
 # Success criteria
 
