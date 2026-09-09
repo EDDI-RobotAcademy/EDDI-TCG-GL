@@ -21,8 +21,18 @@ import {Master} from "./Master";
 //
 // 여기에는 화면에 그려지는 것을 두지 않는다. 적어 둘 수 있는 값만 둔다.
 export class Battle {
+    static readonly FIRST_TURN = 1;
+    // 내 턴이 시작될 때마다 늘어나는 양
+    static readonly FIELD_ENERGY_GAIN_PER_TURN = 1;
+
     // 전투는 내 턴으로 시작한다. 게임을 연 쪽이 먼저 둔다.
     private turnOwner: TurnOwner = 'your';
+
+    // 몇 번째 턴인가. 상대에게 넘겼다가 다시 내게 돌아오면 한 턴이다.
+    private turnNumber: number = Battle.FIRST_TURN;
+
+    // 이번 판에 쓸 수 있는 필드 에너지. 내 턴이 시작될 때마다 하나 는다.
+    private fieldEnergy: number = 0;
 
     private readonly yourDeck = new Deck();
     private readonly opponentDeck = new Deck();
@@ -55,6 +65,8 @@ export class Battle {
     static restore(snapshot: BattleSnapshot): Battle {
         const battle = new Battle(snapshot.battleId);
         battle.turnOwner = snapshot.turnOwner;
+        battle.turnNumber = snapshot.turnNumber;
+        battle.fieldEnergy = snapshot.fieldEnergy;
         battle.yourDeck.seed(snapshot.yourDeckCards);
         battle.opponentDeck.seed(snapshot.opponentDeckCards);
         battle.yourTomb.restoreFrom(snapshot.yourTombCards);
@@ -80,11 +92,58 @@ export class Battle {
         return this.turnOwner;
     }
 
-    setTurnOwner(owner: TurnOwner): void {
-        if (this.turnOwner === owner) return;
-        const prev = this.turnOwner;
-        this.turnOwner = owner;
-        console.log(`[turn-state] owner: ${prev} → ${owner}`);
+    getTurnNumber(): number {
+        return this.turnNumber;
+    }
+
+    isYourTurn(): boolean {
+        return this.turnOwner === 'your';
+    }
+
+    // 내 턴을 끝내고 상대에게 넘긴다.
+    //
+    // 내 턴이 아니면 아무 일도 안 한다. 턴 종료 버튼과 모래시계가 같은 순간에
+    // 겹쳐 들어와도 두 번 넘어가지 않는다. 넘어갔으면 true 다.
+    endYourTurn(): boolean {
+        if (this.turnOwner !== 'your') return false;
+        this.turnOwner = 'opponent';
+        return true;
+    }
+
+    // 상대 턴을 끝내고 내 차례로 돌아온다.
+    //
+    // 한 바퀴가 끝났으므로 턴이 하나 오르고 필드 에너지가 하나 는다.
+    // 상대 턴이 아니면 아무 일도 안 한다. 돌아왔으면 true 다.
+    beginYourTurn(): boolean {
+        if (this.turnOwner !== 'opponent') return false;
+        this.turnOwner = 'your';
+        this.turnNumber += 1;
+        this.fieldEnergy += Battle.FIELD_ENERGY_GAIN_PER_TURN;
+        return true;
+    }
+
+    /* ── 필드 에너지 ── */
+
+    getFieldEnergy(): number {
+        return this.fieldEnergy;
+    }
+
+    setFieldEnergy(next: number): number {
+        this.fieldEnergy = Math.max(0, next);
+        return this.fieldEnergy;
+    }
+
+    // 카드에 붙이거나 할 때 쓴다. 모자라면 안 쓰고 false 다.
+    spendFieldEnergy(amount: number): boolean {
+        if (amount <= 0 || this.fieldEnergy < amount) return false;
+        this.fieldEnergy -= amount;
+        return true;
+    }
+
+    gainFieldEnergy(amount: number): number {
+        if (amount <= 0) return this.fieldEnergy;
+        this.fieldEnergy += amount;
+        return this.fieldEnergy;
     }
 
     /* ── 내 덱 ── */
@@ -304,6 +363,8 @@ export class Battle {
         return {
             battleId: this.battleId,
             turnOwner: this.turnOwner,
+            turnNumber: this.turnNumber,
+            fieldEnergy: this.fieldEnergy,
             yourDeckCards: [...this.yourDeck.getCards()],
             opponentDeckCards: [...this.opponentDeck.getCards()],
             yourTombCards: [...this.yourTomb.getCards()],
