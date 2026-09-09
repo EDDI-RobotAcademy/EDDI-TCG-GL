@@ -396,6 +396,12 @@ async function main(container: HTMLElement): Promise<void> {
             const card = getCardById(cardId);
             return card ? (parseInt(card.등급, 10) as CardGrade) : null;
         },
+        getRace: (cardId) => {
+            const raw = Number((getCardById(cardId) as any)?.['종족']);
+            return raw === CardRace.HUMAN || raw === CardRace.UNDEAD || raw === CardRace.TRENT
+                ? (raw as CardRace)
+                : null;
+        },
     };
     const battleCommandHandler = new BattleCommandHandler(cardCatalog);
 
@@ -745,7 +751,10 @@ async function main(container: HTMLElement): Promise<void> {
             [],
             0,                                   // 화면 좌표 번호를 안 쓴다
             typeof hp === 'number' ? hp : 0,
-            oc.energyCount,
+            // 시작 에너지는 그 카드의 종족으로 붙인다.
+            oc.energyCount > 0
+                ? new Map([[oc.raceId as CardRace, oc.energyCount]])
+                : new Map(),
         ));
     }
 
@@ -763,8 +772,11 @@ async function main(container: HTMLElement): Promise<void> {
     };
     const opponentEnergyOf = (cardIndex: number): number =>
         battle.findOnOpponentField(cardIndex)?.getEnergyCount() ?? 0;
+    // 상대 유닛의 에너지를 이만큼으로 맞춘다. 종족은 안 가린다.
     const setOpponentEnergy = (cardIndex: number, next: number): void => {
-        battle.findOnOpponentField(cardIndex)?.setEnergyCount(next);
+        const unit = battle.findOnOpponentField(cardIndex);
+        if (!unit) return;
+        unit.drainEnergy(unit.getEnergyCount() - next);
     };
 
     const opponentEntries = (opponentGroup.userData as { entries: { card: CardFace; cardIndex: number; group: THREE.Group }[] }).entries;
@@ -2579,9 +2591,12 @@ async function main(container: HTMLElement): Promise<void> {
     // has fewer than MAX, attach however many were available (0-2). The card itself still
     // gets consumed (moved to tomb) regardless of how many energies were pulled — matches
     // the card's passive text "덱에서 찾아 최대 0~2개를 선택하여 유닛에게 수급".
-    const applyOverflowMoraleEffect = async (target: HandEntry): Promise<void> => {
-        const pulled = battle.drawMatchingFromYourDeck(DEATH_ENERGY_CARD_ID, OVERFLOW_MORALE_MAX);
-        const attached = pulled.length;
+    const applyOverflowMoraleEffect = async (
+        target: HandEntry, events: readonly BattleEvent[],
+    ): Promise<void> => {
+        // 덱에서 꺼내 붙이는 것은 전투가 이미 했다. 화면은 몇 개가 붙었는지만 본다.
+        const attachedEvents = events.filter((ev) => ev.type === 'energyAttached');
+        const attached = attachedEvents.length;
         console.log(`[overflow-morale] target cardId=${target.card.cardId} → pulled ${attached} death-energy from deck (deck remaining=${battle.getYourDeckRemainingCount()})`);
 
         // Deck world-position — same convention as SwampEffect (screen 0.81, 0.87),
@@ -2603,12 +2618,12 @@ async function main(container: HTMLElement): Promise<void> {
         // plays the gather aura (deck "searched", nothing found) and fades — no motes.
         // 덱에서 뽑은 에너지 카드(죽음의 에너지)의 종족이 그대로 부착된다.
         const pulledRace = cardRaceOf(DEATH_ENERGY_CARD_ID) ?? CardRace.UNDEAD;
-        // 덱에서 이미 빠진 카드다. 연출을 기다리기 전에 무덤에 넣는다.
-        // 기다리는 동안 화면이 닫히면 덱에도 무덤에도 없는 카드가 생긴다.
-        for (const energyId of pulled) battle.sendToYourTomb(energyId);
-
+        // 알갱이가 하나씩 닿을 때마다 앞에서부터 꺼내 쓴다.
+        let overflowArrival = 0;
         await overflowMoraleEffect.play(deckPos, targetPos, attached, () => {
-            const newCount = addCardEnergy(target, pulledRace, 1);
+            const ev = attachedEvents[overflowArrival++];
+            const newCount = ev && ev.type === 'energyAttached' ? ev.countAfter : 0;
+            addCardEnergy(target, pulledRace, 1);
             void updateCardEnergyVisual(target, newCount);
         });
     };
@@ -3043,10 +3058,16 @@ async function main(container: HTMLElement): Promise<void> {
 
         if (leonikEligibleDeckIndices.length === 0) {
             console.log('[leonik] no eligible deck cards (hero-or-below UNIT) — effect no-ops');
-            // Still consume the card per spec (card is used regardless of result).
+            // 고를 것이 없어도 카드는 쓴 것이 된다. 무덤에 넣고 섞는 것은 전투가 한다.
+            send({
+                type: 'useCardOnField',
+                battleCardId: sourceEntry.cardIndex,
+                side: 'your',
+                pickedDeckIndexes: [],
+                shuffleSeed: makeShuffleSeed(),
+            });
             const idx = handOrder.indexOf(sourceEntry);
-            if (idx >= 0) consumeHandCard(sourceEntry, idx);
-            battle.shuffleYourDeck(makeShuffleSeed());
+            if (idx >= 0) removeHandCardFromScreen(sourceEntry, idx);
             leonikSourceEntry = null;
             reflowHandAndPlaced();
             return;
@@ -3130,16 +3151,20 @@ async function main(container: HTMLElement): Promise<void> {
         // Capture source entry before closeLeonikPopup nulls it.
         const sourceEntry = leonikSourceEntry;
 
-        // Map popup-local indices → absolute deck indices, remove in descending order so
-        // earlier removals don't shift later indices.
+        // 무엇을 골랐는지만 보낸다. 덱에서 빼고 손패에 넣고 섞는 것은 전투가 한다.
         const selectedDeckIndices = Array.from(leonikSelectedPopupIndices)
-            .map((i) => leonikEligibleDeckIndices[i])
-            .sort((a, b) => b - a);
-        const pulledIds: number[] = [];
-        for (const deckIdx of selectedDeckIndices) {
-            const id = battle.removeFromYourDeckAt(deckIdx);
-            if (id != null) pulledIds.push(id);
-        }
+            .map((i) => leonikEligibleDeckIndices[i]);
+        const events = send({
+            type: 'useCardOnField',
+            battleCardId: sourceEntry.cardIndex,
+            side: 'your',
+            pickedDeckIndexes: selectedDeckIndices,
+            shuffleSeed: makeShuffleSeed(),
+        });
+        const pulled = events
+            .filter((ev) => ev.type === 'cardMoved' && ev.from === 'yourDeck' && ev.to === 'hand')
+            .map((ev) => ev as {cardId: number; battleCardId: number});
+        const pulledIds = pulled.map((it) => it.cardId);
 
         // Tear down the popup BEFORE the effect plays — the gate visual sits centred
         // and would be hidden behind a popup overlay otherwise.
@@ -3172,11 +3197,9 @@ async function main(container: HTMLElement): Promise<void> {
                 const resolved = resolveCards([id], 'leonik-summon');
                 if (resolved.length === 0) return;
                 void (async () => {
-                    // 번호는 전투가 매긴다. 손패에도 함께 넣어야 나중에 필드로 낼 수 있다.
-                    const issued = battle.issueCardId();
-                    battle.addToHand(new HandCard(issued, id, [], 0));
+                    // 전투가 매긴 번호를 그대로 쓴다.
                     const newEntry = await handRenderer.appendCard(
-                        handGroup, resolved[0], handCardFrame, issued,
+                        handGroup, resolved[0], handCardFrame, pulled[idx]?.battleCardId,
                     );
                     handOrder.push(newEntry);
                     reflowHandAndPlaced();
@@ -3184,10 +3207,9 @@ async function main(container: HTMLElement): Promise<void> {
             },
         );
 
-        // After effect fully resolves: Leonik → tomb + deck shuffle.
+        // 무덤에 넣고 섞는 것은 전투가 이미 했다. 화면에서 치우기만 한다.
         const idx = handOrder.indexOf(sourceEntry);
-        if (idx >= 0) consumeHandCard(sourceEntry, idx);
-        battle.shuffleYourDeck(makeShuffleSeed());
+        if (idx >= 0) removeHandCardFromScreen(sourceEntry, idx);
         reflowHandAndPlaced();
 
         console.log(`[leonik] pulled ${pulledIds.join(',')} from deck → hand; leonik → tomb; deck shuffled; remaining=${battle.getYourDeckRemainingCount()}`);
@@ -3493,8 +3515,13 @@ async function main(container: HTMLElement): Promise<void> {
                     const dropCy = group.position.y;
                     const allyTarget = hitAllyAt(dropCx, dropCy);
                     if (allyTarget) {
-                        void applyOverflowMoraleEffect(allyTarget);
-                        consumeHandCard(droppedEntry, handIndex);
+                        // 덱에서 꺼내고 붙이고 무덤에 넣는 것은 전투가 한다.
+                        void applyOverflowMoraleEffect(allyTarget, send({
+                            type: 'useCardOnUnit',
+                            battleCardId: droppedEntry.cardIndex,
+                            targetBattleCardId: allyTarget.cardIndex,
+                        }));
+                        removeHandCardFromScreen(droppedEntry, handIndex);
                     }
                 } else if (
                     kind === CardKind.ENERGY &&
@@ -3515,7 +3542,17 @@ async function main(container: HTMLElement): Promise<void> {
                     const dropCy = group.position.y;
                     const allyTarget = hitAllyAt(dropCx, dropCy);
                     if (allyTarget) {
-                        consumeHandCard(droppedEntry, handIndex);
+                        // 죽음의 에너지는 전투가 붙인다. 차갑게 불타는 암흑 에너지는
+                        // 붙인 뒤에도 그 유닛의 공격에 따라붙어서 아직 화면이 든다.
+                        const attachEvents = cardId === DEATH_ENERGY_CARD_ID
+                            ? send({
+                                type: 'useCardOnUnit',
+                                battleCardId: droppedEntry.cardIndex,
+                                targetBattleCardId: allyTarget.cardIndex,
+                            })
+                            : null;
+                        if (attachEvents) removeHandCardFromScreen(droppedEntry, handIndex);
+                        else consumeHandCard(droppedEntry, handIndex);
                         const targetWorld = new THREE.Vector3(
                             allyTarget.group.position.x,
                             allyTarget.group.position.y,
@@ -3525,7 +3562,11 @@ async function main(container: HTMLElement): Promise<void> {
                         const droppedRace = cardRaceOf(cardId) ?? CardRace.UNDEAD;
                         const isColdDark = cardId === COLD_DARK_ENERGY_CARD_ID;
                         void overflowMoraleEffect.playDirectAttach(targetWorld, () => {
-                            const newCount = addCardEnergy(allyTarget, droppedRace, 1);
+                            const attached = attachEvents?.find((ev) => ev.type === 'energyAttached');
+                            addCardEnergy(allyTarget, droppedRace, 1);
+                            const newCount = attached && attached.type === 'energyAttached'
+                                ? attached.countAfter
+                                : cardEnergyOfRace(allyTarget, droppedRace);
                             void updateCardEnergyVisual(allyTarget, newCount);
                             if (isColdDark) {
                                 // 종족 에너지 부여에 더해 암흑 화염 + 빙결 부여 능력이 붙는다.

@@ -1,3 +1,5 @@
+import {CardRace} from "../../card/race";
+
 // 전투에서 무슨 일이 일어났는가.
 //
 // 사용자가 한 일 하나에 이것이 여럿 나온다. 일어난 차례대로 나온다.
@@ -15,7 +17,9 @@ export type BattleEvent =
     // 무엇이 쓰러졌다
     | {type: 'defeated'; target: DamageTarget}
     // 값이 이만큼 바뀌었다
-    | {type: 'valueChanged'; what: ChangedValue; before: number; after: number};
+    | {type: 'valueChanged'; what: ChangedValue; before: number; after: number}
+    // 유닛에 에너지가 붙었다
+    | {type: 'energyAttached'; battleCardId: number; race: CardRace; countAfter: number};
 
 // 카드가 있을 수 있는 자리
 export type CardPlace = 'yourDeck' | 'opponentDeck' | 'hand' | 'yourField' | 'opponentField'
@@ -26,6 +30,9 @@ export type DamageTarget =
     | {kind: 'unit'; battleCardId: number}
     | {kind: 'yourMaster'}
     | {kind: 'opponentMaster'};
+
+// 종족은 카드 쪽에 있는 것을 그대로 쓴다
+export type {CardRace} from "../../card/race";
 
 // 숫자로 세는 것
 export type ChangedValue = 'turnNumber' | 'fieldEnergy' | 'opponentFieldEnergy';

@@ -11,7 +11,15 @@ export type BattleCommand =
     // 손패의 카드를 유닛 하나에게 쓴다
     | {type: 'useCardOnUnit'; battleCardId: number; targetBattleCardId: number}
     // 손패의 카드를 필드 전체에 쓴다
-    | {type: 'useCardOnField'; battleCardId: number; side: 'your' | 'opponent'}
+    // pickedDeckIndexes 는 덱에서 고르는 카드에만 온다. 무엇을 고를지는 사용자가 정한다
+    | {
+        type: 'useCardOnField';
+        battleCardId: number;
+        side: 'your' | 'opponent';
+        pickedDeckIndexes?: readonly number[];
+        // 덱을 섞는 카드에만 온다. 도메인 안에서는 무작위를 못 쓰므로 씨앗을 받는다
+        shuffleSeed?: number;
+    }
     // 내 유닛으로 상대 유닛 하나를 때린다
     | {type: 'attackUnit'; attackerBattleCardId: number; targetBattleCardId: number; damage: number}
     // 내 유닛으로 상대 본체를 때린다
