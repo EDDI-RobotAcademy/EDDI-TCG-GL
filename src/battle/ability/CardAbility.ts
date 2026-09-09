@@ -19,7 +19,8 @@ export interface CardAbility {
     readonly numbers: Readonly<Record<string, number>>;
     // 등급으로 갈리는 카드에서 쓴다
     readonly grade?: CardGrade;
-    // 값 하나로 다 적히지 않는 카드다. 왜 안 되는지 적어 둔다
+    // 값 하나로 다 적히지 않는 카드다. 왜 안 되는지 적어 둔다.
+    // R2-85 에서 넷을 열어 보고 둘로 줄었다. 남은 둘은 전투가 고르기를 기다려야 한다
     readonly notFullyData?: string;
 }
 
@@ -36,7 +37,6 @@ export const CARD_ABILITIES: readonly CardAbility[] = [
         name: '에너지 번',
         target: AbilityTarget.OPPONENT_UNIT,
         numbers: {perMissingEnergyDamage: 10},
-        notFullyData: '붙은 에너지 수에 따라 피해와 뺏는 양이 함께 달라진다. 표가 셋이다',
     },
     {
         cardId: 35,
@@ -61,7 +61,6 @@ export const CARD_ABILITIES: readonly CardAbility[] = [
         name: '차갑게 불타는 암흑 에너지',
         target: AbilityTarget.ALLY_UNIT,
         numbers: {attachEnergy: 1, darkFlameTurnDamage: 5},
-        notFullyData: '붙여 두면 그 유닛의 모든 공격과 스킬에 따라붙는다. 한 번 일어나고 끝이 아니다',
     },
     {
         cardId: 20,
@@ -94,14 +93,14 @@ export const CARD_ABILITIES: readonly CardAbility[] = [
         target: AbilityTarget.ALLY_UNIT_OF_RACE,
         targetRace: CardRace.UNDEAD,
         numbers: {damage: 10, picks: 2},
-        notFullyData: '제물을 바친 뒤 고르기가 한 번 더 일어난다. 고르기가 두 단계다',
+        notFullyData: '제물을 고른 뒤 적을 두 번 더 고른다. 전투가 고르기를 기다려야 한다',
     },
     {
         cardId: 19,
         name: '마검의 지배자 네더 블레이드',
         target: AbilityTarget.NONE,
         numbers: {passive1Damage: 10, passive2Damage: 20},
-        notFullyData: '첫 패시브가 끝나면 두 번째 패시브가 저절로 이어진다. 능력이 능력을 부른다',
+        notFullyData: '첫 패시브가 일어난 뒤에 고른다. 전투가 고르기를 기다려야 한다',
     },
 ];
 
