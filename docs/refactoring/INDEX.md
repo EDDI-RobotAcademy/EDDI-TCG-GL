@@ -90,7 +90,7 @@
 | **R2-63** | Rule | Battle Turn | [턴 넘김의 판단을 전투 상태로 옮긴다](R2-63-turn-progression-rules.md) | R2-50 | **완료** |
 | **R2-64** | Strategy | Battle | [사용자가 하는 일과 그 결과로 일어나는 일을 정한다](R2-64-battle-command-catalog.md) | R2-63 | **완료** |
 | **R2-65** | Rule | Battle Hand | [손패에서 필드로 카드를 내는 일을 전투 상태가 처리한다](R2-65-play-card-to-field.md) | R2-64 | **완료** |
-| **R2-66** | Rule | Battle Ability | 카드 능력을 쓰는 일을 전투 상태가 처리한다 | R2-65 | 예정 |
+| **R2-66** | Rule | Battle Ability | [카드 능력을 쓰는 일을 전투 상태가 처리한다](R2-66-use-card-ability.md) | R2-65 | **완료** |
 | **R2-67** | Rule | Battle | 공격과 스킬을 전투 상태가 처리한다 | R2-66 | 예정 |
 | **R2-68** | Rendering | Battle | 화면이 전투 상태에서 돌려받은 것만 보고 그리게 한다 | R2-67 | 예정 |
 | **R2-69** | Rendering | Battle | 화면 표시가 상태를 들고 있지 않게 한다 | R2-57 | 예정 |
@@ -110,7 +110,7 @@
 | **R2-83** | Structure | Platform | 기본 실행 명령이 없는 화면을 가리키는 것을 고친다 | — | 예정 |
 | **R2-84** | Structure | Battle Active Panel | 액티브 패널을 닫는 일곱 곳을 하나로 묶는다 | R2-48 | 예정 |
 | **R2-85** | Structure | Battle Unit | 옛 드래그로 필드에 놓는 길을 정리한다 | R2-54 | 예정 |
-| **R2-86** | Rule | Battle Card | 카드가 전투에 들어올 때 전투가 신원을 준다 | R2-57 | 예정 |
+| **R2-86** | Rule | Battle Ability | 남은 카드 일곱을 전투 상태가 처리하게 한다 | R2-66 | 예정 |
 
 ### Type — 무엇을 바꾸는 작업인가
 

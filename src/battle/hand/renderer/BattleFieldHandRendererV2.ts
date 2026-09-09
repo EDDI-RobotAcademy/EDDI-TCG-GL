@@ -52,15 +52,24 @@ export class BattleFieldHandRendererV2 {
 
     // Appends a single card to an already-built hand group and registers it in userData.entries.
     // Position is left at (0,0) — the caller is responsible for reflowing hand/placed slots after.
+    // 손패에 카드 하나를 붙인다.
+    //
+    // cardIndex 는 전투가 매긴 번호를 받는다. 안 주면 목록의 길이를 쓰는데,
+    // 그러면 카드를 쓴 뒤에도 목록이 안 줄어서 전투가 매긴 번호와 갈라진다.
     public async appendCard(
         handGroup: THREE.Group,
         card: CardFace,
         cardFrame: HandCardFrame,
+        cardIndex?: number,
     ): Promise<HandEntry> {
         const { entries } = handGroup.userData as HandUserData;
         const cardGroup = await this.cardRenderer.build(card, cardFrame);
         handGroup.add(cardGroup);
-        const entry: HandEntry = { card, cardIndex: entries.length, group: cardGroup };
+        const entry: HandEntry = {
+            card,
+            cardIndex: cardIndex ?? entries.length,
+            group: cardGroup,
+        };
         entries.push(entry);
         return entry;
     }
