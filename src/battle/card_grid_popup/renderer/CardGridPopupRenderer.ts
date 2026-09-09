@@ -69,9 +69,27 @@ export class CardGridPopupRenderer {
             const gapX = frame.cardGapXRatio;
             const gapY = frame.cardGapYRatio;
 
-            // Cards render at the SAME native size as hand cards — no grid-fit scaling.
-            const cw = window.innerWidth * this.handCardFrame.cardWidthRatio;
-            const ch = cw * this.handCardFrame.cardAspect;
+            // Cards render at the SAME native size as hand cards, so the popup's cards match
+            // the ones in hand. That size comes from the viewport WIDTH only, while the popup
+            // box height comes from the viewport HEIGHT — so a short window leaves a box too
+            // short for the rows, and the bottom row falls outside and never gets built.
+            //
+            // Only in that case do the cards shrink, just enough for the page's rows to fit.
+            // At normal window shapes fitScale stays 1 and nothing changes.
+            const nativeCw = window.innerWidth * this.handCardFrame.cardWidthRatio;
+            const nativeCh = nativeCw * this.handCardFrame.cardAspect;
+
+            const pageRowsForFit = Math.max(1, frame.rowsPerPage);
+            const neededHeight = nativeCh * (1 + (pageRowsForFit - 1) * (1 + gapY));
+            const availableHeight = Math.max(0, bounds.height - 2 * pad);
+            // 창을 아주 낮추면 안쪽 여백만으로 상자가 다 차서 남는 높이가 0 이 된다.
+            // 그때 카드가 0 이 되지 않게 바닥을 둔다.
+            const fitScale = neededHeight > 0 && availableHeight < neededHeight
+                ? Math.max(0.2, availableHeight / neededHeight)
+                : 1;
+
+            const cw = nativeCw * fitScale;
+            const ch = nativeCh * fitScale;
 
             const stepX = cw * (1 + gapX);
             const stepY = ch * (1 + gapY);
@@ -94,6 +112,8 @@ export class CardGridPopupRenderer {
                 if (cy - ch / 2 < bounds.minY + pad) break;  // no vertical room for another row
 
                 const cardGroup = await this.cardRenderer.build(cards[i], this.handCardFrame);
+                // 카드 안의 것은 전부 카드 가운데를 기준으로 놓이므로 통째로 줄여도 어긋나지 않는다.
+                if (fitScale !== 1) cardGroup.scale.setScalar(fitScale);
                 cardGroup.position.set(cx, cy, 0);
                 cardGroup.traverse((obj) => {
                     if (obj instanceof THREE.Mesh) obj.renderOrder += roBump;

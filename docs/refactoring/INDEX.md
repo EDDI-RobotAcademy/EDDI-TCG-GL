@@ -109,11 +109,13 @@
 | **R2-82** | Structure | Platform | [기본 실행 명령으로 게임이 뜨게 한다](R2-82-dev-command-starts-game.md) | — | **완료** |
 | **R2-83** | Structure | Battle Card | [카드 선택 시 이전 카드의 선택 해제](R2-83-clear-selection.md) | R2-48 | **완료** |
 | **R2-84** | Structure | Battle Hand | [사용하지 않는 손패 내보내기 방식 제거](R2-84-remove-legacy-drag.md) | R2-54 | **완료** |
-| **R2-85** | Strategy | Battle Ability | [값으로 안 적히는 카드 넷을 전투 상태가 받는 방법 결정](R2-85-multi-step-abilities.md) | R2-68 | **완료** |
-| **R2-86** | Rendering | Battle 공용 | 창 크기가 바뀔 때 다시 안 재는 화면 조각을 잇는다 | R2-72 | 예정 |
-| **R2-87** | Rule | Battle | 멀리건을 더해 1대1 대전이 되게 한다 | R2-75 | 예정 |
-| **R2-88** | Structure | Platform | 사용자에게 내보낼 것을 만드는 명령을 만든다 | R2-82 | 예정 |
-| **R2-89** | Rendering | Battle 공용 | 체력과 무기 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정. **숫자 없는 바탕 그림 셋이 있어야 한다** |
+| **R2-85** | Strategy | Battle Ability | [카드 사용 시 선택이 여러 단계로 나뉘는 경우의 처리 방법 결정](R2-85-multi-step-abilities.md) | R2-68 | **완료** |
+| **R2-86** | Rendering | Battle 공용 | [창 크기 변경 시 무덤과 로스트 존 다시 그리기](R2-86-resize-zone-panels.md) | R2-72 | **완료** |
+| **R2-87** | Rendering | Battle Field | 창 크기 변경 시 상대 필드 다시 그리기를 렌더러가 맡게 한다 | R2-86 | 예정 |
+| **R2-88** | Rendering | Battle 공용 | 창 크기 변경 시 액티브 패널 닫기 | R2-86 | 예정 |
+| **R2-89** | Rule | Battle | 멀리건을 더해 1대1 대전이 되게 한다 | R2-75 | 예정 |
+| **R2-90** | Structure | Platform | 사용자에게 내보낼 것을 만드는 명령을 만든다 | R2-82 | 예정 |
+| **R2-91** | Rendering | Battle 공용 | 체력과 무기 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정. **숫자 없는 바탕 그림 셋이 있어야 한다** |
 
 ### Type — 무엇을 바꾸는 작업인가
 

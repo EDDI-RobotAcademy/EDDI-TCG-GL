@@ -3978,6 +3978,44 @@ export class SimulationBattleFieldView implements Component {
             passTurnOnExpiry('timer expired');
         });
 
+        // 열려 있는 팝업을 창 크기에 맞춰 다시 만든다.
+        //
+        // 팝업은 만들 때 창 크기를 재고 그 뒤로는 안 잰다. 작은 창에서 열어 두고 창을 키우면
+        // 작은 채로 남는다. 그래서 창 크기가 바뀌면 다시 만들어야 하는데, 창을 끌어서 바꾸면
+        // 이 일이 수십 번 불린다. 다시 만드는 것은 그림을 읽는 일이라 시간이 걸리고, 앞의 것이
+        // 끝나기 전에 다음 것이 들어오면 팝업이 겹쳐 쌓인다.
+        //
+        // 그래서 끌기가 멈춘 뒤에 한 번만 만들고, 만드는 중에 또 바뀌면 끝난 뒤에 한 번 더 만든다.
+        // 다섯 모두 안 열려 있으면 그냥 돌아오므로 열림 여부는 여기서 안 따진다.
+        let popupRebuildTimer: ReturnType<typeof setTimeout> | null = null;
+        let popupRebuilding = false;
+        let popupRebuildAgain = false;
+
+        const rebuildOpenPopups = async (): Promise<void> => {
+            if (popupRebuilding) { popupRebuildAgain = true; return; }
+            popupRebuilding = true;
+            try {
+                do {
+                    popupRebuildAgain = false;
+                    await reloadTombPopup();
+                    await reloadOpponentTombPopup();
+                    await reloadLostZonePopup();
+                    await reloadOpponentLostZonePopup();
+                    await reloadLeonikPopup();
+                } while (popupRebuildAgain);
+            } finally {
+                popupRebuilding = false;
+            }
+        };
+
+        const requestPopupRebuild = (): void => {
+            if (popupRebuildTimer !== null) clearTimeout(popupRebuildTimer);
+            popupRebuildTimer = setTimeout(() => {
+                popupRebuildTimer = null;
+                void rebuildOpenPopups();
+            }, 150);
+        };
+
         this.listen(window, 'resize', () => {
             const width = window.innerWidth;
             const height = window.innerHeight;
@@ -3988,6 +4026,14 @@ export class SimulationBattleFieldView implements Component {
             backgroundRenderer.resize(backgroundFrame, backgroundGroup, width, height);
             yourFieldAreaRenderer.resize(yourFieldAreaFrame, yourFieldAreaGroup, width, height);
             opponentFieldAreaRenderer.resize(opponentFieldAreaFrame, opponentFieldAreaGroup, width, height);
+
+            // 무덤 판과 로스트 존 판도 다시 잰다. 판 모양이 창 너비와 높이에서 나오고,
+            // 누르는 자리는 그때그때 창 크기로 다시 재므로, 안 다시 그리면 그림과
+            // 누르는 자리가 어긋난다.
+            tombPanelRenderer.resize(tombPanelFrame, tombPanelGroup, width, height);
+            opponentTombPanelRenderer.resize(opponentTombPanelFrame, opponentTombPanelGroup, width, height);
+            lostZonePanelRenderer.resize(lostZonePanelFrame, lostZonePanelGroup, width, height);
+            opponentLostZonePanelRenderer.resize(opponentLostZonePanelFrame, opponentLostZonePanelGroup, width, height);
 
             const cardRenderer = handRenderer.getCardRenderer();
             for (const entry of entries) {
@@ -4015,6 +4061,8 @@ export class SimulationBattleFieldView implements Component {
             turnRenderer.update(turnFrame, turnElement, width, height);
             masterHpRenderer.resize(masterHpFrame, masterHpGroup, width, height);
             opponentMasterHpRenderer.resize(opponentMasterHpFrame, opponentMasterHpGroup, width, height);
+
+            requestPopupRebuild();
         });
     }
 }
