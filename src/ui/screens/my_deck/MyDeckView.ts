@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {installTween} from "../../../core/tween/Tween";
 
 import myDeckMusic from '@resource/music/my_card/my-card.mp3';
 import {SceneManager} from "../../../core/scene/SceneManager";
@@ -17,6 +18,9 @@ declare const TWEEN: {
     Easing: any;
     update: (time?: number) => void;
 };
+
+// 값 바꾸기를 얹는다. 화면마다 index.html 이 받아 오던 것을 꾸러미에서 가져온다.
+installTween();
 
 export class MyDeckView {
     private static instance: MyDeckView | null = null;

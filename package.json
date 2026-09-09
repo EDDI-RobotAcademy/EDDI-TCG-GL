@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@tweenjs/tween.js": "^23.1.1",
     "chalk": "^5.4.1",
     "lodash": "^4.17.21",
     "three": "^0.164.1",

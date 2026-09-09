@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {installTween} from "../../../core/tween/Tween";
 import {BattleFieldCardAttributeMarkScene} from "../../card/attribute_mark_scene/entity/BattleFieldCardAttributeMarkScene";
 import {OpponentFieldCardScene} from "../../field/opponent/card_scene/entity/OpponentFieldCardScene";
 import {BattleFieldConstants} from "../../../common/BattleFieldConstants";
@@ -9,6 +10,10 @@ declare const TWEEN: {
     Easing: any;
     update: (time?: number) => void;
 };
+
+// 값 바꾸기를 얹는다. 전에는 화면마다 index.html 이 인터넷에서 받아 왔고,
+// 그 줄이 없는 화면에서는 연출 도중에 멈췄다.
+installTween();
 
 export class GeneralAttackAnimation {
     private static instance: GeneralAttackAnimation;

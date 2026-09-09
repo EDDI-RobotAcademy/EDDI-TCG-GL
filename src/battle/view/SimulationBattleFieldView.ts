@@ -1,4 +1,5 @@
 import { CameraManager } from "../../core/camera/CameraManager";
+import { installTween } from "../../core/tween/Tween";
 import { HandCard } from "../../battle/domain/HandCard";
 import { BattleCommandHandler, CardCatalog } from "../../battle/flow/BattleCommandHandler";
 import { BattleCommand } from "../../battle/flow/BattleCommand";
@@ -160,6 +161,8 @@ export class SimulationBattleFieldView implements Component {
     private initialized = false;
     private readonly appended: HTMLElement[] = [];
     private readonly teardown: Array<() => void> = [];
+    // 그리기를 멈추고 다시 돌리려면 이것이 있어야 한다.
+    private animationLoop: AnimationLoop | null = null;
 
     private constructor(private readonly container: HTMLElement) {}
 
@@ -184,21 +187,30 @@ export class SimulationBattleFieldView implements Component {
     public show(): void {
         this.container.style.display = 'block';
         for (const el of this.appended) el.style.display = '';
+
+        // 아직 안 만들었으면 여기서 만든다. 라우터는 show 만 부른다.
+        if (!this.initialized) {
+            this.initialize();
+            return;
+        }
+        this.animationLoop?.start();
     }
 
     public hide(): void {
         this.container.style.display = 'none';
         // 화면 밖에 붙인 것을 함께 감춘다. 안 감추면 로비 위에 남는다.
         for (const el of this.appended) el.style.display = 'none';
+        // 안 보이는 화면을 계속 그릴 이유가 없다.
+        this.animationLoop?.stop();
     }
 
     public animate(): void {
-        // 애니메이션은 안에서 스스로 돈다.
+        this.animationLoop?.start();
     }
 
     // 화면 밖에 붙이는 것을 적어 둔다. 떠날 때 함께 감춘다.
     private appendToBody(element: HTMLElement): void {
-        this.appendToBody(element);
+        document.body.appendChild(element);
         this.appended.push(element);
     }
 
@@ -224,6 +236,10 @@ export class SimulationBattleFieldView implements Component {
     }
 
     private async build(container: HTMLElement): Promise<void> {
+        // 연출이 쓰는 값 바꾸기를 얹는다. 전에는 화면마다 index.html 이 인터넷에서
+        // 받아 왔다. 그 줄이 없는 화면에서 들어오면 연출 도중에 멈춘다.
+        installTween();
+
 
         // 전투 한 판을 여기서 시작한다. 담을 그릇이 먼저 있어야 담는다.
         // 턴, 덱, 무덤, 로스트 존, 필드, 손패, 본체가 이 안에 들어 있다.
@@ -245,7 +261,7 @@ export class SimulationBattleFieldView implements Component {
         audioController.setMusic(battleFieldMusic);
         this.listen(window, 'click', () => { void audioController.playMusic(); }, { once: true });
 
-        const scene = sceneManager.createScene('draw-field-energy-full-efr');
+        const scene = sceneManager.createScene('simulation-battle-field');
 
         // Load skill image paths per card from image-paths.json (card-specific skill buttons)
         let skillImagePaths: Record<string, string[]> = {};
@@ -981,6 +997,8 @@ export class SimulationBattleFieldView implements Component {
         }
 
         const animationLoop = new AnimationLoop(rendererManager, sceneManager, cameraManager);
+        // 화면을 감출 때 멈추려면 밖에서도 잡을 수 있어야 한다.
+        this.animationLoop = animationLoop;
         const attackAnimation = new AttackAnimationV2(scene);
         const scytheCutEffect = new ScytheCutEffect(scene);
         const energyBurnEffect = new EnergyBurnEffect(scene);
