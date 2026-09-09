@@ -19,7 +19,6 @@ import { YourFieldAreaServiceImpl } from "../../battle/field/your/area/service/Y
 import { OpponentFieldAreaServiceImpl } from "../../battle/field/opponent/area/service/OpponentFieldAreaServiceImpl";
 import { BattleFieldHandServiceImpl } from "../../battle/hand/service/BattleFieldHandServiceImpl";
 import { OpponentFieldServiceImpl } from "../../battle/field/opponent/service/OpponentFieldServiceImpl";
-import { BattleFieldHandSceneRepository } from "../../battle_field_hand/deprecated_repository/BattleFieldHandSceneRepository";
 import { NonBackgroundImage } from "../../shape/image/NonBackgroundImage";
 import { UnitCardGenerator } from "../../card/unit/generate";
 import { SupportCardGenerator } from "../../card/support/generate";
@@ -28,7 +27,6 @@ import { EnergyCardGenerator } from "../../card/energy/generate";
 
 export class BattleFieldController {
     private background: NonBackgroundImage | null = null;
-    private battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance();
     private readonly handPageButtonsRenderer = new HandPageButtonsRendererV2();
     private readonly battleRepository: BattleRepository = BattleRepositoryImpl.getInstance();
 
@@ -98,7 +96,6 @@ export class BattleFieldController {
             const createdHand = await this.battleFieldHandService.createHand(handCardId);
 
             if (createdHand) {
-                this.battleFieldHandSceneRepository.addBattleFieldHandScene(createdHand);
                 this.scene.add(createdHand);
             }
         }

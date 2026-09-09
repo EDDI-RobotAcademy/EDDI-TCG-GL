@@ -29,9 +29,6 @@ import {
     BattleFieldCardAttributeMarkStatus
 } from "../../battle/card/attribute_mark/entity/BattleFieldCardAttributeMarkStatus";
 import {
-    BattleFieldHandSceneRepository
-} from "../../battle_field_hand/deprecated_repository/BattleFieldHandSceneRepository";
-import {
     BattleFieldCardAttributeMarkStore
 } from "../../battle/card/attribute_mark/store/BattleFieldCardAttributeMarkStore";
 import {BattleFieldCardSceneCache} from "../../battle/card/scene/cache/BattleFieldCardSceneCache";
@@ -67,7 +64,6 @@ export class KeyboardActionHandler {
 
     private scene: THREE.Scene;
     private battleFieldCardPositionStore: BattleFieldCardPositionStore;
-    private battleFieldHandSceneRepository: BattleFieldHandSceneRepository;
 
     private battleFieldHandPageStore: BattleFieldHandPageStore ;
 
@@ -88,7 +84,6 @@ export class KeyboardActionHandler {
 
     private constructor(scene: THREE.Scene) {
         this.battleFieldCardPositionStore = BattleFieldCardPositionStoreImpl.getInstance();
-        this.battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance();
 
         this.battleFieldHandPageStore = BattleFieldHandPageStoreImpl.getInstance();
 
@@ -117,7 +112,6 @@ export class KeyboardActionHandler {
                 const createdHand = await this.createHand(handCardId)
 
                 if (createdHand) {
-                    this.battleFieldHandSceneRepository.addBattleFieldHandScene(createdHand);
                     this.scene.add(createdHand);
                     this.battleFieldCardAlignHandler.alignHandCard();
                 }

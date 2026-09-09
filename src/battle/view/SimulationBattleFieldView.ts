@@ -159,7 +159,11 @@ export class SimulationBattleFieldView implements Component {
     private static instance: SimulationBattleFieldView | null = null;
 
     private initialized = false;
-    private readonly appended: HTMLElement[] = [];
+    // 화면 밖에 붙인 것과 그것이 원래 쓰던 보이기 방식.
+    //
+    // 되돌릴 때 빈 값을 넣으면 안 된다. 이 조각들은 flex 로 가운데를 맞추는데,
+    // 빈 값을 넣으면 그 맞추기가 풀려 숫자가 왼쪽 위로 간다.
+    private readonly appended: Array<{element: HTMLElement; display: string}> = [];
     private readonly teardown: Array<() => void> = [];
     // 그리기를 멈추고 다시 돌리려면 이것이 있어야 한다.
     private animationLoop: AnimationLoop | null = null;
@@ -186,7 +190,7 @@ export class SimulationBattleFieldView implements Component {
 
     public show(): void {
         this.container.style.display = 'block';
-        for (const el of this.appended) el.style.display = '';
+        for (const it of this.appended) it.element.style.display = it.display;
 
         // 아직 안 만들었으면 여기서 만든다. 라우터는 show 만 부른다.
         if (!this.initialized) {
@@ -199,7 +203,7 @@ export class SimulationBattleFieldView implements Component {
     public hide(): void {
         this.container.style.display = 'none';
         // 화면 밖에 붙인 것을 함께 감춘다. 안 감추면 로비 위에 남는다.
-        for (const el of this.appended) el.style.display = 'none';
+        for (const it of this.appended) it.element.style.display = 'none';
         // 안 보이는 화면을 계속 그릴 이유가 없다.
         this.animationLoop?.stop();
     }
@@ -211,7 +215,7 @@ export class SimulationBattleFieldView implements Component {
     // 화면 밖에 붙이는 것을 적어 둔다. 떠날 때 함께 감춘다.
     private appendToBody(element: HTMLElement): void {
         document.body.appendChild(element);
-        this.appended.push(element);
+        this.appended.push({element, display: element.style.display});
     }
 
     // 창과 글쇠를 듣는 것을 적어 둔다. 화면을 버릴 때 뗀다.
@@ -229,7 +233,7 @@ export class SimulationBattleFieldView implements Component {
     public dispose(): void {
         for (const off of this.teardown) off();
         this.teardown.length = 0;
-        for (const el of this.appended) el.remove();
+        for (const it of this.appended) it.element.remove();
         this.appended.length = 0;
         this.initialized = false;
         SimulationBattleFieldView.instance = null;

@@ -22,7 +22,6 @@ import { BattleFieldUnitScene } from "../../src/battle/unit/scene/BattleFieldUni
 import { ResourceManager } from "../../src/resouce_manager/ResourceManager";
 import { BattleFieldUnitRenderer } from "../../src/battle/unit/renderer/BattleFieldUnitRenderer";
 import { CardGenerationHandler } from "../../src/card/handler";
-import { BattleFieldHandSceneRepository } from "../../src/battle_field_hand/deprecated_repository/BattleFieldHandSceneRepository";
 
 import { UserWindowSize } from "../../src/window_size/WindowSize";
 import { UnitCardGenerator } from "../../src/card/unit/generate";
@@ -57,7 +56,6 @@ export class TCGJustTestBattleFieldReturnToInitialPositionView {
     private battleFieldUnitScene = new BattleFieldUnitScene();
     private battleFieldResourceManager = new ResourceManager();
     private battleFieldUnitRenderer?: BattleFieldUnitRenderer;
-    private battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance();
 
     private initialized = false;
     private isAnimating = false;
@@ -181,7 +179,6 @@ export class TCGJustTestBattleFieldReturnToInitialPositionView {
             const createdHand = await CardGenerationHandler.createCardById(listNumber, positionVector, indexCount);
 
             if (createdHand) {
-                this.battleFieldHandSceneRepository.addBattleFieldHandScene(createdHand);
                 this.scene.add(createdHand);
             }
             indexCount++;
