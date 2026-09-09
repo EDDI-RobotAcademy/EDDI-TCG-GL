@@ -1,6 +1,6 @@
 # [ETWGL-R2-75] 로비에서 들어간 전투가 확인용 화면과 같은 것을 띄우게 한다
 
-선행: R2-74 │ 후행: R2-76 │ 산출물: SimulationBattleFieldView, core/tween/Tween │ Type: Rendering │ Domain: Battle
+선행: R2-74 │ 후행: R2-76 │ 산출물: SimulationBattleFieldView, core/tween/Tween │ Type: Structure │ Domain: Battle
 
 # Success criteria
 
