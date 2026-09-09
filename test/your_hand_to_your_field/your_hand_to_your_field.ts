@@ -20,7 +20,6 @@ import { BattleFieldUnit } from "../../src/battle/domain/BattleFieldUnit";
 import { BattleFieldUnitScene } from "../../src/battle/unit/scene/BattleFieldUnitScene";
 import { ResourceManager } from "../../src/resouce_manager/ResourceManager";
 import { BattleFieldUnitRenderer } from "../../src/battle/unit/renderer/BattleFieldUnitRenderer";
-import { BattleFieldHandRepository } from "../../src/battle_field_hand/deprecated_repository/BattleFieldHandRepository";
 import { CardGenerationHandler } from "../../src/card/handler";
 import { BattleFieldHandSceneRepository } from "../../src/battle_field_hand/deprecated_repository/BattleFieldHandSceneRepository";
 import { BattleFieldHandPositionRepository } from "../../src/battle_field_hand/deprecated_repository/BattleFieldHandPositionRepository";

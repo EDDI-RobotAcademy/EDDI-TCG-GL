@@ -98,23 +98,23 @@
 | **R2-71** | Rule | Battle Unit | [턴이 넘어갈 때 유닛에 붙은 것을 전투 상태가 정산한다](R2-71-settle-on-turn-pass.md) | R2-70 | **완료** |
 | **R2-72** | Rendering | Battle Active Panel | [액티브 패널을 만드는 일을 렌더러로 옮긴다](R2-72-active-panel-to-renderer.md) | R2-44 | **완료** |
 | **R2-73** | Rule | Lobby | [아직 못 만든 화면으로 가는 버튼이 준비 중임을 알리게 한다](R2-73-unregistered-routes.md) | — | **완료** |
-| **R2-74** | Rendering | Battle | [로비에서 들어간 전투 화면이 실제 전투를 띄우게 한다](R2-74-router-shows-battle.md) | R2-29 | **완료** |
-| **R2-75** | Rendering | Battle | [로비에서 들어간 전투가 확인용 화면과 같은 것을 띄우게 한다](R2-75-battle-screen-from-lobby.md) | R2-74 | **완료** |
-| **R2-76** | Rule | Battle | 멀리건을 더해 1대1 대전이 되게 한다 | R2-75 | 예정 |
-| **R2-77** | Structure | Battle Hand | 확인용 화면 다섯이 손패 카드 번호를 새 방식으로 읽게 한다 | R2-38 | 예정 |
-| **R2-78** | Structure | Battle Hand | 확인용 화면 일곱이 손패 카드 자리를 새 방식으로 읽게 한다 | R2-77 | 예정 |
-| **R2-79** | Structure | Battle Hand | 손패 화면 덩어리를 담을 새 자리를 만든다 | R2-78 | 예정 |
-| **R2-80** | Rendering | Battle Hand | 본편 두 곳이 손패 화면 덩어리를 새 자리에서 읽게 한다 | R2-79 | 예정 |
-| **R2-81** | Structure | Battle Hand | 확인용 화면 열둘이 손패 화면 덩어리를 새 자리에서 읽게 하고 낡은 방식을 지운다 | R2-80 | 예정 |
-| **R2-82** | Rendering | Battle Animation | 벨른의 광역기를 공격 연출 파일에서 꺼낸다 | R2-40 | 예정 |
-| **R2-83** | Rendering | Battle Animation | 카드가 서는 자리를 재는 시점을 맞춘다 | R2-43 | 예정 |
-| **R2-84** | Rendering | Battle 공용 | 체력, 무기, 에너지 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정 |
-| **R2-85** | Rendering | Battle Animation | 연출들이 각자 가진 정리 함수를 한 곳으로 모은다 | R2-46 | 예정 |
-| **R2-86** | Structure | Platform | 기본 실행 명령이 없는 화면을 가리키는 것을 고친다 | — | 예정 |
-| **R2-87** | Structure | Battle Active Panel | 액티브 패널을 닫는 일곱 곳을 하나로 묶는다 | R2-48 | 예정 |
-| **R2-88** | Structure | Battle Unit | 옛 드래그로 필드에 놓는 길을 정리한다 | R2-54 | 예정 |
-| **R2-89** | Strategy | Battle Ability | 한 번에 안 끝나는 카드 넷을 다룰 모양을 정한다 | R2-68 | 예정 |
-| **R2-90** | Rendering | Battle 공용 | 창 크기가 바뀔 때 다시 안 재는 화면 조각을 잇는다 | R2-72 | 예정 |
+| **R2-74** | Structure | Battle | [로비에서 들어간 전투 화면이 실제 전투를 띄우게 한다](R2-74-router-shows-battle.md) | R2-29 | **완료** |
+| **R2-75** | Structure | Battle | [로비에서 들어간 전투가 확인용 화면과 같은 것을 띄우게 한다](R2-75-battle-screen-from-lobby.md) | R2-74 | **완료** |
+| **R2-76** | Structure | Battle Hand | [낡은 손패 카드 번호 저장소를 지운다](R2-76-delete-deprecated-hand-card-ids.md) | R2-38 | **완료** |
+| **R2-77** | Structure | Battle Hand | 확인용 화면 일곱이 손패 카드 자리를 새 방식으로 읽게 한다 | R2-76 | 예정 |
+| **R2-78** | Structure | Battle Hand | 손패 화면 덩어리를 담을 새 자리를 만든다 | R2-77 | 예정 |
+| **R2-79** | Rendering | Battle Hand | 본편 두 곳이 손패 화면 덩어리를 새 자리에서 읽게 한다 | R2-78 | 예정 |
+| **R2-80** | Structure | Battle Hand | 확인용 화면 열둘이 손패 화면 덩어리를 새 자리에서 읽게 하고 낡은 방식을 지운다 | R2-79 | 예정 |
+| **R2-81** | Rendering | Battle Animation | 벨른의 광역기를 공격 연출 파일에서 꺼낸다 | R2-40 | 예정 |
+| **R2-82** | Rendering | Battle Animation | 카드가 서는 자리를 재는 시점을 맞춘다 | R2-43 | 예정 |
+| **R2-83** | Rendering | Battle 공용 | 체력, 무기, 에너지 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정 |
+| **R2-84** | Rendering | Battle Animation | 연출들이 각자 가진 정리 함수를 한 곳으로 모은다 | R2-46 | 예정 |
+| **R2-85** | Structure | Platform | 기본 실행 명령이 없는 화면을 가리키는 것을 고친다 | — | 예정 |
+| **R2-86** | Structure | Battle Active Panel | 액티브 패널을 닫는 일곱 곳을 하나로 묶는다 | R2-48 | 예정 |
+| **R2-87** | Structure | Battle Unit | 옛 드래그로 필드에 놓는 길을 정리한다 | R2-54 | 예정 |
+| **R2-88** | Strategy | Battle Ability | 한 번에 안 끝나는 카드 넷을 다룰 모양을 정한다 | R2-68 | 예정 |
+| **R2-89** | Rendering | Battle 공용 | 창 크기가 바뀔 때 다시 안 재는 화면 조각을 잇는다 | R2-72 | 예정 |
+| **R2-90** | Rule | Battle | 멀리건을 더해 1대1 대전이 되게 한다 | R2-75 | 예정 |
 
 ### Type — 무엇을 바꾸는 작업인가
 

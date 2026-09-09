@@ -1,0 +1,1 @@
+# Second skill that number of card
