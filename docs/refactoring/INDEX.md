@@ -89,7 +89,7 @@
 | **R2-62** | Rule | Battle | [연출 도중 종료되어도 전투 상태가 일관되도록 처리 순서 분리](R2-62-separate-state-from-animation.md) | R2-61 | **완료** |
 | **R2-63** | Rule | Battle Turn | [턴 넘김의 판단을 전투 상태로 옮긴다](R2-63-turn-progression-rules.md) | R2-50 | **완료** |
 | **R2-64** | Strategy | Battle | [사용자가 하는 일과 그 결과로 일어나는 일을 정한다](R2-64-battle-command-catalog.md) | R2-63 | **완료** |
-| **R2-65** | Rule | Battle Hand | 손패에서 필드로 카드를 내는 일을 전투 상태가 처리한다 | R2-64 | 예정 |
+| **R2-65** | Rule | Battle Hand | [손패에서 필드로 카드를 내는 일을 전투 상태가 처리한다](R2-65-play-card-to-field.md) | R2-64 | **완료** |
 | **R2-66** | Rule | Battle Ability | 카드 능력을 쓰는 일을 전투 상태가 처리한다 | R2-65 | 예정 |
 | **R2-67** | Rule | Battle | 공격과 스킬을 전투 상태가 처리한다 | R2-66 | 예정 |
 | **R2-68** | Rendering | Battle | 화면이 전투 상태에서 돌려받은 것만 보고 그리게 한다 | R2-67 | 예정 |
