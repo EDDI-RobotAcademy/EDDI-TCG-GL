@@ -29,7 +29,7 @@ import {
 
 import { createDefaultOpponentFieldAreaFrame } from "../../battle/field/opponent/area/frame/OpponentFieldAreaFrame";
 import { OpponentFieldAreaRendererV2 } from "../../battle/field/opponent/area/renderer/OpponentFieldAreaRendererV2";
-import { createDefaultOpponentFieldLayoutFrame, computeOpponentFieldCardCenter } from "../../battle/field/opponent/frame/OpponentFieldLayoutFrame";
+import { createDefaultOpponentFieldLayoutFrame } from "../../battle/field/opponent/frame/OpponentFieldLayoutFrame";
 import { OpponentFieldRendererV2 } from "../../battle/field/opponent/renderer/OpponentFieldRendererV2";
 
 import { CardFace } from "../../battle/hand/entity/CardFace";
@@ -342,14 +342,26 @@ export class SimulationBattleFieldView implements Component {
         scene.add(yourFieldNeonHost);
 
         // Opponent master (본체) — legacy OPPONENT_MASETER area coordinates
-        const masterX1 = (0.4605885 - 0.5) * window.innerWidth;
-        const masterY1 = (0.5 - 0.1920103) * window.innerHeight;
-        const masterX2 = (0.5410156 - 0.5) * window.innerWidth;
-        const masterY2 = (0.5 - 0.0476804) * window.innerHeight;
-        const masterW = Math.abs(masterX2 - masterX1);
-        const masterH = Math.abs(masterY2 - masterY1);
-        const masterCX = (masterX1 + masterX2) / 2;
-        const masterCY = (masterY1 + masterY2) / 2;
+        //
+        // 배경 그림 위에 덮어 두는 보이지 않는 판이다. 이 판을 눌러 본체를 겨누고, 겨냥
+        // 테두리도 이 판에 붙는다. 배경은 창 크기를 따라가므로 이 판도 따라가야 한다.
+        const computeMasterArea = (viewportWidth: number, viewportHeight: number) => {
+            const x1 = (0.4605885 - 0.5) * viewportWidth;
+            const y1 = (0.5 - 0.1920103) * viewportHeight;
+            const x2 = (0.5410156 - 0.5) * viewportWidth;
+            const y2 = (0.5 - 0.0476804) * viewportHeight;
+            return {
+                width: Math.abs(x2 - x1),
+                height: Math.abs(y2 - y1),
+                centerX: (x1 + x2) / 2,
+                centerY: (y1 + y2) / 2,
+            };
+        };
+        const masterArea = computeMasterArea(window.innerWidth, window.innerHeight);
+        const masterW = masterArea.width;
+        const masterH = masterArea.height;
+        const masterCX = masterArea.centerX;
+        const masterCY = masterArea.centerY;
 
         const masterMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, opacity: 0, transparent: true });
         const masterMesh = new THREE.Mesh(new THREE.PlaneGeometry(masterW, masterH), masterMaterial);
@@ -503,6 +515,37 @@ export class SimulationBattleFieldView implements Component {
             entries.find((e) => e.group === group);
         const getMaxPage = () => Math.max(1, Math.ceil(handOrder.length / MAX_PER_PAGE));
 
+        // 스킬을 쓰러 나가 있는 카드와, 끝나고 돌아갈 자리.
+        //
+        // 스킬을 쓰는 동안 카드는 제자리를 비우고 화면 가운데로 나간다. 그 사이에 창 크기가
+        // 바뀌면 제자리가 달라지는데, 카드는 나갈 때 적어 둔 옛 자리로 돌아가 버린다.
+        // 그래서 나가 있는 동안에는 카드를 세우는 대신 돌아갈 자리를 고쳐 둔다.
+        const skillTripHome = new Map<THREE.Group, THREE.Vector3>();
+
+        // 카드를 내보내는 연출을 돌리는 동안 제자리를 맡아 둔다. 도는 중에 창 크기가 바뀌면
+        // 제자리를 다시 세는 쪽이 맡아 둔 값을 고치고, 연출은 돌아갈 때 그 값을 읽는다.
+        const withSkillTripHome = async (
+            group: THREE.Group,
+            play: (home: THREE.Vector3) => Promise<void>,
+        ): Promise<void> => {
+            const home = group.position.clone();
+            skillTripHome.set(group, home);
+            try {
+                await play(home);
+            } finally {
+                skillTripHome.delete(group);
+            }
+        };
+
+        const seatOrRetarget = (group: THREE.Group, x: number, y: number): void => {
+            const home = skillTripHome.get(group);
+            if (home) {
+                home.set(x, y, home.z);
+                return;
+            }
+            group.position.set(x, y, 0);
+        };
+
         const reflowHandAndPlaced = (): void => {
             const w = window.innerWidth;
             const h = window.innerHeight;
@@ -513,7 +556,7 @@ export class SimulationBattleFieldView implements Component {
                 if (index >= pageStart && index < pageEnd) {
                     const pageLocalIndex = index - pageStart;
                     const { x, y } = computeHandCardCenter(handLayoutFrame, pageLocalIndex, w, h);
-                    entry.group.position.set(x, y, 0);
+                    seatOrRetarget(entry.group, x, y);
                     entry.group.visible = true;
                 } else {
                     entry.group.visible = false;
@@ -522,7 +565,7 @@ export class SimulationBattleFieldView implements Component {
 
             placedOrder.forEach((entry, index) => {
                 const { x, y } = computePlacedCardPosition(placementFrame, index, w, h);
-                entry.group.position.set(x, y, 0);
+                seatOrRetarget(entry.group, x, y);
                 entry.group.visible = true;
             });
         };
@@ -839,10 +882,9 @@ export class SimulationBattleFieldView implements Component {
         }
 
         // 살아 있는 차례는 전투가 든 상대 필드 목록 그 자체다.
+        // 상대 필드 카드가 어느 자리에 서는지도 이 차례로 정해진다.
         const opponentAliveIds = (): number[] =>
             battle.getOpponentFieldCards().map((it) => it.getBattleCardId());
-        const opponentAliveIndexOf = (cardIndex: number): number =>
-            battle.getOpponentFieldCards().findIndex((it) => it.getBattleCardId() === cardIndex);
         const isOpponentAlive = (cardIndex: number): boolean =>
             battle.findOnOpponentField(cardIndex) !== null;
         const opponentHpOf = (cardIndex: number): number =>
@@ -862,18 +904,13 @@ export class SimulationBattleFieldView implements Component {
         const opponentEntries = (opponentGroup.userData as { entries: { card: CardFace; cardIndex: number; group: THREE.Group }[] }).entries;
 
         const reflowOpponentField = (): void => {
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            for (const entry of opponentEntries) {
-                const aliveIdx = opponentAliveIndexOf(entry.cardIndex);
-                if (aliveIdx >= 0) {
-                    const { x, y } = computeOpponentFieldCardCenter(opponentLayoutFrame, aliveIdx, w, h);
-                    entry.group.position.set(x, y, 0);
-                    entry.group.visible = true;
-                } else {
-                    entry.group.visible = false;
-                }
-            }
+            opponentRenderer.layout(
+                opponentLayoutFrame,
+                opponentGroup,
+                window.innerWidth,
+                window.innerHeight,
+                opponentAliveIds(),
+            );
         };
 
         // Tracks which attack/skill is active so single-target execution uses the correct damage.
@@ -898,6 +935,12 @@ export class SimulationBattleFieldView implements Component {
         const activePanelFrame = createDefaultActivePanelFrame();
         const activePanelRenderer = new ActivePanelRendererV2();
         let activePanelGroup: THREE.Group | null = null;
+
+        // 패널이 열린 자리를 [그 카드의 가운데에서 얼마나 떨어져 있는가] 로 적어 둔다.
+        // 카드 크기에 대한 비율이라, 창이 커지거나 작아져도 카드에 대해 같은 자리에 선다.
+        // 패널은 우클릭한 자리에 뜨는데, 창이 바뀌면 카드가 다른 자리로 가기 때문에
+        // 누른 자리를 그대로 기억하면 패널만 엉뚱한 데 남는다.
+        let activePanelAnchorOnCard: { entry: HandEntry; xRatio: number; yRatio: number } | null = null;
         type InteractionState = 'idle' | 'cardSelected' | 'panelVisible' | 'attackMode';
         let interactionState: InteractionState = 'idle';
         // Tracks the currently-selected ally card as a concrete entry reference — neonEffect's
@@ -909,6 +952,7 @@ export class SimulationBattleFieldView implements Component {
                 activePanelRenderer.dispose(activePanelGroup);
                 activePanelGroup = null;
             }
+            activePanelAnchorOnCard = null;
             enemyNeonEffect.detachAll();
             if (interactionState === 'panelVisible' || interactionState === 'attackMode') {
                 interactionState = neonEffect.hasActive() ? 'cardSelected' : 'idle';
@@ -1422,6 +1466,7 @@ export class SimulationBattleFieldView implements Component {
             const h = window.innerHeight;
             const { x: skillPositionX, y: skillPositionY } = createCardSkillPositionFrame(h);
             const origPos = group.position.clone();
+            skillTripHome.set(group, origPos);
 
             // 옮기는 일은 moveCard 가 한다. 예전에는 여기서 직접 계산했는데,
             // 그 식이 TWEEN 의 Quadratic.InOut 과 같은 곡선이라 값이 바뀌지 않는다.
@@ -1445,6 +1490,7 @@ export class SimulationBattleFieldView implements Component {
             await moveTo(origPos.x, origPos.y, origPos.z, 700);
             // Snap to exact original to avoid sub-pixel drift.
             group.position.copy(origPos);
+            skillTripHome.delete(group);
         };
 
         // 출격 시 두번째 패시브 (단일기) — auto-entered after passive 1 resolves. User picks
@@ -1729,7 +1775,8 @@ export class SimulationBattleFieldView implements Component {
                                 if (atkEntry.card.cardId === NETHER_BLADE_CARD_ID) {
                                     await playSkillPanelMoveOnly(atkEntry.group);
                                 } else {
-                                    await seaOfSpecterEffect.play(atkEntry.group);
+                                    await withSkillTripHome(atkEntry.group, (home) =>
+                                        seaOfSpecterEffect.play(atkEntry.group, home));
                                 }
                             }
 
@@ -1838,7 +1885,8 @@ export class SimulationBattleFieldView implements Component {
                     });
 
                     if (attackerEntry) {
-                        await attackAnimation.playAttack(attackerEntry.group, masterGroup, pendingAttackType);
+                        await withSkillTripHome(attackerEntry.group, (home) =>
+                            attackAnimation.playAttack(attackerEntry.group, masterGroup, pendingAttackType, home));
                     }
 
                     for (const ev of events) {
@@ -1890,7 +1938,8 @@ export class SimulationBattleFieldView implements Component {
                     });
 
                     if (attackerEntry) {
-                        await attackAnimation.playAttack(attackerEntry.group, targetEntry.group, pendingAttackType);
+                        await withSkillTripHome(attackerEntry.group, (home) =>
+                            attackAnimation.playAttack(attackerEntry.group, targetEntry.group, pendingAttackType, home));
                     }
                     const hit = attackEvents.find((ev) => ev.type === 'damaged');
                     const currentHp = hit && hit.type === 'damaged' ? hit.hpBefore : 0;
@@ -1980,6 +2029,14 @@ export class SimulationBattleFieldView implements Component {
             }
 
             buttonSpecs.push(activePanelFrame.detailsButton);
+
+            const anchorCardWidth = handCardFrame.cardWidthRatio * window.innerWidth;
+            const anchorCardHeight = anchorCardWidth * handCardFrame.cardAspect;
+            activePanelAnchorOnCard = {
+                entry: selectedEntry,
+                xRatio: (clickPos.x - selectedEntry.group.position.x) / anchorCardWidth,
+                yRatio: (clickPos.y - selectedEntry.group.position.y) / anchorCardHeight,
+            };
 
             activePanelGroup = await activePanelRenderer.build(activePanelFrame, clickPos, buttonSpecs);
             scene.add(activePanelGroup);
@@ -4041,11 +4098,14 @@ export class SimulationBattleFieldView implements Component {
             }
             reflowHandAndPlaced();
 
-            // Rescale opponent cards, then reflow alive ones (dead ones stay hidden)
-            for (const entry of opponentEntries) {
-                handRenderer.getCardRenderer().resize(handCardFrame, entry.group);
-            }
-            reflowOpponentField();
+            opponentRenderer.resize(
+                handCardFrame,
+                opponentLayoutFrame,
+                opponentGroup,
+                width,
+                height,
+                opponentAliveIds(),
+            );
             handPageButtonsRenderer.resize(handPageButtonsFrame, handPageButtonsGroup, width, height);
             // 턴 종료 버튼도 다시 잰다. 육각형 자리가 창 크기에서 나오므로,
             // 안 다시 재면 네온 테두리와 누름 자리가 처음 크기에 남는다.
@@ -4061,6 +4121,63 @@ export class SimulationBattleFieldView implements Component {
             turnRenderer.update(turnFrame, turnElement, width, height);
             masterHpRenderer.resize(masterHpFrame, masterHpGroup, width, height);
             opponentMasterHpRenderer.resize(opponentMasterHpFrame, opponentMasterHpGroup, width, height);
+
+            // 본체를 덮은 판과 필드 두 곳의 겨냥 자리를 다시 잰다. 셋 다 만들 때 창 크기를
+            // 재고 그 뒤로 안 쟀다. 배경만 따라 줄어들고 이 셋은 옛 자리에 남아 있어서,
+            // 겨냥 테두리가 대상에서 벗어난 데 그려졌다.
+            const nextMasterArea = computeMasterArea(width, height);
+            masterMesh.geometry?.dispose();
+            masterMesh.geometry = new THREE.PlaneGeometry(nextMasterArea.width, nextMasterArea.height);
+            masterGroup.position.set(nextMasterArea.centerX, nextMasterArea.centerY, 0);
+            masterGroup.userData = {
+                baseCardWidth: nextMasterArea.width,
+                baseCardHeight: nextMasterArea.height,
+            };
+
+            opponentFieldNeonHost.position.set(
+                opponentFieldAreaFrame.xPercent * width,
+                opponentFieldAreaFrame.yPercent * height,
+                0,
+            );
+            opponentFieldNeonHost.userData = {
+                baseCardWidth:  opponentFieldAreaFrame.widthPercent  * width,
+                baseCardHeight: opponentFieldAreaFrame.heightPercent * height,
+            };
+
+            yourFieldNeonHost.position.set(
+                yourFieldAreaFrame.xPercent * width,
+                yourFieldAreaFrame.yPercent * height,
+                0,
+            );
+            yourFieldNeonHost.userData = {
+                baseCardWidth:  yourFieldAreaFrame.widthPercent  * width,
+                baseCardHeight: yourFieldAreaFrame.heightPercent * height,
+            };
+
+            // 붙어 있는 테두리는 붙일 때 크기를 읽어 둔 것이라, 대상이 커지거나 작아지면
+            // 다시 읽어야 한다. 카드에 붙은 것도 함께 다시 읽는다.
+            enemyNeonEffect.refreshSizes();
+            allyTargetNeonEffect.refreshSizes();
+            neonEffect.refreshSizes();
+
+            // 도는 중인 연출도 창 크기에 맞춘다. 안 돌고 있으면 아무것도 안 한다.
+            seaOfSpecterEffect.resize(width, height);
+
+            // 액티브 패널을 카드 따라 옮긴다. 카드가 새 자리로 간 뒤라야 하므로 맨 마지막에 한다.
+            if (activePanelGroup && activePanelAnchorOnCard) {
+                const cardWidth = handCardFrame.cardWidthRatio * width;
+                const cardHeight = cardWidth * handCardFrame.cardAspect;
+                const cardPos = activePanelAnchorOnCard.entry.group.position;
+                activePanelRenderer.resize(
+                    activePanelFrame,
+                    activePanelGroup,
+                    {
+                        x: cardPos.x + activePanelAnchorOnCard.xRatio * cardWidth,
+                        y: cardPos.y + activePanelAnchorOnCard.yRatio * cardHeight,
+                    },
+                    width,
+                );
+            }
 
             requestPopupRebuild();
         });
