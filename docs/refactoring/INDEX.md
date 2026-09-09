@@ -86,7 +86,7 @@
 | **R2-59** | Rule | Battle Ability | [카드가 적용되는 대상과 수치 정리](R2-59-extract-card-ability-values.md) | R2-58 | **완료** |
 | **R2-60** | Rule | Battle Master | [본체 체력을 전투 상태 안으로 옮긴다](R2-60-move-master-hp-into-battle.md) | R2-59 | **완료** |
 | **R2-61** | Rule | Battle Field | [필드 유닛의 체력과 살아 있는 순서를 전투 상태 안으로 옮긴다](R2-61-move-field-unit-state-into-battle.md) | R2-60 | **완료** |
-| **R2-62** | Rule | Battle | 연출 도중 종료되어도 전투 상태가 일관되도록 처리 순서 분리 | R2-61 | 예정 |
+| **R2-62** | Rule | Battle | [연출 도중 종료되어도 전투 상태가 일관되도록 처리 순서 분리](R2-62-separate-state-from-animation.md) | R2-61 | **완료** |
 | **R2-63** | Rule | Battle Turn | 턴 진행 규칙을 한 곳에서 읽을 수 있게 한다 | R2-50 | 예정 |
 | **R2-64** | Rendering | Battle | 화면 표시가 상태를 들고 있지 않게 한다 | R2-57 | 예정 |
 | **R2-65** | Rule | Battle Active Panel | 액티브 패널이 화면과 카메라를 들지 않게 한다 | R2-44 | 예정 |
