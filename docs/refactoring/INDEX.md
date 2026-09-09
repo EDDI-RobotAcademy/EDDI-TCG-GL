@@ -101,7 +101,7 @@
 | **R2-74** | Structure | Battle | [로비에서 들어간 전투 화면이 실제 전투를 띄우게 한다](R2-74-router-shows-battle.md) | R2-29 | **완료** |
 | **R2-75** | Structure | Battle | [로비에서 들어간 전투가 확인용 화면과 같은 것을 띄우게 한다](R2-75-battle-screen-from-lobby.md) | R2-74 | **완료** |
 | **R2-76** | Structure | Battle Hand | [낡은 손패 카드 번호 저장소를 지운다](R2-76-delete-deprecated-hand-card-ids.md) | R2-38 | **완료** |
-| **R2-77** | Structure | Battle Hand | 확인용 화면 일곱이 손패 카드 자리를 새 방식으로 읽게 한다 | R2-76 | 예정 |
+| **R2-77** | Structure | Battle Hand | [낡은 손패 자리 계산을 없애고 본편과 같은 자리에 서게 한다](R2-77-delete-deprecated-hand-position.md) | R2-76 | **완료** |
 | **R2-78** | Structure | Battle Hand | 손패 화면 덩어리를 담을 새 자리를 만든다 | R2-77 | 예정 |
 | **R2-79** | Rendering | Battle Hand | 본편 두 곳이 손패 화면 덩어리를 새 자리에서 읽게 한다 | R2-78 | 예정 |
 | **R2-80** | Structure | Battle Hand | 확인용 화면 열둘이 손패 화면 덩어리를 새 자리에서 읽게 하고 낡은 방식을 지운다 | R2-79 | 예정 |

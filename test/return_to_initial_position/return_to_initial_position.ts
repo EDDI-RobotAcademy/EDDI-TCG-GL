@@ -1,4 +1,5 @@
 import { RouteMap } from "../../src/router/RouteMap";
+import {computeHandCardCenter, createDefaultBattleFieldHandLayoutFrame} from "../../src/battle/hand/frame/BattleFieldHandLayoutFrame";
 
 // 손패의 시작 카드다. 실제 대전에서는 서버가 준다.
 // 전에는 저장소가 이 넉 장을 스스로 들고 있어서, 값을 담는 곳이 시나리오를 정하고 있었다.
@@ -22,7 +23,6 @@ import { ResourceManager } from "../../src/resouce_manager/ResourceManager";
 import { BattleFieldUnitRenderer } from "../../src/battle/unit/renderer/BattleFieldUnitRenderer";
 import { CardGenerationHandler } from "../../src/card/handler";
 import { BattleFieldHandSceneRepository } from "../../src/battle_field_hand/deprecated_repository/BattleFieldHandSceneRepository";
-import { BattleFieldHandPositionRepository } from "../../src/battle_field_hand/deprecated_repository/BattleFieldHandPositionRepository";
 
 import { UserWindowSize } from "../../src/window_size/WindowSize";
 import { UnitCardGenerator } from "../../src/card/unit/generate";
@@ -58,7 +58,6 @@ export class TCGJustTestBattleFieldReturnToInitialPositionView {
     private battleFieldResourceManager = new ResourceManager();
     private battleFieldUnitRenderer?: BattleFieldUnitRenderer;
     private battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance();
-    private battleFieldHandPositionRepository = BattleFieldHandPositionRepository.getInstance();
 
     private initialized = false;
     private isAnimating = false;
@@ -174,7 +173,11 @@ export class TCGJustTestBattleFieldReturnToInitialPositionView {
         let indexCount = 0;
 
         for (const listNumber of battleFieldHandList) {
-            const positionVector = this.battleFieldHandPositionRepository.addBattleFieldHandPosition(indexCount);
+            // 손패가 서는 자리는 본편과 같은 계산을 쓴다.
+            const handCenter = computeHandCardCenter(
+                createDefaultBattleFieldHandLayoutFrame(), indexCount, window.innerWidth, window.innerHeight,
+            );
+            const positionVector = new Vector2d(handCenter.x, handCenter.y);
             const createdHand = await CardGenerationHandler.createCardById(listNumber, positionVector, indexCount);
 
             if (createdHand) {

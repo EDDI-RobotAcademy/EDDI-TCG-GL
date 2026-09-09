@@ -1,4 +1,5 @@
 import {RouteMap} from "../../src/router/RouteMap";
+import {computeHandCardCenter, createDefaultBattleFieldHandLayoutFrame} from "../../src/battle/hand/frame/BattleFieldHandLayoutFrame";
 
 // 손패의 시작 카드다. 실제 대전에서는 서버가 준다.
 // 전에는 저장소가 이 넉 장을 스스로 들고 있어서, 값을 담는 곳이 시나리오를 정하고 있었다.
@@ -21,7 +22,6 @@ import {ResourceManager} from "../../src/resouce_manager/ResourceManager";
 import {BattleFieldUnitRenderer} from "../../src/battle/unit/renderer/BattleFieldUnitRenderer";
 import {CardGenerationHandler} from "../../src/card/handler";
 import {BattleFieldHandSceneRepository} from "../../src/battle_field_hand/deprecated_repository/BattleFieldHandSceneRepository";
-import {BattleFieldHandPositionRepository} from "../../src/battle_field_hand/deprecated_repository/BattleFieldHandPositionRepository";
 
 import {UserWindowSize} from "../../src/window_size/WindowSize"
 import {UnitCardGenerator} from "../../src/card/unit/generate";
@@ -76,7 +76,6 @@ export class TCGJustTestBattleFieldView {
 
     private battleFieldHandService = BattleFieldHandServiceImpl.getInstance()
     private battleFieldHandSceneRepository = BattleFieldHandSceneRepository.getInstance()
-    private battleFieldHandPositionRepository = BattleFieldHandPositionRepository.getInstance()
 
     // private lightningGenerator = new LightningGenerator(20)
     // private lightning: THREE.Mesh[] = [];
