@@ -29,7 +29,7 @@ import {
 
 import { createDefaultOpponentFieldAreaFrame } from "../../battle/field/opponent/area/frame/OpponentFieldAreaFrame";
 import { OpponentFieldAreaRendererV2 } from "../../battle/field/opponent/area/renderer/OpponentFieldAreaRendererV2";
-import { createDefaultOpponentFieldLayoutFrame, computeOpponentFieldCardCenter } from "../../battle/field/opponent/frame/OpponentFieldLayoutFrame";
+import { createDefaultOpponentFieldLayoutFrame } from "../../battle/field/opponent/frame/OpponentFieldLayoutFrame";
 import { OpponentFieldRendererV2 } from "../../battle/field/opponent/renderer/OpponentFieldRendererV2";
 
 import { CardFace } from "../../battle/hand/entity/CardFace";
@@ -839,10 +839,9 @@ export class SimulationBattleFieldView implements Component {
         }
 
         // 살아 있는 차례는 전투가 든 상대 필드 목록 그 자체다.
+        // 상대 필드 카드가 어느 자리에 서는지도 이 차례로 정해진다.
         const opponentAliveIds = (): number[] =>
             battle.getOpponentFieldCards().map((it) => it.getBattleCardId());
-        const opponentAliveIndexOf = (cardIndex: number): number =>
-            battle.getOpponentFieldCards().findIndex((it) => it.getBattleCardId() === cardIndex);
         const isOpponentAlive = (cardIndex: number): boolean =>
             battle.findOnOpponentField(cardIndex) !== null;
         const opponentHpOf = (cardIndex: number): number =>
@@ -862,18 +861,13 @@ export class SimulationBattleFieldView implements Component {
         const opponentEntries = (opponentGroup.userData as { entries: { card: CardFace; cardIndex: number; group: THREE.Group }[] }).entries;
 
         const reflowOpponentField = (): void => {
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            for (const entry of opponentEntries) {
-                const aliveIdx = opponentAliveIndexOf(entry.cardIndex);
-                if (aliveIdx >= 0) {
-                    const { x, y } = computeOpponentFieldCardCenter(opponentLayoutFrame, aliveIdx, w, h);
-                    entry.group.position.set(x, y, 0);
-                    entry.group.visible = true;
-                } else {
-                    entry.group.visible = false;
-                }
-            }
+            opponentRenderer.layout(
+                opponentLayoutFrame,
+                opponentGroup,
+                window.innerWidth,
+                window.innerHeight,
+                opponentAliveIds(),
+            );
         };
 
         // Tracks which attack/skill is active so single-target execution uses the correct damage.
@@ -4041,11 +4035,14 @@ export class SimulationBattleFieldView implements Component {
             }
             reflowHandAndPlaced();
 
-            // Rescale opponent cards, then reflow alive ones (dead ones stay hidden)
-            for (const entry of opponentEntries) {
-                handRenderer.getCardRenderer().resize(handCardFrame, entry.group);
-            }
-            reflowOpponentField();
+            opponentRenderer.resize(
+                handCardFrame,
+                opponentLayoutFrame,
+                opponentGroup,
+                width,
+                height,
+                opponentAliveIds(),
+            );
             handPageButtonsRenderer.resize(handPageButtonsFrame, handPageButtonsGroup, width, height);
             // 턴 종료 버튼도 다시 잰다. 육각형 자리가 창 크기에서 나오므로,
             // 안 다시 재면 네온 테두리와 누름 자리가 처음 크기에 남는다.

@@ -58,24 +58,55 @@ export class OpponentFieldRendererV2 {
         return opponentGroup;
     }
 
+    // 필드에 남아 있는 카드를 앞에서부터 차례로 세운다.
+    //
+    // 어느 자리에 서는지는 [필드에 몇 번째로 남아 있는가] 로 정해진다. 처음 나온 순서가
+    // 아니다. 가운데 것이 죽으면 뒤의 것이 한 칸 당겨 서야 하기 때문이다. 그래서 살아 있는
+    // 카드의 번호를 순서대로 받는다.
+    //
+    // 죽은 카드는 안 보이게만 하고 지우지 않는다. 부활로 다시 설 수 있다.
+    public layout(
+        layout: OpponentFieldLayoutFrame,
+        opponentGroup: THREE.Group,
+        viewportWidth: number,
+        viewportHeight: number,
+        aliveCardIndexes: readonly number[],
+    ): void {
+        const { entries } = opponentGroup.userData as OpponentFieldUserData;
+        for (const entry of entries) {
+            const aliveIndex = aliveCardIndexes.indexOf(entry.cardIndex);
+            if (aliveIndex < 0) {
+                entry.group.visible = false;
+                continue;
+            }
+            const { x, y } = computeOpponentFieldCardCenter(
+                layout,
+                aliveIndex,
+                viewportWidth,
+                viewportHeight,
+            );
+            entry.group.position.set(x, y, 0);
+            entry.group.visible = true;
+        }
+    }
+
+    // 창 크기가 바뀌었을 때. 카드 크기를 다시 잰 다음 다시 세운다.
+    //
+    // 죽어서 안 보이는 카드도 크기는 다시 잰다. 부활해서 다시 섰을 때 혼자 옛 크기로
+    // 남지 않게 하기 위해서다.
     public resize(
         cardFrame: HandCardFrame,
         layout: OpponentFieldLayoutFrame,
         opponentGroup: THREE.Group,
         viewportWidth: number,
         viewportHeight: number,
+        aliveCardIndexes: readonly number[],
     ): void {
         const { entries } = opponentGroup.userData as OpponentFieldUserData;
         for (const entry of entries) {
             this.cardRenderer.resize(cardFrame, entry.group);
-            const { x, y } = computeOpponentFieldCardCenter(
-                layout,
-                entry.cardIndex,
-                viewportWidth,
-                viewportHeight,
-            );
-            entry.group.position.set(x, y, 0);
         }
+        this.layout(layout, opponentGroup, viewportWidth, viewportHeight, aliveCardIndexes);
     }
 
     public dispose(opponentGroup: THREE.Group): void {

@@ -111,7 +111,7 @@
 | **R2-84** | Structure | Battle Hand | [사용하지 않는 손패 내보내기 방식 제거](R2-84-remove-legacy-drag.md) | R2-54 | **완료** |
 | **R2-85** | Strategy | Battle Ability | [카드 사용 시 선택이 여러 단계로 나뉘는 경우의 처리 방법 결정](R2-85-multi-step-abilities.md) | R2-68 | **완료** |
 | **R2-86** | Rendering | Battle 공용 | [창 크기 변경 시 무덤과 로스트 존 다시 그리기](R2-86-resize-zone-panels.md) | R2-72 | **완료** |
-| **R2-87** | Rendering | Battle Field | 창 크기 변경 시 상대 필드 다시 그리기를 렌더러가 맡게 한다 | R2-86 | 예정 |
+| **R2-87** | Rendering | Battle Field | [창 크기 변경 시 상대 필드 다시 그리기를 렌더러가 맡게 한다](R2-87-opponent-field-layout-to-renderer.md) | R2-86 | **완료** |
 | **R2-88** | Rendering | Battle 공용 | 창 크기 변경 시 액티브 패널 닫기 | R2-86 | 예정 |
 | **R2-89** | Rule | Battle | 멀리건을 더해 1대1 대전이 되게 한다 | R2-75 | 예정 |
 | **R2-90** | Structure | Platform | 사용자에게 내보낼 것을 만드는 명령을 만든다 | R2-82 | 예정 |
