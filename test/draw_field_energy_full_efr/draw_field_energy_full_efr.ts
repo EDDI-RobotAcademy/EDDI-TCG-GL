@@ -173,6 +173,9 @@ async function main(container: HTMLElement): Promise<void> {
     // 턴, 덱, 무덤, 로스트 존, 필드, 손패, 본체가 이 안에 들어 있다.
     const battle = BattleRepositoryImpl.getInstance().start();
 
+    // 이 화면의 시작 필드 에너지다. 실제 대전에서는 0 에서 시작해 턴마다 는다.
+    battle.setFieldEnergy(19);
+
     const rendererManager = new RendererManager(container);
     const sceneManager = new SceneManager();
     const cameraManager = CameraManager.getInstance();
@@ -459,7 +462,6 @@ async function main(container: HTMLElement): Promise<void> {
     // Declared here (not next to the 'f' handler that increments it) because the drop
     // handler stamps deployedTurn with it and the right-click handler compares against it —
     // both run earlier in the file.
-    let currentTurn = 1;  // matches TurnHudRendererV2's initial
 
     // Hover → show the red blinking neon border around the hex. Cheap per-mousemove
     // point-in-hex test + a uniform flip on the shader material.
@@ -1792,9 +1794,9 @@ async function main(container: HTMLElement): Promise<void> {
 
         // 출격 멀미 — 이번 턴에 출격한 유닛은 공격도 스킬도 쓸 수 없으므로 액티브 패널
         // 자체를 열지 않는다. 이유를 알 수 없으면 무반응처럼 보이므로 배너로 알린다.
-        if (deployedTurn.get(selectedEntry) === currentTurn) {
+        if (deployedTurn.get(selectedEntry) === battle.getTurnNumber()) {
             guideRenderer.show(guideElement, '이번 턴에 출격한 유닛으로 공격할 수 없습니다.', 3000);
-            console.log(`[summoning-sickness] cardId=${selectedEntry.card.cardId} deployed on TURN ${currentTurn} — panel blocked`);
+            console.log(`[summoning-sickness] cardId=${selectedEntry.card.cardId} deployed on TURN ${battle.getTurnNumber()} — panel blocked`);
             return;
         }
 
@@ -1829,7 +1831,6 @@ async function main(container: HTMLElement): Promise<void> {
     });
 
     // Field energy → card attachment. Intercepts clicks BEFORE bridge when fieldEnergyActive.
-    let availableEnergy = 19;
     // 카드에 붙은 에너지를 **종족별로** 보관한다. 스킬 비용이 종족별 3개 열
     // (스킬N 언데드/휴먼/트런트필요에너지)로 정의되어 있고, 앞으로 여러 종족을 동시에
     // 요구하는 스킬이 추가될 예정이라 총량만으로는 판정할 수 없다.
@@ -2059,20 +2060,20 @@ async function main(container: HTMLElement): Promise<void> {
     }
 
     async function attachEnergyToCard(entry: HandEntry): Promise<void> {
-        if (availableEnergy <= 0) return;
+        if (battle.getFieldEnergy() <= 0) return;
         if (!placedOrder.includes(entry)) return;
 
-        availableEnergy--;
+        battle.spendFieldEnergy(1);
         // 붙는 에너지의 종족 = Race HUD에서 선택 중인 종족.
         const race = currentRaceId as CardRace;
         const cardEnergy = addCardEnergy(entry, race, 1);
 
-        energyRenderer.setEnergy(availableEnergy);
+        energyRenderer.setEnergy(battle.getFieldEnergy());
         energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
         await updateCardEnergyVisual(entry, cardEnergy);
 
         setFieldEnergyNeon(false);
-        console.log(`Energy attached to card ${entry.card.cardId}: ${RACE_LABEL[race]} +1 → ${cardEnergy} total. Available: ${availableEnergy}`);
+        console.log(`Energy attached to card ${entry.card.cardId}: ${RACE_LABEL[race]} +1 → ${cardEnergy} total. Available: ${battle.getFieldEnergy()}`);
     }
 
     function createEnergyCanvasText(value: number, x: number, y: number, baseScale: number): THREE.Mesh {
@@ -2498,12 +2499,12 @@ async function main(container: HTMLElement): Promise<void> {
 
         // One mote per unit of energy gain. Arrival bumps the counter + updates the HUD.
         await moraleConvertEffect.play(sourceWorld, destWorld, energyGain, () => {
-            availableEnergy += 1;
-            energyRenderer.setEnergy(availableEnergy);
+            battle.gainFieldEnergy(1);
+            energyRenderer.setEnergy(battle.getFieldEnergy());
             energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
         });
 
-        console.log(`[morale-convert] effect complete; total field energy = ${availableEnergy}`);
+        console.log(`[morale-convert] effect complete; total field energy = ${battle.getFieldEnergy()}`);
     };
 
     // 넘쳐흐르는 사기 — drop on a placed ally to pull up to OVERFLOW_MORALE_MAX copies of
@@ -3344,7 +3345,7 @@ async function main(container: HTMLElement): Promise<void> {
                     handOrder.splice(handIndex, 1);
                     placedOrder.push(droppedEntry);
                     // 출격한 턴을 기록 — 이번 턴에는 공격/스킬 패널이 열리지 않는다.
-                    deployedTurn.set(droppedEntry, currentTurn);
+                    deployedTurn.set(droppedEntry, battle.getTurnNumber());
                     // 출격 시 — entrance scene → passive chain. Fire-and-forget; the
                     // placement reflow at the bottom of onDrop runs synchronously first.
                     // The entrance is deploy-ONLY (no replay on turn-start).
@@ -3544,7 +3545,7 @@ async function main(container: HTMLElement): Promise<void> {
         }
     });
     const countNextZone = createClickZone(0.97348, 0.62863, 0.995, 0.68030, '▷', () => {
-        if (fieldEnergyChargeCount < availableEnergy) {
+        if (fieldEnergyChargeCount < battle.getFieldEnergy()) {
             fieldEnergyChargeCount++;
             countRenderer.setCount(fieldEnergyChargeCount);
             countRenderer.update(countFrame, countElement, window.innerWidth, window.innerHeight);
@@ -3667,11 +3668,11 @@ async function main(container: HTMLElement): Promise<void> {
     // your → opponent. Triggers: 턴 종료 버튼 클릭, 모래시계 만료.
     // No-op unless it's currently your turn (idempotent).
     function endYourTurn(reason: string): void {
-        if (battle.getTurnOwner() !== 'your') return;
-        battle.setTurnOwner('opponent');
+        // 넘어갈 수 있는지는 전투가 판단한다. 내 턴이 아니면 아무 일도 안 한다.
+        if (!battle.endYourTurn()) return;
         timerRenderer.reset(timerElement);
         guideRenderer.show(guideElement, '상대방의 턴입니다.', 3000);
-        console.log(`[turn-state] your → opponent (${reason}) · TURN ${currentTurn}`);
+        console.log(`[turn-state] your → opponent (${reason}) · TURN ${battle.getTurnNumber()}`);
         // 상대 턴 시작 시점 — 암흑 화염 화상 피해를 여기서 정산한다.
         tickDarkFlameDamage();
     }
@@ -3682,22 +3683,20 @@ async function main(container: HTMLElement): Promise<void> {
     // turn-start draw), plus (e) announce the handback on the guide banner. No-op unless it's
     // currently the opponent's turn (idempotent).
     async function beginYourTurn(reason: string): Promise<void> {
-        if (battle.getTurnOwner() !== 'opponent') {
+        // 턴이 오르는 것과 필드 에너지가 느는 것도 전투가 함께 한다.
+        if (!battle.beginYourTurn()) {
             console.log(`[turn-state] ${reason} ignored — already your turn`);
             return;
         }
-        battle.setTurnOwner('your');
         guideRenderer.show(guideElement, '당신의 턴입니다.', 3000);
 
-        currentTurn += 1;
-        turnRenderer.setTurn(currentTurn);
+        turnRenderer.setTurn(battle.getTurnNumber());
         turnRenderer.update(turnFrame, turnElement, window.innerWidth, window.innerHeight);
 
-        // Field Energy total (the big number, 19 → 20 → …), tracked by `availableEnergy`.
+        // Field Energy total (the big number, 19 → 20 → …), tracked by `battle.getFieldEnergy()`.
         // NOT the small `fieldEnergyChargeCount` above the Race marker — that one is a
         // per-card charge selector driven by prev/next hover zones.
-        availableEnergy += 1;
-        energyRenderer.setEnergy(availableEnergy);
+        energyRenderer.setEnergy(battle.getFieldEnergy());
         energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
 
         timerRenderer.reset(timerElement);
@@ -3720,7 +3719,7 @@ async function main(container: HTMLElement): Promise<void> {
         // 화상 피해는 여기가 아니라 상대 턴 시작(endYourTurn)에서 정산한다.
         tickFreezeExpiry();
 
-        console.log(`[turn-state] opponent → your (${reason}) · TURN ${currentTurn} · field energy ${availableEnergy}`);
+        console.log(`[turn-state] opponent → your (${reason}) · TURN ${battle.getTurnNumber()} · field energy ${battle.getFieldEnergy()}`);
 
         // ── 네더 블레이드 매 턴 패시브 풀체인 발동 ─────────────────────────
         // Each placed + alive Nether Blade re-fires passive 1 (AoE) → passive 2 (single
@@ -3736,7 +3735,7 @@ async function main(container: HTMLElement): Promise<void> {
                 console.log('[nether-blade] 턴이 넘어가 남은 패시브 체인 중단');
                 break;
             }
-            console.log(`[nether-blade] turn-start passive chain · TURN ${currentTurn}`);
+            console.log(`[nether-blade] turn-start passive chain · TURN ${battle.getTurnNumber()}`);
             await triggerNetherBladePassive(entry);
         }
     }

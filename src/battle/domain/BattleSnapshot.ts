@@ -11,6 +11,9 @@ import {HandCardSnapshot} from "./HandCardSnapshot";
 export interface BattleSnapshot {
     readonly battleId: number;
     readonly turnOwner: TurnOwner;
+    // 몇 번째 턴인가와 지금 쓸 수 있는 필드 에너지
+    readonly turnNumber: number;
+    readonly fieldEnergy: number;
     // 덱은 순서가 그대로여야 한다. 순서가 어긋나면 다음에 뽑히는 카드가 달라진다.
     readonly yourDeckCards: readonly number[];
     readonly opponentDeckCards: readonly number[];
