@@ -1,4 +1,8 @@
 import { CameraManager } from "../../src/core/camera/CameraManager";
+import { HandCard } from "../../src/battle/domain/HandCard";
+import { BattleCommandHandler, CardCatalog } from "../../src/battle/flow/BattleCommandHandler";
+import { BattleCommand } from "../../src/battle/flow/BattleCommand";
+import { BattleEvent } from "../../src/battle/flow/BattleEvent";
 import { FieldCard } from "../../src/battle/domain/FieldCard";
 import { findCardAbility, cardIdsTargeting } from "../../src/battle/ability/CardAbility";
 import { AbilityTarget } from "../../src/battle/ability/AbilityTarget";
@@ -371,6 +375,30 @@ async function main(container: HTMLElement): Promise<void> {
 
     // handOrder/placedOrder track HandEntry references, not cardIds — the 40-card deck contains
     // duplicate cardIds (e.g., 8×3, 93×4), so cardId-keyed lookups would collapse them together.
+    // 전투의 손패에도 같은 카드를 넣는다. 신원은 화면 카드의 번호를 쓴다.
+    // 이 화면은 전에 자기 배열만 들고 전투의 손패를 비워 뒀다. 담을 곳이 비어 있으면
+    // 옆에 하나 더 만들게 되고, 그러면 전투가 무엇을 할 수 있는지 알 수 없다.
+    for (const e of entries) {
+        battle.addToHand(new HandCard(e.cardIndex, e.card.cardId, [], 0));
+    }
+
+    // 카드에 적혀 있는 것을 알려 주는 곳. 판과 무관하므로 전투가 안 든다.
+    const cardCatalog: CardCatalog = {
+        getKind: (cardId) => {
+            const card = getCardById(cardId);
+            return card ? (parseInt(card.종류, 10) as CardKind) : null;
+        },
+        getHp: (cardId) => {
+            const hp = getCardById(cardId)?.체력;
+            return typeof hp === 'number' ? hp : parseInt(String(hp ?? 0), 10) || 0;
+        },
+    };
+    const battleCommandHandler = new BattleCommandHandler(cardCatalog);
+
+    // 사용자가 한 일 하나를 전투에 보내고, 무슨 일이 있었는지 받는다.
+    const send = (command: BattleCommand): BattleEvent[] =>
+        battleCommandHandler.handle(battle, command);
+
     const handOrder: HandEntry[] = [...entries];
     const placedOrder: HandEntry[] = [];
     // 출격 멀미(summoning sickness) — 유닛이 필드에 나온 턴 번호. 같은 턴에는 공격/스킬을
@@ -3339,9 +3367,17 @@ async function main(container: HTMLElement): Promise<void> {
                 const inside =
                     worldX >= bounds.minX && worldX <= bounds.maxX &&
                     worldY >= bounds.minY && worldY <= bounds.maxY;
-                const isUnit = kind === CardKind.UNIT;
-
-                if (inside && isUnit) {
+                // 필드 안에 떨어졌는지는 화면이 본다. 카드가 어디에 떨어졌는지는
+                // 화면에서만 알 수 있는 일이라 전투가 판단할 수 없다.
+                //
+                // 낼 수 있는 카드인지와 손패에서 빼고 필드에 놓는 것은 전투가 한다.
+                const playEvents = inside
+                    ? send({type: 'playCardToField', battleCardId: droppedEntry.cardIndex})
+                    : [];
+                const played = playEvents.some(
+                    (ev) => ev.type === 'cardMoved' && ev.to === 'yourField',
+                );
+                if (played) {
                     handOrder.splice(handIndex, 1);
                     placedOrder.push(droppedEntry);
                     // 출격한 턴을 기록 — 이번 턴에는 공격/스킬 패널이 열리지 않는다.
@@ -3432,22 +3468,31 @@ async function main(container: HTMLElement): Promise<void> {
     );
     bridge.attach();
 
+    // 카드 한 장을 뽑고 화면에 붙인다. 뽑을 수 있는지는 전투가 판단한다.
+    const drawOneCard = async (reason: string): Promise<boolean> => {
+        const events = send({type: 'drawCard'});
+        for (const ev of events) {
+            if (ev.type === 'rejected') {
+                console.log(`[deck] ${reason} — ${ev.reason}`);
+                return false;
+            }
+            if (ev.type === 'cardMoved' && ev.to === 'hand') {
+                const resolved = resolveCards([ev.cardId], reason);
+                if (resolved.length === 0) return false;
+                const newEntry = await handRenderer.appendCard(handGroup, resolved[0], handCardFrame);
+                handOrder.push(newEntry);
+                reflowHandAndPlaced();
+                console.log(`[deck] ${reason} drew cardId=${ev.cardId}. Remaining: ${battle.getYourDeckRemainingCount()}`);
+            }
+        }
+        return true;
+    };
+
     // 'd' key — draw 1 card from the deck and append it to the hand. No deck visual.
     // New cards land at the end of handOrder; pagination reflow hides overflow on other pages.
     document.addEventListener('keydown', async (e: KeyboardEvent) => {
         if (e.key !== 'd' && e.key !== 'D') return;
-        const drawnId = battle.drawFromYourDeck();
-        if (drawnId == null) {
-            console.log('[deck] empty — nothing to draw');
-            return;
-        }
-        const resolved = resolveCards([drawnId], 'draw');
-        if (resolved.length === 0) return;
-        const newCard = resolved[0];
-        const newEntry = await handRenderer.appendCard(handGroup, newCard, handCardFrame);
-        handOrder.push(newEntry);
-        reflowHandAndPlaced();
-        console.log(`[deck] drew cardId=${drawnId}. Remaining: ${battle.getYourDeckRemainingCount()}`);
+        await drawOneCard('draw');
     });
 
     // Pilot D-1 — field-energy HUD overlays
@@ -3701,19 +3746,8 @@ async function main(container: HTMLElement): Promise<void> {
 
         timerRenderer.reset(timerElement);
 
-        // Turn-start deck draw — mirrors the 'd'-key handler but runs automatically.
-        const drawnId = battle.drawFromYourDeck();
-        if (drawnId != null) {
-            const resolved = resolveCards([drawnId], 'turn-start-draw');
-            if (resolved.length > 0) {
-                const newEntry = await handRenderer.appendCard(handGroup, resolved[0], handCardFrame);
-                handOrder.push(newEntry);
-                reflowHandAndPlaced();
-                console.log(`[deck] turn-start drew cardId=${drawnId}. Remaining: ${battle.getYourDeckRemainingCount()}`);
-            }
-        } else {
-            console.log(`[deck] empty — no turn-start draw`);
-        }
+        // 턴이 시작될 때 한 장 뽑는다. 'd' 키와 같은 길을 지난다.
+        await drawOneCard('turn-start');
 
         // 빙결 해제 — 상대 턴 내내 얼어 있던 유닛이 이 시점에 녹는다.
         // 화상 피해는 여기가 아니라 상대 턴 시작(endYourTurn)에서 정산한다.
