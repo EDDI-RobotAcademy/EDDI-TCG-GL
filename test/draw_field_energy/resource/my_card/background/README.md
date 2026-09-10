@@ -1,1 +1,0 @@
-# Place Every My Card Background Resource to here

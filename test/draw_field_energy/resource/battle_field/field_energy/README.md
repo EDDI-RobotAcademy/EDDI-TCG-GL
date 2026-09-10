@@ -1,1 +1,0 @@
-# Place Field Energy Resource to here

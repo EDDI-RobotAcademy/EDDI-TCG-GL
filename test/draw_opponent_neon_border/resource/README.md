@@ -1,1 +1,0 @@
-# Place Every Resource to here
