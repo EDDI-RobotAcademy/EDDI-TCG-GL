@@ -1,1 +1,0 @@
-# Place Every Sword Power Resource to here

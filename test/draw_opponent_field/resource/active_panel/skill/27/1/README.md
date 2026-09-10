@@ -1,1 +1,0 @@
-# First skill that number of card

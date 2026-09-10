@@ -1,1 +1,0 @@
-# Place Details Button of Active Panel at here
