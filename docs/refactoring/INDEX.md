@@ -118,9 +118,24 @@
 | **R2-91** | Rendering | Battle 공용 | [연출 도중 창 크기가 바뀌어도 연출이 함께 커지고 작아지게 한다](R2-91-effect-follows-viewport.md) | R2-90 | **완료** |
 | **R2-92** | Rendering | Battle 공용 | [나머지 연출도 창 크기를 따라가게 한다](R2-92-all-effects-follow-viewport.md) | R2-91 | **완료** |
 | **R2-93** | Rendering | Battle Unit | [스킬을 쓰는 동안 창 크기가 바뀌어도 카드가 선 자리가 맞게 한다](R2-93-skill-slot-follows-viewport.md) | R2-92 | **완료** |
-| **R2-94** | Rendering | Battle 공용 | 체력과 무기 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정. **숫자 없는 바탕 그림 셋이 있어야 한다** |
-| **R2-95** | Rule | Battle | 멀리건을 더해 1대1 대전이 되게 한다 | R2-75 | 예정 |
-| **R2-96** | Structure | Platform | 사용자에게 내보낼 것을 만드는 명령을 만든다 | R2-82 | 예정 |
+| **R2-94** | Strategy | Battle | [기존 패키지 구성을 DDD와 E+F+R 구조로 바꾸기 위한 전략](R2-94-package-strategy.md) | R2-93 | **완료** |
+| **R2-95** | Structure | Battle | [어디서도 열리지 않는 옛 전투 화면과 딸린 것을 지운다](R2-95-delete-unreachable.md) | R2-94 | **완료** |
+| **R2-96** | Rule | Battle | 규칙 판정에 필요한 사실에 도메인이 닿게 한다 | R2-94 | 예정 |
+| **R2-97** | Rule | Battle | 명령에서 계산된 값을 뺀다 | R2-96 | 예정 |
+| **R2-98** | Rule | Battle | 화면이 전투 상태를 직접 바꾸는 길을 없앤다 | R2-97 | 예정 |
+| **R2-99** | Structure | Battle | 전투 안을 도메인·지금 판·그리는 쪽으로 가른다 | R2-98 | 예정 |
+| **R2-100** | Structure | Battle | 처리기의 규칙을 System 으로 옮긴다 | R2-99 | 예정 |
+| **R2-101** | Structure | Battle | 읽기 모델을 세운다 | R2-99 | 예정 |
+| **R2-102** | Structure | Platform | 의존성 검사를 자동으로 돌린다 | R2-99 | 예정 |
+| **R2-103** | Strategy | Battle Ability | 새 카드 열 장으로 확장 시험 | R2-101 | 예정 |
+| **R2-104** | Structure | Battle Ability | 카드 한 장이 정의 하나와 연출 하나로 끝나게 한다 | R2-103 | 예정 |
+| **R2-105** | Rule | Battle Ability | 여러 단계로 고르는 일을 전투가 기다리게 한다 | R2-85 | 예정 |
+| **R2-106** | Rendering | Battle 공용 | 화면이 직접 그리던 다섯 덩어리를 렌더러가 맡게 한다 | R2-99 | 예정 |
+| **R2-107** | Structure | Battle Field | 필드 영역이 그림을 들지 않게 한다 | R2-99 | 예정 |
+| **R2-108** | Structure | Battle | 전투 화면을 맡은 일별로 가른다 | R2-106 | 예정 |
+| **R2-109** | Rendering | Battle 공용 | 체력과 무기 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정. **숫자 없는 바탕 그림 셋이 있어야 한다** |
+| **R2-110** | Rule | Battle | 멀리건을 더해 1대1 대전이 되게 한다 | R2-75 | 예정 |
+| **R2-111** | Structure | Platform | 사용자에게 내보낼 것을 만드는 명령을 만든다 | R2-82 | 예정 |
 
 ### Type — 무엇을 바꾸는 작업인가
 
