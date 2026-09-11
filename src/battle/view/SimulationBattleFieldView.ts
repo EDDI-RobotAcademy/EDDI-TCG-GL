@@ -500,6 +500,41 @@ export class SimulationBattleFieldView implements Component {
                     ? (raw as CardRace)
                     : null;
             },
+            getAttack: (cardId) => {
+                const raw = (getCardById(cardId) as any)?.['공격력'];
+                return typeof raw === 'number' ? raw : parseInt(String(raw ?? 0), 10) || 0;
+            },
+            getSkill: (cardId, slot) => {
+                // 카드 데이터의 열 이름은 띄어쓰기가 들어간 한글이다.
+                //   "스킬 1"            그 스킬이 누구를 치는가
+                //   "스킬1 데미지"       카드에 적힌 기본 피해
+                //   "스킬1 언데드필요에너지" 등 셋   종족별 비용
+                const card = getCardById(cardId) as any;
+                if (!card) return null;
+
+                const rangeRaw = card[`스킬 ${slot}`];
+                if (rangeRaw === undefined || rangeRaw === null || rangeRaw === '' || rangeRaw === '0') {
+                    return null;
+                }
+
+                const damageRaw = card[`스킬${slot} 데미지`];
+                const damage = typeof damageRaw === 'number'
+                    ? damageRaw
+                    : parseInt(String(damageRaw ?? 0), 10) || 0;
+
+                const cost = new Map<CardRace, number>();
+                const columns: ReadonlyArray<readonly [CardRace, string]> = [
+                    [CardRace.UNDEAD, `스킬${slot} 언데드필요에너지`],
+                    [CardRace.HUMAN, `스킬${slot} 휴먼필요에너지`],
+                    [CardRace.TRENT, `스킬${slot} 트런트필요에너지`],
+                ];
+                for (const [race, column] of columns) {
+                    const amount = card[column] ?? 0;
+                    if (amount > 0) cost.set(race, amount);
+                }
+
+                return { range: getSkillType(rangeRaw), damage, cost };
+            },
         };
         const battleCommandHandler = new BattleCommandHandler(cardCatalog);
 
@@ -877,8 +912,7 @@ export class SimulationBattleFieldView implements Component {
         // 전에는 이 화면이 지도 둘과 배열 하나로 따로 들고 있었다.
         for (let i = 0; i < opponentCards.length; i++) {
             const oc = opponentCards[i];
-            const card = getCardById(oc.cardId);
-            const hp = card?.체력 ?? 0;
+            const hp = cardCatalog.getHp(oc.cardId);
             battle.placeOnOpponentField(new FieldCard(
                 i,                                   // 신원. 이 화면에서는 만들 때의 차례를 쓴다
                 oc.cardId,
@@ -968,39 +1002,6 @@ export class SimulationBattleFieldView implements Component {
             if (interactionState === 'panelVisible' || interactionState === 'attackMode') {
                 interactionState = neonEffect.hasActive() ? 'cardSelected' : 'idle';
             }
-        }
-
-        // cardData의 "스킬N {언데드|휴먼|트런트}필요에너지" 3개 열 = 그 스킬의 종족별 비용.
-        // 0인 종족은 담지 않으므로, 빈 Map이면 비용 없는 스킬이다.
-        function skillEnergyCost(cardAny: any, btnType: string): Map<CardRace, number> {
-            const cost = new Map<CardRace, number>();
-            const n = btnType === 'skill1' ? 1 : btnType === 'skill2' ? 2 : 0;
-            if (n === 0 || !cardAny) return cost;
-            const columns: ReadonlyArray<readonly [CardRace, string]> = [
-                [CardRace.UNDEAD, `스킬${n} 언데드필요에너지`],
-                [CardRace.HUMAN, `스킬${n} 휴먼필요에너지`],
-                [CardRace.TRENT, `스킬${n} 트런트필요에너지`],
-            ];
-            for (const [race, column] of columns) {
-                const amount = cardAny[column] ?? 0;
-                if (amount > 0) cost.set(race, amount);
-            }
-            return cost;
-        }
-
-        // 비용을 종족별로 하나씩 대조해 처음 모자란 종족을 돌려준다. 전부 충족하면 null.
-        // 총량 비교로는 "언데드 2 필요 / 휴먼 2 보유"를 통과시켜 버리므로 반드시 종족별로 본다.
-        function findMissingSkillEnergy(
-            entry: HandEntry,
-            cost: Map<CardRace, number>,
-        ): { race: CardRace; need: number; have: number } | null {
-            // 붙은 에너지는 전투가 든다. 화면이 따로 세던 것을 지웠다.
-            const unit = battle.findOnYourField(entry.cardIndex);
-            for (const [race, need] of cost) {
-                const have = unit?.getEnergyOfRace(race) ?? 0;
-                if (have < need) return { race, need, have };
-            }
-            return null;
         }
 
         function clearAllSelection(): void {
@@ -1770,31 +1771,27 @@ export class SimulationBattleFieldView implements Component {
                     const btnType = panelHits[0].object.userData.buttonType;
                     if (btnType === 'general' || btnType.startsWith('skill')) {
                         const attackerId = selectedAttackerEntry?.card.cardId ?? null;
-                        const attackerCard = attackerId != null ? getCardById(attackerId) : null;
 
-                        // Determine skill type for skill buttons
-                        let skillType = SkillType.Single;
-                        let damage = attackerCard?.공격력 ?? 0;
-
-                        // Card data uses SPACE keys in the actual JS data (not underscores):
-                        //   "스킬 1" = skill type number, "스킬1 데미지" = skill1 damage, etc.
-                        // Card interface uses underscores (스킬_1, 스킬1_데미지) but those don't match.
-                        const cardAny = attackerCard as any;
-                        if (btnType === 'skill1' && attackerCard) {
-                            skillType = getSkillType(cardAny['스킬 1']);
-                            damage = cardAny['스킬1 데미지'] ?? 0;
-                        } else if (btnType === 'skill2' && attackerCard) {
-                            skillType = getSkillType(cardAny['스킬 2']);
-                            damage = cardAny['스킬2 데미지'] ?? 0;
-                        }
+                        // 얼마나 아픈지와 누구를 치는지는 전투가 정한다. 카드에 적힌 값을
+                        // 화면이 직접 열어 보던 것을 옮겼다.
+                        const skillSlot: 1 | 2 | null =
+                            btnType === 'skill1' ? 1 : btnType === 'skill2' ? 2 : null;
+                        const skillType = attackerId != null
+                            ? battleCommandHandler.attackRange(attackerId, skillSlot)
+                            : SkillType.Single;
+                        const damage = attackerId != null
+                            ? battleCommandHandler.attackDamage(attackerId, skillSlot)
+                            : 0;
 
                         // ── 스킬 에너지 요구량 검사 ────────────────────────────────
                         // cardData의 "스킬N {종족}필요에너지" 3개 열이 그 스킬의 종족별 비용이다.
                         // 카드에 붙은 에너지도 종족별로 보관하므로 종족을 하나씩 대조한다.
                         // 일반 공격(general)은 비용 없음.
-                        if (btnType.startsWith('skill') && attackerCard && selectedAttackerEntry) {
-                            const cost = skillEnergyCost(cardAny, btnType);
-                            const missing = findMissingSkillEnergy(selectedAttackerEntry, cost);
+                        if (skillSlot !== null && attackerId != null && selectedAttackerEntry) {
+                            const cost = battleCommandHandler.skillCost(attackerId, skillSlot);
+                            const missing = battleCommandHandler.missingSkillEnergy(
+                                battle, selectedAttackerEntry.cardIndex, attackerId, skillSlot,
+                            );
                             if (missing) {
                                 guideRenderer.show(guideElement, '에너지가 부족하여 스킬을 사용할 수 없습니다.', 3000);
                                 console.log(`[skill-energy] ${btnType} blocked — cardId=${attackerId} ${RACE_LABEL[missing.race]} 보유 ${missing.have} < 필요 ${missing.need}`);
@@ -2118,13 +2115,8 @@ export class SimulationBattleFieldView implements Component {
             return battle.findOnYourField(entry.cardIndex)?.getEnergyCount() ?? 0;
         }
 
-        // cardData의 "종족" 열은 문자열("1"~"3")이다. 알 수 없는 값이면 null.
-        function cardRaceOf(cardId: number): CardRace | null {
-            const raw = Number((getCardById(cardId) as any)?.['종족']);
-            return raw === CardRace.HUMAN || raw === CardRace.UNDEAD || raw === CardRace.TRENT
-                ? (raw as CardRace)
-                : null;
-        }
+        // 카드 종족은 전투에 넘겨 주는 창구가 이미 읽는다. 화면이 따로 읽던 것을 지웠다.
+        const cardRaceOf = (cardId: number): CardRace | null => cardCatalog.getRace(cardId);
 
         const RACE_LABEL: Record<number, string> = {
             [CardRace.HUMAN]: '휴먼',
@@ -2676,9 +2668,7 @@ export class SimulationBattleFieldView implements Component {
         const applyMoraleConvertEffect = async (
             target: HandEntry, events: readonly BattleEvent[],
         ): Promise<void> => {
-            const card = getCardById(target.card.cardId);
-            const rawHp = card?.체력;
-            const hpNum = typeof rawHp === 'number' ? rawHp : parseInt(String(rawHp ?? 0), 10) || 0;
+            const hpNum = cardCatalog.getHp(target.card.cardId);
             // 얼마나 얻는지는 전투가 이미 셌다. 여기서는 그 값으로 화면을 그린다.
             const gained = events.find(
                 (ev) => ev.type === 'valueChanged' && ev.what === 'fieldEnergy',
@@ -3091,14 +3081,17 @@ export class SimulationBattleFieldView implements Component {
             leonikConfirmMat.opacity = active ? 1.0 : 0.45;
         };
 
+        // 레오닉이 덱에서 뽑아 올 수 있는 카드의 덱 안 차례.
+        //
+        // 유닛이고 영웅 이하라는 판정은 카드에 적힌 값으로 정해진다. 화면이 카드 데이터를
+        // 직접 열어 보던 것을 창구로 바꿨다.
         const collectLeonikEligibleIndices = (): number[] => {
             const out: number[] = [];
             const cards = battle.getYourDeckCards();
             for (let i = 0; i < cards.length; i++) {
-                const cardData = getCardById(cards[i]);
-                if (!cardData) continue;
-                const kind = parseInt(cardData.종류, 10) as CardKind;
-                const grade = parseInt(cardData.등급, 10);
+                const kind = cardCatalog.getKind(cards[i]);
+                const grade = cardCatalog.getGrade(cards[i]);
+                if (kind === null || grade === null) continue;
                 if (kind === CardKind.UNIT && grade <= LEONIK_MAX_GRADE) out.push(i);
             }
             return out;

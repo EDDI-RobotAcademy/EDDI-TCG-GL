@@ -4,6 +4,7 @@ import {FieldCard} from "../domain/FieldCard";
 import {CardKind} from "../../card/kind";
 import {CardGrade} from "../../card/grade";
 import {CardRace} from "../../card/race";
+import {SkillType} from "../../card/SkillType";
 import {findCardAbility} from "../ability/CardAbility";
 import {BattleCommand} from "./BattleCommand";
 import {BattleEvent} from "./BattleEvent";
@@ -17,6 +18,25 @@ export interface CardCatalog {
     getHp(cardId: number): number;
     getGrade(cardId: number): CardGrade | null;
     getRace(cardId: number): CardRace | null;
+
+    // 카드에 적힌 기본 공격력. 붙은 것이 없을 때의 값이다.
+    getAttack(cardId: number): number;
+
+    // 스킬에 적힌 값. 없는 스킬이면 null 이다.
+    //
+    // damage 는 카드에 적힌 기본 피해다. 지금은 이대로 쓰지만, 붙은 것이 생기면
+    // 최종 피해는 규칙이 이 값에서 시작해 계산한다.
+    //
+    // cost 는 종족별로 필요한 에너지다. 총량으로 보면 [언데드 2 필요 / 휴먼 2 보유] 를
+    // 통과시키므로 종족별로 든다.
+    getSkill(cardId: number, slot: 1 | 2): CardSkillSpec | null;
+}
+
+// 카드에 적힌 스킬 하나.
+export interface CardSkillSpec {
+    readonly range: SkillType;
+    readonly damage: number;
+    readonly cost: ReadonlyMap<CardRace, number>;
 }
 
 // 전투가 지금 처리하는 카드들. 값으로 다 적히는 것부터 옮겼다.
@@ -35,6 +55,48 @@ const COLD_DARK_ENERGY = 151;
 // 되는지 안 되는지도 여기서 판단한다. 부르는 쪽은 하나만 보내고 돌려받은 것만 본다.
 export class BattleCommandHandler {
     constructor(private readonly catalog: CardCatalog) {}
+
+    // ── 카드에 적힌 값을 보고 정하는 것들 ─────────────────────────────────────
+    //
+    // 전에는 화면이 카드 데이터를 직접 열어 이것들을 정했다. 도메인이 카드에 뭐가 적혀
+    // 있는지 몰랐기 때문이다. 이제 카탈로그로 읽는다.
+
+    // 이 공격이 얼마나 아픈가.
+    //
+    // 지금은 카드에 적힌 값이 그대로 답이다. 붙은 것이 생기면 여기서 그 값들을 더해
+    // 계산하게 된다. 최종값을 어디에 저장하지는 않는다.
+    attackDamage(cardId: number, slot: 1 | 2 | null): number {
+        if (slot === null) return this.catalog.getAttack(cardId);
+        return this.catalog.getSkill(cardId, slot)?.damage ?? 0;
+    }
+
+    // 이 공격이 누구를 치는가.
+    attackRange(cardId: number, slot: 1 | 2 | null): SkillType {
+        if (slot === null) return SkillType.Single;
+        return this.catalog.getSkill(cardId, slot)?.range ?? SkillType.Single;
+    }
+
+    // 이 스킬을 쓸 만큼 에너지가 붙어 있는가.
+    //
+    // 종족별로 하나씩 대조해 처음 모자란 종족을 돌려준다. 전부 채웠으면 null 이다.
+    // 총량으로 보면 [언데드 2 필요 / 휴먼 2 보유] 를 통과시키므로 반드시 종족별로 본다.
+    missingSkillEnergy(
+        battle: Battle, battleCardId: number, cardId: number, slot: 1 | 2,
+    ): { race: CardRace; need: number; have: number } | null {
+        const cost = this.catalog.getSkill(cardId, slot)?.cost;
+        if (!cost) return null;
+        const unit = battle.findOnYourField(battleCardId);
+        for (const [race, need] of cost) {
+            const have = unit?.getEnergyOfRace(race) ?? 0;
+            if (have < need) return { race, need, have };
+        }
+        return null;
+    }
+
+    // 이 스킬이 얼마를 요구하는가. 화면이 안내 문구에 쓴다.
+    skillCost(cardId: number, slot: 1 | 2): ReadonlyMap<CardRace, number> {
+        return this.catalog.getSkill(cardId, slot)?.cost ?? new Map();
+    }
 
     handle(battle: Battle, command: BattleCommand): BattleEvent[] {
         switch (command.type) {

@@ -123,7 +123,7 @@
 | **R2-95** | Structure | Battle | [어디서도 열리지 않는 옛 전투 화면과 딸린 것을 지운다](R2-95-delete-unreachable.md) | R2-94 | **완료** |
 | **R2-96** | Documentation | — | [프로젝트 지침을 지금 구조에 맞게 다시 쓴다](R2-96-claude-md-rewrite.md) | R2-94 | **완료** |
 | **R2-97** | Structure | Battle | [본편 확인용 화면이 대신 보여주는 옛 확인용 화면을 지운다](R2-97-delete-covered-harnesses.md) | R2-95 | **완료** |
-| **R2-98** | Rule | Battle | 규칙 판정에 필요한 사실에 도메인이 닿게 한다 | R2-97 | 예정 |
+| **R2-98** | Rule | Battle | [카드 정보를 화면이 아니라 전투 상태가 읽는다](R2-98-battle-reads-card-info.md) | R2-97 | **완료** |
 | **R2-99** | Rule | Battle | 명령에서 계산된 값을 뺀다 | R2-98 | 예정 |
 | **R2-100** | Rule | Battle | 화면이 전투 상태를 직접 바꾸는 길을 없앤다 | R2-99 | 예정 |
 | **R2-101** | Structure | Battle | 전투 안을 도메인·지금 판·그리는 쪽으로 가른다 | R2-100 | 예정 |
