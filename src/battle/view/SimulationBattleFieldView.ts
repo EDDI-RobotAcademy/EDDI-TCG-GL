@@ -3,7 +3,7 @@ import { SeaOfSpecterEffect } from "../animation/skill/veln/SeaOfSpecterEffect";
 import { installTween } from "../../core/tween/Tween";
 import { HandCard } from "../../battle/domain/HandCard";
 import { BattleCommandHandler, CardCatalog } from "../../battle/flow/BattleCommandHandler";
-import { BattleCommand } from "../../battle/flow/BattleCommand";
+import { AttackChoice, BattleCommand } from "../../battle/flow/BattleCommand";
 import { BattleEvent } from "../../battle/flow/BattleEvent";
 import { FieldCard } from "../../battle/domain/FieldCard";
 import { findCardAbility, cardIdsTargeting } from "../../battle/ability/CardAbility";
@@ -561,6 +561,7 @@ export class SimulationBattleFieldView implements Component {
         // 지금 스킬 자리에 서 있는 카드. 창 크기가 바뀌면 스킬 자리도 달라지므로 옮겨 준다.
         const skillTripParked = new Set<THREE.Group>();
 
+
         // 카드를 내보내는 연출을 돌리는 동안 제자리를 맡아 둔다. 도는 중에 창 크기가 바뀌면
         // 제자리를 다시 세는 쪽이 맡아 둔 값을 고치고, 연출은 돌아갈 때 그 값을 읽는다.
         const withSkillTripHome = async (
@@ -939,12 +940,6 @@ export class SimulationBattleFieldView implements Component {
         };
         const opponentEnergyOf = (cardIndex: number): number =>
             battle.findOnOpponentField(cardIndex)?.getEnergyCount() ?? 0;
-        // 상대 유닛의 에너지를 이만큼으로 맞춘다. 종족은 안 가린다.
-        const setOpponentEnergy = (cardIndex: number, next: number): void => {
-            const unit = battle.findOnOpponentField(cardIndex);
-            if (!unit) return;
-            unit.drainEnergy(unit.getEnergyCount() - next);
-        };
 
         const opponentEntries = (opponentGroup.userData as { entries: { card: CardFace; cardIndex: number; group: THREE.Group }[] }).entries;
 
@@ -958,8 +953,10 @@ export class SimulationBattleFieldView implements Component {
             );
         };
 
-        // Tracks which attack/skill is active so single-target execution uses the correct damage.
-        let pendingAttackDamage: number = 0;
+        // 사용자가 액티브 패널에서 고른 것. 대상을 고를 때까지 들고 있다가 명령에 담는다.
+        // 얼마나 아픈지는 전투가 정하므로 여기서 안 든다.
+        let pendingAttack: AttackChoice = 'general';
+        // 연출 이름. 'general' / 'skill1' / 'skill2' 를 그대로 쓴다.
         let pendingAttackType: string = 'general';
 
         // Pilot E — hand page prev/next buttons with click handling
@@ -1660,7 +1657,7 @@ export class SimulationBattleFieldView implements Component {
                     const newHp = Math.max(0, prev - dmg);
                     setOpponentHp(pick.cardIndex, newHp);
                     // 패시브도 이 유닛의 공격이다 — 보유자면 암흑 화염 + 빙결이 실린다.
-                    if (newHp > 0) applyColdDarkTraits(state.deployedEntry, pick.cardIndex);
+                    if (newHp > 0) carryColdDarkFromScreen(state.deployedEntry, pick.cardIndex);
                     console.log(`[nether-blade] passive 2 → opponent idx=${pick.cardIndex} cardId=${target.card.cardId} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
                     if (newHp <= 0) {
                         defeatOpponentUnit(pick.cardIndex);
@@ -1729,7 +1726,7 @@ export class SimulationBattleFieldView implements Component {
                 const newHp = Math.max(0, prev - dmg);
                 setOpponentHp(idx, newHp);
                 // 패시브도 이 유닛의 공격이다 — 보유자면 암흑 화염 + 빙결이 실린다.
-                if (newHp > 0) applyColdDarkTraits(deployedEntry, idx);
+                if (newHp > 0) carryColdDarkFromScreen(deployedEntry, idx);
                 console.log(`[nether-blade] AoE → opponent idx=${idx} cardId=${target.card.cardId} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
                 if (newHp <= 0) {
                     defeatOpponentUnit(idx);
@@ -1772,16 +1769,14 @@ export class SimulationBattleFieldView implements Component {
                     if (btnType === 'general' || btnType.startsWith('skill')) {
                         const attackerId = selectedAttackerEntry?.card.cardId ?? null;
 
-                        // 얼마나 아픈지와 누구를 치는지는 전투가 정한다. 카드에 적힌 값을
-                        // 화면이 직접 열어 보던 것을 옮겼다.
                         const skillSlot: 1 | 2 | null =
                             btnType === 'skill1' ? 1 : btnType === 'skill2' ? 2 : null;
+
+                        // 누구를 치는지만 묻는다. 대상을 골라야 하는 공격인지 여기서 갈리기 때문이다.
+                        // 얼마나 아픈지는 안 묻는다. 전투가 명령을 받고 정한다.
                         const skillType = attackerId != null
                             ? battleCommandHandler.attackRange(attackerId, skillSlot)
                             : SkillType.Single;
-                        const damage = attackerId != null
-                            ? battleCommandHandler.attackDamage(attackerId, skillSlot)
-                            : 0;
 
                         // ── 스킬 에너지 요구량 검사 ────────────────────────────────
                         // cardData의 "스킬N {종족}필요에너지" 3개 열이 그 스킬의 종족별 비용이다.
@@ -1806,18 +1801,17 @@ export class SimulationBattleFieldView implements Component {
 
                         if (skillType === SkillType.EveryUnitField || skillType === SkillType.EveryField) {
                             // AoE — play animation first, then apply damage
-                            console.log(`${btnType} (AoE, damage=${damage}) → hitting all opponents`);
+                            console.log(`${btnType} (AoE) → hitting all opponents`);
                             const atkEntry = selectedAttackerEntry;
 
                             // 때리는 것과 쓰러뜨리는 것은 전투가 한다. 본체까지 갈지도 여기서 정한다.
                             // 연출을 기다리기 전에 값을 다 바꾼다. 기다리는 동안 화면이 닫혀도
                             // 체력만 0 이고 필드에 남아 있는 어중간한 상태가 안 생긴다.
+                            // 본체까지 갈지는 카드에 적힌 범위가 정한다. 전투가 판단한다.
                             const aoeEvents = send({
-                                type: skillType === SkillType.EveryField
-                                    ? 'attackEveryOpponent'
-                                    : 'attackEveryOpponentUnit',
+                                type: 'attackEveryOpponent',
                                 attackerBattleCardId: atkEntry?.cardIndex ?? -1,
-                                damage,
+                                attack: skillSlot ?? 'general',
                             });
 
                             if (atkEntry) {
@@ -1834,6 +1828,9 @@ export class SimulationBattleFieldView implements Component {
                                 }
                             }
 
+                            // 따라붙은 것은 전투가 이미 붙였다. 여기서는 그린다.
+                            showColdDarkTraits(aoeEvents);
+
                             for (const ev of aoeEvents) {
                                 if (ev.type !== 'damaged' || ev.target.kind !== 'unit') continue;
                                 const idx = ev.target.battleCardId;
@@ -1843,8 +1840,6 @@ export class SimulationBattleFieldView implements Component {
                                 const currentHp = ev.hpBefore;
                                 const newHp = ev.hpAfter;
 
-                                // 차갑게 불타는 암흑 에너지 보유자의 광역기 — 맞은 전원에게 부여.
-                                if (newHp > 0) applyColdDarkTraits(atkEntry, idx);
 
                                 // Red flash + shake on all hit targets
                                 entry.group.traverse((child) => {
@@ -1901,7 +1896,7 @@ export class SimulationBattleFieldView implements Component {
                         } else {
                             // Single-target — enter attack mode, red neon on opponents + master
                             interactionState = 'attackMode';
-                            pendingAttackDamage = damage;
+                            pendingAttack = skillSlot ?? 'general';
                             pendingAttackType = btnType;
                             for (const entry of opponentEntries) {
                                 if (entry.group.visible) {
@@ -1911,7 +1906,7 @@ export class SimulationBattleFieldView implements Component {
                             if (battle.getOpponentMasterHp() > 0) {
                                 enemyNeonEffect.attach(-1, masterGroup);
                             }
-                            console.log(`${btnType} (Single, damage=${damage}) — choose opponent target or master`);
+                            console.log(`${btnType} (Single) — choose opponent target or master`);
                         }
                     } else if (btnType === 'details') {
                         console.log('Details clicked — not implemented in pilot');
@@ -1926,7 +1921,6 @@ export class SimulationBattleFieldView implements Component {
                 const masterHits = sharedRaycaster.intersectObjects(masterGroup.children, true);
                 if (masterHits.length > 0) {
                     e.stopImmediatePropagation();
-                    const atkPower = pendingAttackDamage;
                     const attackerEntry = selectedAttackerEntry;
 
                     clearAllSelection();
@@ -1935,7 +1929,7 @@ export class SimulationBattleFieldView implements Component {
                     const events = send({
                         type: 'attackOpponentMaster',
                         attackerBattleCardId: attackerEntry?.cardIndex ?? -1,
-                        damage: atkPower,
+                        attack: pendingAttack,
                     });
 
                     if (attackerEntry) {
@@ -1946,7 +1940,7 @@ export class SimulationBattleFieldView implements Component {
                     for (const ev of events) {
                         if (ev.type === 'damaged' && ev.target.kind === 'opponentMaster') {
                             opponentMasterHpRenderer.setHp(opponentMasterHpGroup, opponentMasterHpFrame, ev.hpAfter);
-                            console.log(`[opponent-master-hp] attack on MASTER (ATK=${atkPower}) → ${ev.hpBefore} → ${ev.hpAfter}`);
+                            console.log(`[opponent-master-hp] attack on MASTER (${pendingAttackType}) → ${ev.hpBefore} → ${ev.hpAfter}`);
                         } else if (ev.type === 'defeated' && ev.target.kind === 'opponentMaster') {
                             setTimeout(() => { masterGroup.visible = false; console.log('Opponent MASTER defeated!'); }, 300);
                         }
@@ -1975,7 +1969,6 @@ export class SimulationBattleFieldView implements Component {
 
                 if (targetEntry) {
                     e.stopImmediatePropagation();
-                    const attackPower = pendingAttackDamage;
                     const attackerEntry = selectedAttackerEntry;
                     const attackerId = attackerEntry?.card.cardId ?? null;
 
@@ -1988,7 +1981,7 @@ export class SimulationBattleFieldView implements Component {
                         type: 'attackUnit',
                         attackerBattleCardId: attackerEntry?.cardIndex ?? -1,
                         targetBattleCardId: targetIdx,
-                        damage: attackPower,
+                        attack: pendingAttack,
                     });
 
                     if (attackerEntry) {
@@ -1999,10 +1992,10 @@ export class SimulationBattleFieldView implements Component {
                     const currentHp = hit && hit.type === 'damaged' ? hit.hpBefore : 0;
                     const newHp = hit && hit.type === 'damaged' ? hit.hpAfter : 0;
 
-                    // 차갑게 불타는 암흑 에너지 보유자의 공격/단일기 — 맞은 대상에게 부여.
-                    if (newHp > 0) applyColdDarkTraits(attackerEntry, targetIdx);
+                    // 따라붙은 것은 전투가 이미 붙였다. 여기서는 그린다.
+                    showColdDarkTraits(attackEvents);
 
-                    console.log(`Single-target attack: attacker=${attackerId} (ATK=${attackPower}) → opponent idx=${targetIdx} cardId=${targetEntry.card.cardId} (HP: ${currentHp} → ${newHp})`);
+                    console.log(`Single-target attack: attacker=${attackerId} (${pendingAttackType}) → opponent idx=${targetIdx} cardId=${targetEntry.card.cardId} (HP: ${currentHp} → ${newHp})`);
 
                     const flashGroup = targetEntry.group;
                     flashGroup.traverse((child) => {
@@ -2228,29 +2221,44 @@ export class SimulationBattleFieldView implements Component {
             frozenBurningEffect.detach(cardIndex);
         }
 
-        // 공격이 명중한 뒤 호출. 공격자가 보유자가 아니면 아무 일도 하지 않는다.
-        // 암흑 화염은 매번 갱신(지속), 빙결은 면역이 아닐 때만 새로 건다.
-        function applyColdDarkTraits(attacker: HandEntry | null, targetIdx: number): void {
-            if (!attacker || !coldDarkEnergyHolders.has(attacker)) return;
-            const target = opponentEntries.find((oe) => oe.cardIndex === targetIdx);
-            if (!target || !target.group.visible) return;
-            if (!ensureFrozenBurningOverlay(targetIdx)) return;
+        // 네더 블레이드 패시브가 때렸을 때 따라붙이는 것.
+        //
+        // 그 카드는 아직 전투가 안 다뤄서(R2-105) 화면이 피해까지 준다. 그래서 붙이는 것도
+        // 여기서 한다. 전투가 그 카드를 맡으면 이 함수는 없어지고 showColdDarkTraits 만 남는다.
+        function carryColdDarkFromScreen(attacker: HandEntry | null, targetIdx: number): void {
+            if (!attacker) return;
+            const holder = battle.findOnYourField(attacker.cardIndex);
+            if (!holder?.hasColdDarkEnergy()) return;
+            const target = battle.findOnOpponentField(targetIdx);
+            if (!target) return;
 
-            // 붙이는 것은 전투가 한다. 연속 빙결 불가도 전투가 안다.
-            const unit = battle.findOnOpponentField(targetIdx);
-            if (!unit) return;
-            unit.setDarkFlame(true);
-            const froze = unit.freeze();
-            const immune = !froze;
+            target.setDarkFlame(true);
+            const froze = target.freeze();
+            showColdDarkTraits([{
+                type: 'coldDarkCarried', battleCardId: targetIdx, darkFlame: true, frozen: froze,
+            }]);
+        }
 
-            frozenBurningEffect.setState(targetIdx, {
-                flame: true,
-                freeze: unit.isFrozen(),
-            });
-            console.log(
-                `[cold-dark-energy] idx=${targetIdx} 암흑 화염 부여` +
-                (immune ? ' · 빙결 면역(연속 빙결 불가)' : ' · 빙결 부여'),
-            );
+        // 따라붙은 것을 화면에 그린다. 붙이는 것은 전투가 이미 했다.
+        //
+        // 일어난 일에 [따라붙었다] 가 없으면 지닌 유닛의 공격이 아니었다는 뜻이다.
+        function showColdDarkTraits(events: readonly BattleEvent[]): void {
+            for (const ev of events) {
+                if (ev.type !== 'coldDarkCarried') continue;
+                const idx = ev.battleCardId;
+                const target = opponentEntries.find((oe) => oe.cardIndex === idx);
+                if (!target || !target.group.visible) continue;
+                if (!ensureFrozenBurningOverlay(idx)) continue;
+
+                frozenBurningEffect.setState(idx, {
+                    flame: ev.darkFlame,
+                    freeze: battle.findOnOpponentField(idx)?.isFrozen() ?? false,
+                });
+                console.log(
+                    `[cold-dark-energy] idx=${idx} 암흑 화염 부여` +
+                    (ev.frozen ? ' · 빙결 부여' : ' · 빙결 면역(연속 빙결 불가)'),
+                );
+            }
         }
 
         // 상대 유닛이 지금 행동할 수 있는지. 빙결 중이면 불가.
@@ -2340,7 +2348,6 @@ export class SimulationBattleFieldView implements Component {
         const SCYTHE_MYTHIC_DAMAGE = ability(SCYTHE_CARD_ID).numbers.mythicDamage;
 
         const ENERGY_BURN_CARD_ID = 9;
-        const ENERGY_BURN_PER_MISSING_DAMAGE = ability(ENERGY_BURN_CARD_ID).numbers.perMissingEnergyDamage;
 
         const OPPONENT_TARGETING_ITEM_IDS: readonly number[] = cardIdsTargeting(AbilityTarget.OPPONENT_UNIT);
 
@@ -2354,7 +2361,6 @@ export class SimulationBattleFieldView implements Component {
         const DARK_FLAME_TURN_DAMAGE = ability(COLD_DARK_ENERGY_CARD_ID).numbers.darkFlameTurnDamage;
 
         // 이 에너지를 보유한 아군 유닛. 보유 개수가 아니라 보유 여부만 의미가 있다.
-        const coldDarkEnergyHolders = new Set<HandEntry>();
 
         // 상대 유닛의 상태이상은 전투가 든다. 암흑 화염, 빙결, 재빙결 불가.
 
@@ -2453,32 +2459,23 @@ export class SimulationBattleFieldView implements Component {
             }, 30);
         };
 
-        const applyEnergyBurnEffect = async (target: OpponentEntry): Promise<void> => {
-            const targetIdx = target.cardIndex;
-            const currentEnergy = opponentEnergyOf(targetIdx);
-            const energyDrained = Math.min(2, currentEnergy);
-            const damageMultiplier = 2 - energyDrained;  // 0 e → 2, 1 e → 1, ≥2 e → 0
-            const damage = damageMultiplier * ENERGY_BURN_PER_MISSING_DAMAGE;
+        // 에너지 번 연출. 무엇이 일어났는지는 전투가 이미 정했다. 여기서는 그리기만 한다.
+        const applyEnergyBurnEffect = async (
+            target: OpponentEntry, events: readonly BattleEvent[],
+        ): Promise<void> => {
+            const drainedEvent = events.find((ev) => ev.type === 'energyDrained');
+            const energyDrained = drainedEvent && drainedEvent.type === 'energyDrained'
+                ? drainedEvent.amount : 0;
+            const newEnergy = drainedEvent && drainedEvent.type === 'energyDrained'
+                ? drainedEvent.countAfter : opponentEnergyOf(target.cardIndex);
 
-            const newEnergy = currentEnergy - energyDrained;
-            setOpponentEnergy(targetIdx, newEnergy);
+            const damagedEvent = events.find(
+                (ev) => ev.type === 'damaged' && ev.target.kind === 'unit',
+            );
+            const damage = damagedEvent && damagedEvent.type === 'damaged' ? damagedEvent.amount : 0;
+            const killing = events.some((ev) => ev.type === 'defeated' && ev.target.kind === 'unit');
 
-            let newHp = 0;
-            let killing = false;
-            if (damage > 0) {
-                const currentHp = opponentHpOf(targetIdx);
-                newHp = Math.max(0, currentHp - damage);
-                setOpponentHp(targetIdx, newHp);
-                killing = newHp <= 0;
-                console.log(`[energy-burn] target cardId=${target.card.cardId} energy: ${currentEnergy} → ${newEnergy} (drained ${energyDrained}) damage=${damage} HP → ${newHp}${killing ? ' (defeated — card burns away)' : ''}`);
-            } else {
-                console.log(`[energy-burn] target cardId=${target.card.cardId} energy: ${currentEnergy} → ${newEnergy} (drained ${energyDrained}) no damage`);
-            }
-
-            // 상태는 연출을 기다리기 전에 다 바꾼다.
-            if (killing) {
-                defeatOpponentUnit(targetIdx);
-            }
+            console.log(`[energy-burn] target cardId=${target.card.cardId} drained ${energyDrained} → ${newEnergy}, damage=${damage}${killing ? ' (defeated — card burns away)' : ''}`);
 
             // Play the effect (passes killing so the card dissolves inside the flame) + damage
             // feedback in parallel. The icon refreshes ~1s in AFTER motes visually consume, but
@@ -3478,8 +3475,13 @@ export class SimulationBattleFieldView implements Component {
                                 }));
                                 removeHandCardFromScreen(droppedEntry, handIndex);
                             } else if (cardId === ENERGY_BURN_CARD_ID) {
-                                applyEnergyBurnEffect(opponentTarget);
-                                consumeHandCard(droppedEntry, handIndex);
+                                // 카드를 쓴다. 에너지 빼기와 피해와 카드 이동은 전투가 한다.
+                                void applyEnergyBurnEffect(opponentTarget, send({
+                                    type: 'useCardOnUnit',
+                                    battleCardId: droppedEntry.cardIndex,
+                                    targetBattleCardId: opponentTarget.cardIndex,
+                                }));
+                                removeHandCardFromScreen(droppedEntry, handIndex);
                             }
                         } else if (cardId === DOOM_CONTRACT_CARD_ID) {
                             // AoE + deck drain — MUST land on the OPPONENT field area. Dropping
@@ -3678,17 +3680,13 @@ export class SimulationBattleFieldView implements Component {
                         const dropCy = group.position.y;
                         const allyTarget = hitAllyAt(dropCx, dropCy);
                         if (allyTarget) {
-                            // 죽음의 에너지는 전투가 붙인다. 차갑게 불타는 암흑 에너지는
-                            // 붙인 뒤에도 그 유닛의 공격에 따라붙어서 아직 화면이 든다.
-                            const attachEvents = cardId === DEATH_ENERGY_CARD_ID
-                                ? send({
-                                    type: 'useCardOnUnit',
-                                    battleCardId: droppedEntry.cardIndex,
-                                    targetBattleCardId: allyTarget.cardIndex,
-                                })
-                                : null;
-                            if (attachEvents) removeHandCardFromScreen(droppedEntry, handIndex);
-                            else consumeHandCard(droppedEntry, handIndex);
+                            // 둘 다 전투가 붙인다. 카드를 무덤으로 보내는 것도 전투가 한다.
+                            const attachEvents = send({
+                                type: 'useCardOnUnit',
+                                battleCardId: droppedEntry.cardIndex,
+                                targetBattleCardId: allyTarget.cardIndex,
+                            });
+                            removeHandCardFromScreen(droppedEntry, handIndex);
                             const targetWorld = new THREE.Vector3(
                                 allyTarget.group.position.x,
                                 allyTarget.group.position.y,
@@ -3698,20 +3696,15 @@ export class SimulationBattleFieldView implements Component {
                             const droppedRace = cardRaceOf(cardId) ?? CardRace.UNDEAD;
                             const isColdDark = cardId === COLD_DARK_ENERGY_CARD_ID;
                             void overflowMoraleEffect.playDirectAttach(targetWorld, () => {
-                                // 죽음의 에너지는 전투가 붙였다. 암흑 에너지는 아직 화면이 붙인다.
+                                // 붙이는 것은 전투가 한다. 여기서는 붙은 결과를 그린다.
                                 const attached = attachEvents?.find((ev) => ev.type === 'energyAttached');
-                                let newCount: number;
-                                if (attached && attached.type === 'energyAttached') {
-                                    newCount = attached.countAfter;
-                                } else {
-                                    const unit = battle.findOnYourField(allyTarget.cardIndex);
-                                    newCount = unit ? unit.addEnergy(droppedRace, 1) : 0;
-                                }
+                                const newCount = attached && attached.type === 'energyAttached'
+                                    ? attached.countAfter
+                                    : battle.findOnYourField(allyTarget.cardIndex)?.getEnergyCount() ?? 0;
                                 void updateCardEnergyVisual(allyTarget, newCount);
                                 if (isColdDark) {
-                                    // 종족 에너지 부여에 더해 암흑 화염 + 빙결 부여 능력이 붙는다.
-                                    // 부여 사실은 카드에 붙는 두 마크가 알리므로 배너는 띄우지 않는다.
-                                    coldDarkEnergyHolders.add(allyTarget);
+                                    // 종족 에너지에 더해 앞으로 때릴 때마다 따라붙는 능력이 생긴다.
+                                    // 그 사실은 카드에 붙는 두 마크가 알리므로 배너는 안 띄운다.
                                     attachColdDarkTraitMarks(allyTarget);
                                 }
                                 console.log(`[${isColdDark ? 'cold-dark-energy' : 'death-energy'}] attached ${RACE_LABEL[droppedRace]} 1 → placed cardId=${allyTarget.card.cardId} total=${newCount}`);
