@@ -50,19 +50,46 @@ export class AnimationBasics {
         return moveCard(group, to, duration, CardMoveEasing.inOut);
     }
 
+    // 화면을 흔든다.
+    //
+    // 두 공격이 같이 돌면 흔들기도 겹친다. 먼저 끝난 쪽이 화면을 제자리로 돌려 버리면
+    // 아직 흔드는 쪽이 뚝 끊긴다. 그래서 지금 몇 개가 흔드는지 세고, 마지막 하나가
+    // 끝날 때만 제자리로 돌린다.
+    private static shaking = 0;
+
     public shakeScene(cardW: number, duration: number, onDone: () => void): void {
-        // Always return to origin (0,0) — not the current position, which may be mid-shake
+        AnimationBasics.shaking += 1;
         const steps = 12; const sd = duration / steps; const tweens: any[] = [];
         for (let i = 0; i < steps; i++) {
             const t = new TWEEN.Tween(this.scene.position).to({ x: (Math.random() * 2 - 1) * cardW / 8, y: (Math.random() * 2 - 1) * cardW / 8 }, sd).easing(TWEEN.Easing.Quadratic.InOut);
             if (i > 0) tweens[i - 1].chain(t); tweens.push(t);
         }
-        tweens[steps - 1].chain(new TWEEN.Tween(this.scene.position).to({ x: 0, y: 0 }, sd).easing(TWEEN.Easing.Quadratic.InOut).onComplete(onDone));
+        const scene = this.scene;
+        tweens[steps - 1].chain(
+            new TWEEN.Tween(scene.position)
+                .to({ x: 0, y: 0 }, sd)
+                .easing(TWEEN.Easing.Quadratic.InOut)
+                .onComplete(() => {
+                    AnimationBasics.shaking -= 1;
+                    // 아직 흔드는 것이 남아 있으면 제자리로 돌리지 않는다.
+                    if (AnimationBasics.shaking > 0) { onDone(); return; }
+                    scene.position.set(0, 0, 0);
+                    onDone();
+                }),
+        );
         tweens[0].start();
     }
 
     public shakeScenePromise(cardW: number, duration: number): void {
         this.shakeScene(cardW, duration, () => {});
+    }
+
+    // 연출이 끝나면서 화면을 제자리로 돌린다.
+    //
+    // 다른 연출이 아직 흔드는 중이면 돌리지 않는다. 돌리면 그쪽이 뚝 끊긴다.
+    public restoreScenePosition(): void {
+        if (AnimationBasics.shaking > 0) return;
+        this.scene.position.set(0, 0, 0);
     }
 
     public spawnScreenFlash(duration: number): void {

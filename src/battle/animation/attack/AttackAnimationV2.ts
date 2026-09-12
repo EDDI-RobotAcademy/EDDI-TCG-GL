@@ -25,7 +25,12 @@ export class AttackAnimationV2 {
     private scene: THREE.Scene;
     // 어느 연출에나 쓰이는 것은 이쪽이 든다. 광역기 연출도 같은 것을 쓴다.
     private readonly basics: AnimationBasics;
-    private animating = false;
+    // 지금 몇 개가 도는 중인가.
+    //
+    // 전에는 [도는 중이면 그냥 돌아간다] 였다. 그런데 화면은 명령을 먼저 보내므로
+    // 피해는 이미 들어간 뒤였고, 연출만 조용히 건너뛰었다. 턴 시간이 빠듯해 사용자는
+    // 연달아 공격해야 하므로, 막는 대신 같이 돌게 한다.
+    private running = 0;
 
     // 그리는 것을 담는 겹. 도중에 창 크기가 바뀌면 겹이 함께 늘고 준다.
     private readonly layer = new EffectLayer();
@@ -41,7 +46,7 @@ export class AttackAnimationV2 {
     }
 
     public isAnimating(): boolean {
-        return this.animating;
+        return this.running > 0;
     }
 
     // Unified entry — routes to weapon animation or skill projectile based on attackType
@@ -52,7 +57,6 @@ export class AttackAnimationV2 {
         attackType: string = 'general',
         trip?: SkillTripHandle,
     ): Promise<void> {
-        if (this.animating) return;
 
         if (attackType.startsWith('skill')) {
             await this.playSkillProjectile(attackerGroup, targetGroup, attackType, trip);
@@ -63,9 +67,9 @@ export class AttackAnimationV2 {
 
     // === AoE skill (Sea of Specter) — magic circle → specters → scream ===
     private async playWeaponAttack(attackerGroup: THREE.Group, targetGroup: THREE.Group, trip?: SkillTripHandle): Promise<void> {
-        this.animating = true;
+        this.running += 1;
         const { mesh: weaponMesh, type: weaponType } = this.findWeaponMesh(attackerGroup);
-        if (!weaponMesh) { this.animating = false; return; }
+        if (!weaponMesh) { this.running -= 1; return; }
 
         const cardW = CWR * window.innerWidth;
         const quarterW = cardW / 4;
@@ -99,8 +103,8 @@ export class AttackAnimationV2 {
         attackerGroup.position.y = trip ? trip.home.y : attackerOrigY;
         weaponMesh.position.copy(weaponOrigPos);
         weaponMesh.rotation.z = weaponOrigRot;
-        this.scene.position.set(0, 0, 0);
-        this.animating = false;
+        this.basics.restoreScenePosition();
+        this.running -= 1;
     }
 
     // === Skill projectile (shadow ball, etc.) ===
@@ -110,7 +114,7 @@ export class AttackAnimationV2 {
         skillType: string,
         trip?: SkillTripHandle,
     ): Promise<void> {
-        this.animating = true;
+        this.running += 1;
         const cardW = CWR * window.innerWidth;
 
         const origPos = trip?.home ?? attackerGroup.position.clone();
@@ -162,8 +166,8 @@ export class AttackAnimationV2 {
         await this.basics.moveCardToLive(attackerGroup, () => origPos, 1000);
         attackerGroup.position.copy(origPos);
 
-        this.scene.position.set(0, 0, 0);
-        this.animating = false;
+        this.basics.restoreScenePosition();
+        this.running -= 1;
     }
 
     // 옮기는 일은 moveCard 가 한다. 걸리는 시간은 부르는 쪽이 정한다.

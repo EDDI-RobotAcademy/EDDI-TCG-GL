@@ -22,7 +22,8 @@ const CWR = BattleFieldConstants.CARD_WIDTH_RATIO;
 export class SeaOfSpecterEffect {
     private scene: THREE.Scene;
     private readonly basics: AnimationBasics;
-    private animating = false;
+    // 지금 몇 개가 도는 중인가. 턴 시간이 빠듯해 연달아 쓸 수 있어야 하므로 겹쳐 돈다.
+    private running = 0;
 
     private readonly layer = new EffectLayer();
 
@@ -42,7 +43,7 @@ export class SeaOfSpecterEffect {
     }
 
     public isAnimating(): boolean {
-        return this.animating;
+        return this.running > 0;
     }
 
     private readonly DEMENTOR_SHADER = `
@@ -285,8 +286,7 @@ export class SeaOfSpecterEffect {
 
     // trip 을 주면 나갔다 오는 일을 화면과 함께 다룬다. 안 주면 지금 자리로 돌아온다.
     public async play(attackerGroup: THREE.Group, trip?: SkillTripHandle): Promise<void> {
-        if (this.animating) return;
-        this.animating = true;
+        this.running += 1;
         const cardW = CWR * window.innerWidth;
         const w = window.innerWidth;
         const h = window.innerHeight;
@@ -398,9 +398,9 @@ export class SeaOfSpecterEffect {
         attackerGroup.position.copy(origPos);
 
         // Force-reset scene position — overlapping shakes can leave it offset
-        this.scene.position.set(0, 0, 0);
+        this.basics.restoreScenePosition();
 
-        this.animating = false;
+        this.running -= 1;
     }
 
     private createMagicCircle(center: THREE.Vector3, cardW: number): THREE.Mesh {
