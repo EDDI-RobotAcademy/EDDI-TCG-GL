@@ -6,7 +6,7 @@ import {CardGrade} from "../../card/grade";
 import {CardRace} from "../../card/race";
 import {SkillType} from "../../card/SkillType";
 import {findCardAbility} from "../ability/CardAbility";
-import {BattleCommand} from "./BattleCommand";
+import {AttackChoice, BattleCommand} from "./BattleCommand";
 import {BattleEvent} from "./BattleEvent";
 
 // 카드가 어떤 종류이고 체력이 얼마인지를 알려 주는 곳.
@@ -47,6 +47,9 @@ const DEAD_LANDS = 36;
 const SWAMP_OF_DEAD = 20;
 const OVERFLOW_MORALE = 2;
 const DEATH_ENERGY = 93;
+const ENERGY_BURN = 9;
+// 에너지 번이 없앨 수 있는 에너지 수. 카드 설명의 [2개] 다.
+const ENERGY_BURN_MAX_DRAIN = 2;
 const LEONIK_SUMMON = 30;
 const COLD_DARK_ENERGY = 151;
 
@@ -61,11 +64,27 @@ export class BattleCommandHandler {
     // 전에는 화면이 카드 데이터를 직접 열어 이것들을 정했다. 도메인이 카드에 뭐가 적혀
     // 있는지 몰랐기 때문이다. 이제 카탈로그로 읽는다.
 
+    // 고른 공격이 얼마나 아픈가. 필드에 선 유닛에서 카드를 찾아 값을 읽는다.
+    private chosenAttackDamage(battle: Battle, attackerId: number, attack: AttackChoice): number {
+        const cardId = battle.findOnYourField(attackerId)?.getCardId();
+        if (cardId === undefined) return 0;
+        return this.attackDamage(cardId, attack === 'general' ? null : attack);
+    }
+
+    // 고른 공격이 본체까지 가는가.
+    private reachesMaster(battle: Battle, attackerId: number, attack: AttackChoice): boolean {
+        const cardId = battle.findOnYourField(attackerId)?.getCardId();
+        if (cardId === undefined) return false;
+        return this.attackRange(cardId, attack === 'general' ? null : attack) === SkillType.EveryField;
+    }
+
     // 이 공격이 얼마나 아픈가.
     //
     // 지금은 카드에 적힌 값이 그대로 답이다. 붙은 것이 생기면 여기서 그 값들을 더해
     // 계산하게 된다. 최종값을 어디에 저장하지는 않는다.
-    attackDamage(cardId: number, slot: 1 | 2 | null): number {
+    //
+    // 밖으로 열지 않는다. 열어 두면 화면이 이 값을 받아 명령에 다시 실어 보내는 길이 생긴다.
+    private attackDamage(cardId: number, slot: 1 | 2 | null): number {
         if (slot === null) return this.catalog.getAttack(cardId);
         return this.catalog.getSkill(cardId, slot)?.damage ?? 0;
     }
@@ -121,20 +140,21 @@ export class BattleCommandHandler {
                 );
             case 'attackUnit':
                 return this.attackUnit(
-                    battle, command.attackerBattleCardId,
-                    command.targetBattleCardId, command.damage,
+                    battle, command.attackerBattleCardId, command.targetBattleCardId,
+                    this.chosenAttackDamage(battle, command.attackerBattleCardId, command.attack),
                 );
             case 'attackOpponentMaster':
                 return this.attackOpponentMaster(
-                    battle, command.damage, command.attackerBattleCardId,
-                );
-            case 'attackEveryOpponentUnit':
-                return this.attackEveryOpponent(
-                    battle, command.damage, false, command.attackerBattleCardId,
+                    battle,
+                    this.chosenAttackDamage(battle, command.attackerBattleCardId, command.attack),
+                    command.attackerBattleCardId,
                 );
             case 'attackEveryOpponent':
                 return this.attackEveryOpponent(
-                    battle, command.damage, true, command.attackerBattleCardId,
+                    battle,
+                    this.chosenAttackDamage(battle, command.attackerBattleCardId, command.attack),
+                    this.reachesMaster(battle, command.attackerBattleCardId, command.attack),
+                    command.attackerBattleCardId,
                 );
         }
     }
@@ -286,10 +306,47 @@ export class BattleCommandHandler {
             case OVERFLOW_MORALE:
                 return this.useOverflowMorale(battle, battleCardId, cardId, targetBattleCardId);
             case DEATH_ENERGY:
+            case COLD_DARK_ENERGY:
                 return this.attachEnergyCard(battle, battleCardId, cardId, targetBattleCardId);
+            case ENERGY_BURN:
+                return this.useEnergyBurn(battle, battleCardId, cardId, targetBattleCardId);
             default:
                 return [{type: 'rejected', reason: '아직 전투가 처리하지 않는 카드입니다.'}];
         }
+    }
+
+    // 에너지 번 — 상대 유닛에 붙은 에너지를 최대 둘 없앤다.
+    //
+    // 못 없앤 만큼이 피해가 된다. 둘 다 있으면 피해 없음, 하나면 한 번치, 없으면 두 번치다.
+    // 사용자에게 묻는 것은 대상 하나뿐이다. 어느 에너지를 없앨지는 안 묻는다.
+    private useEnergyBurn(
+        battle: Battle, battleCardId: number, cardId: number, targetId: number,
+    ): BattleEvent[] {
+        const target = battle.findOnOpponentField(targetId);
+        if (!target) return [{type: 'rejected', reason: '상대 필드에 없는 유닛입니다.'}];
+
+        const perMissing = findCardAbility(cardId)!.numbers.perMissingEnergyDamage;
+
+        const energyBefore = target.getEnergyCount();
+        const drained = Math.min(ENERGY_BURN_MAX_DRAIN, energyBefore);
+        const energyAfter = energyBefore - drained;
+        if (drained > 0) target.drainEnergy(drained);
+
+        const events: BattleEvent[] = [];
+        if (drained > 0) {
+            events.push({
+                type: 'energyDrained', battleCardId: targetId,
+                amount: drained, countAfter: energyAfter,
+            });
+        }
+
+        const damage = (ENERGY_BURN_MAX_DRAIN - drained) * perMissing;
+        if (damage > 0) {
+            events.push(...this.damageOpponentUnit(battle, targetId, target.getCardId(), damage));
+        }
+
+        events.push(...this.spendHandCard(battle, battleCardId, cardId));
+        return events;
     }
 
     // 죽음의 낫 — 신화 미만이면 즉사, 신화면 정해진 만큼 피해.
@@ -381,6 +438,10 @@ export class BattleCommandHandler {
         const n = findCardAbility(cardId)!.numbers;
         const race = this.catalog.getRace(cardId) ?? CardRace.UNDEAD;
         const countAfter = target.addEnergy(race, n.attachEnergy);
+
+        // 차갑게 불타는 암흑 에너지는 에너지 하나를 붙이는 데서 끝나지 않는다.
+        // 이 유닛이 앞으로 때릴 때마다 맞은 쪽에 암흑 화염과 빙결이 따라붙는다.
+        if (cardId === COLD_DARK_ENERGY) target.setColdDarkEnergy(true);
 
         return [
             {type: 'energyAttached', battleCardId: targetId, race, countAfter},
@@ -567,6 +628,27 @@ export class BattleCommandHandler {
     // 아직 카드 정보 쪽에 있어서, 전투가 그것까지 정하려면 그 길을 먼저 내야 한다.
 
     // 상대 유닛 하나를 때린다.
+    // 차갑게 불타는 암흑 에너지를 지닌 유닛이 때리면 맞은 쪽에 따라붙는다.
+    //
+    // 암흑 화염은 맞을 때마다 다시 붙는다. 빙결은 방금 풀린 유닛에는 안 붙는다.
+    // 쓰러진 유닛에는 안 붙인다. 이미 필드를 떠났다.
+    private carryColdDark(battle: Battle, attackerId: number, targetId: number): BattleEvent[] {
+        const attacker = battle.findOnYourField(attackerId);
+        if (!attacker?.hasColdDarkEnergy()) return [];
+
+        const target = battle.findOnOpponentField(targetId);
+        if (!target) return [];
+
+        target.setDarkFlame(true);
+        const froze = target.freeze();
+        return [{
+            type: 'coldDarkCarried',
+            battleCardId: targetId,
+            darkFlame: true,
+            frozen: froze,
+        }];
+    }
+
     private attackUnit(
         battle: Battle, attackerId: number, targetId: number, damage: number,
     ): BattleEvent[] {
@@ -575,7 +657,24 @@ export class BattleCommandHandler {
 
         const target = battle.findOnOpponentField(targetId);
         if (!target) return [{type: 'rejected', reason: '상대 필드에 없는 유닛입니다.'}];
-        return this.damageOpponentUnit(battle, target.getBattleCardId(), target.getCardId(), damage);
+
+        const events = this.damageOpponentUnit(
+            battle, target.getBattleCardId(), target.getCardId(), damage,
+        );
+        // 살아남은 경우에만 따라붙는다. 쓰러졌으면 이미 필드를 떠났다.
+        if (!this.wasDefeated(events, targetId)) {
+            events.push(...this.carryColdDark(battle, attackerId, targetId));
+        }
+        return events;
+    }
+
+    // 이 일어난 일 묶음에서 그 유닛이 쓰러졌는가.
+    private wasDefeated(events: readonly BattleEvent[], battleCardId: number): boolean {
+        return events.some(
+            (ev) => ev.type === 'defeated'
+                && ev.target.kind === 'unit'
+                && ev.target.battleCardId === battleCardId,
+        );
     }
 
     // 때리는 유닛이 못 움직이면 왜 못 움직이는지를 준다. 움직일 수 있으면 null 이다.
@@ -619,9 +718,13 @@ export class BattleCommandHandler {
         const events: BattleEvent[] = [];
         // 목록이 도는 중에 빠지므로 미리 베껴 둔다.
         for (const unit of [...battle.getOpponentFieldCards()]) {
-            events.push(...this.damageOpponentUnit(
-                battle, unit.getBattleCardId(), unit.getCardId(), damage,
-            ));
+            const id = unit.getBattleCardId();
+            const hit = this.damageOpponentUnit(battle, id, unit.getCardId(), damage);
+            events.push(...hit);
+            // 광역기도 이 유닛의 공격이다. 살아남은 쪽에 따라붙는다.
+            if (!this.wasDefeated(hit, id)) {
+                events.push(...this.carryColdDark(battle, attackerId, id));
+            }
         }
         if (withMaster && battle.getOpponentMasterHp() > 0) {
             events.push(...this.attackOpponentMaster(battle, damage));

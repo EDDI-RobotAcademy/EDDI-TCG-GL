@@ -29,10 +29,14 @@ export type BattleCommand =
     // 필드 에너지 하나를 내 유닛에 붙인다. 어느 종족으로 붙일지는 사용자가 고른다
     | {type: 'attachFieldEnergyToUnit'; targetBattleCardId: number; race: CardRace}
     // 내 유닛으로 상대 유닛 하나를 때린다
-    | {type: 'attackUnit'; attackerBattleCardId: number; targetBattleCardId: number; damage: number}
+    | {type: 'attackUnit'; attackerBattleCardId: number; targetBattleCardId: number; attack: AttackChoice}
     // 내 유닛으로 상대 본체를 때린다
-    | {type: 'attackOpponentMaster'; attackerBattleCardId: number; damage: number}
-    // 내 유닛의 스킬로 상대 유닛 전부를 때린다
-    | {type: 'attackEveryOpponentUnit'; attackerBattleCardId: number; damage: number}
-    // 내 유닛의 스킬로 상대 유닛 전부와 본체를 때린다
-    | {type: 'attackEveryOpponent'; attackerBattleCardId: number; damage: number};
+    | {type: 'attackOpponentMaster'; attackerBattleCardId: number; attack: AttackChoice}
+    // 내 유닛의 스킬로 상대 전부를 때린다.
+    // 본체까지 가는지는 카드에 적힌 범위가 정하므로 여기서 나누지 않는다
+    | {type: 'attackEveryOpponent'; attackerBattleCardId: number; attack: AttackChoice};
+
+// 사용자가 액티브 패널에서 고른 것. 일반 공격이거나 스킬 하나다.
+//
+// 얼마나 아픈지와 누구를 치는지는 여기 안 담는다. 카드에 적힌 값에서 전투 상태가 정한다.
+export type AttackChoice = 'general' | 1 | 2;
