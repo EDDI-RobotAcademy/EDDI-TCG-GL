@@ -20,6 +20,11 @@ export type BattleEvent =
     | {type: 'valueChanged'; what: ChangedValue; before: number; after: number}
     // 유닛에 에너지가 붙었다
     | {type: 'energyAttached'; battleCardId: number; race: CardRace; countAfter: number}
+    // 차갑게 불타는 암흑 에너지를 지닌 유닛이 때려서 맞은 쪽에 따라붙었다.
+    // frozen 이 false 면 방금 풀린 유닛이라 안 얼었다는 뜻이다
+    | {type: 'coldDarkCarried'; battleCardId: number; darkFlame: boolean; frozen: boolean}
+    // 유닛에 붙어 있던 에너지가 빠졌다. 종족은 안 가리고 뺀 것이라 수만 알린다
+    | {type: 'energyDrained'; battleCardId: number; amount: number; countAfter: number}
     // 턴이 넘어갔다
     | {type: 'turnPassed'; to: 'your' | 'opponent'}
     // 유닛에 붙어 있던 것이 풀렸다
