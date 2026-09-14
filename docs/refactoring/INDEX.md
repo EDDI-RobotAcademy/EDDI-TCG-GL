@@ -128,7 +128,7 @@
 | **R2-100** | Rule | Battle Unit | [앞 공격이 끝나기 전에도 다음 공격을 할 수 있게 한다](R2-100-concurrent-attacks.md) | R2-99 | **완료** |
 | **R2-101** | Rule | Battle Ability | [에너지 번을 전투 상태가 처리한다](R2-101-energy-burn-into-battle.md) | R2-85 | **완료** |
 | **R2-102** | Rule | Battle Ability | [차갑게 불타는 암흑 에너지를 전투 상태가 처리한다](R2-102-cold-dark-energy-into-battle.md) | R2-101 | **완료** |
-| **R2-103** | Rule | Battle Ability | 여러 단계로 고르는 일을 전투 상태가 기다리게 한다 | R2-102 | 예정 |
+| **R2-103** | Rule | Battle Ability | [전투 중 무엇을 고르는 중인지 전투 상태가 파악하고 기다린다](R2-103-pending-choice.md) | R2-102 | **완료** |
 | **R2-104** | Rule | Battle Ability | 시체 폭발을 전투 상태가 처리한다 | R2-103 | 예정 |
 | **R2-105** | Rule | Battle Ability | 네더 블레이드를 전투 상태가 처리한다 | R2-104 | 예정 |
 | **R2-106** | Rule | Battle | 일어난 일을 받고 그 뒤처리까지 화면이 하지 않는다 | R2-105 | 예정 |

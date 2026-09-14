@@ -20,6 +20,12 @@ export type BattleEvent =
     | {type: 'valueChanged'; what: ChangedValue; before: number; after: number}
     // 유닛에 에너지가 붙었다
     | {type: 'energyAttached'; battleCardId: number; race: CardRace; countAfter: number}
+    // 고르라고 기다리기 시작했다. 몇 개를 더 골라야 하는지 함께 알린다
+    | {type: 'choiceStarted'; cardId: number; remaining: number}
+    // 하나를 받았다. 아직 다 안 골랐으면 remaining 이 0 보다 크다
+    | {type: 'choicePicked'; cardId: number; remaining: number}
+    // 고르던 것이 그만둬졌다. 턴이 끝났을 때다
+    | {type: 'choiceCancelled'; cardId: number}
     // 차갑게 불타는 암흑 에너지를 지닌 유닛이 때려서 맞은 쪽에 따라붙었다.
     // frozen 이 false 면 방금 풀린 유닛이라 안 얼었다는 뜻이다
     | {type: 'coldDarkCarried'; battleCardId: number; darkFlame: boolean; frozen: boolean}

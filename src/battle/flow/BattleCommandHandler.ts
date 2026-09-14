@@ -7,6 +7,7 @@ import {CardRace} from "../../card/race";
 import {SkillType} from "../../card/SkillType";
 import {findCardAbility} from "../ability/CardAbility";
 import {AttackChoice, BattleCommand} from "./BattleCommand";
+import {ChoicePick, PendingChoice, isChoiceComplete, remainingPicks} from "../domain/PendingChoice";
 import {BattleEvent} from "./BattleEvent";
 
 // 카드가 어떤 종류이고 체력이 얼마인지를 알려 주는 곳.
@@ -138,6 +139,10 @@ export class BattleCommandHandler {
                 return this.attachFieldEnergyToUnit(
                     battle, command.targetBattleCardId, command.race,
                 );
+            case 'pickChoiceTarget':
+                return this.pickChoiceTarget(battle, command.pick);
+            case 'cancelChoice':
+                return this.cancelChoice(battle);
             case 'attackUnit':
                 return this.attackUnit(
                     battle, command.attackerBattleCardId, command.targetBattleCardId,
@@ -169,7 +174,10 @@ export class BattleCommandHandler {
             return [{type: 'rejected', reason: '내 턴이 아닙니다.'}];
         }
 
-        const events: BattleEvent[] = [{type: 'turnPassed', to: 'opponent'}];
+        // 고르던 중에 턴이 끝났으면 그만둔다. 아무 일도 안 일어난 것으로 둔다.
+        // 전에는 화면이 제 손으로 취소했고 전투는 그런 일이 있었는지도 몰랐다.
+        const events: BattleEvent[] = [...this.cancelChoice(battle)];
+        events.push({type: 'turnPassed', to: 'opponent'});
         events.push(...this.settleDarkFlame(battle));
         return events;
     }
@@ -313,6 +321,53 @@ export class BattleCommandHandler {
             default:
                 return [{type: 'rejected', reason: '아직 전투가 처리하지 않는 카드입니다.'}];
         }
+    }
+
+    // ── 기다리는 고르기 ────────────────────────────────────────────────────
+
+    // 고르라고 기다리기 시작한다. 카드 규칙이 부른다.
+    private beginChoice(battle: Battle, choice: PendingChoice): BattleEvent[] {
+        battle.beginChoice(choice);
+        return [{
+            type: 'choiceStarted',
+            cardId: choice.cardId,
+            remaining: remainingPicks(choice),
+        }];
+    }
+
+    // 하나를 받는다. 다 골랐으면 그 카드의 규칙이 돈다.
+    private pickChoiceTarget(battle: Battle, pick: ChoicePick): BattleEvent[] {
+        const choice = battle.recordPick(pick);
+        if (!choice) return [{type: 'rejected', reason: '지금 고르라고 기다리는 것이 없습니다.'}];
+
+        if (!isChoiceComplete(choice)) {
+            return [{
+                type: 'choicePicked',
+                cardId: choice.cardId,
+                remaining: remainingPicks(choice),
+            }];
+        }
+
+        const events: BattleEvent[] = [{
+            type: 'choicePicked', cardId: choice.cardId, remaining: 0,
+        }];
+        battle.endChoice();
+        events.push(...this.resolveChoice(battle, choice));
+        return events;
+    }
+
+    // 고르던 것을 그만둔다. 아무 일도 안 일어난 것으로 둔다.
+    private cancelChoice(battle: Battle): BattleEvent[] {
+        const was = battle.endChoice();
+        if (!was) return [];
+        return [{type: 'choiceCancelled', cardId: was.cardId}];
+    }
+
+    // 다 고른 뒤 그 카드의 규칙을 돌린다.
+    //
+    // 지금은 받는 카드가 없다. R2-104 에서 시체 폭발이, R2-105 에서 네더 블레이드가 붙는다.
+    private resolveChoice(battle: Battle, choice: PendingChoice): BattleEvent[] {
+        return [{type: 'rejected', reason: '아직 전투가 처리하지 않는 카드입니다.'}];
     }
 
     // 에너지 번 — 상대 유닛에 붙은 에너지를 최대 둘 없앤다.

@@ -1,5 +1,6 @@
 import {BattleSnapshot} from "./BattleSnapshot";
 import {TurnOwner} from "./TurnOwner";
+import {ChoicePick, PendingChoice, withPick} from "./PendingChoice";
 import {Deck} from "./Deck";
 import {Tomb} from "./Tomb";
 import {LostZone} from "./LostZone";
@@ -61,6 +62,11 @@ export class Battle {
     // 전투가 그 번호로 찾는 것이 서로 다른 카드가 된다.
     private nextCardId: number = 0;
 
+    // 지금 사용자에게 무엇을 고르라고 기다리는 중인가. 기다리는 것이 없으면 null 이다.
+    //
+    // 하나만 둔다. 고르는 중에 다른 고르기가 또 시작되는 일은 없다.
+    private pendingChoice: PendingChoice | null = null;
+
     private constructor(private readonly battleId: number) {}
 
     // 전투를 새로 시작한다.
@@ -87,6 +93,7 @@ export class Battle {
         battle.hand.restoreFrom(snapshot.handCards);
         battle.yourMaster.restoreFrom(snapshot.yourMasterHp);
         battle.opponentMaster.restoreFrom(snapshot.opponentMasterHp);
+        battle.pendingChoice = snapshot.pendingChoice;
         return battle;
     }
 
@@ -100,6 +107,35 @@ export class Battle {
     }
 
     // 밖에서 번호를 정해 넣은 경우 그 다음부터 주도록 맞춘다.
+    // ── 기다리는 고르기 ────────────────────────────────────────────────────
+
+    getPendingChoice(): PendingChoice | null {
+        return this.pendingChoice;
+    }
+
+    isWaitingForChoice(): boolean {
+        return this.pendingChoice !== null;
+    }
+
+    // 고르라고 기다리기 시작한다.
+    beginChoice(choice: PendingChoice): void {
+        this.pendingChoice = choice;
+    }
+
+    // 하나를 받는다. 기다리는 것이 없으면 아무 일도 안 한다.
+    recordPick(pick: ChoicePick): PendingChoice | null {
+        if (!this.pendingChoice) return null;
+        this.pendingChoice = withPick(this.pendingChoice, pick);
+        return this.pendingChoice;
+    }
+
+    // 기다리던 것을 놓는다. 다 골라서 끝났을 때도, 턴이 끝나 취소할 때도 부른다.
+    endChoice(): PendingChoice | null {
+        const was = this.pendingChoice;
+        this.pendingChoice = null;
+        return was;
+    }
+
     private markCardIdUsed(cardId: number): void {
         if (cardId >= this.nextCardId) this.nextCardId = cardId + 1;
     }
@@ -418,6 +454,7 @@ export class Battle {
     toSnapshot(): BattleSnapshot {
         return {
             battleId: this.battleId,
+            pendingChoice: this.pendingChoice,
             turnOwner: this.turnOwner,
             turnNumber: this.turnNumber,
             fieldEnergy: this.fieldEnergy,
