@@ -21,7 +21,9 @@ The goal is not a clean-looking folder tree. The goal is to make responsibilitie
 - **Upper-level directories represent responsibility boundaries.**
 - **Lower-level directories represent functional slices.**
 
-Do not collapse or rearrange directories for tidiness. A boundary that cannot be checked by a script is a boundary that will be crossed.
+Do not collapse or rearrange directories for tidiness. **A boundary that can be checked mechanically should be checked mechanically** — those are the ones that survive.
+
+Not every boundary is mechanically checkable. Whether an aggregate really owns the order of a user action, whether an event states a fact rather than a presentation instruction, whether two pieces of code change for the same reason — those need judgment. The rules in `docs/refactoring/RULES.md` exist for exactly those.
 
 ## Battle architecture
 
@@ -49,7 +51,9 @@ src/battle/
 
 The four `domain/` subfolders marked *create when actually needed* are **not to be created preemptively**. Declare where something belongs; build the folder when a real requirement arrives.
 
-### Runtime flow
+### Domain battle flow
+
+How the aggregate itself runs. This says nothing about *where* it runs.
 
 ```
 input
@@ -58,12 +62,121 @@ Battle (aggregate)
   ├ reads state
   ├ applies rules
   ↓  Event
-UI
-  ├─(a) rebuild presentation state → layout → Renderer → THREE
-  └─(b) play an effect (owns its own meshes and its own timeline)
+```
+
+### Client presentation flow
+
+```
+confirmed result / state
+  ↓
+read model / presentation state
+  ├─(a) → layout → Renderer → THREE
+  └─(b) → Effect (owns its own meshes and its own timeline)
 ```
 
 **There are two read paths, and they must stay separate.** Values determined by state (hp numbers, energy counts, card positions) go through (a). Time-based choreography (explosions, screen shake, projectiles) goes through (b). Forcing effects through (a) makes the Renderer an animation scheduler.
+
+## Battle authority
+
+**In a real match, the server is authoritative for battle state and rule execution.**
+
+The client does not re-run battle rules to correct, complete, or reproduce the server's result. It receives the confirmed result and presents it.
+
+```
+                    REAL MATCH
+                      server
+                        │
+                authoritative Battle
+                        │
+                 result / state
+                        │
+                     network
+                        ↓
+                      client
+                        │
+             ┌──────────┴──────────┐
+             ↓                     ↓
+      read model / state      what happened
+             ↓                     ↓
+         UI Entity                Effect
+             ↓                     ↓
+           Frame                timeline
+             ↓                     │
+         Renderer                  │
+             ↓                     │
+           THREE ←─────────────────┘
+```
+
+The client may play a result out over time, but **the animation must not change battle state.** The result is already true before the effect starts.
+
+**After receiving a fact, the client must not re-run game rules on it to decide new state.**
+
+Reflecting a received fact is exactly what the client is for. Two energy drained → draw fewer icons. Unit defeated → hide it on the field, show it in the tomb. That is presenting the result.
+
+What is forbidden is the step after: *"defeated, so it should go to the tomb, so it should leave the field, so this other effect fires too."* That is computing. Calling `sendToOpponentTomb()` or `removeFromOpponentField()` as battle operations makes the client authoritative by the back door — and the two sides disagree the moment a rule changes on one of them.
+
+The other direction exists too, and its meaning is fixed even though its shape is not:
+
+```
+client
+  ↓  player intent
+server
+  ├ validates the intent
+  ├ reads battle state
+  ├ applies rules
+  └ produces a confirmed result / state
+       ↓
+     client
+       ├ presentation state
+       └ effects
+```
+
+**A Command describes player intent. It is not a network message.** `Command` ≠ WebSocket frame ≠ HTTP request. How that intent reaches the server, and how the result crosses back — snapshot or delta, event log or state dump — is **not decided yet**. Only the location of authority and the direction of meaning are fixed. Do not invent a transport shape ahead of a real requirement (see Rule 27 in `docs/refactoring/RULES.md`).
+
+### Simulation / verification mode
+
+`src/battle/view/SimulationBattleFieldView.ts` is currently the battle verification screen, and it is reachable from the lobby through the test-battle entry.
+
+Its local battle setup — seeding decks, hands, zones, and the opponent field — exists to give a self-contained environment where the battle UI can be verified without a server. **This does not define the authority model of a real match.** When the network battle path arrives, server-provided state and results replace that simulation-only initialization.
+
+Two things that look alike are not the same:
+
+| | |
+|---|---|
+| Setting a starting state up locally so the screen can run | expected today, replaced later |
+| Re-running battle rules on the client to follow up on a result | never correct |
+
+Do not treat "it is the simulation screen" as licence for client UI to own battle rules.
+
+### Expressing a result is not re-running the rules
+
+This is the distinction that matters most in UI code.
+
+```
+defeated
+  ↓
+client calls sendToOpponentTomb() / removeFromOpponentField()     ✗ re-running the rules
+```
+
+```
+defeated
+  ↓
+read model says: not on the field, in the tomb                    ⭕ projecting the result
+  ↓
+death effect plays for two seconds                                ⭕ presenting it over time
+```
+
+The client may show anything the result implies. It may not *derive and apply* the follow-up state changes itself.
+
+### The swappable seam is a consequence, not a goal
+
+The battle screen is not going to be duplicated into "verification" and "real match" copies. Card drawing, field, hand, zones, HUD, input, selection, effects and resize are identical either way — two copies would drift, and one of them would be the one nobody fixed.
+
+What differs is only who computes the battle. So the objective is:
+
+> Keep the screen's presentation responsibility. Remove its responsibility for computing the battle and for applying battle consequences. The same screen then works against a server.
+
+Do not start by building a `BattleProvider` / `BattleAdapter` / `BattleRunner` abstraction. Put the responsibility back where it belongs first; the swappable point appears on its own, and its shape gets decided when something is actually swapped in.
 
 ## Dependency boundaries
 
@@ -82,6 +195,8 @@ At runtime, interaction flows from the UI into the domain and back out through c
 | presentation state (`frame/`) | THREE | ✗ |
 | renderer | THREE | ⭕ |
 | effect | domain state mutation | ✗ |
+| UI | applying a state change it inferred from an event | ✗ |
+| simulation harness | building a starting state locally | ⭕ |
 
 ### What may cross each boundary
 
@@ -198,6 +313,7 @@ Rules differ by boundary. Do not apply E+F+R to domain code.
 - Effects are time-based choreography. **They never mutate domain state.**
 - State changes before the effect is awaited. The truth is already updated while the effect plays it out over two seconds.
 - Effects receive events, not domain objects.
+- Effects may overlap. Anything that resets shared state at the end — the scene shake position, for instance — must count how many are running and only restore on the last one.
 
 ### Deleting
 
@@ -210,9 +326,11 @@ Rules differ by boundary. Do not apply E+F+R to domain code.
 
 These are the migration backlog, not the pattern to copy:
 
-- `src/battle/view/SimulationBattleFieldView.ts` is ~4,300 lines. It constructs meshes directly, holds card ordering and pending-selection state, and branches per card. Splitting it is planned; do not add to it casually.
-- The screen mutates battle state directly in 18 places, bypassing commands.
-- Four commands carry a computed `damage`, meaning the screen decides how much a hit hurts.
+These numbers were measured on the date of the last update and go stale as the migration proceeds. Re-measure before relying on them.
+
+- `src/battle/view/SimulationBattleFieldView.ts` is ~4,250 lines. It constructs meshes in 17 places, holds card ordering and pending-selection state, and branches per card. Splitting it is planned; do not add to it casually.
+- The screen mutates battle state directly in 18 places, bypassing commands. Eight of those are the simulation harness building a starting state, which is fine there. Most of the rest are cards the battle does not handle yet — 차갑게 불타는 암흑 에너지, 시체 폭발, 네더 블레이드 — so the screen computes them instead. Those move in R2-102 through R2-105.
+- The screen reads inside the battle in 58 places. There is no read model yet.
 - `card/unit/generate.ts`, `card/support/generate.ts`, `card/item/generate.ts`, `card/energy/generate.ts` are a parallel rendering pipeline slated for absorption. Don't add new card-building logic there.
 - `*_position/` feature folders are proto-layouts: they hold layout values but are named "Position".
 

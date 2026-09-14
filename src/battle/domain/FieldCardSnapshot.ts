@@ -15,4 +15,5 @@ export interface FieldCardSnapshot {
     readonly frozen: boolean;
     readonly freezeImmune: boolean;
     readonly darkFlame: boolean;
+    readonly coldDarkEnergy: boolean;
 }
