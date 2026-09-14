@@ -28,6 +28,11 @@ export class FieldCard {
         private freezeImmune: boolean = false,
         // 매 턴 깎이는 피해. 암흑 화염
         private darkFlame: boolean = false,
+        // 차갑게 불타는 암흑 에너지를 지녔다.
+        //
+        // 붙은 것이 아니라 지닌 것이다. 이 유닛이 때릴 때마다 맞은 쪽에 암흑 화염과
+        // 빙결이 따라붙는다. 한 번 일어나고 끝이 아니라 계속 따라다니므로 상태로 든다.
+        private coldDarkEnergy: boolean = false,
     ) {}
 
     static restore(snapshot: FieldCardSnapshot): FieldCard {
@@ -42,6 +47,7 @@ export class FieldCard {
             snapshot.frozen,
             snapshot.freezeImmune,
             snapshot.darkFlame,
+            snapshot.coldDarkEnergy,
         );
     }
 
@@ -149,11 +155,22 @@ export class FieldCard {
         this.darkFlame = on;
     }
 
+    hasColdDarkEnergy(): boolean {
+        return this.coldDarkEnergy;
+    }
+
+    setColdDarkEnergy(on: boolean): void {
+        this.coldDarkEnergy = on;
+    }
+
     // 붙은 것을 다 뗀다. 유닛이 쓰러지거나 되살아날 때 쓴다.
+    //
+    // 지닌 카드도 함께 뗀다. 유닛이 필드를 떠나면 그 유닛에 붙여 둔 카드도 같이 나간다.
     clearStatus(): void {
         this.frozen = false;
         this.freezeImmune = false;
         this.darkFlame = false;
+        this.coldDarkEnergy = false;
     }
 
     toSnapshot(): FieldCardSnapshot {
@@ -168,6 +185,7 @@ export class FieldCard {
             frozen: this.frozen,
             freezeImmune: this.freezeImmune,
             darkFlame: this.darkFlame,
+            coldDarkEnergy: this.coldDarkEnergy,
         };
     }
 }
