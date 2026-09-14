@@ -2,6 +2,7 @@ import {TurnOwner} from "./TurnOwner";
 import {BattleFieldUnitSnapshot} from "./BattleFieldUnitSnapshot";
 import {FieldCardSnapshot} from "./FieldCardSnapshot";
 import {HandCardSnapshot} from "./HandCardSnapshot";
+import {PendingChoice} from "./PendingChoice";
 
 // 전투 한 판의 상태를 통째로 적어 둔 것이다.
 //
@@ -34,4 +35,6 @@ export interface BattleSnapshot {
     // 본체 체력. 0 이 되면 그 판을 진다
     readonly yourMasterHp: number;
     readonly opponentMasterHp: number;
+    // 고르라고 기다리던 것. 고르는 중에 저장하면 여기 담겨야 이어서 고를 수 있다
+    readonly pendingChoice: PendingChoice | null;
 }

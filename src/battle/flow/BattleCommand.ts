@@ -1,4 +1,5 @@
 import {CardRace} from "../../card/race";
+import {ChoicePick} from "../domain/PendingChoice";
 
 // 사용자가 하는 일.
 //
@@ -32,6 +33,12 @@ export type BattleCommand =
     | {type: 'attackUnit'; attackerBattleCardId: number; targetBattleCardId: number; attack: AttackChoice}
     // 내 유닛으로 상대 본체를 때린다
     | {type: 'attackOpponentMaster'; attackerBattleCardId: number; attack: AttackChoice}
+    // 고르라고 기다리는 중에 하나를 골랐다.
+    //
+    // 무엇을 고르는 중인지는 전투가 안다. 화면은 무엇을 골랐는지만 보낸다
+    | {type: 'pickChoiceTarget'; pick: ChoicePick}
+    // 고르는 중에 그만둔다. 턴이 끝날 때 쓴다
+    | {type: 'cancelChoice'}
     // 내 유닛의 스킬로 상대 전부를 때린다.
     // 본체까지 가는지는 카드에 적힌 범위가 정하므로 여기서 나누지 않는다
     | {type: 'attackEveryOpponent'; attackerBattleCardId: number; attack: AttackChoice};
