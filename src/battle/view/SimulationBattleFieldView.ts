@@ -1220,16 +1220,31 @@ export class SimulationBattleFieldView implements Component {
 
                 sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
 
+                // 고른 것을 전투에 보낸다. 몇 개를 더 받아야 하는지는 전투가 안다.
+                //
+                // 다 골랐으면 전투가 그 자리에서 제물을 무덤으로 보내고 적을 때린다.
+                // 화면은 그 일어난 일로 그린다.
                 const recordPick = (pick: CorpseExplosionPick): void => {
                     if (!corpseExplosionState) return;
                     corpseExplosionState.picks.push(pick);
-                    console.log(`[corpse-explosion] pick ${corpseExplosionState.picks.length}/${CORPSE_EXPLOSION_PICKS} → ${pick.kind}${pick.kind === 'opponent' ? ` idx=${pick.cardIndex}` : ''}`);
-                    if (corpseExplosionState.picks.length >= CORPSE_EXPLOSION_PICKS) {
+
+                    const events = send({
+                        type: 'pickChoiceTarget',
+                        pick: pick.kind === 'master'
+                            ? { kind: 'opponentMaster' }
+                            : { kind: 'opponentUnit', battleCardId: pick.cardIndex },
+                    });
+
+                    const picked = events.find((ev) => ev.type === 'choicePicked');
+                    const remaining = picked && picked.type === 'choicePicked' ? picked.remaining : 0;
+                    console.log(`[corpse-explosion] pick ${corpseExplosionState.picks.length} → ${pick.kind}${pick.kind === 'opponent' ? ` idx=${pick.cardIndex}` : ''}, 남은 ${remaining}`);
+
+                    if (remaining <= 0) {
                         // Detach red neon at pick completion so the targeting borders go
                         // away the instant the corpse starts flying (not after the effect
                         // resolves) — keeps the visual focus on the corpse + projectiles.
                         enemyNeonEffect.detachAll();
-                        void runResolving(() => resolveCorpseExplosion());
+                        void runResolving(() => resolveCorpseExplosion(events));
                     }
                 };
 
@@ -2381,8 +2396,6 @@ export class SimulationBattleFieldView implements Component {
         const LEONIK_MAX_GRADE = ability(LEONIK_SUMMON_CARD_ID).grade!;
 
         const CORPSE_EXPLOSION_CARD_ID = 33;
-        const CORPSE_EXPLOSION_DAMAGE = ability(CORPSE_EXPLOSION_CARD_ID).numbers.damage;
-        const CORPSE_EXPLOSION_PICKS = ability(CORPSE_EXPLOSION_CARD_ID).numbers.picks;
 
         const NETHER_BLADE_CARD_ID = 19;
         const NETHER_BLADE_PASSIVE_DAMAGE = ability(NETHER_BLADE_CARD_ID).numbers.passive1Damage;
@@ -2800,16 +2813,18 @@ export class SimulationBattleFieldView implements Component {
         // flash, NOT flashAndShakeTarget — so no shake races against the post-effect
         // bury+reflow. After the effect resolves, dead targets get buried + hidden +
         // reflowed in one synchronous pass; the corpse mesh disposes; state exits.
-        const resolveCorpseExplosion = async (): Promise<void> => {
+        // 시체 폭발 연출. 제물을 보내는 것도 때리는 것도 전투가 이미 했다.
+        // 여기서는 화면에서 치우고 그린다.
+        const resolveCorpseExplosion = async (events: readonly BattleEvent[]): Promise<void> => {
             if (!corpseExplosionState) return;
             const state = corpseExplosionState;
             const sacrificed = state.sacrificed;
 
-            // ── NOW remove the sacrificed unit from placedOrder + tomb it. The mesh
+            // ── NOW remove the sacrificed unit from placedOrder. The mesh
             // stays in handGroup at its slot position (orphan from reflow) so the
             // CorpseExplosionEffect can animate it from there. The OTHER placed
             // allies reflow to fill the empty slot in the same frame.
-            battle.sendToYourTomb(sacrificed.card.cardId);
+            // 무덤으로 보낸 것은 전투가 했다.
             const sIdx = placedOrder.indexOf(sacrificed);
             if (sIdx >= 0) placedOrder.splice(sIdx, 1);
             reflowHandAndPlaced();
@@ -2840,22 +2855,28 @@ export class SimulationBattleFieldView implements Component {
             // Per-projectile arrival: tick HP for that pick. The effect handles the
             // visual impact (impact flash sprite at target position) — we don't call
             // flashAndShakeTarget so there's no shake-vs-reflow race.
+            // 발이 하나 닿을 때마다 그 발의 결과를 그린다. 값은 전투가 이미 바꿨다.
+            //
+            // 일어난 일에 담긴 [맞았다] 를 순서대로 쓴다. 본체가 맞은 것과 유닛이 맞은 것이
+            // 고른 순서대로 들어 있다.
+            const damagedEvents = events.filter(
+                (ev) => ev.type === 'damaged',
+            ) as Extract<BattleEvent, {type: 'damaged'}>[];
+
             const onProjectileLand = (idx: number): void => {
-                const pick = state.picks[idx];
-                if (pick.kind === 'master') {
-                    if (battle.getOpponentMasterHp() > 0) {
-                        setOpponentMasterHp(battle.getOpponentMasterHp() - CORPSE_EXPLOSION_DAMAGE, 'corpse explosion');
-                    }
-                } else {
-                    const prev = opponentHpOf(pick.cardIndex);
-                    const newHp = Math.max(0, prev - CORPSE_EXPLOSION_DAMAGE);
-                    setOpponentHp(pick.cardIndex, newHp);
-                    const entry = opponentEntries.find((oe) => oe.cardIndex === pick.cardIndex);
-                    console.log(`[corpse-explosion] projectile → opponent idx=${pick.cardIndex}${entry ? ` cardId=${entry.card.cardId}` : ''} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
-                    // 상태는 여기서 다 바꾼다. 연출이 다 끝날 때까지 미루면 그 사이에
-                    // 체력만 0 이고 필드에 남아 있는 상태가 된다. 화면 정리는 뒤에서 한다.
-                    if (newHp <= 0) defeatOpponentUnit(pick.cardIndex);
+                const ev = damagedEvents[idx];
+                if (!ev) return;
+                if (ev.target.kind === 'opponentMaster') {
+                    void opponentMasterHpRenderer.setHp(
+                        opponentMasterHpGroup, opponentMasterHpFrame, ev.hpAfter,
+                    );
+                    console.log(`[corpse-explosion] projectile → MASTER ${ev.hpBefore} → ${ev.hpAfter}`);
+                    return;
                 }
+                if (ev.target.kind !== 'unit') return;
+                const targetIdx = ev.target.battleCardId;
+                const entry = opponentEntries.find((oe) => oe.cardIndex === targetIdx);
+                console.log(`[corpse-explosion] projectile → opponent idx=${targetIdx}${entry ? ` cardId=${entry.card.cardId}` : ''} ${ev.hpBefore} → ${ev.hpAfter}`);
             };
 
             await corpseExplosionEffect.play(
@@ -2905,8 +2926,9 @@ export class SimulationBattleFieldView implements Component {
             const sourceEntry = corpseExplosionState.sourceEntry;
             corpseExplosionState = null;
             enemyNeonEffect.detachAll();
+            // 무덤으로 보낸 것은 전투가 했다. 화면에서 치우기만 한다.
             const idx = handOrder.indexOf(sourceEntry);
-            if (idx >= 0) consumeHandCard(sourceEntry, idx);
+            if (idx >= 0) removeHandCardFromScreen(sourceEntry, idx);
             reflowHandAndPlaced();
             console.log(`[corpse-explosion] effect resolved — corpse-explosion card → tomb.`);
         };
@@ -3524,7 +3546,15 @@ export class SimulationBattleFieldView implements Component {
                             // it's consumed at the end of the second damage pick).
                             const allyTarget = hitAllyAt(dropCx, dropCy);
                             if (allyTarget && allyTarget.card.raceId === CardRace.UNDEAD) {
-                                enterCorpseExplosionTargeting(droppedEntry, allyTarget);
+                                // 제물을 받고 적을 고르라고 기다리기 시작하는 것은 전투가 한다.
+                                const started = send({
+                                    type: 'useCardOnUnit',
+                                    battleCardId: droppedEntry.cardIndex,
+                                    targetBattleCardId: allyTarget.cardIndex,
+                                });
+                                if (started.some((ev) => ev.type === 'choiceStarted')) {
+                                    enterCorpseExplosionTargeting(droppedEntry, allyTarget);
+                                }
                             } else if (allyTarget) {
                                 console.log(`[corpse-explosion] target cardId=${allyTarget.card.cardId} is not UNDEAD — snap back`);
                             } else {

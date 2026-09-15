@@ -49,6 +49,7 @@ const SWAMP_OF_DEAD = 20;
 const OVERFLOW_MORALE = 2;
 const DEATH_ENERGY = 93;
 const ENERGY_BURN = 9;
+const CORPSE_EXPLOSION = 33;
 // 에너지 번이 없앨 수 있는 에너지 수. 카드 설명의 [2개] 다.
 const ENERGY_BURN_MAX_DRAIN = 2;
 const LEONIK_SUMMON = 30;
@@ -318,6 +319,8 @@ export class BattleCommandHandler {
                 return this.attachEnergyCard(battle, battleCardId, cardId, targetBattleCardId);
             case ENERGY_BURN:
                 return this.useEnergyBurn(battle, battleCardId, cardId, targetBattleCardId);
+            case CORPSE_EXPLOSION:
+                return this.useCorpseExplosion(battle, battleCardId, cardId, targetBattleCardId);
             default:
                 return [{type: 'rejected', reason: '아직 전투가 처리하지 않는 카드입니다.'}];
         }
@@ -365,9 +368,82 @@ export class BattleCommandHandler {
 
     // 다 고른 뒤 그 카드의 규칙을 돌린다.
     //
-    // 지금은 받는 카드가 없다. R2-104 에서 시체 폭발이, R2-105 에서 네더 블레이드가 붙는다.
+    // R2-105 에서 네더 블레이드가 더 붙는다.
     private resolveChoice(battle: Battle, choice: PendingChoice): BattleEvent[] {
-        return [{type: 'rejected', reason: '아직 전투가 처리하지 않는 카드입니다.'}];
+        switch (choice.cardId) {
+            case CORPSE_EXPLOSION:
+                return this.resolveCorpseExplosion(battle, choice);
+            default:
+                return [{type: 'rejected', reason: '아직 전투가 처리하지 않는 카드입니다.'}];
+        }
+    }
+
+    // 시체 폭발을 쓴다. 제물을 받고, 적을 몇 번 더 고르라고 기다리기 시작한다.
+    //
+    // 제물은 아직 필드에 둔다. 고르는 동안 자리에 서 있어야 하고, 고르다 그만두면
+    // 아무 일도 안 일어난 것이 되어야 한다.
+    private useCorpseExplosion(
+        battle: Battle, battleCardId: number, cardId: number, targetId: number,
+    ): BattleEvent[] {
+        const sacrificed = battle.findOnYourField(targetId);
+        if (!sacrificed) return [{type: 'rejected', reason: '내 필드에 없는 유닛입니다.'}];
+
+        const race = this.catalog.getRace(sacrificed.getCardId());
+        const ability = findCardAbility(cardId)!;
+        if (race !== ability.targetRace) {
+            return [{type: 'rejected', reason: '제물로 바칠 수 없는 유닛입니다.'}];
+        }
+
+        return this.beginChoice(battle, {
+            cardId,
+            sourceBattleCardId: battleCardId,
+            actorBattleCardId: targetId,
+            target: 'opponentUnitOrMaster',
+            need: ability.numbers.picks,
+            picked: [],
+        });
+    }
+
+    // 시체 폭발 — 아군 언데드를 제물로 바치고 고른 적 둘을 때린다.
+    //
+    // 제물은 고르는 내내 필드에 서 있다가 여기서 무덤으로 간다. 같은 적을 두 번 골랐으면
+    // 그쪽이 두 번 맞는다.
+    //
+    // 피해량은 카드에 적힌 값을 쓴다. 카드 설명은 [제물의 현재 체력만큼] 인데 지금 값과
+    // 다르다. 옮기는 일과 규칙을 고치는 일은 다른 일이라 R2-106 에서 따로 본다.
+    private resolveCorpseExplosion(battle: Battle, choice: PendingChoice): BattleEvent[] {
+        const damage = findCardAbility(choice.cardId)!.numbers.damage;
+        const events: BattleEvent[] = [];
+
+        // 제물을 무덤으로 보낸다.
+        const sacrificed = battle.findOnYourField(choice.actorBattleCardId);
+        if (sacrificed) {
+            battle.removeFromYourField(choice.actorBattleCardId);
+            battle.sendToYourTomb(sacrificed.getCardId());
+            events.push({
+                type: 'cardMoved',
+                battleCardId: choice.actorBattleCardId,
+                cardId: sacrificed.getCardId(),
+                from: 'yourField', to: 'yourTomb',
+            });
+        }
+
+        for (const pick of choice.picked) {
+            if (pick.kind === 'opponentMaster') {
+                if (battle.getOpponentMasterHp() > 0) {
+                    events.push(...this.attackOpponentMaster(battle, damage));
+                }
+                continue;
+            }
+            const unit = battle.findOnOpponentField(pick.battleCardId);
+            if (!unit) continue;   // 앞의 발에 이미 쓰러졌다
+            events.push(...this.damageOpponentUnit(
+                battle, pick.battleCardId, unit.getCardId(), damage,
+            ));
+        }
+
+        events.push(...this.spendHandCard(battle, choice.sourceBattleCardId, choice.cardId));
+        return events;
     }
 
     // 에너지 번 — 상대 유닛에 붙은 에너지를 최대 둘 없앤다.
