@@ -827,22 +827,6 @@ export class SimulationBattleFieldView implements Component {
         const opponentTombTotalPages = (): number =>
             Math.max(1, Math.ceil(battle.getOpponentTombCards().length / opponentTombCardsPerPage));
 
-        // Burial helper — whenever an opponent unit dies on the field (HP ≤ 0), look up its
-        // cardId by cardIndex and push it into the Opponent Tomb repo. Call at every death
-        // site (scythe, energy-burn, doom-contract, AoE skill, single-target attack) right
-        // next to the existing battle.removeFromOpponentField(...).
-        // 상대 유닛이 쓰러진다. 무덤으로 보내는 것과 필드에서 빼는 것은 한 가지 일이다.
-        //
-        // 전에는 두 줄이 늘 붙어 다녔다. 둘 사이에서 화면이 닫히면 무덤에는 있는데
-        // 필드에도 남아 있는 상태가 된다.
-        const defeatOpponentUnit = (cardIndex: number): void => {
-            const card = opponentCards[cardIndex];
-            if (!card) return;
-            battle.sendToOpponentTomb(card.cardId);
-            battle.removeFromOpponentField(cardIndex);
-            console.log(`[tomb] opponent cardId=${card.cardId} (idx=${cardIndex}) → opponent tomb`);
-        };
-
         // Popup is built on demand when panel is clicked; null when hidden.
         let lostZonePopupGroup: THREE.Group | null = null;
         let lostZonePage = 0;
@@ -2336,7 +2320,6 @@ export class SimulationBattleFieldView implements Component {
         };
 
         const SCYTHE_CARD_ID = 8;
-        const SCYTHE_MYTHIC_DAMAGE = ability(SCYTHE_CARD_ID).numbers.mythicDamage;
 
         const ENERGY_BURN_CARD_ID = 9;
 
@@ -2346,10 +2329,8 @@ export class SimulationBattleFieldView implements Component {
 
         const OVERFLOW_MORALE_CARD_ID = 2;
         const DEATH_ENERGY_CARD_ID = ability(OVERFLOW_MORALE_CARD_ID).numbers.pullCardId;
-        const OVERFLOW_MORALE_MAX = ability(OVERFLOW_MORALE_CARD_ID).numbers.maxPull;
 
         const COLD_DARK_ENERGY_CARD_ID = 151;
-        const DARK_FLAME_TURN_DAMAGE = ability(COLD_DARK_ENERGY_CARD_ID).numbers.darkFlameTurnDamage;
 
         // 이 에너지를 보유한 아군 유닛. 보유 개수가 아니라 보유 여부만 의미가 있다.
 
@@ -2365,7 +2346,6 @@ export class SimulationBattleFieldView implements Component {
         const FIELD_NEON_ENTITY_ID = -1;  // sentinel — distinct from any card.cardIndex
 
         const DEAD_LANDS_CARD_ID = 36;
-        const DEAD_LANDS_DRAIN = ability(DEAD_LANDS_CARD_ID).numbers.fieldEnergyDrain;
 
         const LEONIK_SUMMON_CARD_ID = 30;
         const LEONIK_MAX_PICK = ability(LEONIK_SUMMON_CARD_ID).numbers.maxPick;
@@ -2491,16 +2471,6 @@ export class SimulationBattleFieldView implements Component {
             if (killing) {
                 reflowOpponentField();
             }
-        };
-
-        // Used when an ITEM card from Your Hand resolves its effect — the spent card moves
-        // into Your Tomb before the mesh is disposed. All current call sites are ITEM drops
-        // (scythe, energy burn, doom contract, morale convert), so the burial is unconditional.
-        const consumeHandCard = (entry: HandEntry, idx: number): void => {
-            battle.sendToYourTomb(entry.card.cardId);
-            battle.removeFromHand(entry.cardIndex);
-            console.log(`[tomb] your cardId=${entry.card.cardId} → your tomb (used from hand)`);
-            removeHandCardFromScreen(entry, idx);
         };
 
         // 카드를 화면에서 치운다. 무덤에 넣는 것은 전투가 이미 했다.
@@ -3644,10 +3614,9 @@ export class SimulationBattleFieldView implements Component {
                         }));
                         removeHandCardFromScreen(droppedEntry, handIndex);
                     } else if (inside && kind === CardKind.SUPPORT && cardId === LEONIK_SUMMON_CARD_ID) {
-                        // 레오닉의 부름 — opens a picker popup. DO NOT consume the card yet —
-                        // the popup's confirm handler calls consumeHandCard itself once the user
-                        // picks their 2 cards and clicks 확인. Dropping outside Your Field just
-                        // snaps back unused (handled by the `inside &&` guard).
+                        // 레오닉의 부름 — 고르는 창을 열기만 한다. 여기서 카드를 쓰지 않는다.
+                        // 고르기를 마치고 확인을 누를 때 전투에게 보낸다.
+                        // 필드 밖에 떨어뜨릴 때는 그대로 돌아간다.
                         void openLeonikPopup(droppedEntry);
                     } else if (kind === CardKind.SUPPORT && cardId === OVERFLOW_MORALE_CARD_ID) {
                         // 넘쳐흐르는 사기 — MUST land on a placed ally, else snap back unused.
@@ -3670,8 +3639,8 @@ export class SimulationBattleFieldView implements Component {
                         (cardId === DEATH_ENERGY_CARD_ID || cardId === COLD_DARK_ENERGY_CARD_ID)
                     ) {
                         // 죽음의 에너지 / 차갑게 불타는 암흑 에너지 —
-                        // drop onto a placed ally to attach 1 energy. The card
-                        // itself is consumed (handled by consumeHandCard → tomb). No field
+                        // drop onto a placed ally to attach 1 energy. 쓴 카드를 무덤으로
+                        // 보내는 것은 전투가 한다. No field
                         // energy is spent; this is a hand-to-unit direct attach.
                         //
                         // Effect reuses the OverflowMoraleEffect.playDirectAttach variant so
