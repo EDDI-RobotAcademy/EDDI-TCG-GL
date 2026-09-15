@@ -92,6 +92,10 @@ export const CARD_ABILITIES: readonly CardAbility[] = [
         name: '시체 폭발',
         target: AbilityTarget.ALLY_UNIT_OF_RACE,
         targetRace: CardRace.UNDEAD,
+        // 고른 적 하나당 이만큼. 제물이 누구든 같다.
+        //
+        // 카드 설명에는 [해당 유닛의 현재 체력 만큼] 이라고 적혀 있지만, 정해진 규칙은
+        // 이 고정값이다. 설명 쪽이 낡았다. 설명을 보고 고치지 말 것.
         numbers: {damage: 10, picks: 2},
         notFullyData: '제물을 고른 뒤 적을 두 번 더 고른다. 전투가 고르기를 기다려야 한다',
     },

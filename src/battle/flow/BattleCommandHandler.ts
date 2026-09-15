@@ -493,8 +493,8 @@ export class BattleCommandHandler {
     // 제물은 고르는 내내 필드에 서 있다가 여기서 무덤으로 간다. 같은 적을 두 번 골랐으면
     // 그쪽이 두 번 맞는다.
     //
-    // 피해량은 카드에 적힌 값을 쓴다. 카드 설명은 [제물의 현재 체력만큼] 인데 지금 값과
-    // 다르다. 옮기는 일과 규칙을 고치는 일은 다른 일이라 R2-106 에서 따로 본다.
+    // 피해량은 카드 능력에 적힌 고정값이다. 제물이 누구든 같다.
+    // 카드 설명에는 [제물의 현재 체력만큼] 이라고 적혀 있지만 설명 쪽이 낡았다 (R2-105 에서 확인).
     private resolveCorpseExplosion(battle: Battle, choice: PendingChoice): BattleEvent[] {
         const damage = findCardAbility(choice.cardId)!.numbers.damage;
         const events: BattleEvent[] = [];
