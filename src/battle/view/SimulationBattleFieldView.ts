@@ -381,20 +381,6 @@ export class SimulationBattleFieldView implements Component {
         const opponentMasterHpGroup = await opponentMasterHpRenderer.build(opponentMasterHpFrame);
         scene.add(opponentMasterHpGroup);
 
-        // 상대 본체 HP를 바꾸는 **유일한** 지점. 여러 카드 효과가 제각기 값을 건드리면
-        // 표기 갱신을 빠뜨리기 쉬우므로 여기로 모은다. 반환값은 갱신 후 HP.
-        function setOpponentMasterHp(next: number, reason: string): number {
-            const prev = battle.getOpponentMasterHp();
-            const clamped = battle.setOpponentMasterHp(next);
-            if (clamped !== prev) {
-                void opponentMasterHpRenderer.setHp(
-                    opponentMasterHpGroup, opponentMasterHpFrame, clamped,
-                );
-                console.log(`[opponent-master-hp] ${reason} → ${prev} → ${clamped}${clamped <= 0 ? ' (defeated)' : ''}`);
-            }
-            return clamped;
-        }
-
         // ── 메인 캐릭터(본체) HP ──────────────────────────────────────────────────
         // 수치는 hp/{n}.png 이미지에 새겨져 있고, 렌더러가 HP가 바뀔 때마다 텍스처를
         // 갈아 끼운다. 100에서 시작한다.
@@ -403,15 +389,6 @@ export class SimulationBattleFieldView implements Component {
         const masterHpGroup = await masterHpRenderer.build(masterHpFrame);
         scene.add(masterHpGroup);
         // 내 본체 HP도 전투가 든다.
-
-        // 메인 캐릭터가 피해를 입는 유일한 지점. 표기 갱신까지 여기서 함께 한다.
-        function damageYourMaster(amount: number, reason: string): void {
-            const prev = battle.getYourMasterHp();
-            const next = battle.damageYourMaster(amount);
-            if (next === prev) return;
-            void masterHpRenderer.setHp(masterHpGroup, masterHpFrame, next);
-            console.log(`[master-hp] ${reason} → ${prev} → ${next}${next <= 0 ? ' (defeated)' : ''}`);
-        }
 
         // Pilot B — hand row (6장으로 확장해 페이지네이션 검증)
         const placementFrame = createDefaultPlacedCardPlacementFrame();
@@ -933,11 +910,6 @@ export class SimulationBattleFieldView implements Component {
             battle.getOpponentFieldCards().map((it) => it.getBattleCardId());
         const isOpponentAlive = (cardIndex: number): boolean =>
             battle.findOnOpponentField(cardIndex) !== null;
-        const opponentHpOf = (cardIndex: number): number =>
-            battle.findOnOpponentField(cardIndex)?.getHp() ?? 0;
-        const setOpponentHp = (cardIndex: number, next: number): void => {
-            battle.findOnOpponentField(cardIndex)?.setHp(next);
-        };
         const opponentEnergyOf = (cardIndex: number): number =>
             battle.findOnOpponentField(cardIndex)?.getEnergyCount() ?? 0;
 
@@ -1039,6 +1011,10 @@ export class SimulationBattleFieldView implements Component {
 
         // 아직 선택이 끝나지 않은 타겟팅을 전부 취소한다. 되돌릴 상태만 정리하므로 희생 유닛은
         // 필드에, 시전 카드는 손패에 그대로 남는다 — 말 그대로 아무것도 하지 못한 상태.
+        // 고르던 것을 화면에서 정리한다.
+        //
+        // 기다리던 것을 놓는 것은 전투가 한다. 턴을 끝내는 자리에서 함께 한다 (R2-103).
+        // 여기서는 화면이 든 것만 치운다. 기다리던 약속을 안 풀면 그 자리에서 영영 멈춘다.
         function cancelPendingTargeting(): void {
             if (netherBladePassive2State !== null) {
                 const state = netherBladePassive2State;
@@ -1583,8 +1559,11 @@ export class SimulationBattleFieldView implements Component {
                     opponentEntries.some((oe) =>
                         oe.group.visible && isOpponentAlive(oe.cardIndex),
                     );
+                // 칠 것이 있는지, 고르라고 기다리는지는 전투가 정한다.
+                // 첫 패시브가 돌려준 일어난 일에 [묻기 시작했다] 가 없으면 물을 것이 없다는 뜻이다.
+                const started = netherBladeChoiceEvents.some((ev) => ev.type === 'choiceStarted');
                 const hasMaster = battle.getOpponentMasterHp() > 0;
-                if (!hasOpponents && !hasMaster) {
+                if (!started) {
                     console.log('[nether-blade] passive 2 → no valid targets, skipped');
                     resolve();
                     return;
@@ -1634,7 +1613,9 @@ export class SimulationBattleFieldView implements Component {
             // 않아, 조각이 흩어진 자리가 그대로 사망이 된다. 연출이 끝난 뒤 되살아났다가
             // 아래 데미지 처리로 사라지면 카드가 깜빡이는 것처럼 보인다.
             const lethal = pick.kind === 'opponent'
-                && (opponentHpOf(pick.cardIndex)) - NETHER_BLADE_PASSIVE2_DAMAGE <= 0;
+                && battleCommandHandler.wouldDefeat(battle, {
+                    kind: 'opponentUnit', battleCardId: pick.cardIndex,
+                });
 
             await playSkillPanelMoveOnly(state.deployedEntry.group, async (_panelPos) => {
                 if (!canvasEl || !singleTarget) {
@@ -1655,30 +1636,35 @@ export class SimulationBattleFieldView implements Component {
                 ));
             });
 
-            const dmg = NETHER_BLADE_PASSIVE2_DAMAGE;
-            if (pick.kind === 'master') {
-                if (battle.getOpponentMasterHp() > 0) {
-                    setOpponentMasterHp(battle.getOpponentMasterHp() - dmg, 'nether-blade passive 2');
-                    if (battle.getOpponentMasterHp() <= 0) {
-                        masterGroup.visible = false;
-                        console.log('[nether-blade] opponent MASTER defeated by passive 2!');
-                    }
-                }
-            } else {
-                // Opponent unit pick.
-                const target = opponentEntries.find((oe) => oe.cardIndex === pick.cardIndex);
-                if (target && target.group.visible) {
-                    const prev = opponentHpOf(pick.cardIndex);
-                    const newHp = Math.max(0, prev - dmg);
-                    setOpponentHp(pick.cardIndex, newHp);
-                    // 패시브도 이 유닛의 공격이다 — 보유자면 암흑 화염 + 빙결이 실린다.
-                    if (newHp > 0) carryColdDarkFromScreen(state.deployedEntry, pick.cardIndex);
-                    console.log(`[nether-blade] passive 2 → opponent idx=${pick.cardIndex} cardId=${target.card.cardId} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
-                    if (newHp <= 0) {
-                        defeatOpponentUnit(pick.cardIndex);
-                        target.group.visible = false;
-                        reflowOpponentField();
-                    }
+            // 고른 것을 전투에 보낸다. 때리는 것도 쓰러뜨리는 것도 전투가 한다.
+            const pickEvents = send({
+                type: 'pickChoiceTarget',
+                pick: pick.kind === 'master'
+                    ? { kind: 'opponentMaster' }
+                    : { kind: 'opponentUnit', battleCardId: pick.cardIndex },
+            });
+
+            // 따라붙은 것은 전투가 이미 붙였다. 여기서는 그린다.
+            showColdDarkTraits(pickEvents);
+
+            for (const ev of pickEvents) {
+                if (ev.type === 'damaged' && ev.target.kind === 'opponentMaster') {
+                    void opponentMasterHpRenderer.setHp(
+                        opponentMasterHpGroup, opponentMasterHpFrame, ev.hpAfter,
+                    );
+                    console.log(`[nether-blade] passive 2 → MASTER ${ev.hpBefore} → ${ev.hpAfter}`);
+                } else if (ev.type === 'damaged' && ev.target.kind === 'unit') {
+                    const idx = ev.target.battleCardId;
+                    const target = opponentEntries.find((oe) => oe.cardIndex === idx);
+                    console.log(`[nether-blade] passive 2 → opponent idx=${idx}${target ? ` cardId=${target.card.cardId}` : ''} ${ev.hpBefore} → ${ev.hpAfter}`);
+                } else if (ev.type === 'defeated' && ev.target.kind === 'opponentMaster') {
+                    masterGroup.visible = false;
+                    console.log('[nether-blade] opponent MASTER defeated by passive 2!');
+                } else if (ev.type === 'defeated' && ev.target.kind === 'unit') {
+                    const deadId = ev.target.battleCardId;
+                    const e = opponentEntries.find((oe) => oe.cardIndex === deadId);
+                    if (e) e.group.visible = false;
+                    reflowOpponentField();
                 }
             }
 
@@ -1700,6 +1686,9 @@ export class SimulationBattleFieldView implements Component {
         // before the single-target picker comes up — the damage isn't visually merged
         // into "after both passives".
         const NETHER_BLADE_PHASE_SETTLE_MS = 450;
+        // 첫 패시브가 돌려준 일어난 일. 둘째 패시브를 기다리는지 보는 데 쓴다.
+        let netherBladeChoiceEvents: readonly BattleEvent[] = [];
+
         const triggerNetherBladeAoEPassive = async (deployedEntry: HandEntry): Promise<void> => {
             // Yield once so any pending sync layout work (e.g., onDrop's trailing reflow)
             // lands before we capture origPos inside playSkillPanelMoveOnly.
@@ -1732,20 +1721,25 @@ export class SimulationBattleFieldView implements Component {
                 ));
             });
 
-            const dmg = NETHER_BLADE_PASSIVE_DAMAGE;
+            // 때리는 것과 둘째 패시브를 기다리기 시작하는 것은 전투가 한다.
+            // 연출을 기다린 뒤에 보내는 이유는, 첫 패시브가 끝난 결과를 보고 골라야 하기 때문이다.
+            const passiveEvents = send({
+                type: 'triggerDeployPassive',
+                battleCardId: deployedEntry.cardIndex,
+            });
+            netherBladeChoiceEvents = passiveEvents;
+
+            // 따라붙은 것은 전투가 이미 붙였다. 여기서는 그린다.
+            showColdDarkTraits(passiveEvents);
+
             const deadIndices: number[] = [];
-            for (const idx of opponentAliveIds()) {
-                const target = opponentEntries.find((oe) => oe.cardIndex === idx);
-                if (!target || !target.group.visible) continue;
-                const prev = opponentHpOf(idx);
-                const newHp = Math.max(0, prev - dmg);
-                setOpponentHp(idx, newHp);
-                // 패시브도 이 유닛의 공격이다 — 보유자면 암흑 화염 + 빙결이 실린다.
-                if (newHp > 0) carryColdDarkFromScreen(deployedEntry, idx);
-                console.log(`[nether-blade] AoE → opponent idx=${idx} cardId=${target.card.cardId} ${prev} → ${newHp}${newHp <= 0 ? ' (defeated)' : ''}`);
-                if (newHp <= 0) {
-                    defeatOpponentUnit(idx);
-                    deadIndices.push(idx);
+            for (const ev of passiveEvents) {
+                if (ev.type === 'damaged' && ev.target.kind === 'unit') {
+                    const idx = ev.target.battleCardId;
+                    const target = opponentEntries.find((oe) => oe.cardIndex === idx);
+                    console.log(`[nether-blade] AoE → opponent idx=${idx}${target ? ` cardId=${target.card.cardId}` : ''} ${ev.hpBefore} → ${ev.hpAfter}`);
+                } else if (ev.type === 'defeated' && ev.target.kind === 'unit') {
+                    deadIndices.push(ev.target.battleCardId);
                 }
             }
             for (const idx of deadIndices) {
@@ -2236,24 +2230,6 @@ export class SimulationBattleFieldView implements Component {
             frozenBurningEffect.detach(cardIndex);
         }
 
-        // 네더 블레이드 패시브가 때렸을 때 따라붙이는 것.
-        //
-        // 그 카드는 아직 전투가 안 다뤄서(R2-105) 화면이 피해까지 준다. 그래서 붙이는 것도
-        // 여기서 한다. 전투가 그 카드를 맡으면 이 함수는 없어지고 showColdDarkTraits 만 남는다.
-        function carryColdDarkFromScreen(attacker: HandEntry | null, targetIdx: number): void {
-            if (!attacker) return;
-            const holder = battle.findOnYourField(attacker.cardIndex);
-            if (!holder?.hasColdDarkEnergy()) return;
-            const target = battle.findOnOpponentField(targetIdx);
-            if (!target) return;
-
-            target.setDarkFlame(true);
-            const froze = target.freeze();
-            showColdDarkTraits([{
-                type: 'coldDarkCarried', battleCardId: targetIdx, darkFlame: true, frozen: froze,
-            }]);
-        }
-
         // 따라붙은 것을 화면에 그린다. 붙이는 것은 전투가 이미 했다.
         //
         // 일어난 일에 [따라붙었다] 가 없으면 지닌 유닛의 공격이 아니었다는 뜻이다.
@@ -2398,8 +2374,6 @@ export class SimulationBattleFieldView implements Component {
         const CORPSE_EXPLOSION_CARD_ID = 33;
 
         const NETHER_BLADE_CARD_ID = 19;
-        const NETHER_BLADE_PASSIVE_DAMAGE = ability(NETHER_BLADE_CARD_ID).numbers.passive1Damage;
-        const NETHER_BLADE_PASSIVE2_DAMAGE = ability(NETHER_BLADE_CARD_ID).numbers.passive2Damage;
 
         type OpponentEntry = typeof opponentEntries[number];
 
