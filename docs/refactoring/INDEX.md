@@ -129,22 +129,23 @@
 | **R2-101** | Rule | Battle Ability | [에너지 번을 전투 상태가 처리한다](R2-101-energy-burn-into-battle.md) | R2-85 | **완료** |
 | **R2-102** | Rule | Battle Ability | [차갑게 불타는 암흑 에너지를 전투 상태가 처리한다](R2-102-cold-dark-energy-into-battle.md) | R2-101 | **완료** |
 | **R2-103** | Rule | Battle Ability | [전투 중 무엇을 고르는 중인지 전투 상태가 파악하고 기다린다](R2-103-pending-choice.md) | R2-102 | **완료** |
-| **R2-104** | Rule | Battle Ability | 시체 폭발을 전투 상태가 처리한다 | R2-103 | 예정 |
+| **R2-104** | Rule | Battle Ability | [시체 폭발을 전투 상태가 처리한다](R2-104-corpse-explosion-into-battle.md) | R2-103 | **완료** |
 | **R2-105** | Rule | Battle Ability | 네더 블레이드를 전투 상태가 처리한다 | R2-104 | 예정 |
-| **R2-106** | Rule | Battle | 일어난 일을 받고 그 뒤처리까지 화면이 하지 않는다 | R2-105 | 예정 |
-| **R2-107** | Structure | Battle | 전투 안을 도메인·지금 판·그리는 쪽으로 가른다 | R2-106 | 예정 |
-| **R2-108** | Structure | Battle | 처리기의 규칙을 System 으로 옮긴다 | R2-107 | 예정 |
-| **R2-109** | Structure | Battle | 읽기 모델을 세운다 | R2-107 | 예정 |
-| **R2-110** | Structure | Platform | 의존성 검사를 자동으로 돌린다 | R2-107 | 예정 |
-| **R2-111** | Strategy | Battle Ability | 새 카드 열 장으로 확장 시험 | R2-109 | 예정 |
-| **R2-112** | Structure | Battle Ability | 카드 한 장이 정의 하나와 연출 하나로 끝나게 한다 | R2-111 | 예정 |
-| **R2-113** | Structure | Battle | 판을 차리는 일과 전투를 셈하는 일을 화면 밖으로 뺀다 | R2-112 | 예정. **둘은 성격이 다르다. 판 차리기는 확인용 화면의 시작 상태 만들기, 셈하기는 실행 권한. 본문에서 갈라 적을 것** |
-| **R2-114** | Rendering | Battle 공용 | 화면이 직접 그리던 다섯 덩어리를 렌더러가 맡게 한다 | R2-107 | 예정 |
-| **R2-115** | Structure | Battle Field | 필드 영역이 그림을 들지 않게 한다 | R2-107 | 예정 |
-| **R2-116** | Structure | Battle | 전투 화면을 맡은 일별로 가른다 | R2-114 | 예정 |
-| **R2-117** | Rendering | Battle 공용 | 체력과 무기 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정. **숫자 없는 바탕 그림 셋이 있어야 한다** |
-| **R2-118** | Rule | Battle | 멀리건을 더해 1대1 대전이 되게 한다 | R2-113 | 예정 |
-| **R2-119** | Structure | Platform | 사용자에게 내보낼 것을 만드는 명령을 만든다 | R2-82 | 예정 |
+| **R2-106** | Rule | Battle Ability | 시체 폭발 피해량을 카드에 적힌 대로 제물의 체력에서 낸다 | R2-104 | 예정 |
+| **R2-107** | Rule | Battle | 일어난 일을 받고 그 뒤처리까지 화면이 하지 않는다 | R2-105 | 예정 |
+| **R2-108** | Structure | Battle | 전투 안을 도메인·지금 판·그리는 쪽으로 가른다 | R2-107 | 예정 |
+| **R2-109** | Structure | Battle | 처리기의 규칙을 System 으로 옮긴다 | R2-108 | 예정 |
+| **R2-110** | Structure | Battle | 읽기 모델을 세운다 | R2-108 | 예정 |
+| **R2-111** | Structure | Platform | 의존성 검사를 자동으로 돌린다 | R2-108 | 예정 |
+| **R2-112** | Strategy | Battle Ability | 새 카드 열 장으로 확장 시험 | R2-110 | 예정 |
+| **R2-113** | Structure | Battle Ability | 카드 한 장이 정의 하나와 연출 하나로 끝나게 한다 | R2-112 | 예정 |
+| **R2-114** | Structure | Battle | 판을 차리는 일과 전투를 셈하는 일을 화면 밖으로 뺀다 | R2-113 | 예정. **둘은 성격이 다르다. 판 차리기는 확인용 화면의 시작 상태 만들기, 셈하기는 실행 권한. 본문에서 갈라 적을 것** |
+| **R2-115** | Rendering | Battle 공용 | 화면이 직접 그리던 다섯 덩어리를 렌더러가 맡게 한다 | R2-108 | 예정 |
+| **R2-116** | Structure | Battle Field | 필드 영역이 그림을 들지 않게 한다 | R2-108 | 예정 |
+| **R2-117** | Structure | Battle | 전투 화면을 맡은 일별로 가른다 | R2-115 | 예정 |
+| **R2-118** | Rendering | Battle 공용 | 체력과 무기 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정. **숫자 없는 바탕 그림 셋이 있어야 한다** |
+| **R2-119** | Rule | Battle | 멀리건을 더해 1대1 대전이 되게 한다 | R2-114 | 예정 |
+| **R2-120** | Structure | Platform | 사용자에게 내보낼 것을 만드는 명령을 만든다 | R2-82 | 예정 |
 
 ### Type — 무엇을 바꾸는 작업인가
 
