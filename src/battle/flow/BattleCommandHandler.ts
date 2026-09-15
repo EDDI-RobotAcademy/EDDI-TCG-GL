@@ -50,6 +50,7 @@ const OVERFLOW_MORALE = 2;
 const DEATH_ENERGY = 93;
 const ENERGY_BURN = 9;
 const CORPSE_EXPLOSION = 33;
+const NETHER_BLADE = 19;
 // 에너지 번이 없앨 수 있는 에너지 수. 카드 설명의 [2개] 다.
 const ENERGY_BURN_MAX_DRAIN = 2;
 const LEONIK_SUMMON = 30;
@@ -140,6 +141,8 @@ export class BattleCommandHandler {
                 return this.attachFieldEnergyToUnit(
                     battle, command.targetBattleCardId, command.race,
                 );
+            case 'triggerDeployPassive':
+                return this.triggerDeployPassive(battle, command.battleCardId);
             case 'pickChoiceTarget':
                 return this.pickChoiceTarget(battle, command.pick);
             case 'cancelChoice':
@@ -355,6 +358,7 @@ export class BattleCommandHandler {
             type: 'choicePicked', cardId: choice.cardId, remaining: 0,
         }];
         battle.endChoice();
+        // 여기서부터는 그 카드의 규칙이다. 손패 카드를 무덤으로 보내는 것도 각 카드가 정한다
         events.push(...this.resolveChoice(battle, choice));
         return events;
     }
@@ -367,15 +371,95 @@ export class BattleCommandHandler {
     }
 
     // 다 고른 뒤 그 카드의 규칙을 돌린다.
-    //
-    // R2-105 에서 네더 블레이드가 더 붙는다.
     private resolveChoice(battle: Battle, choice: PendingChoice): BattleEvent[] {
         switch (choice.cardId) {
             case CORPSE_EXPLOSION:
                 return this.resolveCorpseExplosion(battle, choice);
+            case NETHER_BLADE:
+                return this.resolveNetherBladePassive2(battle, choice);
             default:
                 return [{type: 'rejected', reason: '아직 전투가 처리하지 않는 카드입니다.'}];
         }
+    }
+
+    // 지금 기다리는 고르기에서 이것을 고르면 쓰러지는가.
+    //
+    // 연출을 시작하기 전에 알아야 한다. 죽는 일격이면 갈라진 카드를 안 되돌려서, 조각이
+    // 흩어진 자리가 그대로 사망이 된다. 연출 뒤에 알면 카드가 깜빡인다.
+    wouldDefeat(battle: Battle, pick: ChoicePick): boolean {
+        const choice = battle.getPendingChoice();
+        if (!choice || pick.kind !== 'opponentUnit') return false;
+
+        const unit = battle.findOnOpponentField(pick.battleCardId);
+        if (!unit) return false;
+
+        const damage = choice.cardId === NETHER_BLADE
+            ? findCardAbility(NETHER_BLADE)!.numbers.passive2Damage
+            : findCardAbility(choice.cardId)?.numbers.damage ?? 0;
+        return unit.getHp() - damage <= 0;
+    }
+
+    // 낸 유닛의 패시브를 터뜨린다.
+    //
+    // 지금은 네더 블레이드만 이런 카드다. 첫 패시브가 상대 전원을 치고, 그 결과를 본 뒤에
+    // 사용자가 하나를 고르라고 기다린다. 능력이 능력을 부르는 모양이다.
+    private triggerDeployPassive(battle: Battle, battleCardId: number): BattleEvent[] {
+        const unit = battle.findOnYourField(battleCardId);
+        if (!unit) return [{type: 'rejected', reason: '내 필드에 없는 유닛입니다.'}];
+        if (unit.getCardId() !== NETHER_BLADE) return [];
+
+        const n = findCardAbility(NETHER_BLADE)!.numbers;
+        const events: BattleEvent[] = [];
+
+        // 첫 패시브 — 상대 유닛 전부. 본체는 안 친다.
+        for (const target of [...battle.getOpponentFieldCards()]) {
+            const id = target.getBattleCardId();
+            const hit = this.damageOpponentUnit(battle, id, target.getCardId(), n.passive1Damage);
+            events.push(...hit);
+            // 패시브도 이 유닛의 공격이다. 살아남은 쪽에 따라붙는다.
+            if (!this.wasDefeated(hit, id)) {
+                events.push(...this.carryColdDark(battle, battleCardId, id));
+            }
+        }
+
+        // 둘째 패시브 — 남은 것 중 하나를 고르라고 기다린다.
+        // 칠 것이 아무것도 없으면 묻지 않는다.
+        const hasUnit = battle.getOpponentFieldCount() > 0;
+        const hasMaster = battle.getOpponentMasterHp() > 0;
+        if (!hasUnit && !hasMaster) return events;
+
+        events.push(...this.beginChoice(battle, {
+            cardId: NETHER_BLADE,
+            // 손패에서 온 카드가 아니다. 이미 필드에 선 유닛의 능력이다
+            sourceBattleCardId: -1,
+            actorBattleCardId: battleCardId,
+            target: 'opponentUnitOrMaster',
+            need: 1,
+            picked: [],
+        }));
+        return events;
+    }
+
+    // 네더 블레이드 둘째 패시브 — 고른 하나를 친다.
+    private resolveNetherBladePassive2(battle: Battle, choice: PendingChoice): BattleEvent[] {
+        const damage = findCardAbility(NETHER_BLADE)!.numbers.passive2Damage;
+        const pick = choice.picked[0];
+        if (!pick) return [];
+
+        if (pick.kind === 'opponentMaster') {
+            if (battle.getOpponentMasterHp() <= 0) return [];
+            return this.attackOpponentMaster(battle, damage);
+        }
+
+        const unit = battle.findOnOpponentField(pick.battleCardId);
+        if (!unit) return [];
+        const events = this.damageOpponentUnit(
+            battle, pick.battleCardId, unit.getCardId(), damage,
+        );
+        if (!this.wasDefeated(events, pick.battleCardId)) {
+            events.push(...this.carryColdDark(battle, choice.actorBattleCardId, pick.battleCardId));
+        }
+        return events;
     }
 
     // 시체 폭발을 쓴다. 제물을 받고, 적을 몇 번 더 고르라고 기다리기 시작한다.

@@ -130,7 +130,7 @@
 | **R2-102** | Rule | Battle Ability | [차갑게 불타는 암흑 에너지를 전투 상태가 처리한다](R2-102-cold-dark-energy-into-battle.md) | R2-101 | **완료** |
 | **R2-103** | Rule | Battle Ability | [전투 중 무엇을 고르는 중인지 전투 상태가 파악하고 기다린다](R2-103-pending-choice.md) | R2-102 | **완료** |
 | **R2-104** | Rule | Battle Ability | [시체 폭발을 전투 상태가 처리한다](R2-104-corpse-explosion-into-battle.md) | R2-103 | **완료** |
-| **R2-105** | Rule | Battle Ability | 네더 블레이드를 전투 상태가 처리한다 | R2-104 | 예정 |
+| **R2-105** | Rule | Battle Ability | [네더 블레이드를 전투 상태가 처리한다](R2-105-nether-blade-into-battle.md) | R2-104 | **완료** |
 | **R2-106** | Rule | Battle Ability | 시체 폭발 피해량을 카드에 적힌 대로 제물의 체력에서 낸다 | R2-104 | 예정 |
 | **R2-107** | Rule | Battle | 일어난 일을 받고 그 뒤처리까지 화면이 하지 않는다 | R2-105 | 예정 |
 | **R2-108** | Structure | Battle | 전투 안을 도메인·지금 판·그리는 쪽으로 가른다 | R2-107 | 예정 |

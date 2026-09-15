@@ -33,6 +33,11 @@ export type BattleCommand =
     | {type: 'attackUnit'; attackerBattleCardId: number; targetBattleCardId: number; attack: AttackChoice}
     // 내 유닛으로 상대 본체를 때린다
     | {type: 'attackOpponentMaster'; attackerBattleCardId: number; attack: AttackChoice}
+    // 낸 유닛의 패시브를 터뜨린다.
+    //
+    // 네더 블레이드는 나오면 첫 패시브가 저절로 터지고, 그 결과를 본 뒤에 사용자가
+    // 하나를 고른다. 그래서 [내는 것] 과 [패시브] 를 나눠 보낸다
+    | {type: 'triggerDeployPassive'; battleCardId: number}
     // 고르라고 기다리는 중에 하나를 골랐다.
     //
     // 무엇을 고르는 중인지는 전투가 안다. 화면은 무엇을 골랐는지만 보낸다
