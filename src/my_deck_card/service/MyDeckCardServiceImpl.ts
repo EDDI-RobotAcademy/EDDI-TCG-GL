@@ -3,11 +3,11 @@ import {Vector2d} from "../../common/math/Vector2d";
 
 import {MyDeckCardService} from "./MyDeckCardService";
 
-import {MyDeckCard} from "../../my_deck_card/entity/MyDeckCard";
+import {MyDeckCard} from "../entity/MyDeckCard";
 import {SideScrollArea} from "../../side_scroll_area/entity/SideScrollArea";
 
-import {MyDeckCardRepository} from "../../my_deck_card/repository/MyDeckCardRepository";
-import {MyDeckCardRepositoryImpl} from "../../my_deck_card/repository/MyDeckCardRepositoryImpl";
+import {MyDeckCardRepository} from "../repository/MyDeckCardRepository";
+import {MyDeckCardRepositoryImpl} from "../repository/MyDeckCardRepositoryImpl";
 import {MyDeckCardPositionRepositoryImpl} from "../../my_deck_card_position/repository/MyDeckCardPositionRepositoryImpl";
 import {MyDeckCardPosition} from "../../my_deck_card_position/entity/MyDeckCardPosition";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";

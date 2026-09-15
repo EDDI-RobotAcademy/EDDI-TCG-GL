@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import {Vector2d} from "../../common/math/Vector2d";
 
 import {NumberOfSelectedCardsService} from "./NumberOfSelectedCardsService";
-import {NumberOfSelectedCards} from "../../number_of_selected_cards/entity/NumberOfSelectedCards";
-import {NumberOfSelectedCardsRepositoryImpl} from "../../number_of_selected_cards/repository/NumberOfSelectedCardsRepositoryImpl";
+import {NumberOfSelectedCards} from "../entity/NumberOfSelectedCards";
+import {NumberOfSelectedCardsRepositoryImpl} from "../repository/NumberOfSelectedCardsRepositoryImpl";
 
 import {NumberOfSelectedCardsPositionRepositoryImpl} from "../../number_of_selected_cards_position/repository/NumberOfSelectedCardsPositionRepositoryImpl";
 import {NumberOfSelectedCardsPosition} from "../../number_of_selected_cards_position/entity/NumberOfSelectedCardsPosition";

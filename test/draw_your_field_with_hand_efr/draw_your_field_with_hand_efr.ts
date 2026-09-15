@@ -11,13 +11,13 @@ import { AnimationLoop } from "../../src/core/animation/AnimationLoop";
 import { createBattleFieldBackgroundFrame } from "../../src/background/frame/BackgroundFrame";
 import { BackgroundRendererV2 } from "../../src/background/renderer/BackgroundRendererV2";
 
-import { createDefaultYourFieldAreaFrame } from "../../src/battle/field/your/area/frame/YourFieldAreaFrame";
-import { YourFieldAreaRendererV2 } from "../../src/battle/field/your/area/renderer/YourFieldAreaRendererV2";
+import { createDefaultYourFieldAreaFrame } from "../../src/battle/ui/field/your/area/frame/YourFieldAreaFrame";
+import { YourFieldAreaRendererV2 } from "../../src/battle/ui/field/your/area/renderer/YourFieldAreaRendererV2";
 
-import { CardFace } from "../../src/battle/hand/entity/CardFace";
-import { createDefaultHandCardFrame } from "../../src/battle/hand/frame/HandCardFrame";
-import { createDefaultBattleFieldHandLayoutFrame } from "../../src/battle/hand/frame/BattleFieldHandLayoutFrame";
-import { BattleFieldHandRendererV2 } from "../../src/battle/hand/renderer/BattleFieldHandRendererV2";
+import { CardFace } from "../../src/battle/ui/hand/entity/CardFace";
+import { createDefaultHandCardFrame } from "../../src/battle/ui/hand/frame/HandCardFrame";
+import { createDefaultBattleFieldHandLayoutFrame } from "../../src/battle/ui/hand/frame/BattleFieldHandLayoutFrame";
+import { BattleFieldHandRendererV2 } from "../../src/battle/ui/hand/renderer/BattleFieldHandRendererV2";
 
 import { getCardById } from "../../src/card/utility";
 import { CardJob } from "../../src/card/job";

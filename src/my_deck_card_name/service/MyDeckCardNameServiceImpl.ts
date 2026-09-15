@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import {Vector2d} from "../../common/math/Vector2d";
 
 import {MyDeckCardNameService} from "./MyDeckCardNameService";
-import {MyDeckCardName} from "../../my_deck_card_name/entity/MyDeckCardName";
-import {MyDeckCardNameRepositoryImpl} from "../../my_deck_card_name/repository/MyDeckCardNameRepositoryImpl";
+import {MyDeckCardName} from "../entity/MyDeckCardName";
+import {MyDeckCardNameRepositoryImpl} from "../repository/MyDeckCardNameRepositoryImpl";
 import {MyDeckCardNamePositionRepositoryImpl} from "../../my_deck_card_name_position/repository/MyDeckCardNamePositionRepositoryImpl";
 import {MyDeckCardNamePosition} from "../../my_deck_card_name_position/entity/MyDeckCardNamePosition";
 import {MyDeckButtonClickDetectRepositoryImpl} from "../../deck_button_click_detect/repository/MyDeckButtonClickDetectRepositoryImpl";

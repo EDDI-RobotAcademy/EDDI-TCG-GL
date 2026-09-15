@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import {Vector2d} from "../../common/math/Vector2d";
 import {getCardById} from "../../card/utility";
 import {SelectedCardBlockEffectService} from "./SelectedCardBlockEffectService";
-import {SelectedCardBlockEffect} from "../../selected_card_block_effect/entity/SelectedCardBlockEffect";
-import {SelectedCardBlockEffectRepositoryImpl} from "../../selected_card_block_effect/repository/SelectedCardBlockEffectRepositoryImpl";
+import {SelectedCardBlockEffect} from "../entity/SelectedCardBlockEffect";
+import {SelectedCardBlockEffectRepositoryImpl} from "../repository/SelectedCardBlockEffectRepositoryImpl";
 
 import {SelectedCardBlockEffectPosition} from "../../selected_card_block_effect_position/entity/SelectedCardBlockEffectPosition";
 import {SelectedCardBlockEffectPositionRepositoryImpl} from "../../selected_card_block_effect_position/repository/SelectedCardBlockEffectPositionRepositoryImpl";

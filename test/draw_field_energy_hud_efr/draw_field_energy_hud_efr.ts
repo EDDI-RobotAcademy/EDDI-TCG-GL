@@ -14,32 +14,32 @@ import { BackgroundRendererV2 } from "../../src/background/renderer/BackgroundRe
 import {
     createDefaultYourFieldAreaFrame,
     computeYourFieldAreaBounds,
-} from "../../src/battle/field/your/area/frame/YourFieldAreaFrame";
-import { YourFieldAreaRendererV2 } from "../../src/battle/field/your/area/renderer/YourFieldAreaRendererV2";
+} from "../../src/battle/ui/field/your/area/frame/YourFieldAreaFrame";
+import { YourFieldAreaRendererV2 } from "../../src/battle/ui/field/your/area/renderer/YourFieldAreaRendererV2";
 import {
     createDefaultPlacedCardPlacementFrame,
     computePlacedCardPosition,
-} from "../../src/battle/field/your/area/frame/PlacedCardPlacementFrame";
+} from "../../src/battle/ui/field/your/area/frame/PlacedCardPlacementFrame";
 
-import { CardFace } from "../../src/battle/hand/entity/CardFace";
-import { createDefaultHandCardFrame } from "../../src/battle/hand/frame/HandCardFrame";
+import { CardFace } from "../../src/battle/ui/hand/entity/CardFace";
+import { createDefaultHandCardFrame } from "../../src/battle/ui/hand/frame/HandCardFrame";
 import {
     createDefaultBattleFieldHandLayoutFrame,
     computeHandCardCenter,
-} from "../../src/battle/hand/frame/BattleFieldHandLayoutFrame";
-import { BattleFieldHandRendererV2 } from "../../src/battle/hand/renderer/BattleFieldHandRendererV2";
-import { HandInteractionBridge } from "../../src/battle/hand/interaction/HandInteractionBridge";
+} from "../../src/battle/ui/hand/frame/BattleFieldHandLayoutFrame";
+import { BattleFieldHandRendererV2 } from "../../src/battle/ui/hand/renderer/BattleFieldHandRendererV2";
+import { HandInteractionBridge } from "../../src/battle/ui/hand/interaction/HandInteractionBridge";
 
 import { getCardById } from "../../src/card/utility";
 import { CardJob } from "../../src/card/job";
 import { CardKind } from "../../src/card/kind";
 
-import { createDefaultFieldEnergyHudFrame } from "../../src/battle/field_energy/your/frame/FieldEnergyHudFrame";
-import { FieldEnergyHudRendererV2 } from "../../src/battle/field_energy/your/renderer/FieldEnergyHudRendererV2";
-import { createDefaultFieldEnergyRaceHudFrame } from "../../src/battle/field_energy/your/frame/FieldEnergyRaceHudFrame";
-import { FieldEnergyRaceHudRendererV2 } from "../../src/battle/field_energy/your/renderer/FieldEnergyRaceHudRendererV2";
-import { createDefaultFieldEnergyCountHudFrame } from "../../src/battle/field_energy/your/frame/FieldEnergyCountHudFrame";
-import { FieldEnergyCountHudRendererV2 } from "../../src/battle/field_energy/your/renderer/FieldEnergyCountHudRendererV2";
+import { createDefaultFieldEnergyHudFrame } from "../../src/battle/ui/field_energy/your/frame/FieldEnergyHudFrame";
+import { FieldEnergyHudRendererV2 } from "../../src/battle/ui/field_energy/your/renderer/FieldEnergyHudRendererV2";
+import { createDefaultFieldEnergyRaceHudFrame } from "../../src/battle/ui/field_energy/your/frame/FieldEnergyRaceHudFrame";
+import { FieldEnergyRaceHudRendererV2 } from "../../src/battle/ui/field_energy/your/renderer/FieldEnergyRaceHudRendererV2";
+import { createDefaultFieldEnergyCountHudFrame } from "../../src/battle/ui/field_energy/your/frame/FieldEnergyCountHudFrame";
+import { FieldEnergyCountHudRendererV2 } from "../../src/battle/ui/field_energy/your/renderer/FieldEnergyCountHudRendererV2";
 
 const rootElement = document.getElementById('app');
 if (!rootElement) {

@@ -44,12 +44,15 @@ src/battle/
 │
 └── ui/              Everything that draws
     ├── animation/   Skill-slot position, attack choreography, per-card effects
-    ├── hand/ field/ field_energy/ zone/ unit/ turn/ card/ …
-    │       each: layout/ · frame/ · renderer/
+    ├── hand/ field/ field_energy/ zone/ unit/ turn/ active_panel/ master_hp/ card_grid_popup/
+    │       each: frame/ · renderer/ (and interaction/ · page/ · entity/ where needed)
     └── view/        Assembly: input → Command, Event → presentation / effect
 ```
 
-The four `domain/` subfolders marked *create when actually needed* are **not to be created preemptively**. Declare where something belongs; build the folder when a real requirement arrives.
+This is the shape on disk as of R2-107. The four `domain/` subfolders marked *create when
+actually needed* do not exist yet.
+
+Do **not** create them preemptively. Declare where something belongs; build the folder when a real requirement arrives.
 
 ### Domain battle flow
 
@@ -135,7 +138,7 @@ server
 
 ### Simulation / verification mode
 
-`src/battle/view/SimulationBattleFieldView.ts` is currently the battle verification screen, and it is reachable from the lobby through the test-battle entry.
+`src/battle/ui/view/SimulationBattleFieldView.ts` is currently the battle verification screen, and it is reachable from the lobby through the test-battle entry.
 
 Its local battle setup — seeding decks, hands, zones, and the opponent field — exists to give a self-contained environment where the battle UI can be verified without a server. **This does not define the authority model of a real match.** When the network battle path arrives, server-provided state and results replace that simulation-only initialization.
 
@@ -328,7 +331,7 @@ These are the migration backlog, not the pattern to copy:
 
 These numbers were measured on the date of the last update and go stale as the migration proceeds. Re-measure before relying on them.
 
-- `src/battle/view/SimulationBattleFieldView.ts` is ~4,250 lines. It constructs meshes in 17 places, holds card ordering and pending-selection state, and branches per card. Splitting it is planned; do not add to it casually.
+- `src/battle/ui/view/SimulationBattleFieldView.ts` is ~4,230 lines. It constructs meshes in 17 places, holds card ordering and pending-selection state, and branches per card. Splitting it is planned; do not add to it casually.
 - The screen mutates battle state directly in 18 places, bypassing commands. Eight of those are the simulation harness building a starting state, which is fine there. Most of the rest are cards the battle does not handle yet — 차갑게 불타는 암흑 에너지, 시체 폭발, 네더 블레이드 — so the screen computes them instead. Those move in R2-102 through R2-105.
 - The screen reads inside the battle in 58 places. There is no read model yet.
 - `card/unit/generate.ts`, `card/support/generate.ts`, `card/item/generate.ts`, `card/energy/generate.ts` are a parallel rendering pipeline slated for absorption. Don't add new card-building logic there.
@@ -349,7 +352,7 @@ Similarity is not sufficient evidence for consolidation. Merge only when all fou
 
 Only 14 of the 100 cards in `src/common/every_card_info.js` are implemented. Code that looks duplicated is often duplicated *because the differentiating cards are not built yet*. Look for the eventual requirement in the card descriptions, not in the code.
 
-Worked example — `src/battle/zone/`:
+Worked example — `src/battle/ui/zone/`:
 
 - `YourTombPanelRendererV2` and `OpponentTombPanelRendererV2` differ by 7–28 lines once names are normalized. Tempting to merge.
 - But card #33 (시체 폭발) sends **allied** units to **your** tomb, and card #17 (해골 군주 레오닉) sends the **opponent's** hand to the **opponent's** lost zone. Thirteen cards touch tomb or lost zone, and they distinguish the two sides.
