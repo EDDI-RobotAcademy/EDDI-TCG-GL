@@ -2,12 +2,17 @@
  * 의존 방향 검사 규칙 — [ETWGL-R2-3]
  *
  * 배경: 이 저장소에는 의존 방향을 검사할 수단이 없었다. tsc --noEmit은 도메인
- * 코드가 THREE를 import해도 통과시킨다. Frame 파일 31개가 THREE를 한 번도
+ * 코드가 THREE를 import해도 통과시킨다. Frame 파일이 THREE를 한 번도
  * import하지 않은 것은 순전히 사람의 규율 덕분이었는데, 240개 폴더를 재배치하는
- * 동안에는 규율만으로 지킬 수 없다.
+ * 동안에는 규율만으로 지킬 수 없다. 그 규율을 R2-110 에서 frame-no-three 로 옮겼다.
  *
  * 목표 의존 방향 (왼쪽으로만 흐른다):
  *   platform/  ←  shared/  ←  <context>/domain/  ←  <context>/ (view, frame, renderer)
+ *
+ * [R2-107] 이후 battle 은 셋으로 갈렸다. 그 사이의 경계를 R2-110 에서 걸었다:
+ *   battle/domain/   규칙과 상태        — ui 와 session 을 모른다
+ *   battle/session/  진행 중인 판 하나
+ *   battle/ui/       그리는 것          — domain/flow 와 domain/ability 만 쓴다
  *
  * 참고 문서:
  *   docs/refactoring/R2-3-dependency-rules.md
@@ -62,6 +67,42 @@ module.exports = {
             severity: 'error',
             from: { path: '^src/battle/' },
             to: { circular: true },
+        },
+        {
+            name: 'domain-no-ui',
+            comment:
+                '[R2-110] 규칙 쪽은 그리는 쪽을 몰라야 한다. 지침의 표에 [domain → ui ✗] 로 ' +
+                '적혀 있다. R2-107 로 폴더가 갈리기 전에는 이것을 걸 자리가 없었다. ' +
+                '지금 넘는 것은 없다. 새로 생기면 여기서 잡힌다.',
+            severity: 'error',
+            from: { path: '^src/battle/domain/' },
+            to: { path: '^src/battle/(ui|session)/' },
+        },
+        {
+            name: 'ui-no-domain-object',
+            comment:
+                '[R2-110] 그리는 쪽은 규칙 쪽의 물건(유닛, 손패 카드, 필드 카드)을 직접 받지 ' +
+                '않는다. 주고받는 말(domain/flow)과 카드에 적힌 것(domain/ability)만 쓴다. ' +
+                '지금 넘는 곳이 셋 있고 아래 exception 에 적었다. 고쳐질 때 예외를 지운다.',
+            severity: 'error',
+            from: {
+                path: '^src/battle/ui/',
+                // R2-109 에서 읽기 모델로 바꾼다 — 유닛 그리는 것이 규칙 물건을 받는다
+                pathNot: '^src/battle/ui/unit/renderer/BattleFieldUnitRendererV2\\.ts$'
+                       // R2-113 에서 판 차리기를 화면 밖으로 뺀다 — 손패/필드 카드를 직접 만든다
+                       + '|^src/battle/ui/view/SimulationBattleFieldView\\.ts$',
+            },
+            to: { path: '^src/battle/domain/battle/' },
+        },
+        {
+            name: 'frame-no-three',
+            comment:
+                '[R2-110] Frame 은 [지금 이게 어떻게 보이는가] 만 든다. THREE 를 알면 그 값이 ' +
+                '렌더러 밖으로 새어 나간다. 지금 frame 파일 63개가 전부 안 쓴다. ' +
+                '규율로만 지켜지던 것을 검사로 옮긴다.',
+            severity: 'error',
+            from: { path: '/frame/' },
+            to: { path: '(^|/)node_modules/three($|/)|^three$' },
         },
         {
             name: 'no-circular-legacy',

@@ -21,6 +21,7 @@
   "scripts": {
     "dev": "webpack serve --config ./src/client/webpack.dev.js",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "check": "tsc --noEmit && npm run depcruise",
     "depcruise": "npm run depcruise:deps && npm run depcruise:purity",
     "depcruise:deps": "depcruise src --config .dependency-cruiser.js",
     "depcruise:purity": "node scripts/check-domain-purity.js",

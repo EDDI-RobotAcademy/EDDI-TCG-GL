@@ -187,19 +187,31 @@ Do not start by building a `BattleProvider` / `BattleAdapter` / `BattleRunner` a
 
 At runtime, interaction flows from the UI into the domain and back out through contracts. That is a statement about flow, not a licence for the UI to reach into domain types — where Command / Event / ReadModel physically live is not settled yet, and the UI never handles domain objects directly either way.
 
-| From | To | Allowed |
-|---|---|---|
-| domain | ui | ✗ |
-| domain | THREE | ✗ |
-| domain | window / browser | ✗ |
-| ui | domain object (aggregate, part, session) | ✗ |
-| ui | domain state mutation | ✗ |
-| ui | contract (Command / Event / ReadModel) | ⭕ |
-| presentation state (`frame/`) | THREE | ✗ |
-| renderer | THREE | ⭕ |
-| effect | domain state mutation | ✗ |
-| UI | applying a state change it inferred from an event | ✗ |
-| simulation harness | building a starting state locally | ⭕ |
+`npm run check` runs the typecheck and every boundary rule below that is mechanical.
+The **Checked by** column names the rule; blank means a human has to notice.
+
+| From | To | Allowed | Checked by |
+|---|---|---|---|
+| domain | ui / session | ✗ | `domain-no-ui` |
+| domain | THREE | ✗ | `domain-no-three` + purity script |
+| domain | window / browser | ✗ | |
+| domain | `Math.random` / `Date.now` | ✗ | purity script |
+| ui | domain object (aggregate, part, session) | ✗ | `ui-no-domain-object` |
+| ui | domain state mutation | ✗ | |
+| ui | contract (Command / Event / ReadModel) | ⭕ | |
+| presentation state (`frame/`) | THREE | ✗ | `frame-no-three` |
+| renderer | THREE | ⭕ | |
+| effect | domain state mutation | ✗ | |
+| UI | applying a state change it inferred from an event | ✗ | |
+| simulation harness | building a starting state locally | ⭕ | |
+
+Two crossings are known and listed as exceptions inside `ui-no-domain-object`. Delete the
+exception when you fix the crossing — do not add a new one:
+
+| Crossing | Fixed by |
+|---|---|
+| the unit renderer takes a domain unit | R2-109 |
+| the battle screen builds hand and field cards itself | R2-113 |
 
 ### What may cross each boundary
 
@@ -212,7 +224,7 @@ At runtime, interaction flows from the UI into the domain and back out through c
 
 `Effect(unitEntity)` is wrong. `Effect(unitDamagedEvent)` is right.
 
-`scripts/check-domain-purity.js` enforces the THREE/random/clock rules over `src/battle/domain`. More of this table becomes checkable once the folder split lands.
+`scripts/check-domain-purity.js` enforces the THREE/random/clock rules over `src/battle/domain`; `.dependency-cruiser.js` enforces the import-direction rules. Both run from `npm run check`.
 
 ### Where a value belongs
 

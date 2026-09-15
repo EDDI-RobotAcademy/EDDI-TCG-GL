@@ -134,8 +134,8 @@
 | **R2-106** | Rule | Battle | [화면에서 사용하지 않는 전투 규칙 제거](R2-106-screen-stops-following-up.md) | R2-105 | **완료** |
 | **R2-107** | Structure | Battle | [전투 폴더를 규칙·진행 중인 판·그리기 셋으로 가른다](R2-107-split-battle-into-three.md) | R2-106 | **완료** |
 | **R2-108** | Structure | Battle | 유닛의 상태를 다루는 규칙을 카드 처리에서 분리 | R2-107 | 예정 |
-| **R2-109** | Structure | Battle | 읽기 모델을 세운다 | R2-107 | 예정 |
-| **R2-110** | Structure | Platform | 의존성 검사를 자동으로 돌린다 | R2-107 | 예정 |
+| **R2-109** | Structure | Battle | 전투 화면이 전투 상태를 직접 읽지 않게 분리 | R2-107 | 예정 |
+| **R2-110** | Structure | Platform | [규칙·진행 중인 판·그리기 셋의 경계를 유지하는지 검사](R2-110-boundary-check.md) | R2-107 | **완료** |
 | **R2-111** | Strategy | Battle Ability | 새 카드 열 장으로 확장 시험 | R2-109 | 예정 |
 | **R2-112** | Structure | Battle Ability | 카드 한 장이 정의 하나와 연출 하나로 끝나게 한다 | R2-111 | 예정 |
 | **R2-113** | Structure | Battle | 판을 차리는 일과 전투를 셈하는 일을 화면 밖으로 뺀다 | R2-112 | 예정. **둘은 성격이 다르다. 판 차리기는 확인용 화면의 시작 상태 만들기, 셈하기는 실행 권한. 본문에서 갈라 적을 것** |
