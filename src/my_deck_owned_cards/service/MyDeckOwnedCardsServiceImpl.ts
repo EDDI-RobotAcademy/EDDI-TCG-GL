@@ -5,11 +5,11 @@ import {CardGrade} from "../../card/grade";
 
 import {MyDeckOwnedCardsService} from "./MyDeckOwnedCardsService";
 
-import {MyDeckOwnedCards} from "../../my_deck_owned_cards/entity/MyDeckOwnedCards";
+import {MyDeckOwnedCards} from "../entity/MyDeckOwnedCards";
 import {SideScrollArea} from "../../side_scroll_area/entity/SideScrollArea";
 import {MyDeckOwnedCardsPosition} from "../../my_deck_owned_cards_position/entity/MyDeckOwnedCardsPosition";
 
-import {MyDeckOwnedCardsRepositoryImpl} from "../../my_deck_owned_cards/repository/MyDeckOwnedCardsRepositoryImpl";
+import {MyDeckOwnedCardsRepositoryImpl} from "../repository/MyDeckOwnedCardsRepositoryImpl";
 import {MyDeckOwnedCardsPositionRepositoryImpl} from "../../my_deck_owned_cards_position/repository/MyDeckOwnedCardsPositionRepositoryImpl";
 import {SideScrollAreaRepositoryImpl} from "../../side_scroll_area/repository/SideScrollAreaRepositoryImpl";
 

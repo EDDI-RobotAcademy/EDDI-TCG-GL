@@ -2,9 +2,9 @@ import * as THREE from 'three';
 import {Vector2d} from "../../common/math/Vector2d";
 import {getCardById} from "../../card/utility";
 import {MakeDeckScreenCardService} from "./MakeDeckScreenCardService";
-import {MakeDeckScreenCard} from "../../make_deck_screen_card/entity/MakeDeckScreenCard";
-import {MakeDeckScreenCardRepository} from "../../make_deck_screen_card/repository/MakeDeckScreenCardRepository";
-import {MakeDeckScreenCardRepositoryImpl} from "../../make_deck_screen_card/repository/MakeDeckScreenCardRepositoryImpl";
+import {MakeDeckScreenCard} from "../entity/MakeDeckScreenCard";
+import {MakeDeckScreenCardRepository} from "../repository/MakeDeckScreenCardRepository";
+import {MakeDeckScreenCardRepositoryImpl} from "../repository/MakeDeckScreenCardRepositoryImpl";
 import {MakeDeckScreenCardPositionRepositoryImpl} from "../../make_deck_screen_card_position/repository/MakeDeckScreenCardPositionRepositoryImpl";
 import {MakeDeckScreenCardPosition} from "../../make_deck_screen_card_position/entity/MakeDeckScreenCardPosition";
 

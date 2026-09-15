@@ -2,7 +2,7 @@ import { TCGMainLobbyView } from '../lobby/TCGMainLobbyView';
 import {RouteMap} from "./RouteMap";
 import {Component} from "./Component";
 import {TCGCardShopView} from "../shop/TCGCardShopView";
-import {SimulationBattleFieldView} from "../battle/view/SimulationBattleFieldView";
+import {SimulationBattleFieldView} from "../battle/ui/view/SimulationBattleFieldView";
 import {TCGMyCardView} from "../my_card/TCGMyCardView";
 
 export interface Route {

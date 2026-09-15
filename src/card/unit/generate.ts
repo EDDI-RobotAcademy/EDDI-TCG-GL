@@ -6,7 +6,7 @@ import { CardJob } from "../job";
 import { UserWindowSize } from "../../window_size/WindowSize";
 import {CardState} from "../state";
 import {CardStateManager} from "../CardStateManager";
-import {BattleRepositoryImpl} from "../../battle/repository/BattleRepositoryImpl";
+import {BattleSessionImpl} from "../../battle/session/BattleSessionImpl";
 
 // interface CardInitialInfo {
 //     cardMesh: THREE.Mesh;
