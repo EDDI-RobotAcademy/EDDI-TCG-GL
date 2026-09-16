@@ -9,6 +9,8 @@ import {findCardAbility} from "../ability/CardAbility";
 import {AttackChoice, BattleCommand} from "./BattleCommand";
 import {ChoicePick, PendingChoice, isChoiceComplete, remainingPicks} from "../battle/PendingChoice";
 import {BattleEvent} from "./BattleEvent";
+import {darkFlameTicks, thawFrozenUnits, carryColdDark}
+    from "../system/UnitStatusSystem";
 
 // 카드가 어떤 종류이고 체력이 얼마인지를 알려 주는 곳.
 //
@@ -204,41 +206,22 @@ export class BattleCommandHandler {
             {type: 'valueChanged', what: 'fieldEnergy',
              before: energyBefore, after: battle.getFieldEnergy()},
         ];
-        events.push(...this.thawFrozenUnits(battle));
+        events.push(...thawFrozenUnits(battle.getOpponentFieldCards()));
         events.push(...this.drawCard(battle));
         return events;
     }
 
-    // 암흑 화염이 붙은 유닛이 정해진 만큼 깎인다. 0 이 되면 무덤으로 간다.
+    // 암흑 화염이 붙은 유닛이 깎인다. 0 이 되면 무덤으로 간다.
+    //
+    // 누가 얼마 맞는지는 상태 규칙이 낸다. 여기서는 깎기만 한다. 깎는 일에는
+    // 쓰러뜨리기와 무덤으로 보내기가 딸려 있고 그것은 맞는 모든 경우에 같다.
     private settleDarkFlame(battle: Battle): BattleEvent[] {
-        const damage = findCardAbility(COLD_DARK_ENERGY)?.numbers.darkFlameTurnDamage ?? 0;
-        if (damage <= 0) return [];
-
         const events: BattleEvent[] = [];
         // 도는 중에 빠지므로 미리 베껴 둔다.
-        for (const unit of [...battle.getOpponentFieldCards()]) {
-            if (!unit.hasDarkFlame()) continue;
+        for (const tick of darkFlameTicks([...battle.getOpponentFieldCards()])) {
             events.push(...this.damageOpponentUnit(
-                battle, unit.getBattleCardId(), unit.getCardId(), damage,
+                battle, tick.battleCardId, tick.cardId, tick.damage,
             ));
-        }
-        return events;
-    }
-
-    // 얼어 있던 유닛이 풀린다. 풀린 유닛은 이번 턴에 다시 안 언다.
-    private thawFrozenUnits(battle: Battle): BattleEvent[] {
-        const events: BattleEvent[] = [];
-        for (const unit of battle.getOpponentFieldCards()) {
-            if (!unit.isFrozen()) {
-                unit.clearFreezeImmune();
-                continue;
-            }
-            unit.thaw();
-            events.push({
-                type: 'statusCleared',
-                battleCardId: unit.getBattleCardId(),
-                what: 'frozen',
-            });
         }
         return events;
     }
@@ -418,7 +401,7 @@ export class BattleCommandHandler {
             events.push(...hit);
             // 패시브도 이 유닛의 공격이다. 살아남은 쪽에 따라붙는다.
             if (!this.wasDefeated(hit, id)) {
-                events.push(...this.carryColdDark(battle, battleCardId, id));
+                events.push(...carryColdDark(battle.findOnYourField(battleCardId), battle.findOnOpponentField(id)));
             }
         }
 
@@ -457,7 +440,8 @@ export class BattleCommandHandler {
             battle, pick.battleCardId, unit.getCardId(), damage,
         );
         if (!this.wasDefeated(events, pick.battleCardId)) {
-            events.push(...this.carryColdDark(battle, choice.actorBattleCardId, pick.battleCardId));
+            events.push(...carryColdDark(battle.findOnYourField(choice.actorBattleCardId),
+                                    battle.findOnOpponentField(pick.battleCardId)));
         }
         return events;
     }
@@ -846,24 +830,6 @@ export class BattleCommandHandler {
     // 차갑게 불타는 암흑 에너지를 지닌 유닛이 때리면 맞은 쪽에 따라붙는다.
     //
     // 암흑 화염은 맞을 때마다 다시 붙는다. 빙결은 방금 풀린 유닛에는 안 붙는다.
-    // 쓰러진 유닛에는 안 붙인다. 이미 필드를 떠났다.
-    private carryColdDark(battle: Battle, attackerId: number, targetId: number): BattleEvent[] {
-        const attacker = battle.findOnYourField(attackerId);
-        if (!attacker?.hasColdDarkEnergy()) return [];
-
-        const target = battle.findOnOpponentField(targetId);
-        if (!target) return [];
-
-        target.setDarkFlame(true);
-        const froze = target.freeze();
-        return [{
-            type: 'coldDarkCarried',
-            battleCardId: targetId,
-            darkFlame: true,
-            frozen: froze,
-        }];
-    }
-
     private attackUnit(
         battle: Battle, attackerId: number, targetId: number, damage: number,
     ): BattleEvent[] {
@@ -878,7 +844,7 @@ export class BattleCommandHandler {
         );
         // 살아남은 경우에만 따라붙는다. 쓰러졌으면 이미 필드를 떠났다.
         if (!this.wasDefeated(events, targetId)) {
-            events.push(...this.carryColdDark(battle, attackerId, targetId));
+            events.push(...carryColdDark(battle.findOnYourField(attackerId), battle.findOnOpponentField(targetId)));
         }
         return events;
     }
@@ -938,7 +904,7 @@ export class BattleCommandHandler {
             events.push(...hit);
             // 광역기도 이 유닛의 공격이다. 살아남은 쪽에 따라붙는다.
             if (!this.wasDefeated(hit, id)) {
-                events.push(...this.carryColdDark(battle, attackerId, id));
+                events.push(...carryColdDark(battle.findOnYourField(attackerId), battle.findOnOpponentField(id)));
             }
         }
         if (withMaster && battle.getOpponentMasterHp() > 0) {
