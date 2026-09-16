@@ -35,8 +35,8 @@ src/battle/
 │   ├── battle/      The Battle aggregate: one match and its consistency boundary
 │   ├── ability/     Card ability definitions: what a card targets, and the values written on the card
 │   ├── flow/        Commands, Events, and the handler that applies them
+│   ├── system/      Rules that sweep unit state, not cards
 │   ├── part/        State attached to a unit          (create when actually needed)
-│   ├── system/      Rules applied over parts          (create when actually needed)
 │   ├── card/        One card per file                 (create when actually needed)
 │   └── read/        User-facing projections           (create when actually needed)
 │
@@ -49,8 +49,13 @@ src/battle/
     └── view/        Assembly: input → Command, Event → presentation / effect
 ```
 
-This is the shape on disk as of R2-107. The four `domain/` subfolders marked *create when
+This is the shape on disk as of R2-108. The three `domain/` subfolders marked *create when
 actually needed* do not exist yet.
+
+`system/` is the one that arrived: `flow/` answers *what does this card do*, `system/` answers
+*what does this mark on a unit do*. A rule belongs in `system/` when it reads a unit's status
+and never looks at which card was played — dark flame ticking each turn, freeze thawing,
+a mark carried onto whoever gets hit. Card count grows; `system/` does not.
 
 Do **not** create them preemptively. Declare where something belongs; build the folder when a real requirement arrives.
 

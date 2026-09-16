@@ -133,7 +133,7 @@
 | **R2-105** | Rule | Battle Ability | [네더 블레이드를 전투 상태가 처리한다](R2-105-nether-blade-into-battle.md) | R2-104 | **완료** |
 | **R2-106** | Rule | Battle | [화면에서 사용하지 않는 전투 규칙 제거](R2-106-screen-stops-following-up.md) | R2-105 | **완료** |
 | **R2-107** | Structure | Battle | [전투 폴더를 규칙·진행 중인 판·그리기 셋으로 가른다](R2-107-split-battle-into-three.md) | R2-106 | **완료** |
-| **R2-108** | Structure | Battle | 유닛의 상태를 다루는 규칙을 카드 처리에서 분리 | R2-107 | 예정 |
+| **R2-108** | Structure | Battle | [유닛의 상태를 다루는 규칙을 카드 처리에서 분리](R2-108-unit-status-system.md) | R2-107 | **완료** |
 | **R2-109** | Structure | Battle | 전투 화면이 전투 상태를 직접 읽지 않게 분리 | R2-107 | 예정 |
 | **R2-110** | Structure | Platform | [규칙·진행 중인 판·그리기 셋의 경계를 유지하는지 검사](R2-110-boundary-check.md) | R2-107 | **완료** |
 | **R2-111** | Strategy | Battle Ability | 새 카드 열 장으로 확장 시험 | R2-109 | 예정 |
