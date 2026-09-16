@@ -83,14 +83,12 @@ module.exports = {
             comment:
                 '[R2-110] 그리는 쪽은 규칙 쪽의 물건(유닛, 손패 카드, 필드 카드)을 직접 받지 ' +
                 '않는다. 주고받는 말(domain/flow)과 카드에 적힌 것(domain/ability)만 쓴다. ' +
-                '지금 넘는 곳이 셋 있고 아래 exception 에 적었다. 고쳐질 때 예외를 지운다.',
+                '지금 넘는 곳이 하나 있고 아래 exception 에 적었다. 고쳐질 때 예외를 지운다.',
             severity: 'error',
             from: {
                 path: '^src/battle/ui/',
-                // R2-109 에서 읽기 모델로 바꾼다 — 유닛 그리는 것이 규칙 물건을 받는다
-                pathNot: '^src/battle/ui/unit/renderer/BattleFieldUnitRendererV2\\.ts$'
-                       // R2-113 에서 판 차리기를 화면 밖으로 뺀다 — 손패/필드 카드를 직접 만든다
-                       + '|^src/battle/ui/view/SimulationBattleFieldView\\.ts$',
+                // R2-113 에서 판 차리기를 화면 밖으로 뺀다 — 손패/필드 카드를 직접 만든다
+                pathNot: '^src/battle/ui/view/SimulationBattleFieldView\\.ts$',
             },
             to: { path: '^src/battle/domain/battle/' },
         },

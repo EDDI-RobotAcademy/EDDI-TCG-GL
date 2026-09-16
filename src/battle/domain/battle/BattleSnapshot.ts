@@ -1,5 +1,4 @@
 import {TurnOwner} from "./TurnOwner";
-import {BattleFieldUnitSnapshot} from "./BattleFieldUnitSnapshot";
 import {FieldCardSnapshot} from "./FieldCardSnapshot";
 import {HandCardSnapshot} from "./HandCardSnapshot";
 import {PendingChoice} from "./PendingChoice";
@@ -25,8 +24,6 @@ export interface BattleSnapshot {
     // 로스트 존도 차례가 그대로여야 한다. 되찾는 카드가 몇 번째 것을 가리킬 수 있다.
     readonly yourLostZoneCards: readonly number[];
     readonly opponentLostZoneCards: readonly number[];
-    // 필드에 나온 유닛. 나온 차례가 그대로여야 한다.
-    readonly deployedUnits: readonly BattleFieldUnitSnapshot[];
     // 필드에 놓인 카드. 놓인 차례가 그대로여야 한다.
     readonly yourFieldCards: readonly FieldCardSnapshot[];
     readonly opponentFieldCards: readonly FieldCardSnapshot[];

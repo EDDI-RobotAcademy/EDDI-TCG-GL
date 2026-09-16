@@ -4,7 +4,6 @@ import {ChoicePick, PendingChoice, withPick} from "./PendingChoice";
 import {Deck} from "./Deck";
 import {Tomb} from "./Tomb";
 import {LostZone} from "./LostZone";
-import {BattleFieldUnit} from "./BattleFieldUnit";
 import {Field} from "./Field";
 import {FieldCard} from "./FieldCard";
 import {Hand} from "./Hand";
@@ -46,7 +45,6 @@ export class Battle {
     private readonly opponentLostZone = new LostZone();
 
     // 필드에 나온 유닛이다. 나온 차례대로 담긴다.
-    private deployedUnits: BattleFieldUnit[] = [];
 
     private readonly yourField = new Field();
     private readonly opponentField = new Field();
@@ -87,7 +85,6 @@ export class Battle {
         battle.opponentTomb.restoreFrom(snapshot.opponentTombCards);
         battle.yourLostZone.restoreFrom(snapshot.yourLostZoneCards);
         battle.opponentLostZone.restoreFrom(snapshot.opponentLostZoneCards);
-        battle.deployedUnits = snapshot.deployedUnits.map((it) => BattleFieldUnit.restore(it));
         battle.yourField.restoreFrom(snapshot.yourFieldCards);
         battle.opponentField.restoreFrom(snapshot.opponentFieldCards);
         battle.hand.restoreFrom(snapshot.handCards);
@@ -321,21 +318,6 @@ export class Battle {
         this.opponentLostZone.clear();
     }
 
-    /* ── 필드에 나온 유닛 ── */
-
-    // 유닛이 필드에 나온다.
-    deployUnit(unit: BattleFieldUnit): void {
-        this.deployedUnits.push(unit);
-    }
-
-    getDeployedUnits(): readonly BattleFieldUnit[] {
-        return this.deployedUnits;
-    }
-
-    getDeployedUnitCount(): number {
-        return this.deployedUnits.length;
-    }
-
     /* ── 내 필드 ── */
 
     placeOnYourField(card: FieldCard): void {
@@ -465,7 +447,6 @@ export class Battle {
             opponentTombCards: [...this.opponentTomb.getCards()],
             yourLostZoneCards: [...this.yourLostZone.getCards()],
             opponentLostZoneCards: [...this.opponentLostZone.getCards()],
-            deployedUnits: this.deployedUnits.map((it) => it.toSnapshot()),
             yourFieldCards: this.yourField.getCards().map((it) => it.toSnapshot()),
             opponentFieldCards: this.opponentField.getCards().map((it) => it.toSnapshot()),
             handCards: this.hand.getCards().map((it) => it.toSnapshot()),

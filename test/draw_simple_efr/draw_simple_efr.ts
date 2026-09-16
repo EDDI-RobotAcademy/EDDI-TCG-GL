@@ -4,7 +4,7 @@ import { RendererManager } from "../../src/core/renderer/RendererManager";
 import { SceneManager } from "../../src/core/scene/SceneManager";
 import { AnimationLoop } from "../../src/core/animation/AnimationLoop";
 import { ResourceManager } from "../../src/resouce_manager/ResourceManager";
-import { BattleFieldUnit } from "../../src/battle/domain/battle/BattleFieldUnit";
+import { BattleFieldUnit } from "../../src/battle/ui/unit/entity/BattleFieldUnit";
 import { createDefaultUnitFrame } from "../../src/battle/ui/unit/frame/UnitFrame";
 import { BattleFieldUnitRendererV2 } from "../../src/battle/ui/unit/renderer/BattleFieldUnitRendererV2";
 

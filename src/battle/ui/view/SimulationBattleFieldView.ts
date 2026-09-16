@@ -133,6 +133,7 @@ import {
 } from "../turn/end_button/frame/TurnEndButtonFrame";
 import { TurnEndButtonRendererV2 } from "../turn/end_button/renderer/TurnEndButtonRendererV2";
 import { BattleSessionImpl } from "../../session/BattleSessionImpl";
+import { BattleReadModel } from "../../domain/read/BattleReadModel";
 import {
     createDefaultMasterHpFrame,
     createOpponentMasterHpFrame,
@@ -263,6 +264,10 @@ export class SimulationBattleFieldView implements Component {
 
         // 이 화면의 시작 필드 에너지다. 실제 대전에서는 0 에서 시작해 턴마다 는다.
         battle.setFieldEnergy(19);
+
+        // 화면은 전투 안을 직접 안 본다. 이 창구를 본다.
+        // 판을 차리는 열 군데만 아직 전투를 직접 쓴다. R2-113 에서 뺀다.
+        const view = new BattleReadModel(battle);
 
         const rendererManager = new RendererManager(container);
         // 감출 때 이것만 감춘다. 함께 쓰는 자리를 감추면 다른 화면까지 사라진다.
@@ -685,7 +690,7 @@ export class SimulationBattleFieldView implements Component {
             opponentLostZonePopupFrame.cardColumns * opponentLostZonePopupFrame.rowsPerPage;
 
         const buildOpponentLostZonePopupForCurrentPage = async (): Promise<THREE.Group> => {
-            const all = [...battle.getOpponentLostZoneCards()];
+            const all = [...view.opponentLostZoneCards()];
             const start = opponentLostZonePage * opponentLostZoneCardsPerPage;
             const slice = all.slice(start, start + opponentLostZoneCardsPerPage);
             const resolved = resolveCards(slice, 'opponent-lost-zone');
@@ -719,7 +724,7 @@ export class SimulationBattleFieldView implements Component {
         };
 
         const opponentLostZoneTotalPages = (): number =>
-            Math.max(1, Math.ceil(battle.getOpponentLostZoneCards().length / opponentLostZoneCardsPerPage));
+            Math.max(1, Math.ceil(view.opponentLostZoneCards().length / opponentLostZoneCardsPerPage));
 
         // ── Your Tomb — gravestone-shaped panel + popup (same as Your Lost Zone). ─────────
         const tombPanelFrame = createDefaultYourTombPanelFrame();
@@ -738,7 +743,7 @@ export class SimulationBattleFieldView implements Component {
         const tombCardsPerPage = tombPopupFrame.cardColumns * tombPopupFrame.rowsPerPage;
 
         const buildTombPopupForCurrentPage = async (): Promise<THREE.Group> => {
-            const all = [...battle.getYourTombCards()];
+            const all = [...view.yourTombCards()];
             const start = tombPage * tombCardsPerPage;
             const slice = all.slice(start, start + tombCardsPerPage);
             const resolved = resolveCards(slice, 'tomb');
@@ -772,7 +777,7 @@ export class SimulationBattleFieldView implements Component {
         };
 
         const tombTotalPages = (): number =>
-            Math.max(1, Math.ceil(battle.getYourTombCards().length / tombCardsPerPage));
+            Math.max(1, Math.ceil(view.yourTombCards().length / tombCardsPerPage));
 
         // ── Opponent Tomb — 180° mirror of Your Tomb. Same popup reuse pattern as opp LZ. ──
         const opponentTombPanelFrame = createDefaultOpponentTombPanelFrame();
@@ -791,7 +796,7 @@ export class SimulationBattleFieldView implements Component {
             opponentTombPopupFrame.cardColumns * opponentTombPopupFrame.rowsPerPage;
 
         const buildOpponentTombPopupForCurrentPage = async (): Promise<THREE.Group> => {
-            const all = [...battle.getOpponentTombCards()];
+            const all = [...view.opponentTombCards()];
             const start = opponentTombPage * opponentTombCardsPerPage;
             const slice = all.slice(start, start + opponentTombCardsPerPage);
             const resolved = resolveCards(slice, 'opponent-tomb');
@@ -825,7 +830,7 @@ export class SimulationBattleFieldView implements Component {
         };
 
         const opponentTombTotalPages = (): number =>
-            Math.max(1, Math.ceil(battle.getOpponentTombCards().length / opponentTombCardsPerPage));
+            Math.max(1, Math.ceil(view.opponentTombCards().length / opponentTombCardsPerPage));
 
         // Popup is built on demand when panel is clicked; null when hidden.
         let lostZonePopupGroup: THREE.Group | null = null;
@@ -833,7 +838,7 @@ export class SimulationBattleFieldView implements Component {
         const lostZoneCardsPerPage = lostZonePopupFrame.cardColumns * lostZonePopupFrame.rowsPerPage;
 
         const buildLostZonePopupForCurrentPage = async (): Promise<THREE.Group> => {
-            const all = [...battle.getYourLostZoneCards()];
+            const all = [...view.yourLostZoneCards()];
             const start = lostZonePage * lostZoneCardsPerPage;
             const slice = all.slice(start, start + lostZoneCardsPerPage);
             const resolved = resolveCards(slice, 'lost-zone');
@@ -868,7 +873,7 @@ export class SimulationBattleFieldView implements Component {
         };
 
         const lostZoneTotalPages = (): number =>
-            Math.max(1, Math.ceil(battle.getYourLostZoneCards().length / lostZoneCardsPerPage));
+            Math.max(1, Math.ceil(view.yourLostZoneCards().length / lostZoneCardsPerPage));
 
         // 상대 유닛의 체력과 붙은 에너지, 그리고 살아 있는 차례는 전투가 든다.
         // 전에는 이 화면이 지도 둘과 배열 하나로 따로 들고 있었다.
@@ -891,11 +896,11 @@ export class SimulationBattleFieldView implements Component {
         // 살아 있는 차례는 전투가 든 상대 필드 목록 그 자체다.
         // 상대 필드 카드가 어느 자리에 서는지도 이 차례로 정해진다.
         const opponentAliveIds = (): number[] =>
-            battle.getOpponentFieldCards().map((it) => it.getBattleCardId());
+            view.opponentAliveIds();
         const isOpponentAlive = (cardIndex: number): boolean =>
-            battle.findOnOpponentField(cardIndex) !== null;
+            view.isOpponentAlive(cardIndex);
         const opponentEnergyOf = (cardIndex: number): number =>
-            battle.findOnOpponentField(cardIndex)?.getEnergyCount() ?? 0;
+            view.opponentUnitEnergyCount(cardIndex);
 
         const opponentEntries = (opponentGroup.userData as { entries: { card: CardFace; cardIndex: number; group: THREE.Group }[] }).entries;
 
@@ -1019,7 +1024,7 @@ export class SimulationBattleFieldView implements Component {
 
         function passTurnOnExpiry(reason: string): void {
             cancelPendingTargeting();
-            if (battle.getTurnOwner() === 'your') {
+            if (view.isYourTurn()) {
                 endYourTurn(reason);
             } else {
                 void beginYourTurn(reason);
@@ -1209,7 +1214,7 @@ export class SimulationBattleFieldView implements Component {
                 };
 
                 // Master first (smaller target; raycast doesn't intersect opponent group).
-                if (battle.getOpponentMasterHp() > 0) {
+                if (view.isOpponentMasterAlive()) {
                     const masterHits = sharedRaycaster.intersectObjects(masterGroup.children, true);
                     if (masterHits.length > 0) {
                         recordPick({ kind: 'master' });
@@ -1246,7 +1251,7 @@ export class SimulationBattleFieldView implements Component {
                 sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
 
                 // Master first (own raycast tree).
-                if (battle.getOpponentMasterHp() > 0) {
+                if (view.isOpponentMasterAlive()) {
                     const masterHits = sharedRaycaster.intersectObjects(masterGroup.children, true);
                     if (masterHits.length > 0) {
                         void runResolving(() => resolveNetherBladePassive2({ kind: 'master' }));
@@ -1539,14 +1544,14 @@ export class SimulationBattleFieldView implements Component {
 
         const enterNetherBladePassive2 = (deployedEntry: HandEntry): Promise<void> => {
             return new Promise<void>((resolve) => {
-                const hasOpponents = battle.getOpponentFieldCount() > 0 &&
+                const hasOpponents = view.opponentAliveCount() > 0 &&
                     opponentEntries.some((oe) =>
                         oe.group.visible && isOpponentAlive(oe.cardIndex),
                     );
                 // 칠 것이 있는지, 고르라고 기다리는지는 전투가 정한다.
                 // 첫 패시브가 돌려준 일어난 일에 [묻기 시작했다] 가 없으면 물을 것이 없다는 뜻이다.
                 const started = netherBladeChoiceEvents.some((ev) => ev.type === 'choiceStarted');
-                const hasMaster = battle.getOpponentMasterHp() > 0;
+                const hasMaster = view.isOpponentMasterAlive();
                 if (!started) {
                     console.log('[nether-blade] passive 2 → no valid targets, skipped');
                     resolve();
@@ -1578,7 +1583,7 @@ export class SimulationBattleFieldView implements Component {
             // flies to where the unit currently sits.
             let singleTarget: THREE.Vector3 | null = null;
             if (pick.kind === 'master') {
-                if (battle.getOpponentMasterHp() > 0) {
+                if (view.isOpponentMasterAlive()) {
                     singleTarget = masterGroup.getWorldPosition(new THREE.Vector3());
                 }
             } else {
@@ -1896,7 +1901,7 @@ export class SimulationBattleFieldView implements Component {
                                     enemyNeonEffect.attach(entry.cardIndex, entry.group);
                                 }
                             }
-                            if (battle.getOpponentMasterHp() > 0) {
+                            if (view.isOpponentMasterAlive()) {
                                 enemyNeonEffect.attach(-1, masterGroup);
                             }
                             console.log(`${btnType} (Single) — choose opponent target or master`);
@@ -1910,7 +1915,7 @@ export class SimulationBattleFieldView implements Component {
             }
 
             // Check master click while in attack mode
-            if (interactionState === 'attackMode' && battle.getOpponentMasterHp() > 0) {
+            if (interactionState === 'attackMode' && view.isOpponentMasterAlive()) {
                 const masterHits = sharedRaycaster.intersectObjects(masterGroup.children, true);
                 if (masterHits.length > 0) {
                     e.stopImmediatePropagation();
@@ -2007,7 +2012,7 @@ export class SimulationBattleFieldView implements Component {
                         setTimeout(() => {
                             targetEntry.group.visible = false;
                             reflowOpponentField();
-                            console.log(`Opponent idx=${targetIdx} defeated! Remaining: ${battle.getOpponentFieldCount()}`);
+                            console.log(`Opponent idx=${targetIdx} defeated! Remaining: ${view.opponentAliveCount()}`);
                         }, 300);
                     } else {
                         console.log(`Opponent idx=${targetIdx} survived with HP=${newHp}`);
@@ -2039,9 +2044,9 @@ export class SimulationBattleFieldView implements Component {
 
             // 출격 멀미 — 이번 턴에 출격한 유닛은 공격도 스킬도 쓸 수 없으므로 액티브 패널
             // 자체를 열지 않는다. 이유를 알 수 없으면 무반응처럼 보이므로 배너로 알린다.
-            if (!battle.canYourUnitAct(selectedEntry.cardIndex)) {
+            if (!view.canYourUnitAct(selectedEntry.cardIndex)) {
                 guideRenderer.show(guideElement, '이번 턴에 출격한 유닛으로 공격할 수 없습니다.', 3000);
-                console.log(`[summoning-sickness] cardId=${selectedEntry.card.cardId} deployed on TURN ${battle.getTurnNumber()} — panel blocked`);
+                console.log(`[summoning-sickness] cardId=${selectedEntry.card.cardId} deployed on TURN ${view.turnNumber()} — panel blocked`);
                 return;
             }
 
@@ -2098,7 +2103,7 @@ export class SimulationBattleFieldView implements Component {
 
         // 카드 UI(아이콘 위 숫자)와 Count HUD는 종족 구분 없이 총합 하나만 보여준다.
         function totalCardEnergy(entry: HandEntry): number {
-            return battle.findOnYourField(entry.cardIndex)?.getEnergyCount() ?? 0;
+            return view.yourUnitEnergyCount(entry.cardIndex);
         }
 
         // 카드 종족은 전투에 넘겨 주는 창구가 이미 읽는다. 화면이 따로 읽던 것을 지웠다.
@@ -2208,12 +2213,6 @@ export class SimulationBattleFieldView implements Component {
             return true;
         }
 
-        // 유닛이 죽거나 필드를 떠날 때 상태·오버레이를 모두 걷어낸다.
-        function clearColdDarkStatus(cardIndex: number): void {
-            battle.findOnOpponentField(cardIndex)?.clearStatus();
-            frozenBurningEffect.detach(cardIndex);
-        }
-
         // 따라붙은 것을 화면에 그린다. 붙이는 것은 전투가 이미 했다.
         //
         // 일어난 일에 [따라붙었다] 가 없으면 지닌 유닛의 공격이 아니었다는 뜻이다.
@@ -2227,20 +2226,13 @@ export class SimulationBattleFieldView implements Component {
 
                 frozenBurningEffect.setState(idx, {
                     flame: ev.darkFlame,
-                    freeze: battle.findOnOpponentField(idx)?.isFrozen() ?? false,
+                    freeze: view.isOpponentUnitFrozen(idx),
                 });
                 console.log(
                     `[cold-dark-energy] idx=${idx} 암흑 화염 부여` +
                     (ev.frozen ? ' · 빙결 부여' : ' · 빙결 면역(연속 빙결 불가)'),
                 );
             }
-        }
-
-        // 상대 유닛이 지금 행동할 수 있는지. 빙결 중이면 불가.
-        // (상대 행동 로직이 아직 없어 호출부가 없다 — 상태의 단일 판정 지점으로 먼저 둔다.)
-        // 얼어 있는지는 전투가 안다.
-        function isOpponentFrozen(cardIndex: number): boolean {
-            return !battle.canOpponentUnitAct(cardIndex);
         }
 
         // 내 턴 시작 훅 — 빙결 해제 + 재빙결 면역 갱신.
@@ -2260,12 +2252,12 @@ export class SimulationBattleFieldView implements Component {
 
             const cardEnergy = attached.countAfter;
 
-            energyRenderer.setEnergy(battle.getFieldEnergy());
+            energyRenderer.setEnergy(view.yourFieldEnergy());
             energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
             await updateCardEnergyVisual(entry, cardEnergy);
 
             setFieldEnergyNeon(false);
-            console.log(`Energy attached to card ${entry.card.cardId}: ${RACE_LABEL[race]} +1 → ${cardEnergy} total. Available: ${battle.getFieldEnergy()}`);
+            console.log(`Energy attached to card ${entry.card.cardId}: ${RACE_LABEL[race]} +1 → ${cardEnergy} total. Available: ${view.yourFieldEnergy()}`);
         }
 
         function createEnergyCanvasText(value: number, x: number, y: number, baseScale: number): THREE.Mesh {
@@ -2389,7 +2381,7 @@ export class SimulationBattleFieldView implements Component {
 
             if (killing) {
                 reflowOpponentField();
-                console.log(`[scythe] opponent idx=${target.cardIndex} defeated. Remaining: ${battle.getOpponentFieldCount()}`);
+                console.log(`[scythe] opponent idx=${target.cardIndex} defeated. Remaining: ${view.opponentAliveCount()}`);
             }
         };
 
@@ -2509,7 +2501,7 @@ export class SimulationBattleFieldView implements Component {
                 } else if (ev.type === 'defeated' && ev.target.kind === 'opponentMaster') {
                     masterGroup.visible = false;
                 } else if (ev.type === 'cardMoved' && ev.to === 'opponentLostZone') {
-                    console.log(`  opponent deck → opponent lost zone: cardId ${ev.cardId} (opp deck remaining: ${battle.getOpponentDeckRemainingCount()})`);
+                    console.log(`  opponent deck → opponent lost zone: cardId ${ev.cardId} (opp deck remaining: ${view.opponentDeckRemainingCount()})`);
                 }
             }
             if (anyDefeated) reflowOpponentField();
@@ -2627,7 +2619,7 @@ export class SimulationBattleFieldView implements Component {
             const gained = events.find(
                 (ev) => ev.type === 'valueChanged' && ev.what === 'fieldEnergy',
             );
-            const energyBefore = gained && gained.type === 'valueChanged' ? gained.before : battle.getFieldEnergy();
+            const energyBefore = gained && gained.type === 'valueChanged' ? gained.before : view.yourFieldEnergy();
             const energyGain = gained && gained.type === 'valueChanged' ? gained.after - gained.before : 0;
 
             // Capture the source world position BEFORE removing the mesh.
@@ -2671,7 +2663,7 @@ export class SimulationBattleFieldView implements Component {
                 energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
             });
 
-            console.log(`[morale-convert] effect complete; total field energy = ${battle.getFieldEnergy()}`);
+            console.log(`[morale-convert] effect complete; total field energy = ${view.yourFieldEnergy()}`);
         };
 
         // 넘쳐흐르는 사기 — drop on a placed ally to pull up to OVERFLOW_MORALE_MAX copies of
@@ -2685,7 +2677,7 @@ export class SimulationBattleFieldView implements Component {
             // 덱에서 꺼내 붙이는 것은 전투가 이미 했다. 화면은 몇 개가 붙었는지만 본다.
             const attachedEvents = events.filter((ev) => ev.type === 'energyAttached');
             const attached = attachedEvents.length;
-            console.log(`[overflow-morale] target cardId=${target.card.cardId} → pulled ${attached} death-energy from deck (deck remaining=${battle.getYourDeckRemainingCount()})`);
+            console.log(`[overflow-morale] target cardId=${target.card.cardId} → pulled ${attached} death-energy from deck (deck remaining=${view.yourDeckRemainingCount()})`);
 
             // Deck world-position — same convention as SwampEffect (screen 0.81, 0.87),
             // sitting left of the Field Energy HUD.
@@ -2746,7 +2738,7 @@ export class SimulationBattleFieldView implements Component {
             for (const oe of opponentEntries) {
                 if (oe.group.visible) enemyNeonEffect.attach(oe.cardIndex, oe.group);
             }
-            if (battle.getOpponentMasterHp() > 0) {
+            if (view.isOpponentMasterAlive()) {
                 enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, masterGroup);
             }
         };
@@ -2839,7 +2831,7 @@ export class SimulationBattleFieldView implements Component {
                 else uniqueOpponentIdxs.add(p.cardIndex);
             }
 
-            const masterDied = masterPicked && battle.getOpponentMasterHp() <= 0 && masterGroup.visible;
+            const masterDied = masterPicked && !view.isOpponentMasterAlive() && masterGroup.visible;
             // 여기부터는 화면 정리만 한다. 무덤과 필드에서 빼는 것은 이미 끝났다.
             const deadOpponentIndices: number[] = [];
             for (const idx of uniqueOpponentIdxs) {
@@ -3050,7 +3042,7 @@ export class SimulationBattleFieldView implements Component {
         // 직접 열어 보던 것을 창구로 바꿨다.
         const collectLeonikEligibleIndices = (): number[] => {
             const out: number[] = [];
-            const cards = battle.getYourDeckCards();
+            const cards = view.yourDeckCards();
             for (let i = 0; i < cards.length; i++) {
                 const kind = cardCatalog.getKind(cards[i]);
                 const grade = cardCatalog.getGrade(cards[i]);
@@ -3106,7 +3098,7 @@ export class SimulationBattleFieldView implements Component {
         const buildLeonikPopupForCurrentPage = async (): Promise<THREE.Group> => {
             const start = leonikPopupPage * leonikCardsPerPage;
             const pageDeckIndices = leonikEligibleDeckIndices.slice(start, start + leonikCardsPerPage);
-            const deckCards = battle.getYourDeckCards();
+            const deckCards = view.yourDeckCards();
             const pageCardIds = pageDeckIndices.map((di) => deckCards[di]);
             const resolved = resolveCards(pageCardIds, 'leonik');
             const group = await leonikPopupRenderer.build(leonikPopupFrame, resolved);
@@ -3311,7 +3303,7 @@ export class SimulationBattleFieldView implements Component {
             if (idx >= 0) removeHandCardFromScreen(sourceEntry, idx);
             reflowHandAndPlaced();
 
-            console.log(`[leonik] pulled ${pulledIds.join(',')} from deck → hand; leonik → tomb; deck shuffled; remaining=${battle.getYourDeckRemainingCount()}`);
+            console.log(`[leonik] pulled ${pulledIds.join(',')} from deck → hand; leonik → tomb; deck shuffled; remaining=${view.yourDeckRemainingCount()}`);
         };
 
         // Pilot C — click / drag / drop
@@ -3327,7 +3319,7 @@ export class SimulationBattleFieldView implements Component {
                 // passive 2 single-pick flow is in progress — neither card flow should be
                 // interruptible by another hand action.
                 canPickup: () =>
-                    battle.getTurnOwner() === 'your' &&
+                    view.isYourTurn() &&
                     corpseExplosionState === null &&
                     netherBladePassive2State === null,
                 onPickup: (entityId, group) => {
@@ -3673,7 +3665,7 @@ export class SimulationBattleFieldView implements Component {
                                 const attached = attachEvents?.find((ev) => ev.type === 'energyAttached');
                                 const newCount = attached && attached.type === 'energyAttached'
                                     ? attached.countAfter
-                                    : battle.findOnYourField(allyTarget.cardIndex)?.getEnergyCount() ?? 0;
+                                    : view.yourUnitEnergyCount(allyTarget.cardIndex);
                                 void updateCardEnergyVisual(allyTarget, newCount);
                                 if (isColdDark) {
                                     // 종족 에너지에 더해 앞으로 때릴 때마다 따라붙는 능력이 생긴다.
@@ -3716,7 +3708,7 @@ export class SimulationBattleFieldView implements Component {
                     );
                     handOrder.push(newEntry);
                     reflowHandAndPlaced();
-                    console.log(`[deck] ${reason} drew cardId=${ev.cardId}. Remaining: ${battle.getYourDeckRemainingCount()}`);
+                    console.log(`[deck] ${reason} drew cardId=${ev.cardId}. Remaining: ${view.yourDeckRemainingCount()}`);
                 }
             }
             return true;
@@ -3759,7 +3751,7 @@ export class SimulationBattleFieldView implements Component {
         // 상대 패널과 숫자는 캔버스 안에 그린다. 화면 위에 얹는 조각(DOM)으로 두면 죽음의
         // 대지 연출이 그 뒤에서 돌아 무엇이 부서지는지 보이지 않는다.
         // 자리와 크기는 위 영역 프레임이 이미 재고 있어 그대로 쓴다.
-        const opponentEnergyRenderer = new OpponentFieldEnergyHudRendererV2(battle.getOpponentFieldEnergy());
+        const opponentEnergyRenderer = new OpponentFieldEnergyHudRendererV2(view.opponentFieldEnergy());
         const opponentEnergyGroup = await opponentEnergyRenderer.build(opponentFieldEnergyAreaFrame);
         scene.add(opponentEnergyGroup);
 
@@ -3825,7 +3817,7 @@ export class SimulationBattleFieldView implements Component {
             }
         });
         const countNextZone = createClickZone(0.97348, 0.62863, 0.995, 0.68030, '▷', () => {
-            if (fieldEnergyChargeCount < battle.getFieldEnergy()) {
+            if (fieldEnergyChargeCount < view.yourFieldEnergy()) {
                 fieldEnergyChargeCount++;
                 countRenderer.setCount(fieldEnergyChargeCount);
                 countRenderer.update(countFrame, countElement, window.innerWidth, window.innerHeight);
@@ -3954,7 +3946,7 @@ export class SimulationBattleFieldView implements Component {
 
             timerRenderer.reset(timerElement);
             guideRenderer.show(guideElement, '상대방의 턴입니다.', 3000);
-            console.log(`[turn-state] your → opponent (${reason}) · TURN ${battle.getTurnNumber()}`);
+            console.log(`[turn-state] your → opponent (${reason}) · TURN ${view.turnNumber()}`);
             applyDarkFlameToScreen(events);
         }
 
@@ -3991,13 +3983,13 @@ export class SimulationBattleFieldView implements Component {
             }
             guideRenderer.show(guideElement, '당신의 턴입니다.', 3000);
 
-            turnRenderer.setTurn(battle.getTurnNumber());
+            turnRenderer.setTurn(view.turnNumber());
             turnRenderer.update(turnFrame, turnElement, window.innerWidth, window.innerHeight);
 
-            // Field Energy total (the big number, 19 → 20 → …), tracked by `battle.getFieldEnergy()`.
+            // Field Energy total (the big number, 19 → 20 → …), tracked by `view.yourFieldEnergy()`.
             // NOT the small `fieldEnergyChargeCount` above the Race marker — that one is a
             // per-card charge selector driven by prev/next hover zones.
-            energyRenderer.setEnergy(battle.getFieldEnergy());
+            energyRenderer.setEnergy(view.yourFieldEnergy());
             energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
 
             timerRenderer.reset(timerElement);
@@ -4011,7 +4003,7 @@ export class SimulationBattleFieldView implements Component {
                 }
             }
 
-            console.log(`[turn-state] opponent → your (${reason}) · TURN ${battle.getTurnNumber()} · field energy ${battle.getFieldEnergy()}`);
+            console.log(`[turn-state] opponent → your (${reason}) · TURN ${view.turnNumber()} · field energy ${view.yourFieldEnergy()}`);
 
             // ── 네더 블레이드 매 턴 패시브 풀체인 발동 ─────────────────────────
             // Each placed + alive Nether Blade re-fires passive 1 (AoE) → passive 2 (single
@@ -4027,7 +4019,7 @@ export class SimulationBattleFieldView implements Component {
                     console.log('[nether-blade] 턴이 넘어가 남은 패시브 체인 중단');
                     break;
                 }
-                console.log(`[nether-blade] turn-start passive chain · TURN ${battle.getTurnNumber()}`);
+                console.log(`[nether-blade] turn-start passive chain · TURN ${view.turnNumber()}`);
                 await triggerNetherBladePassive(entry);
             }
         }
