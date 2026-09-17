@@ -9,65 +9,15 @@ import {findCardAbility} from "../ability/CardAbility";
 import {AttackChoice, BattleCommand} from "./BattleCommand";
 import {ChoicePick, PendingChoice, isChoiceComplete, remainingPicks} from "../battle/PendingChoice";
 import {BattleEvent} from "./BattleEvent";
+import {CardRuleContext} from "../card/CardRule";
+import {findCardRule} from "../card/CardRegistry";
+import {CardCatalog, CardSkillSpec} from "../ability/CardCatalog";
+export {CardCatalog, CardSkillSpec};
 import {darkFlameTicks, thawFrozenUnits, carryColdDark}
     from "../system/UnitStatusSystem";
 
-// 카드가 어떤 종류이고 체력이 얼마인지를 알려 주는 곳.
-//
-// 카드에 적혀 있는 것은 판과 무관하다. 전투 상태가 그것까지 들면 판마다 카드 백 장을
-// 통째로 적어 두게 된다. 그래서 밖에서 받는다.
-export interface CardCatalog {
-    getKind(cardId: number): CardKind | null;
-    getHp(cardId: number): number;
-    getGrade(cardId: number): CardGrade | null;
-    getRace(cardId: number): CardRace | null;
-
-    // 카드에 적힌 기본 공격력. 붙은 것이 없을 때의 값이다.
-    getAttack(cardId: number): number;
-
-    // 스킬에 적힌 값. 없는 스킬이면 null 이다.
-    //
-    // damage 는 카드에 적힌 기본 피해다. 지금은 이대로 쓰지만, 붙은 것이 생기면
-    // 최종 피해는 규칙이 이 값에서 시작해 계산한다.
-    //
-    // cost 는 종족별로 필요한 에너지다. 총량으로 보면 [언데드 2 필요 / 휴먼 2 보유] 를
-    // 통과시키므로 종족별로 든다.
-    getSkill(cardId: number, slot: 1 | 2): CardSkillSpec | null;
-}
-
-// 카드에 적힌 스킬 하나.
-export interface CardSkillSpec {
-    readonly range: SkillType;
-    readonly damage: number;
-    readonly cost: ReadonlyMap<CardRace, number>;
-}
-
-// 전투가 지금 처리하는 카드들. 값으로 다 적히는 것부터 옮겼다.
-const SCYTHE = 8;
-const MORALE_CONVERT = 35;
-const DOOM_CONTRACT = 25;
-const DEAD_LANDS = 36;
-const SWAMP_OF_DEAD = 20;
-const OVERFLOW_MORALE = 2;
-const DEATH_ENERGY = 93;
-const ENERGY_BURN = 9;
-const CORPSE_EXPLOSION = 33;
-const NETHER_BLADE = 19;
-// 에너지 번이 없앨 수 있는 에너지 수. 카드 설명의 [2개] 다.
-const ENERGY_BURN_MAX_DRAIN = 2;
-const LEONIK_SUMMON = 30;
-const COLD_DARK_ENERGY = 151;
-
-// 사용자가 한 일 하나를 받아 끝까지 처리하고, 무슨 일이 일어났는지 차례대로 돌려준다.
-//
-// 되는지 안 되는지도 여기서 판단한다. 부르는 쪽은 하나만 보내고 돌려받은 것만 본다.
 export class BattleCommandHandler {
     constructor(private readonly catalog: CardCatalog) {}
-
-    // ── 카드에 적힌 값을 보고 정하는 것들 ─────────────────────────────────────
-    //
-    // 전에는 화면이 카드 데이터를 직접 열어 이것들을 정했다. 도메인이 카드에 뭐가 적혀
-    // 있는지 몰랐기 때문이다. 이제 카탈로그로 읽는다.
 
     // 고른 공격이 얼마나 아픈가. 필드에 선 유닛에서 카드를 찾아 값을 읽는다.
     private chosenAttackDamage(battle: Battle, attackerId: number, attack: AttackChoice): number {
@@ -293,26 +243,43 @@ export class BattleCommandHandler {
         const ability = findCardAbility(cardId);
         if (!ability) return [{type: 'rejected', reason: '아직 만들어지지 않은 카드입니다.'}];
 
-        switch (cardId) {
-            case SCYTHE:
-                return this.useScythe(battle, battleCardId, cardId, targetBattleCardId);
-            case MORALE_CONVERT:
-                return this.useMoraleConvert(battle, battleCardId, cardId, targetBattleCardId);
-            case OVERFLOW_MORALE:
-                return this.useOverflowMorale(battle, battleCardId, cardId, targetBattleCardId);
-            case DEATH_ENERGY:
-            case COLD_DARK_ENERGY:
-                return this.attachEnergyCard(battle, battleCardId, cardId, targetBattleCardId);
-            case ENERGY_BURN:
-                return this.useEnergyBurn(battle, battleCardId, cardId, targetBattleCardId);
-            case CORPSE_EXPLOSION:
-                return this.useCorpseExplosion(battle, battleCardId, cardId, targetBattleCardId);
-            default:
-                return [{type: 'rejected', reason: '아직 전투가 처리하지 않는 카드입니다.'}];
+        const rule = findCardRule(cardId);
+        if (!rule?.useOnUnit) {
+            return [{type: 'rejected', reason: '아직 전투가 처리하지 않는 카드입니다.'}];
         }
+        return rule.useOnUnit(this.ruleContext(battle), {
+            battleCardId, cardId, targetBattleCardId,
+        });
     }
 
-    // ── 기다리는 고르기 ────────────────────────────────────────────────────
+    // 이 카드가 필드에 나왔다. 나올 때 터지는 것이 있으면 그 카드의 규칙이 돈다.
+    private triggerDeployPassive(battle: Battle, battleCardId: number): BattleEvent[] {
+        const unit = battle.findOnYourField(battleCardId);
+        if (!unit) return [{type: 'rejected', reason: '내 필드에 없는 유닛입니다.'}];
+
+        const rule = findCardRule(unit.getCardId());
+        if (!rule?.onDeploy) return [];
+        return rule.onDeploy(this.ruleContext(battle), battleCardId);
+    }
+
+    // 카드 규칙이 쓸 수 있는 것을 모아 건넨다.
+    //
+    // 처리기 자신을 넘기지 않는다. 넘기면 카드가 아무거나 부를 수 있게 되고, 갈림길을
+    // 파일로 흩어 놓은 것이 될 뿐이다. 여기 적힌 것이 곧 [카드가 할 수 있는 일] 이다.
+    private ruleContext(battle: Battle): CardRuleContext {
+        return {
+            battle,
+            catalog: this.catalog,
+            spendHandCard: (id, cardId) => this.spendHandCard(battle, id, cardId),
+            damageOpponentUnit: (id, cardId, damage) =>
+                this.damageOpponentUnit(battle, id, cardId, damage),
+            defeatOpponentUnit: (id, cardId) => this.defeatOpponentUnit(battle, id, cardId),
+            attackOpponentMaster: (damage, attackerId) =>
+                this.attackOpponentMaster(battle, damage, attackerId),
+            beginChoice: (choice) => this.beginChoice(battle, choice),
+            wasDefeated: (events, id) => this.wasDefeated(events, id),
+        };
+    }
 
     // 고르라고 기다리기 시작한다. 카드 규칙이 부른다.
     private beginChoice(battle: Battle, choice: PendingChoice): BattleEvent[] {
@@ -355,14 +322,11 @@ export class BattleCommandHandler {
 
     // 다 고른 뒤 그 카드의 규칙을 돌린다.
     private resolveChoice(battle: Battle, choice: PendingChoice): BattleEvent[] {
-        switch (choice.cardId) {
-            case CORPSE_EXPLOSION:
-                return this.resolveCorpseExplosion(battle, choice);
-            case NETHER_BLADE:
-                return this.resolveNetherBladePassive2(battle, choice);
-            default:
-                return [{type: 'rejected', reason: '아직 전투가 처리하지 않는 카드입니다.'}];
+        const rule = findCardRule(choice.cardId);
+        if (!rule?.resolveChoice) {
+            return [{type: 'rejected', reason: '아직 전투가 처리하지 않는 카드입니다.'}];
         }
+        return rule.resolveChoice(this.ruleContext(battle), choice);
     }
 
     // 지금 기다리는 고르기에서 이것을 고르면 쓰러지는가.
@@ -376,9 +340,9 @@ export class BattleCommandHandler {
         const unit = battle.findOnOpponentField(pick.battleCardId);
         if (!unit) return false;
 
-        const damage = choice.cardId === NETHER_BLADE
-            ? findCardAbility(NETHER_BLADE)!.numbers.passive2Damage
-            : findCardAbility(choice.cardId)?.numbers.damage ?? 0;
+        const rule = findCardRule(choice.cardId);
+        if (!rule?.choiceDamage) return false;
+        const damage = rule.choiceDamage(this.ruleContext(battle), choice, pick);
         return unit.getHp() - damage <= 0;
     }
 
@@ -386,92 +350,11 @@ export class BattleCommandHandler {
     //
     // 지금은 네더 블레이드만 이런 카드다. 첫 패시브가 상대 전원을 치고, 그 결과를 본 뒤에
     // 사용자가 하나를 고르라고 기다린다. 능력이 능력을 부르는 모양이다.
-    private triggerDeployPassive(battle: Battle, battleCardId: number): BattleEvent[] {
-        const unit = battle.findOnYourField(battleCardId);
-        if (!unit) return [{type: 'rejected', reason: '내 필드에 없는 유닛입니다.'}];
-        if (unit.getCardId() !== NETHER_BLADE) return [];
-
-        const n = findCardAbility(NETHER_BLADE)!.numbers;
-        const events: BattleEvent[] = [];
-
-        // 첫 패시브 — 상대 유닛 전부. 본체는 안 친다.
-        for (const target of [...battle.getOpponentFieldCards()]) {
-            const id = target.getBattleCardId();
-            const hit = this.damageOpponentUnit(battle, id, target.getCardId(), n.passive1Damage);
-            events.push(...hit);
-            // 패시브도 이 유닛의 공격이다. 살아남은 쪽에 따라붙는다.
-            if (!this.wasDefeated(hit, id)) {
-                events.push(...carryColdDark(battle.findOnYourField(battleCardId), battle.findOnOpponentField(id)));
-            }
-        }
-
-        // 둘째 패시브 — 남은 것 중 하나를 고르라고 기다린다.
-        // 칠 것이 아무것도 없으면 묻지 않는다.
-        const hasUnit = battle.getOpponentFieldCount() > 0;
-        const hasMaster = battle.getOpponentMasterHp() > 0;
-        if (!hasUnit && !hasMaster) return events;
-
-        events.push(...this.beginChoice(battle, {
-            cardId: NETHER_BLADE,
-            // 손패에서 온 카드가 아니다. 이미 필드에 선 유닛의 능력이다
-            sourceBattleCardId: -1,
-            actorBattleCardId: battleCardId,
-            target: 'opponentUnitOrMaster',
-            need: 1,
-            picked: [],
-        }));
-        return events;
-    }
-
     // 네더 블레이드 둘째 패시브 — 고른 하나를 친다.
-    private resolveNetherBladePassive2(battle: Battle, choice: PendingChoice): BattleEvent[] {
-        const damage = findCardAbility(NETHER_BLADE)!.numbers.passive2Damage;
-        const pick = choice.picked[0];
-        if (!pick) return [];
-
-        if (pick.kind === 'opponentMaster') {
-            if (battle.getOpponentMasterHp() <= 0) return [];
-            return this.attackOpponentMaster(battle, damage);
-        }
-
-        const unit = battle.findOnOpponentField(pick.battleCardId);
-        if (!unit) return [];
-        const events = this.damageOpponentUnit(
-            battle, pick.battleCardId, unit.getCardId(), damage,
-        );
-        if (!this.wasDefeated(events, pick.battleCardId)) {
-            events.push(...carryColdDark(battle.findOnYourField(choice.actorBattleCardId),
-                                    battle.findOnOpponentField(pick.battleCardId)));
-        }
-        return events;
-    }
-
     // 시체 폭발을 쓴다. 제물을 받고, 적을 몇 번 더 고르라고 기다리기 시작한다.
     //
     // 제물은 아직 필드에 둔다. 고르는 동안 자리에 서 있어야 하고, 고르다 그만두면
     // 아무 일도 안 일어난 것이 되어야 한다.
-    private useCorpseExplosion(
-        battle: Battle, battleCardId: number, cardId: number, targetId: number,
-    ): BattleEvent[] {
-        const sacrificed = battle.findOnYourField(targetId);
-        if (!sacrificed) return [{type: 'rejected', reason: '내 필드에 없는 유닛입니다.'}];
-
-        const race = this.catalog.getRace(sacrificed.getCardId());
-        const ability = findCardAbility(cardId)!;
-        if (race !== ability.targetRace) {
-            return [{type: 'rejected', reason: '제물로 바칠 수 없는 유닛입니다.'}];
-        }
-
-        return this.beginChoice(battle, {
-            cardId,
-            sourceBattleCardId: battleCardId,
-            actorBattleCardId: targetId,
-            target: 'opponentUnitOrMaster',
-            need: ability.numbers.picks,
-            picked: [],
-        });
-    }
-
     // 시체 폭발 — 아군 언데드를 제물로 바치고 고른 적 둘을 때린다.
     //
     // 제물은 고르는 내내 필드에 서 있다가 여기서 무덤으로 간다. 같은 적을 두 번 골랐으면
@@ -479,214 +362,17 @@ export class BattleCommandHandler {
     //
     // 피해량은 카드 능력에 적힌 고정값이다. 제물이 누구든 같다.
     // 카드 설명에는 [제물의 현재 체력만큼] 이라고 적혀 있지만 설명 쪽이 낡았다 (R2-105 에서 확인).
-    private resolveCorpseExplosion(battle: Battle, choice: PendingChoice): BattleEvent[] {
-        const damage = findCardAbility(choice.cardId)!.numbers.damage;
-        const events: BattleEvent[] = [];
-
-        // 제물을 무덤으로 보낸다.
-        const sacrificed = battle.findOnYourField(choice.actorBattleCardId);
-        if (sacrificed) {
-            battle.removeFromYourField(choice.actorBattleCardId);
-            battle.sendToYourTomb(sacrificed.getCardId());
-            events.push({
-                type: 'cardMoved',
-                battleCardId: choice.actorBattleCardId,
-                cardId: sacrificed.getCardId(),
-                from: 'yourField', to: 'yourTomb',
-            });
-        }
-
-        for (const pick of choice.picked) {
-            if (pick.kind === 'opponentMaster') {
-                if (battle.getOpponentMasterHp() > 0) {
-                    events.push(...this.attackOpponentMaster(battle, damage));
-                }
-                continue;
-            }
-            const unit = battle.findOnOpponentField(pick.battleCardId);
-            if (!unit) continue;   // 앞의 발에 이미 쓰러졌다
-            events.push(...this.damageOpponentUnit(
-                battle, pick.battleCardId, unit.getCardId(), damage,
-            ));
-        }
-
-        events.push(...this.spendHandCard(battle, choice.sourceBattleCardId, choice.cardId));
-        return events;
-    }
-
     // 에너지 번 — 상대 유닛에 붙은 에너지를 최대 둘 없앤다.
     //
     // 못 없앤 만큼이 피해가 된다. 둘 다 있으면 피해 없음, 하나면 한 번치, 없으면 두 번치다.
     // 사용자에게 묻는 것은 대상 하나뿐이다. 어느 에너지를 없앨지는 안 묻는다.
-    private useEnergyBurn(
-        battle: Battle, battleCardId: number, cardId: number, targetId: number,
-    ): BattleEvent[] {
-        const target = battle.findOnOpponentField(targetId);
-        if (!target) return [{type: 'rejected', reason: '상대 필드에 없는 유닛입니다.'}];
-
-        const perMissing = findCardAbility(cardId)!.numbers.perMissingEnergyDamage;
-
-        const energyBefore = target.getEnergyCount();
-        const drained = Math.min(ENERGY_BURN_MAX_DRAIN, energyBefore);
-        const energyAfter = energyBefore - drained;
-        if (drained > 0) target.drainEnergy(drained);
-
-        const events: BattleEvent[] = [];
-        if (drained > 0) {
-            events.push({
-                type: 'energyDrained', battleCardId: targetId,
-                amount: drained, countAfter: energyAfter,
-            });
-        }
-
-        const damage = (ENERGY_BURN_MAX_DRAIN - drained) * perMissing;
-        if (damage > 0) {
-            events.push(...this.damageOpponentUnit(battle, targetId, target.getCardId(), damage));
-        }
-
-        events.push(...this.spendHandCard(battle, battleCardId, cardId));
-        return events;
-    }
-
     // 죽음의 낫 — 신화 미만이면 즉사, 신화면 정해진 만큼 피해.
-    private useScythe(
-        battle: Battle, battleCardId: number, cardId: number, targetId: number,
-    ): BattleEvent[] {
-        const target = battle.findOnOpponentField(targetId);
-        if (!target) return [{type: 'rejected', reason: '상대 필드에 없는 유닛입니다.'}];
-
-        const isMythic = this.catalog.getGrade(target.getCardId()) === CardGrade.MYTHICAL;
-        const hpBefore = target.getHp();
-        const damage = isMythic ? findCardAbility(cardId)!.numbers.mythicDamage : hpBefore;
-        const hpAfter = target.setHp(hpBefore - damage);
-
-        const events: BattleEvent[] = [{
-            type: 'damaged',
-            target: {kind: 'unit', battleCardId: targetId},
-            amount: damage, hpBefore, hpAfter,
-        }];
-        if (hpAfter <= 0) {
-            events.push(...this.defeatOpponentUnit(battle, targetId, target.getCardId()));
-        }
-        events.push(...this.spendHandCard(battle, battleCardId, cardId));
-        return events;
-    }
-
     // 사기 전환 — 아군 하나를 무덤으로 보내고 그 체력을 나눈 만큼 필드 에너지를 얻는다.
-    private useMoraleConvert(
-        battle: Battle, battleCardId: number, cardId: number, targetId: number,
-    ): BattleEvent[] {
-        const target = battle.findOnYourField(targetId);
-        if (!target) return [{type: 'rejected', reason: '내 필드에 없는 유닛입니다.'}];
-
-        const divisor = findCardAbility(cardId)!.numbers.hpDividedBy;
-        const gain = Math.floor(this.catalog.getHp(target.getCardId()) / divisor);
-
-        const before = battle.getFieldEnergy();
-        const after = battle.gainFieldEnergy(gain);
-
-        const events: BattleEvent[] = [];
-        battle.removeFromYourField(targetId);
-        battle.sendToYourTomb(target.getCardId());
-        events.push({
-            type: 'cardMoved',
-            battleCardId: targetId, cardId: target.getCardId(),
-            from: 'yourField', to: 'yourTomb',
-        });
-        if (after !== before) {
-            events.push({type: 'valueChanged', what: 'fieldEnergy', before, after});
-        }
-        events.push(...this.spendHandCard(battle, battleCardId, cardId));
-        return events;
-    }
-
     // 넘쳐 흐르는 사기 — 덱에서 정해진 카드를 꺼내 유닛에 붙인다.
-    private useOverflowMorale(
-        battle: Battle, battleCardId: number, cardId: number, targetId: number,
-    ): BattleEvent[] {
-        const target = battle.findOnYourField(targetId);
-        if (!target) return [{type: 'rejected', reason: '내 필드에 없는 유닛입니다.'}];
-
-        const n = findCardAbility(cardId)!.numbers;
-        const pulled = battle.drawMatchingFromYourDeck(n.pullCardId, n.maxPull);
-
-        const race = this.catalog.getRace(n.pullCardId) ?? CardRace.UNDEAD;
-        const events: BattleEvent[] = [];
-        for (const energyId of pulled) {
-            const countAfter = target.addEnergy(race, 1);
-            events.push({type: 'energyAttached', battleCardId: targetId, race, countAfter});
-            // 쓴 에너지 카드는 무덤으로 간다.
-            battle.sendToYourTomb(energyId);
-            events.push({
-                type: 'cardMoved', battleCardId: -1, cardId: energyId,
-                from: 'yourDeck', to: 'yourTomb',
-            });
-        }
-
-        events.push(...this.spendHandCard(battle, battleCardId, cardId));
-        return events;
-    }
-
     // 에너지 카드를 유닛에 붙인다. 붙는 종족은 그 카드의 종족이다.
-    private attachEnergyCard(
-        battle: Battle, battleCardId: number, cardId: number, targetId: number,
-    ): BattleEvent[] {
-        const target = battle.findOnYourField(targetId);
-        if (!target) return [{type: 'rejected', reason: '내 필드에 없는 유닛입니다.'}];
-
-        const n = findCardAbility(cardId)!.numbers;
-        const race = this.catalog.getRace(cardId) ?? CardRace.UNDEAD;
-        const countAfter = target.addEnergy(race, n.attachEnergy);
-
-        // 차갑게 불타는 암흑 에너지는 에너지 하나를 붙이는 데서 끝나지 않는다.
-        // 이 유닛이 앞으로 때릴 때마다 맞은 쪽에 암흑 화염과 빙결이 따라붙는다.
-        if (cardId === COLD_DARK_ENERGY) target.setColdDarkEnergy(true);
-
-        return [
-            {type: 'energyAttached', battleCardId: targetId, race, countAfter},
-            ...this.spendHandCard(battle, battleCardId, cardId),
-        ];
-    }
-
     // 레오닉의 부름 — 덱에서 고른 것을 손패로, 이 카드는 무덤으로, 덱을 섞는다.
     //
     // 무엇을 고를지는 사용자가 정한다. 고른 자리가 함께 온다.
-    private useLeonikSummon(
-        battle: Battle, battleCardId: number, cardId: number,
-        pickedDeckIndexes: readonly number[],
-        shuffleSeed?: number,
-    ): BattleEvent[] {
-        const n = findCardAbility(cardId)!.numbers;
-        if (pickedDeckIndexes.length > n.maxPick) {
-            return [{type: 'rejected', reason: `${n.maxPick}장까지만 고를 수 있습니다.`}];
-        }
-
-        const events: BattleEvent[] = [];
-        // 앞에서부터 빼면 뒤엣것의 자리가 밀린다. 뒤에서부터 뺀다.
-        const sorted = [...pickedDeckIndexes].sort((a, b) => b - a);
-        const pulled: number[] = [];
-        for (const index of sorted) {
-            const id = battle.removeFromYourDeckAt(index);
-            if (id !== null) pulled.push(id);
-        }
-        // 고른 차례대로 손패에 넣는다.
-        for (const id of pulled.reverse()) {
-            const newId = battle.issueCardId();
-            battle.addToHand(new HandCard(newId, id, [], 0));
-            events.push({
-                type: 'cardMoved', battleCardId: newId, cardId: id,
-                from: 'yourDeck', to: 'hand',
-            });
-        }
-
-        events.push(...this.spendHandCard(battle, battleCardId, cardId));
-
-        // 고르고 나면 덱을 섞는다. 무엇을 골랐는지가 남은 덱의 순서로 드러나면 안 된다.
-        if (shuffleSeed !== undefined) battle.shuffleYourDeck(shuffleSeed);
-
-        return events;
-    }
-
     // 손패의 카드를 필드 전체에 쓴다.
     private useCardOnField(
         battle: Battle, battleCardId: number, side: 'your' | 'opponent',
@@ -700,105 +386,20 @@ export class BattleCommandHandler {
         const ability = findCardAbility(cardId);
         if (!ability) return [{type: 'rejected', reason: '아직 만들어지지 않은 카드입니다.'}];
 
-        switch (cardId) {
-            case DOOM_CONTRACT:
-                if (side !== 'opponent') return [{type: 'rejected', reason: '상대 필드에 써야 합니다.'}];
-                return this.useDoomContract(battle, battleCardId, cardId);
-            case DEAD_LANDS:
-                if (side !== 'opponent') return [{type: 'rejected', reason: '상대 필드에 써야 합니다.'}];
-                return this.useDeadLands(battle, battleCardId, cardId);
-            case SWAMP_OF_DEAD:
-                if (side !== 'your') return [{type: 'rejected', reason: '내 필드에 써야 합니다.'}];
-                return this.useSwampOfDead(battle, battleCardId, cardId);
-            case LEONIK_SUMMON:
-                if (side !== 'your') return [{type: 'rejected', reason: '내 필드에 써야 합니다.'}];
-                return this.useLeonikSummon(
-                    battle, battleCardId, cardId, pickedDeckIndexes ?? [], shuffleSeed,
-                );
-            default:
-                return [{type: 'rejected', reason: '아직 전투가 처리하지 않는 카드입니다.'}];
+        const rule = findCardRule(cardId);
+        if (!rule?.useOnField) {
+            return [{type: 'rejected', reason: '아직 전투가 처리하지 않는 카드입니다.'}];
         }
+        return rule.useOnField(this.ruleContext(battle), {
+            battleCardId, cardId, side,
+            pickedDeckIndexes: pickedDeckIndexes ?? [],
+            shuffleSeed,
+        });
     }
 
     // 파멸의 계약 — 상대 유닛 전부와 본체에 피해, 내 덱에서 한 장을 로스트 존으로.
-    private useDoomContract(battle: Battle, battleCardId: number, cardId: number): BattleEvent[] {
-        const n = findCardAbility(cardId)!.numbers;
-        const events: BattleEvent[] = [];
-
-        // 목록이 도는 중에 빠지므로 미리 베껴 둔다.
-        for (const unit of [...battle.getOpponentFieldCards()]) {
-            const id = unit.getBattleCardId();
-            const hpBefore = unit.getHp();
-            const hpAfter = unit.setHp(hpBefore - n.damage);
-            events.push({
-                type: 'damaged',
-                target: {kind: 'unit', battleCardId: id},
-                amount: n.damage, hpBefore, hpAfter,
-            });
-            if (hpAfter <= 0) {
-                events.push(...this.defeatOpponentUnit(battle, id, unit.getCardId()));
-            }
-        }
-
-        const masterBefore = battle.getOpponentMasterHp();
-        if (masterBefore > 0) {
-            const masterAfter = battle.setOpponentMasterHp(masterBefore - n.damage);
-            events.push({
-                type: 'damaged', target: {kind: 'opponentMaster'},
-                amount: n.damage, hpBefore: masterBefore, hpAfter: masterAfter,
-            });
-            if (masterAfter <= 0) events.push({type: 'defeated', target: {kind: 'opponentMaster'}});
-        }
-
-        for (let i = 0; i < n.deckToLostZone; i++) {
-            const drawn = battle.drawFromOpponentDeck();
-            if (drawn === null) break;
-            battle.sendToOpponentLostZone(drawn);
-            events.push({
-                type: 'cardMoved', battleCardId: -1, cardId: drawn,
-                from: 'opponentDeck', to: 'opponentLostZone',
-            });
-        }
-
-        events.push(...this.spendHandCard(battle, battleCardId, cardId));
-        return events;
-    }
-
     // 죽음의 대지 — 상대 필드 에너지를 깎는다.
-    private useDeadLands(battle: Battle, battleCardId: number, cardId: number): BattleEvent[] {
-        const n = findCardAbility(cardId)!.numbers;
-        const before = battle.getOpponentFieldEnergy();
-        battle.drainOpponentFieldEnergy(n.fieldEnergyDrain);
-        const after = battle.getOpponentFieldEnergy();
-
-        const events: BattleEvent[] = [];
-        if (after !== before) {
-            events.push({type: 'valueChanged', what: 'opponentFieldEnergy', before, after});
-        }
-        events.push(...this.spendHandCard(battle, battleCardId, cardId));
-        return events;
-    }
-
     // 망자의 늪 — 덱에서 정해진 장수만큼 뽑는다.
-    private useSwampOfDead(battle: Battle, battleCardId: number, cardId: number): BattleEvent[] {
-        const n = findCardAbility(cardId)!.numbers;
-        const events: BattleEvent[] = [];
-
-        for (let i = 0; i < n.drawCount; i++) {
-            const drawn = battle.drawFromYourDeck();
-            if (drawn === null) break;
-            const newId = battle.issueCardId();
-            battle.addToHand(new HandCard(newId, drawn, [], 0));
-            events.push({
-                type: 'cardMoved', battleCardId: newId, cardId: drawn,
-                from: 'yourDeck', to: 'hand',
-            });
-        }
-
-        events.push(...this.spendHandCard(battle, battleCardId, cardId));
-        return events;
-    }
-
     // 필드 에너지 하나를 내 유닛에 붙인다.
     //
     // 필드 에너지는 내 턴이 시작될 때마다 하나씩 는 것이고, 그것을 유닛에 옮겨 담는다.
@@ -822,10 +423,6 @@ export class BattleCommandHandler {
     }
 
     /* ── 공격과 스킬 ── */
-    //
-    // 얼마나 때리는지는 밖에서 온다. 무기 힘과 스킬 값을 어떻게 읽는지는
-    // 아직 카드 정보 쪽에 있어서, 전투가 그것까지 정하려면 그 길을 먼저 내야 한다.
-
     // 상대 유닛 하나를 때린다.
     // 차갑게 불타는 암흑 에너지를 지닌 유닛이 때리면 맞은 쪽에 따라붙는다.
     //
