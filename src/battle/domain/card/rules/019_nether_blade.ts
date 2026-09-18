@@ -1,4 +1,4 @@
-import {CardRule, CardRuleContext} from "../CardRule";
+import {CardRule, CardRuleContext, ReadOnlyCardContext} from "../CardRule";
 import {BattleEvent} from "../../flow/BattleEvent";
 import {ChoicePick, PendingChoice} from "../../battle/PendingChoice";
 import {findCardAbility} from "../../ability/CardAbility";
@@ -66,7 +66,7 @@ export const NetherBladeRule: CardRule = {
         return events;
     },
 
-    choiceDamage(_ctx: CardRuleContext, _choice: PendingChoice, _pick: ChoicePick): number {
+    choiceDamage(_ctx: ReadOnlyCardContext, _choice: PendingChoice, _pick: ChoicePick): number {
         return findCardAbility(NETHER_BLADE)!.numbers.passive2Damage;
     },
 };
