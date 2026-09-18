@@ -20,7 +20,10 @@ export const OverflowMoraleRule: CardRule = {
         const events: BattleEvent[] = [];
         for (const energyId of pulled) {
             const countAfter = target.addEnergy(race, 1);
-            events.push({type: 'energyAttached', battleCardId: targetId, race, countAfter});
+            events.push({
+                type: 'energyAttached', battleCardId: targetId, race,
+                countAfter, totalAfter: target.getEnergyCount(),
+            });
             // 쓴 에너지 카드는 무덤으로 간다.
             ctx.battle.sendToYourTomb(energyId);
             events.push({

@@ -18,7 +18,8 @@ export const DeathEnergyRule: CardRule = {
         const countAfter = target.addEnergy(race, n.attachEnergy);
 
         return [
-            {type: 'energyAttached', battleCardId: targetId, race, countAfter},
+            {type: 'energyAttached', battleCardId: targetId, race,
+             countAfter, totalAfter: target.getEnergyCount()},
             ...ctx.spendHandCard(battleCardId, cardId),
         ];
     

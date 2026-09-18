@@ -418,7 +418,8 @@ export class BattleCommandHandler {
 
         return [
             {type: 'valueChanged', what: 'fieldEnergy', before, after: battle.getFieldEnergy()},
-            {type: 'energyAttached', battleCardId: targetId, race, countAfter},
+            {type: 'energyAttached', battleCardId: targetId, race,
+             countAfter, totalAfter: target.getEnergyCount()},
         ];
     }
 

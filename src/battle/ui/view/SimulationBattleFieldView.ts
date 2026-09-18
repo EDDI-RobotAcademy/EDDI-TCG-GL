@@ -2134,7 +2134,19 @@ export class SimulationBattleFieldView implements Component {
         // Shared renderer for per-card energy visuals (icon + count text + the global Count HUD).
         // Used by attachEnergyToCard (field-energy → card) AND by the overflow-morale flow
         // (deck-energy → card). Source-of-energy tracking is the CALLER's responsibility.
+        // 카드에 그려 둔 에너지 숫자. 겹친 연출이 뒤로 되돌리는 것을 막는 데 쓴다.
+        const shownCardEnergy = new Map<HandEntry, number>();
+
         async function updateCardEnergyVisual(entry: HandEntry, newCount: number): Promise<void> {
+            // 연출 둘이 겹칠 수 있다. 넘쳐흐르는 사기가 알갱이를 날리는 중에 죽음의 에너지를
+            // 바로 붙이면, 뒤늦게 도착한 알갱이가 자기가 들고 있던 옛 숫자로 되돌려 쓴다.
+            //
+            // 아군 유닛의 에너지는 줄어드는 자리가 없다. 그래서 올라가는 쪽만 그린다.
+            // 줄어드는 카드가 생기면 이 규칙을 다시 봐야 한다.
+            const shown = shownCardEnergy.get(entry) ?? 0;
+            if (newCount < shown) return;
+            shownCardEnergy.set(entry, newCount);
+
             // 저장은 전투가 한다 — 여기서는 아이콘/숫자/HUD만 갱신.
             countRenderer.setCount(newCount);
             countRenderer.update(countFrame, countElement, window.innerWidth, window.innerHeight);
@@ -2252,7 +2264,8 @@ export class SimulationBattleFieldView implements Component {
             const attached = events.find((ev) => ev.type === 'energyAttached');
             if (!attached || attached.type !== 'energyAttached') return;
 
-            const cardEnergy = attached.countAfter;
+            // 카드에 그려지는 숫자는 전 종족 합계다. 종족별 개수가 아니다.
+            const cardEnergy = attached.totalAfter;
 
             energyRenderer.setEnergy(view.yourFieldEnergy());
             energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
@@ -2704,7 +2717,7 @@ export class SimulationBattleFieldView implements Component {
             let overflowArrival = 0;
             await overflowMoraleEffect.play(deckPos, targetPos, attached, () => {
                 const ev = attachedEvents[overflowArrival++];
-                const newCount = ev && ev.type === 'energyAttached' ? ev.countAfter : 0;
+                const newCount = ev && ev.type === 'energyAttached' ? ev.totalAfter : 0;
                 void updateCardEnergyVisual(target, newCount);
             });
         };
@@ -3666,7 +3679,7 @@ export class SimulationBattleFieldView implements Component {
                                 // 붙이는 것은 전투가 한다. 여기서는 붙은 결과를 그린다.
                                 const attached = attachEvents?.find((ev) => ev.type === 'energyAttached');
                                 const newCount = attached && attached.type === 'energyAttached'
-                                    ? attached.countAfter
+                                    ? attached.totalAfter
                                     : view.yourUnitEnergyCount(allyTarget.cardIndex);
                                 void updateCardEnergyVisual(allyTarget, newCount);
                                 if (isColdDark) {
