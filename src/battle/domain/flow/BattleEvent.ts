@@ -19,7 +19,13 @@ export type BattleEvent =
     // 값이 이만큼 바뀌었다
     | {type: 'valueChanged'; what: ChangedValue; before: number; after: number}
     // 유닛에 에너지가 붙었다
-    | {type: 'energyAttached'; battleCardId: number; race: CardRace; countAfter: number}
+    // 에너지 하나가 붙었다.
+    //
+    // countAfter 는 그 종족만의 개수다. 스킬 비용을 종족별로 대조하는 데 쓴다.
+    // totalAfter 는 전 종족 합계다. 카드에 그려지는 숫자가 이것이다.
+    // 둘을 섞으면 다른 종족이 섞여 붙은 카드에서 그려지는 숫자가 모자라게 나온다.
+    | {type: 'energyAttached'; battleCardId: number; race: CardRace;
+       countAfter: number; totalAfter: number}
     // 고르라고 기다리기 시작했다. 몇 개를 더 골라야 하는지 함께 알린다
     | {type: 'choiceStarted'; cardId: number; remaining: number}
     // 하나를 받았다. 아직 다 안 골랐으면 remaining 이 0 보다 크다

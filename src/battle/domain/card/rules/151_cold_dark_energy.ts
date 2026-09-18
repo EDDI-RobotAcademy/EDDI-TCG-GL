@@ -22,7 +22,8 @@ export const ColdDarkEnergyRule: CardRule = {
         target.setColdDarkEnergy(true);
 
         return [
-            {type: 'energyAttached', battleCardId: targetId, race, countAfter},
+            {type: 'energyAttached', battleCardId: targetId, race,
+             countAfter, totalAfter: target.getEnergyCount()},
             ...ctx.spendHandCard(battleCardId, cardId),
         ];
     
