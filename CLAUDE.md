@@ -249,7 +249,14 @@ Do not cache a derived value as state. Do not store the same truth in two places
 
 ## Battle session
 
-`src/battle/session/` holds the currently active battle in memory. It offers `start` / `restore` / `getCurrent` / `end`.
+`src/battle/session/` holds the currently active battle in memory. It offers `start` / `restore` /
+`send` / `read` / `getCurrent` / `end`.
+
+**Whoever holds the battle runs its rules.** `send(command)` applies a command and returns the
+events; `read()` hands out the ReadModel. The screen never constructs a `BattleCommandHandler`
+and never calls `handle` — it does not know where the rules run. That is the swappable point,
+and it appeared because the responsibility moved, not because an adapter was designed for it
+(Rule 27). When the network battle path arrives, `send` is what changes; its callers do not.
 
 **It is not a persistence repository.** If persistent storage is introduced later, create a separate boundary for it. Do not rename or reuse `session` for persistence.
 

@@ -15,7 +15,13 @@ import {CardCatalog} from "../ability/CardCatalog";
 //
 // 새 카드가 여기 없는 것을 필요로 하면 그때 늘린다. 없던 규칙이 실제로 나온 것이므로
 // 늘어나는 것이 맞다 (규칙 24). 안 늘리고 카드만 느는 것이 통과다.
-export interface CardRuleContext {
+// 얼마 맞는지만 답할 때 필요한 것. 아무것도 안 바꾸므로 판과 카드에 적힌 것만 있으면 된다.
+export interface ReadOnlyCardContext {
+    readonly battle: Battle;
+    readonly catalog: CardCatalog;
+}
+
+export interface CardRuleContext extends ReadOnlyCardContext {
     readonly battle: Battle;
     // 카드에 적혀 있는 것 — 종류, 체력, 등급, 종족, 공격력, 스킬
     readonly catalog: CardCatalog;
@@ -71,5 +77,5 @@ export interface CardRule {
     //
     // 고르기를 가진 카드만 채운다. 연출을 시작하기 전에 결과를 알아야 하는 자리가 있어서
     // 필요하다 (R2-105). 아무것도 안 바꾸고 답만 준다.
-    choiceDamage?(ctx: CardRuleContext, choice: PendingChoice, pick: ChoicePick): number;
+    choiceDamage?(ctx: ReadOnlyCardContext, choice: PendingChoice, pick: ChoicePick): number;
 }

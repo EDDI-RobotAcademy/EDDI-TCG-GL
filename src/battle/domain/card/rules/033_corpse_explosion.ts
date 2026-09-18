@@ -1,4 +1,4 @@
-import {CardRule, CardRuleContext, UseOnUnitInput} from "../CardRule";
+import {CardRule, CardRuleContext, ReadOnlyCardContext, UseOnUnitInput} from "../CardRule";
 import {BattleEvent} from "../../flow/BattleEvent";
 import {ChoicePick, PendingChoice} from "../../battle/PendingChoice";
 import {findCardAbility} from "../../ability/CardAbility";
@@ -65,7 +65,7 @@ export const CorpseExplosionRule: CardRule = {
         return events;
     },
 
-    choiceDamage(_ctx: CardRuleContext, choice: PendingChoice, _pick: ChoicePick): number {
+    choiceDamage(_ctx: ReadOnlyCardContext, choice: PendingChoice, _pick: ChoicePick): number {
         return findCardAbility(choice.cardId)!.numbers.damage;
     },
 };

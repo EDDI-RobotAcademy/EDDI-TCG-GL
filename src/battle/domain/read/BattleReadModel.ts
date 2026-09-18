@@ -1,5 +1,10 @@
 import {Battle} from "../battle/Battle";
 import {TurnOwner} from "../battle/TurnOwner";
+import {CardCatalog} from "../ability/CardCatalog";
+import {ChoicePick} from "../battle/PendingChoice";
+import {CardRace} from "../../../card/race";
+import {SkillType} from "../../../card/SkillType";
+import {findCardRule} from "../card/CardRegistry";
 
 // 화면에 보여 줄 것만 추린 것이다.
 //
@@ -27,7 +32,10 @@ export interface UnitOnField {
 }
 
 export class BattleReadModel {
-    constructor(private readonly battle: Battle) {}
+    constructor(
+        private readonly battle: Battle,
+        private readonly catalog: CardCatalog,
+    ) {}
 
     /* ── 턴 ── */
 
@@ -122,6 +130,56 @@ export class BattleReadModel {
 
     opponentAliveCount(): number {
         return this.battle.getOpponentFieldCount();
+    }
+
+    /* ── 내가 지금 무엇을 할 수 있나 ── */
+
+    // 이 공격이 누구를 치는가. 대상을 골라야 하는 공격인지가 여기서 갈린다.
+    //
+    // 얼마나 아픈지는 안 알려 준다. 그것은 명령을 받은 전투가 정한다 (R2-99).
+    attackRange(cardId: number, slot: 1 | 2 | null): SkillType {
+        if (slot === null) return SkillType.Single;
+        return this.catalog.getSkill(cardId, slot)?.range ?? SkillType.Single;
+    }
+
+    // 이 스킬이 얼마를 요구하는가. 화면이 안내 문구에 쓴다.
+    skillCost(cardId: number, slot: 1 | 2): ReadonlyMap<CardRace, number> {
+        return this.catalog.getSkill(cardId, slot)?.cost ?? new Map();
+    }
+
+    // 이 스킬을 쓸 만큼 에너지가 붙어 있는가. 모자란 종족 하나를 돌려준다.
+    //
+    // 총량으로 보면 [언데드 둘 필요 / 휴먼 둘 보유] 가 통과되므로 종족별로 대조한다.
+    missingSkillEnergy(
+        battleCardId: number, cardId: number, slot: 1 | 2,
+    ): {race: CardRace; need: number; have: number} | null {
+        const cost = this.catalog.getSkill(cardId, slot)?.cost;
+        if (!cost) return null;
+        const unit = this.battle.findOnYourField(battleCardId);
+        for (const [race, need] of cost) {
+            const have = unit?.getEnergyOfRace(race) ?? 0;
+            if (have < need) return {race, need, have};
+        }
+        return null;
+    }
+
+    // 지금 기다리는 고르기에서 이것을 고르면 쓰러지는가.
+    //
+    // 연출을 시작하기 전에 알아야 한다. 죽는 일격이면 갈라진 카드를 안 되돌려서, 조각이
+    // 흩어진 자리가 그대로 사망이 된다. 연출 뒤에 알면 카드가 깜빡인다 (R2-105).
+    wouldDefeat(pick: ChoicePick): boolean {
+        const choice = this.battle.getPendingChoice();
+        if (!choice || pick.kind !== 'opponentUnit') return false;
+
+        const unit = this.battle.findOnOpponentField(pick.battleCardId);
+        if (!unit) return false;
+
+        const rule = findCardRule(choice.cardId);
+        if (!rule?.choiceDamage) return false;
+        const damage = rule.choiceDamage(
+            {battle: this.battle, catalog: this.catalog}, choice, pick,
+        );
+        return unit.getHp() - damage <= 0;
     }
 
     /* ── 덱 ── */

@@ -2,7 +2,7 @@ import { CameraManager } from "../../../core/camera/CameraManager";
 import { SeaOfSpecterEffect } from "../animation/skill/veln/SeaOfSpecterEffect";
 import { installTween } from "../../../core/tween/Tween";
 import { HandCard } from "../../domain/battle/HandCard";
-import { BattleCommandHandler, CardCatalog } from "../../domain/flow/BattleCommandHandler";
+import { CardCatalog } from "../../domain/ability/CardCatalog";
 import { AttackChoice, BattleCommand } from "../../domain/flow/BattleCommand";
 import { BattleEvent } from "../../domain/flow/BattleEvent";
 import { FieldCard } from "../../domain/battle/FieldCard";
@@ -133,7 +133,6 @@ import {
 } from "../turn/end_button/frame/TurnEndButtonFrame";
 import { TurnEndButtonRendererV2 } from "../turn/end_button/renderer/TurnEndButtonRendererV2";
 import { BattleSessionImpl } from "../../session/BattleSessionImpl";
-import { BattleReadModel } from "../../domain/read/BattleReadModel";
 import {
     createDefaultMasterHpFrame,
     createOpponentMasterHpFrame,
@@ -258,16 +257,80 @@ export class SimulationBattleFieldView implements Component {
         installTween();
 
 
-        // 전투 한 판을 여기서 시작한다. 담을 그릇이 먼저 있어야 담는다.
-        // 턴, 덱, 무덤, 로스트 존, 필드, 손패, 본체가 이 안에 들어 있다.
-        const battle = BattleSessionImpl.getInstance().start();
+        // 카드에 적혀 있는 것을 알려 주는 곳. 판과 무관하므로 전투가 안 든다.
+        const cardCatalog: CardCatalog = {
+            getKind: (cardId) => {
+                const card = getCardById(cardId);
+                return card ? (parseInt(card.종류, 10) as CardKind) : null;
+            },
+            getHp: (cardId) => {
+                const hp = getCardById(cardId)?.체력;
+                return typeof hp === 'number' ? hp : parseInt(String(hp ?? 0), 10) || 0;
+            },
+            getGrade: (cardId) => {
+                const card = getCardById(cardId);
+                return card ? (parseInt(card.등급, 10) as CardGrade) : null;
+            },
+            getRace: (cardId) => {
+                const raw = Number((getCardById(cardId) as any)?.['종족']);
+                return raw === CardRace.HUMAN || raw === CardRace.UNDEAD || raw === CardRace.TRENT
+                    ? (raw as CardRace)
+                    : null;
+            },
+            getAttack: (cardId) => {
+                const raw = (getCardById(cardId) as any)?.['공격력'];
+                return typeof raw === 'number' ? raw : parseInt(String(raw ?? 0), 10) || 0;
+            },
+            getSkill: (cardId, slot) => {
+                // 카드 데이터의 열 이름은 띄어쓰기가 들어간 한글이다.
+                //   "스킬 1"            그 스킬이 누구를 치는가
+                //   "스킬1 데미지"       카드에 적힌 기본 피해
+                //   "스킬1 언데드필요에너지" 등 셋   종족별 비용
+                const card = getCardById(cardId) as any;
+                if (!card) return null;
 
-        // 이 화면의 시작 필드 에너지다. 실제 대전에서는 0 에서 시작해 턴마다 는다.
-        battle.setFieldEnergy(19);
+                const rangeRaw = card[`스킬 ${slot}`];
+                if (rangeRaw === undefined || rangeRaw === null || rangeRaw === '' || rangeRaw === '0') {
+                    return null;
+                }
+
+                const damageRaw = card[`스킬${slot} 데미지`];
+                const damage = typeof damageRaw === 'number'
+                    ? damageRaw
+                    : parseInt(String(damageRaw ?? 0), 10) || 0;
+
+                const cost = new Map<CardRace, number>();
+                const columns: ReadonlyArray<readonly [CardRace, string]> = [
+                    [CardRace.UNDEAD, `스킬${slot} 언데드필요에너지`],
+                    [CardRace.HUMAN, `스킬${slot} 휴먼필요에너지`],
+                    [CardRace.TRENT, `스킬${slot} 트런트필요에너지`],
+                ];
+                for (const [race, column] of columns) {
+                    const amount = card[column] ?? 0;
+                    if (amount > 0) cost.set(race, amount);
+                }
+
+                return { range: getSkillType(rangeRaw), damage, cost };
+            },
+        };
+
+        // 전투 한 판을 여기서 시작한다.
+        //
+        // 규칙을 구동하는 것은 판을 든 쪽이 맡는다. 화면은 규칙 기계를 만들지도, 쥐지도
+        // 않는다. 전에는 화면이 제 손으로 만들어 제 안에서 돌렸다 (규칙 25).
+        const session = BattleSessionImpl.getInstance();
+        const battle = session.start(cardCatalog);
+
+        // 사용자가 한 일 하나를 보내고, 무슨 일이 있었는지 받는다.
+        // 어디서 셈하는지는 화면이 모른다.
+        const send = (command: BattleCommand): BattleEvent[] => session.send(command);
 
         // 화면은 전투 안을 직접 안 본다. 이 창구를 본다.
         // 판을 차리는 열 군데만 아직 전투를 직접 쓴다. R2-113 에서 뺀다.
-        const view = new BattleReadModel(battle);
+        const view = session.read();
+
+        // 이 화면의 시작 필드 에너지다. 실제 대전에서는 0 에서 시작해 턴마다 는다.
+        battle.setFieldEnergy(19);
 
         const rendererManager = new RendererManager(container);
         // 감출 때 이것만 감춘다. 함께 쓰는 자리를 감추면 다른 화면까지 사라진다.
@@ -462,67 +525,6 @@ export class SimulationBattleFieldView implements Component {
             battle.addToHand(new HandCard(e.cardIndex, e.card.cardId, [], 0));
         }
 
-        // 카드에 적혀 있는 것을 알려 주는 곳. 판과 무관하므로 전투가 안 든다.
-        const cardCatalog: CardCatalog = {
-            getKind: (cardId) => {
-                const card = getCardById(cardId);
-                return card ? (parseInt(card.종류, 10) as CardKind) : null;
-            },
-            getHp: (cardId) => {
-                const hp = getCardById(cardId)?.체력;
-                return typeof hp === 'number' ? hp : parseInt(String(hp ?? 0), 10) || 0;
-            },
-            getGrade: (cardId) => {
-                const card = getCardById(cardId);
-                return card ? (parseInt(card.등급, 10) as CardGrade) : null;
-            },
-            getRace: (cardId) => {
-                const raw = Number((getCardById(cardId) as any)?.['종족']);
-                return raw === CardRace.HUMAN || raw === CardRace.UNDEAD || raw === CardRace.TRENT
-                    ? (raw as CardRace)
-                    : null;
-            },
-            getAttack: (cardId) => {
-                const raw = (getCardById(cardId) as any)?.['공격력'];
-                return typeof raw === 'number' ? raw : parseInt(String(raw ?? 0), 10) || 0;
-            },
-            getSkill: (cardId, slot) => {
-                // 카드 데이터의 열 이름은 띄어쓰기가 들어간 한글이다.
-                //   "스킬 1"            그 스킬이 누구를 치는가
-                //   "스킬1 데미지"       카드에 적힌 기본 피해
-                //   "스킬1 언데드필요에너지" 등 셋   종족별 비용
-                const card = getCardById(cardId) as any;
-                if (!card) return null;
-
-                const rangeRaw = card[`스킬 ${slot}`];
-                if (rangeRaw === undefined || rangeRaw === null || rangeRaw === '' || rangeRaw === '0') {
-                    return null;
-                }
-
-                const damageRaw = card[`스킬${slot} 데미지`];
-                const damage = typeof damageRaw === 'number'
-                    ? damageRaw
-                    : parseInt(String(damageRaw ?? 0), 10) || 0;
-
-                const cost = new Map<CardRace, number>();
-                const columns: ReadonlyArray<readonly [CardRace, string]> = [
-                    [CardRace.UNDEAD, `스킬${slot} 언데드필요에너지`],
-                    [CardRace.HUMAN, `스킬${slot} 휴먼필요에너지`],
-                    [CardRace.TRENT, `스킬${slot} 트런트필요에너지`],
-                ];
-                for (const [race, column] of columns) {
-                    const amount = card[column] ?? 0;
-                    if (amount > 0) cost.set(race, amount);
-                }
-
-                return { range: getSkillType(rangeRaw), damage, cost };
-            },
-        };
-        const battleCommandHandler = new BattleCommandHandler(cardCatalog);
-
-        // 사용자가 한 일 하나를 전투에 보내고, 무슨 일이 있었는지 받는다.
-        const send = (command: BattleCommand): BattleEvent[] =>
-            battleCommandHandler.handle(battle, command);
 
         const handOrder: HandEntry[] = [...entries];
         const placedOrder: HandEntry[] = [];
@@ -1602,7 +1604,7 @@ export class SimulationBattleFieldView implements Component {
             // 않아, 조각이 흩어진 자리가 그대로 사망이 된다. 연출이 끝난 뒤 되살아났다가
             // 아래 데미지 처리로 사라지면 카드가 깜빡이는 것처럼 보인다.
             const lethal = pick.kind === 'opponent'
-                && battleCommandHandler.wouldDefeat(battle, {
+                && view.wouldDefeat({
                     kind: 'opponentUnit', battleCardId: pick.cardIndex,
                 });
 
@@ -1773,7 +1775,7 @@ export class SimulationBattleFieldView implements Component {
                         // 누구를 치는지만 묻는다. 대상을 골라야 하는 공격인지 여기서 갈리기 때문이다.
                         // 얼마나 아픈지는 안 묻는다. 전투가 명령을 받고 정한다.
                         const skillType = attackerId != null
-                            ? battleCommandHandler.attackRange(attackerId, skillSlot)
+                            ? view.attackRange(attackerId, skillSlot)
                             : SkillType.Single;
 
                         // ── 스킬 에너지 요구량 검사 ────────────────────────────────
@@ -1781,9 +1783,9 @@ export class SimulationBattleFieldView implements Component {
                         // 카드에 붙은 에너지도 종족별로 보관하므로 종족을 하나씩 대조한다.
                         // 일반 공격(general)은 비용 없음.
                         if (skillSlot !== null && attackerId != null && selectedAttackerEntry) {
-                            const cost = battleCommandHandler.skillCost(attackerId, skillSlot);
-                            const missing = battleCommandHandler.missingSkillEnergy(
-                                battle, selectedAttackerEntry.cardIndex, attackerId, skillSlot,
+                            const cost = view.skillCost(attackerId, skillSlot);
+                            const missing = view.missingSkillEnergy(
+                                selectedAttackerEntry.cardIndex, attackerId, skillSlot,
                             );
                             if (missing) {
                                 guideRenderer.show(guideElement, '에너지가 부족하여 스킬을 사용할 수 없습니다.', 3000);
