@@ -10,6 +10,9 @@ import { createOpponentMasterAreaFrame } from "../master_area/frame/OpponentMast
 import { OpponentMasterAreaRendererV2 } from "../master_area/renderer/OpponentMasterAreaRendererV2";
 import { CardEnergyBadgeRenderer } from "../card_energy/renderer/CardEnergyBadgeRenderer";
 import { LeonikPopupPartsRenderer } from "../leonik_popup/renderer/LeonikPopupPartsRenderer";
+import { FieldNeonHostRenderer } from "../field/neon_host/renderer/FieldNeonHostRenderer";
+import { computeOpponentFieldAreaBounds } from "../field/opponent/area/frame/OpponentFieldAreaFrame";
+import { isInsideArea } from "../../../core/frame/AreaBounds";
 import { AttackChoice, BattleCommand } from "../../domain/flow/BattleCommand";
 import { BattleEvent } from "../../domain/flow/BattleEvent";
 import { findCardAbility, cardIdsTargeting } from "../../domain/ability/CardAbility";
@@ -381,37 +384,13 @@ export class SimulationBattleFieldView implements Component {
         const opponentFieldAreaGroup = await opponentFieldAreaRenderer.build(opponentFieldAreaFrame);
         scene.add(opponentFieldAreaGroup);
 
-        // Dedicated host group for attaching a NEON BORDER to the whole opponent field area
-        // (used by 파멸의 계약's pickup highlight). OpponentFieldAreaRendererV2 positions its mesh
-        // INSIDE its group (group stays at origin, mesh at xPercent*vw, yPercent*vh), and its
-        // userData keys are `baseWidth/baseHeight` while NeonBorderEffect expects
-        // `baseCardWidth/baseCardHeight`. A wrapper host placed at the mesh's world position
-        // with the right userData keys lets NeonBorderEffect size + anchor its glow correctly.
-        const opponentFieldNeonHost = new THREE.Group();
-        opponentFieldNeonHost.position.set(
-            opponentFieldAreaFrame.xPercent * window.innerWidth,
-            opponentFieldAreaFrame.yPercent * window.innerHeight,
-            0,
-        );
-        opponentFieldNeonHost.userData = {
-            baseCardWidth:  opponentFieldAreaFrame.widthPercent  * window.innerWidth,
-            baseCardHeight: opponentFieldAreaFrame.heightPercent * window.innerHeight,
-        };
+        // 필드 영역 전체에 겨냥 테두리를 붙일 때 매달리는 빈 자리 둘.
+        //
+        // 상대 필드 쪽은 파멸의 계약을 집었을 때, 내 필드 쪽은 망자의 늪을 집었을 때 쓴다.
+        const fieldNeonHostRenderer = new FieldNeonHostRenderer();
+        const opponentFieldNeonHost = fieldNeonHostRenderer.build(opponentFieldAreaFrame);
         scene.add(opponentFieldNeonHost);
-
-        // Mirror wrapper host for YOUR field area — used by 망자의 늪's pickup highlight to
-        // attach a green neon border around the whole player field rectangle. Same userData
-        // key requirement (baseCardWidth/baseCardHeight) as opponentFieldNeonHost.
-        const yourFieldNeonHost = new THREE.Group();
-        yourFieldNeonHost.position.set(
-            yourFieldAreaFrame.xPercent * window.innerWidth,
-            yourFieldAreaFrame.yPercent * window.innerHeight,
-            0,
-        );
-        yourFieldNeonHost.userData = {
-            baseCardWidth:  yourFieldAreaFrame.widthPercent  * window.innerWidth,
-            baseCardHeight: yourFieldAreaFrame.heightPercent * window.innerHeight,
-        };
+        const yourFieldNeonHost = fieldNeonHostRenderer.build(yourFieldAreaFrame);
         scene.add(yourFieldNeonHost);
 
         // 상대 본체를 누를 수 있는 영역. 보이지 않는 판이다.
@@ -2290,6 +2269,8 @@ export class SimulationBattleFieldView implements Component {
                 ? drainedEvent.amount : 0;
             const newEnergy = drainedEvent && drainedEvent.type === 'energyDrained'
                 ? drainedEvent.countAfter : opponentEnergyOf(target.cardIndex);
+            // 그리는 자리는 연출이 끝난 뒤라, 그때 참인 값으로 그린다. 같은 유닛에 에너지
+            // 번을 빠르게 두 번 쓰면 연출 둘이 겹치고, 각자 들고 있던 값을 쓰면 되돌아간다.
 
             const damagedEvent = events.find(
                 (ev) => ev.type === 'damaged' && ev.target.kind === 'unit',
@@ -2319,7 +2300,9 @@ export class SimulationBattleFieldView implements Component {
                     await new Promise((r) => setTimeout(r, 600));
                     await energyBurnEffect.playEnergyIconBurnAway(target.group);
                     // After burn, redraw with the new (reduced) count — shows any remaining energy.
-                    opponentRenderer.getCardRenderer().updateEnergyCount(target.group, newEnergy, handCardFrame);
+                    opponentRenderer.getCardRenderer().updateEnergyCount(
+                        target.group, opponentEnergyOf(target.cardIndex), handCardFrame,
+                    );
                 })(),
             ]);
 
@@ -2400,13 +2383,12 @@ export class SimulationBattleFieldView implements Component {
             console.log(`[swamp] drawing ${drawnIds.length}/${SWAMP_DRAW_COUNT}: cardIds=${drawnIds.join(',')}`);
 
             // Swamp plays over the your-field rectangle.
-            const fieldCenter = new THREE.Vector3(
-                yourFieldAreaFrame.xPercent * window.innerWidth,
-                yourFieldAreaFrame.yPercent * window.innerHeight,
-                2,
+            const yourField = computeYourFieldAreaBounds(
+                yourFieldAreaFrame, window.innerWidth, window.innerHeight,
             );
-            const fieldW = yourFieldAreaFrame.widthPercent  * window.innerWidth;
-            const fieldH = yourFieldAreaFrame.heightPercent * window.innerHeight;
+            const fieldCenter = new THREE.Vector3(yourField.centerX, yourField.centerY, 2);
+            const fieldW = yourField.width;
+            const fieldH = yourField.height;
 
             // Deck world position — sits LEFT of the Field Energy HUD (HUD centre at
             // screen ~0.940). Screen (0.81, 0.87) puts the deck visibly left of the big
@@ -2525,6 +2507,14 @@ export class SimulationBattleFieldView implements Component {
                 energyRenderer.setEnergy(shownEnergy);
                 energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
             });
+
+            // 알갱이마다 올려 보이는 숫자는 이 연출이 시작할 때의 값에서 세는 것이다.
+            // 도는 동안 다른 데서 필드 에너지가 바뀌면 그 값이 어긋난다.
+            //
+            // 필드 에너지는 오르기도 하고 내려가기도 해서, 본체 체력처럼 한쪽만 그리는
+            // 방법으로 막을 수 없다. 그래서 끝나고 지금 참인 값으로 맞춘다.
+            energyRenderer.setEnergy(view.yourFieldEnergy());
+            energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
 
             console.log(`[morale-convert] effect complete; total field energy = ${view.yourFieldEnergy()}`);
         };
@@ -2645,10 +2635,11 @@ export class SimulationBattleFieldView implements Component {
             // xPercent / yPercent are already in WORLD coords (y-up, origin at screen
             // centre) — xPercent 0 = horizontal centre, yPercent 0.153 = upper half. So
             // multiply by viewport directly, NO (x-0.5) / (0.5-y) re-centering.
+            const opponentField = computeOpponentFieldAreaBounds(
+                opponentFieldAreaFrame, window.innerWidth, window.innerHeight,
+            );
             const landingPos = new THREE.Vector3(
-                opponentFieldAreaFrame.xPercent * window.innerWidth,
-                opponentFieldAreaFrame.yPercent * window.innerHeight,
-                5,
+                opponentField.centerX, opponentField.centerY, 5,
             );
 
             // Per-projectile arrival: tick HP for that pick. The effect handles the
@@ -3220,15 +3211,13 @@ export class SimulationBattleFieldView implements Component {
                         } else if (cardId === DOOM_CONTRACT_CARD_ID) {
                             // AoE + deck drain — MUST land on the OPPONENT field area. Dropping
                             // on your own field or somewhere on the hand leaves it unused (snap
-                            // back). Bounds inlined from opponentFieldAreaFrame's percent values
-                            // (same formula as computeYourFieldAreaBounds).
-                            const oHalfW = (opponentFieldAreaFrame.widthPercent  * window.innerWidth)  / 2;
-                            const oHalfH = (opponentFieldAreaFrame.heightPercent * window.innerHeight) / 2;
-                            const oCX = opponentFieldAreaFrame.xPercent * window.innerWidth;
-                            const oCY = opponentFieldAreaFrame.yPercent * window.innerHeight;
-                            const insideOppField =
-                                dropCx >= oCX - oHalfW && dropCx <= oCX + oHalfW &&
-                                dropCy >= oCY - oHalfH && dropCy <= oCY + oHalfH;
+                            // back).
+                            const insideOppField = isInsideArea(
+                                computeOpponentFieldAreaBounds(
+                                    opponentFieldAreaFrame, window.innerWidth, window.innerHeight,
+                                ),
+                                dropCx, dropCy,
+                            );
                             if (insideOppField) {
                                 // 카드를 쓴다. 피해와 카드 이동은 전투가 한다.
                                 const events = send({
@@ -3278,13 +3267,12 @@ export class SimulationBattleFieldView implements Component {
                             // DeadLandsEffect plays. The count decrement fires at the effect's
                             // SHATTER peak (~1.3 s in), NOT at drop time — so the visual
                             // tearing/shattering of the HUD is in sync with the number drop.
-                            const oHalfW = (opponentFieldAreaFrame.widthPercent  * window.innerWidth)  / 2;
-                            const oHalfH = (opponentFieldAreaFrame.heightPercent * window.innerHeight) / 2;
-                            const oCX = opponentFieldAreaFrame.xPercent * window.innerWidth;
-                            const oCY = opponentFieldAreaFrame.yPercent * window.innerHeight;
-                            const insideOppField =
-                                dropCx >= oCX - oHalfW && dropCx <= oCX + oHalfW &&
-                                dropCy >= oCY - oHalfH && dropCy <= oCY + oHalfH;
+                            const insideOppField = isInsideArea(
+                                computeOpponentFieldAreaBounds(
+                                    opponentFieldAreaFrame, window.innerWidth, window.innerHeight,
+                                ),
+                                dropCx, dropCy,
+                            );
                             if (insideOppField) {
                                 // 카드를 쓴다. 값을 바꾸고 카드를 무덤에 넣는 것은 전투가 한다.
                                 const events = send({
@@ -3909,25 +3897,12 @@ export class SimulationBattleFieldView implements Component {
             // 겨냥 테두리가 대상에서 벗어난 데 그려졌다.
             masterAreaRenderer.resize(masterAreaFrame, masterGroup, width, height);
 
-            opponentFieldNeonHost.position.set(
-                opponentFieldAreaFrame.xPercent * width,
-                opponentFieldAreaFrame.yPercent * height,
-                0,
+            fieldNeonHostRenderer.resize(
+                opponentFieldNeonHost, opponentFieldAreaFrame, width, height,
             );
-            opponentFieldNeonHost.userData = {
-                baseCardWidth:  opponentFieldAreaFrame.widthPercent  * width,
-                baseCardHeight: opponentFieldAreaFrame.heightPercent * height,
-            };
-
-            yourFieldNeonHost.position.set(
-                yourFieldAreaFrame.xPercent * width,
-                yourFieldAreaFrame.yPercent * height,
-                0,
+            fieldNeonHostRenderer.resize(
+                yourFieldNeonHost, yourFieldAreaFrame, width, height,
             );
-            yourFieldNeonHost.userData = {
-                baseCardWidth:  yourFieldAreaFrame.widthPercent  * width,
-                baseCardHeight: yourFieldAreaFrame.heightPercent * height,
-            };
 
             // 붙어 있는 테두리는 붙일 때 크기를 읽어 둔 것이라, 대상이 커지거나 작아지면
             // 다시 읽어야 한다. 카드에 붙은 것도 함께 다시 읽는다.
