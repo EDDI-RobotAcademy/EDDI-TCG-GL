@@ -136,12 +136,12 @@
 | **R2-108** | Structure | Battle | [유닛의 상태를 다루는 규칙을 카드 처리에서 분리](R2-108-unit-status-system.md) | R2-107 | **완료** |
 | **R2-109** | Structure | Battle | [전투 화면이 전투 상태를 직접 읽지 않게 분리](R2-109-battle-read-model.md) | R2-107 | **완료** |
 | **R2-110** | Structure | Platform | [규칙·진행 중인 판·그리기 셋의 경계를 유지하는지 검사](R2-110-boundary-check.md) | R2-107 | **완료** |
-| **R2-111** | Structure | Battle Ability | [신규 카드 추가 시 기존 카드의 코드를 고치지 않도록 카드별로 분리](R2-111-card-per-file.md) | R2-109 | **완료. 규칙 쪽만. 연출은 R2-116** |
+| **R2-111** | Structure | Battle Ability | [신규 카드 추가 시 기존 카드의 코드를 고치지 않도록 카드별로 분리](R2-111-card-per-file.md) | R2-109 | **완료. 규칙 쪽만. 연출은 R2-117** |
 | **R2-112** | Structure | Battle | [전투 화면이 전투 규칙을 직접 구동하지 않게 분리](R2-112-session-runs-rules.md) | R2-111 | **완료** |
 | **R2-113** | Structure | Battle | [전투 화면이 확인용 시작 상태를 직접 만들지 않게 분리](R2-113-simulation-setup.md) | R2-112 | **완료** |
 | **R2-114** | Rendering | Battle 공용 | [전투 화면이 메시를 직접 만들지 않게 분리](R2-114-view-stops-building-meshes.md) | R2-107 | **완료** |
 | **R2-115** | Structure | Battle Field | [전투 화면이 필드 영역 크기를 직접 계산하지 않게 분리](R2-115-field-area-math.md) | R2-107 | **완료** |
-| **R2-116** | Structure | Battle | 전투 화면을 맡은 일별로 가른다 | R2-114 | 예정 |
+| **R2-116** | Structure | Battle | [전투 화면을 생성, 입력, 연출, 크기 조절 목적별로 분리](R2-116-split-view-by-purpose.md) | R2-114 | **완료. 파일 가르기는 R2-117 뒤** |
 | **R2-117** | Structure | Battle Ability | 신규 카드 추가 시 전투 화면을 고치지 않도록 연출을 카드별로 분리 | R2-116 | 예정. **R2-111 의 나머지 절반. 화면이 한 덩어리라 R2-116 뒤에 온다** |
 | **R2-118** | Strategy | Battle Ability | 새 카드 열 장으로 확장 시험 | R2-117 | 예정. **여기부터는 리팩토링이 아니다** |
 | **R2-119** | Rendering | Battle 공용 | 체력과 무기 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정. **숫자 없는 바탕 그림 셋이 있어야 한다** |

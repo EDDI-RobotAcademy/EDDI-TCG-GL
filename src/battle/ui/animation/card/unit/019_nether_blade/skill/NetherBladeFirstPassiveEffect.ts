@@ -159,6 +159,21 @@ export class NetherBladeFirstPassiveEffect {
         // Edge-to-edge layered glow strokes with z-perspective. zStart/zEnd
         // control the direction: wave 1 uses (+30, -60) → slash flies TOWARD
         // the camera; wave 2 uses (-60, +30) → slash flies AWAY into the panel.
+        // 화면 전체를 덮는 판 하나를 새 창 크기로 다시 맞춘다.
+        //
+        // 판을 새로 만들고, 셰이더가 들고 있는 창 크기를 고친다. 무늬를 픽셀 단위로 계산
+        // 하므로 이 값이 옛 것이면 무늬가 어긋난다.
+        const refitFullscreen = (mesh: THREE.Mesh) =>
+            (viewportWidth: number, viewportHeight: number): void => {
+                mesh.geometry?.dispose();
+                mesh.geometry = new THREE.PlaneGeometry(viewportWidth, viewportHeight);
+                const material = mesh.material as THREE.ShaderMaterial;
+                const resolution = material.uniforms?.u_resolution;
+                if (resolution) {
+                    (resolution.value as THREE.Vector2).set(viewportWidth, viewportHeight);
+                }
+            };
+
         const createRefSlashMaterial = (
             canvasW: number, canvasH: number,
             zStart: number, zEnd: number,
@@ -316,7 +331,7 @@ export class NetherBladeFirstPassiveEffect {
         const overlay = new THREE.Mesh(overlayGeom, overlayMaterial);
         overlay.position.set(0, 0, 8);
         overlay.renderOrder = 9999;
-        this.layer.add(this.scene, overlay);
+        this.layer.addFullscreen(this.scene, overlay, refitFullscreen(overlay));
 
         // Wave-1 slash mesh — fullscreen, reference-style. Slashes fly TOWARD
         // the camera (z: +30 → -60). Triggered later when release phase begins.
@@ -325,7 +340,7 @@ export class NetherBladeFirstPassiveEffect {
         const slashMesh = new THREE.Mesh(slashGeom, slashMaterial);
         slashMesh.position.set(0, 0, 8);
         slashMesh.renderOrder = 10000;
-        this.layer.add(this.scene, slashMesh);
+        this.layer.addFullscreen(this.scene, slashMesh, refitFullscreen(slashMesh));
 
         // ─── Phase durations (frames @ 60 Hz, dt-normalised) ────────────────
         const GATHER_DURATION = 8;     // ~0.13 s — single flash
@@ -572,7 +587,9 @@ export class NetherBladeFirstPassiveEffect {
                     );
                     rectSlashMesh.position.set(0, 0, 8.5);
                     rectSlashMesh.renderOrder = 10002;
-                    this.layer.add(this.scene, rectSlashMesh);
+                    this.layer.addFullscreen(
+                        this.scene, rectSlashMesh, refitFullscreen(rectSlashMesh),
+                    );
                     phase = 'rectSlash';
                     phaseTimer = 0;
                     cameraShake = 18;
@@ -611,7 +628,10 @@ export class NetherBladeFirstPassiveEffect {
                     );
                     panelBackdrop.position.set(0, 0, 8.05);
                     panelBackdrop.renderOrder = 10000;     // BELOW fragments (10001)
-                    this.layer.add(this.scene, panelBackdrop);
+                    // 화면을 가려야 하는 것이라 비율로 늘리지 않고 창 크기에 맞춘다.
+                    this.layer.addFullscreen(
+                        this.scene, panelBackdrop, refitFullscreen(panelBackdrop),
+                    );
 
                     const minDim = Math.min(vw, vh);
                     // Seed polygon list with the full viewport.

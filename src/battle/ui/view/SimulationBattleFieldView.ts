@@ -10,6 +10,9 @@ import { createOpponentMasterAreaFrame } from "../master_area/frame/OpponentMast
 import { OpponentMasterAreaRendererV2 } from "../master_area/renderer/OpponentMasterAreaRendererV2";
 import { CardEnergyBadgeRenderer } from "../card_energy/renderer/CardEnergyBadgeRenderer";
 import { LeonikPopupPartsRenderer } from "../leonik_popup/renderer/LeonikPopupPartsRenderer";
+import { PagedCardPopup, ExclusivePopups } from "../card_grid_popup/PagedCardPopup";
+import { ViewportResize } from "../resize/ViewportResize";
+import { PointerRouter } from "../input/PointerRouter";
 import { FieldNeonHostRenderer } from "../field/neon_host/renderer/FieldNeonHostRenderer";
 import { computeOpponentFieldAreaBounds } from "../field/opponent/area/frame/OpponentFieldAreaFrame";
 import { isInsideArea } from "../../../core/frame/AreaBounds";
@@ -239,9 +242,12 @@ export class SimulationBattleFieldView implements Component {
         this.appended.push({element, display: element.style.display});
     }
 
-    // 창과 글쇠를 듣는 것을 적어 둔다. 화면을 버릴 때 뗀다.
+    // 듣는 것을 적어 둔다. 화면을 버릴 때 뗀다.
+    //
+    // 창과 글쇠뿐 아니라 그리는 자리도 받는다. 전에는 그리는 자리에 붙인 것을 여기 안
+    // 적어서, 화면을 버려도 안 떼졌다.
     private listen(
-        target: Window | Document,
+        target: Window | Document | HTMLElement,
         type: string,
         handler: (event: never) => void,
         options?: AddEventListenerOptions,
@@ -339,9 +345,15 @@ export class SimulationBattleFieldView implements Component {
         const view = session.read();
 
 
+        // 창 크기가 바뀔 때 다시 재야 하는 것을 모은다. 만드는 자리에서 바로 등록한다.
+        const onResize = new ViewportResize();
+
         const rendererManager = new RendererManager(container);
         // 감출 때 이것만 감춘다. 함께 쓰는 자리를 감추면 다른 화면까지 사라진다.
         this.canvas = rendererManager.getDomElement();
+
+        // 누름을 누가 먼저 받을지 정한다. 등록하는 자리가 어디든 칸 이름이 순서를 정한다.
+        const pointerRouter = new PointerRouter(rendererManager.getDomElement());
         const sceneManager = new SceneManager();
         const cameraManager = CameraManager.getInstance();
 
@@ -372,17 +384,20 @@ export class SimulationBattleFieldView implements Component {
         const backgroundRenderer = new BackgroundRendererV2();
         const backgroundGroup = await backgroundRenderer.build(backgroundFrame);
         scene.add(backgroundGroup);
+        onResize.add('layout', (w, h) => backgroundRenderer.resize(backgroundFrame, backgroundGroup, w, h));
 
         const yourFieldAreaFrame = createDefaultYourFieldAreaFrame();
         const yourFieldAreaRenderer = new YourFieldAreaRendererV2();
         const yourFieldAreaGroup = await yourFieldAreaRenderer.build(yourFieldAreaFrame);
         scene.add(yourFieldAreaGroup);
+        onResize.add('layout', (w, h) => yourFieldAreaRenderer.resize(yourFieldAreaFrame, yourFieldAreaGroup, w, h));
 
         // Pilot E new — opponent field area + opponent units
         const opponentFieldAreaFrame = createDefaultOpponentFieldAreaFrame();
         const opponentFieldAreaRenderer = new OpponentFieldAreaRendererV2();
         const opponentFieldAreaGroup = await opponentFieldAreaRenderer.build(opponentFieldAreaFrame);
         scene.add(opponentFieldAreaGroup);
+        onResize.add('layout', (w, h) => opponentFieldAreaRenderer.resize(opponentFieldAreaFrame, opponentFieldAreaGroup, w, h));
 
         // 필드 영역 전체에 겨냥 테두리를 붙일 때 매달리는 빈 자리 둘.
         //
@@ -392,12 +407,18 @@ export class SimulationBattleFieldView implements Component {
         scene.add(opponentFieldNeonHost);
         const yourFieldNeonHost = fieldNeonHostRenderer.build(yourFieldAreaFrame);
         scene.add(yourFieldNeonHost);
+        onResize.add('layout', (w, h) => {
+            fieldNeonHostRenderer.resize(opponentFieldNeonHost, opponentFieldAreaFrame, w, h);
+            fieldNeonHostRenderer.resize(yourFieldNeonHost, yourFieldAreaFrame, w, h);
+        });
 
         // 상대 본체를 누를 수 있는 영역. 보이지 않는 판이다.
         const masterAreaFrame = createOpponentMasterAreaFrame();
         const masterAreaRenderer = new OpponentMasterAreaRendererV2();
         const masterGroup = await masterAreaRenderer.build(masterAreaFrame);
         scene.add(masterGroup);
+        // 안 보이는 판이라 안 맞아도 눈에 안 띈다. 창 크기 문제가 여기서 여러 번 났다.
+        onResize.add('layout', (w, h) => masterAreaRenderer.resize(masterAreaFrame, masterGroup, w, h));
 
         // 상대 본체 HP는 전투가 든다. 여기서는 표기만 맞춘다.
 
@@ -405,6 +426,7 @@ export class SimulationBattleFieldView implements Component {
         const opponentMasterHpRenderer = new MasterHpRendererV2();
         const opponentMasterHpGroup = await opponentMasterHpRenderer.build(opponentMasterHpFrame);
         scene.add(opponentMasterHpGroup);
+        onResize.add('layout', (w, h) => opponentMasterHpRenderer.resize(opponentMasterHpFrame, opponentMasterHpGroup, w, h));
 
         // ── 메인 캐릭터(본체) HP ──────────────────────────────────────────────────
         // 수치는 hp/{n}.png 이미지에 새겨져 있고, 렌더러가 HP가 바뀔 때마다 텍스처를
@@ -413,6 +435,7 @@ export class SimulationBattleFieldView implements Component {
         const masterHpRenderer = new MasterHpRendererV2();
         const masterHpGroup = await masterHpRenderer.build(masterHpFrame);
         scene.add(masterHpGroup);
+        onResize.add('layout', (w, h) => masterHpRenderer.resize(masterHpFrame, masterHpGroup, w, h));
         // 내 본체 HP도 전투가 든다.
 
         // Pilot B — hand row (6장으로 확장해 페이지네이션 검증)
@@ -548,6 +571,7 @@ export class SimulationBattleFieldView implements Component {
         const lostZonePopupRenderer = new CardGridPopupRenderer();
         const lostZonePanelGroup = await lostZonePanelRenderer.build(lostZonePanelFrame);
         scene.add(lostZonePanelGroup);
+        onResize.add('layout', (w, h) => lostZonePanelRenderer.resize(lostZonePanelFrame, lostZonePanelGroup, w, h));
 
         // ── Opponent Lost Zone — mirror of Your Lost Zone, with its own panel, popup, and repo.
         const opponentLostZonePanelFrame = createDefaultOpponentLostZonePanelFrame();
@@ -558,6 +582,7 @@ export class SimulationBattleFieldView implements Component {
         const opponentLostZonePopupRenderer = new CardGridPopupRenderer();
         const opponentLostZonePanelGroup = await opponentLostZonePanelRenderer.build(opponentLostZonePanelFrame);
         scene.add(opponentLostZonePanelGroup);
+        onResize.add('layout', (w, h) => opponentLostZonePanelRenderer.resize(opponentLostZonePanelFrame, opponentLostZonePanelGroup, w, h));
 
 
         // ── Turn-end button — right-side click zone that hands control to the opponent.
@@ -565,6 +590,8 @@ export class SimulationBattleFieldView implements Component {
         const turnEndButtonRenderer = new TurnEndButtonRendererV2();
         const turnEndButtonGroup = await turnEndButtonRenderer.build(turnEndButtonFrame);
         scene.add(turnEndButtonGroup);
+        // 육각형 자리가 창 크기에서 나온다. 안 다시 재면 네온 테두리와 누름 자리가 처음 크기에 남는다.
+        onResize.add('layout', (w, h) => turnEndButtonRenderer.resize(turnEndButtonFrame, turnEndButtonGroup, w, h));
         // Declared here (not next to the 'f' handler that increments it) because the drop
         // handler runs earlier in the file.
 
@@ -591,47 +618,6 @@ export class SimulationBattleFieldView implements Component {
         });
 
 
-        let opponentLostZonePopupGroup: THREE.Group | null = null;
-        let opponentLostZonePage = 0;
-        const opponentLostZoneCardsPerPage =
-            opponentLostZonePopupFrame.cardColumns * opponentLostZonePopupFrame.rowsPerPage;
-
-        const buildOpponentLostZonePopupForCurrentPage = async (): Promise<THREE.Group> => {
-            const all = [...view.opponentLostZoneCards()];
-            const start = opponentLostZonePage * opponentLostZoneCardsPerPage;
-            const slice = all.slice(start, start + opponentLostZoneCardsPerPage);
-            const resolved = resolveCards(slice, 'opponent-lost-zone');
-            return opponentLostZonePopupRenderer.build(opponentLostZonePopupFrame, resolved);
-        };
-
-        const openOpponentLostZonePopup = async (): Promise<void> => {
-            if (opponentLostZonePopupGroup) return;
-            // Modal mutex — close any other centred popup first so they don't stack.
-            if (lostZonePopupGroup) closeLostZonePopup();
-            if (tombPopupGroup) closeTombPopup();
-            if (opponentTombPopupGroup) closeOpponentTombPopup();
-            opponentLostZonePopupGroup = await buildOpponentLostZonePopupForCurrentPage();
-            scene.add(opponentLostZonePopupGroup);
-        };
-
-        const closeOpponentLostZonePopup = (): void => {
-            if (!opponentLostZonePopupGroup) return;
-            scene.remove(opponentLostZonePopupGroup);
-            opponentLostZonePopupRenderer.dispose(opponentLostZonePopupGroup);
-            opponentLostZonePopupGroup = null;
-            opponentLostZonePage = 0;
-        };
-
-        const reloadOpponentLostZonePopup = async (): Promise<void> => {
-            if (!opponentLostZonePopupGroup) return;
-            scene.remove(opponentLostZonePopupGroup);
-            opponentLostZonePopupRenderer.dispose(opponentLostZonePopupGroup);
-            opponentLostZonePopupGroup = await buildOpponentLostZonePopupForCurrentPage();
-            scene.add(opponentLostZonePopupGroup);
-        };
-
-        const opponentLostZoneTotalPages = (): number =>
-            Math.max(1, Math.ceil(view.opponentLostZoneCards().length / opponentLostZoneCardsPerPage));
 
         // ── Your Tomb — gravestone-shaped panel + popup (same as Your Lost Zone). ─────────
         const tombPanelFrame = createDefaultYourTombPanelFrame();
@@ -641,48 +627,11 @@ export class SimulationBattleFieldView implements Component {
         const tombPopupRenderer = new CardGridPopupRenderer();
         const tombPanelGroup = await tombPanelRenderer.build(tombPanelFrame);
         scene.add(tombPanelGroup);
+        // 판 모양이 창 너비와 높이에서 나오고 누르는 자리는 그때그때 다시 재므로,
+        // 안 다시 그리면 그림과 누르는 자리가 어긋난다.
+        onResize.add('layout', (w, h) => tombPanelRenderer.resize(tombPanelFrame, tombPanelGroup, w, h));
 
 
-        let tombPopupGroup: THREE.Group | null = null;
-        let tombPage = 0;
-        const tombCardsPerPage = tombPopupFrame.cardColumns * tombPopupFrame.rowsPerPage;
-
-        const buildTombPopupForCurrentPage = async (): Promise<THREE.Group> => {
-            const all = [...view.yourTombCards()];
-            const start = tombPage * tombCardsPerPage;
-            const slice = all.slice(start, start + tombCardsPerPage);
-            const resolved = resolveCards(slice, 'tomb');
-            return tombPopupRenderer.build(tombPopupFrame, resolved);
-        };
-
-        const openTombPopup = async (): Promise<void> => {
-            if (tombPopupGroup) return;
-            // Modal mutex — close every other centred popup first.
-            if (lostZonePopupGroup) closeLostZonePopup();
-            if (opponentLostZonePopupGroup) closeOpponentLostZonePopup();
-            if (opponentTombPopupGroup) closeOpponentTombPopup();
-            tombPopupGroup = await buildTombPopupForCurrentPage();
-            scene.add(tombPopupGroup);
-        };
-
-        const closeTombPopup = (): void => {
-            if (!tombPopupGroup) return;
-            scene.remove(tombPopupGroup);
-            tombPopupRenderer.dispose(tombPopupGroup);
-            tombPopupGroup = null;
-            tombPage = 0;
-        };
-
-        const reloadTombPopup = async (): Promise<void> => {
-            if (!tombPopupGroup) return;
-            scene.remove(tombPopupGroup);
-            tombPopupRenderer.dispose(tombPopupGroup);
-            tombPopupGroup = await buildTombPopupForCurrentPage();
-            scene.add(tombPopupGroup);
-        };
-
-        const tombTotalPages = (): number =>
-            Math.max(1, Math.ceil(view.yourTombCards().length / tombCardsPerPage));
 
         // ── Opponent Tomb — 180° mirror of Your Tomb. Same popup reuse pattern as opp LZ. ──
         const opponentTombPanelFrame = createDefaultOpponentTombPanelFrame();
@@ -691,92 +640,10 @@ export class SimulationBattleFieldView implements Component {
         const opponentTombPopupRenderer = new CardGridPopupRenderer();
         const opponentTombPanelGroup = await opponentTombPanelRenderer.build(opponentTombPanelFrame);
         scene.add(opponentTombPanelGroup);
+        onResize.add('layout', (w, h) => opponentTombPanelRenderer.resize(opponentTombPanelFrame, opponentTombPanelGroup, w, h));
 
 
-        let opponentTombPopupGroup: THREE.Group | null = null;
-        let opponentTombPage = 0;
-        const opponentTombCardsPerPage =
-            opponentTombPopupFrame.cardColumns * opponentTombPopupFrame.rowsPerPage;
 
-        const buildOpponentTombPopupForCurrentPage = async (): Promise<THREE.Group> => {
-            const all = [...view.opponentTombCards()];
-            const start = opponentTombPage * opponentTombCardsPerPage;
-            const slice = all.slice(start, start + opponentTombCardsPerPage);
-            const resolved = resolveCards(slice, 'opponent-tomb');
-            return opponentTombPopupRenderer.build(opponentTombPopupFrame, resolved);
-        };
-
-        const openOpponentTombPopup = async (): Promise<void> => {
-            if (opponentTombPopupGroup) return;
-            // Modal mutex — close every other centred popup first.
-            if (lostZonePopupGroup) closeLostZonePopup();
-            if (opponentLostZonePopupGroup) closeOpponentLostZonePopup();
-            if (tombPopupGroup) closeTombPopup();
-            opponentTombPopupGroup = await buildOpponentTombPopupForCurrentPage();
-            scene.add(opponentTombPopupGroup);
-        };
-
-        const closeOpponentTombPopup = (): void => {
-            if (!opponentTombPopupGroup) return;
-            scene.remove(opponentTombPopupGroup);
-            opponentTombPopupRenderer.dispose(opponentTombPopupGroup);
-            opponentTombPopupGroup = null;
-            opponentTombPage = 0;
-        };
-
-        const reloadOpponentTombPopup = async (): Promise<void> => {
-            if (!opponentTombPopupGroup) return;
-            scene.remove(opponentTombPopupGroup);
-            opponentTombPopupRenderer.dispose(opponentTombPopupGroup);
-            opponentTombPopupGroup = await buildOpponentTombPopupForCurrentPage();
-            scene.add(opponentTombPopupGroup);
-        };
-
-        const opponentTombTotalPages = (): number =>
-            Math.max(1, Math.ceil(view.opponentTombCards().length / opponentTombCardsPerPage));
-
-        // Popup is built on demand when panel is clicked; null when hidden.
-        let lostZonePopupGroup: THREE.Group | null = null;
-        let lostZonePage = 0;
-        const lostZoneCardsPerPage = lostZonePopupFrame.cardColumns * lostZonePopupFrame.rowsPerPage;
-
-        const buildLostZonePopupForCurrentPage = async (): Promise<THREE.Group> => {
-            const all = [...view.yourLostZoneCards()];
-            const start = lostZonePage * lostZoneCardsPerPage;
-            const slice = all.slice(start, start + lostZoneCardsPerPage);
-            const resolved = resolveCards(slice, 'lost-zone');
-            return lostZonePopupRenderer.build(lostZonePopupFrame, resolved);
-        };
-
-        const openLostZonePopup = async (): Promise<void> => {
-            if (lostZonePopupGroup) return;
-            // Modal mutex — only one centred popup at a time.
-            if (opponentLostZonePopupGroup) closeOpponentLostZonePopup();
-            if (tombPopupGroup) closeTombPopup();
-            if (opponentTombPopupGroup) closeOpponentTombPopup();
-            lostZonePopupGroup = await buildLostZonePopupForCurrentPage();
-            scene.add(lostZonePopupGroup);
-        };
-
-        const closeLostZonePopup = (): void => {
-            if (!lostZonePopupGroup) return;
-            scene.remove(lostZonePopupGroup);
-            lostZonePopupRenderer.dispose(lostZonePopupGroup);
-            lostZonePopupGroup = null;
-            // Reset to first page when closing so the next open starts fresh.
-            lostZonePage = 0;
-        };
-
-        const reloadLostZonePopup = async (): Promise<void> => {
-            if (!lostZonePopupGroup) return;
-            scene.remove(lostZonePopupGroup);
-            lostZonePopupRenderer.dispose(lostZonePopupGroup);
-            lostZonePopupGroup = await buildLostZonePopupForCurrentPage();
-            scene.add(lostZonePopupGroup);
-        };
-
-        const lostZoneTotalPages = (): number =>
-            Math.max(1, Math.ceil(view.yourLostZoneCards().length / lostZoneCardsPerPage));
 
         // 확인용 판을 여기서 한 번에 차린다.
         //
@@ -826,6 +693,7 @@ export class SimulationBattleFieldView implements Component {
         const handPageButtonsRenderer = new HandPageButtonsRendererV2();
         const handPageButtonsGroup = await handPageButtonsRenderer.build(handPageButtonsFrame);
         scene.add(handPageButtonsGroup);
+        onResize.add('layout', (w, h) => handPageButtonsRenderer.resize(handPageButtonsFrame, handPageButtonsGroup, w, h));
 
         // NeonBorder effects — ally (blue, single-select) + enemy (red, multi-select)
         const neonBorderFrame = createAllyNeonBorderFrame();
@@ -869,6 +737,35 @@ export class SimulationBattleFieldView implements Component {
             selectedAttackerEntry = null;
             interactionState = 'idle';
         }
+
+        // 무덤 둘과 로스트 존 둘의 창. 한 번에 하나만 열린다.
+        //
+        // 넷의 다른 점은 프레임과 [어느 목록을 보여 주는가] 뿐이다. 그 목록이 넷을 가른다 —
+        // 시체 폭발은 아군을 내 무덤으로, 해골 군주 레오닉은 상대 손패를 상대 로스트 존으로
+        // 보낸다. 열고 닫고 쪽을 넘기는 일만 함께 쓴다.
+        const zonePopups = new ExclusivePopups();
+        const lostZonePopup = zonePopups.register(new PagedCardPopup(
+            scene, lostZonePopupRenderer,
+            {frame: lostZonePopupFrame, cards: () => view.yourLostZoneCards(), label: 'lost-zone'},
+            resolveCards,
+        ));
+        const opponentLostZonePopup = zonePopups.register(new PagedCardPopup(
+            scene, opponentLostZonePopupRenderer,
+            {frame: opponentLostZonePopupFrame, cards: () => view.opponentLostZoneCards(),
+             label: 'opponent-lost-zone'},
+            resolveCards,
+        ));
+        const tombPopup = zonePopups.register(new PagedCardPopup(
+            scene, tombPopupRenderer,
+            {frame: tombPopupFrame, cards: () => view.yourTombCards(), label: 'tomb'},
+            resolveCards,
+        ));
+        const opponentTombPopup = zonePopups.register(new PagedCardPopup(
+            scene, opponentTombPopupRenderer,
+            {frame: opponentTombPopupFrame, cards: () => view.opponentTombCards(),
+             label: 'opponent-tomb'},
+            resolveCards,
+        ));
 
         // ── 모래시계 만료 시의 턴 넘김 조정 ──────────────────────────────────────────
         // 만료 시점의 상태를 두 가지로 구분한다.
@@ -1020,7 +917,7 @@ export class SimulationBattleFieldView implements Component {
         // consume the click before hand/opponent/page handlers run. Screen → world coords:
         //   world_x = clientX - width/2     (OrthographicCamera centered at 0, width full-span)
         //   world_y = height/2 - clientY    (y flipped: screen y grows down, world y grows up)
-        rendererManager.getDomElement().addEventListener('mousedown', (e: MouseEvent) => {
+        pointerRouter.add('modal', (e: MouseEvent) => {
             if (e.button !== 0) return;
             const w = window.innerWidth;
             const h = window.innerHeight;
@@ -1184,7 +1081,7 @@ export class SimulationBattleFieldView implements Component {
             // so the new turn owner (the opponent) gets a fresh budget, and the guide banner
             // announces the handover the same way the drag hint greets you on entry — all of
             // which lives in endYourTurn(), shared with the hourglass-expiry trigger.
-            if (!lostZonePopupGroup && !opponentLostZonePopupGroup) {
+            if (!zonePopups.anyOpen()) {
                 if (isPointInsideTurnEndButton(worldX, worldY, turnEndButtonFrame, w, h)) {
                     e.stopImmediatePropagation();
                     endYourTurn('turn-end button');
@@ -1202,11 +1099,11 @@ export class SimulationBattleFieldView implements Component {
                 worldY >= yourPanelBounds.minY && worldY <= yourPanelBounds.maxY;
             if (onYourPanel) {
                 e.stopImmediatePropagation();
-                if (lostZonePopupGroup) {
-                    closeLostZonePopup();
+                if (lostZonePopup.isOpen()) {
+                    lostZonePopup.close();
                 } else {
                     guideRenderer.show(guideElement, '당신의 로스트 존입니다.', 3000);
-                    void openLostZonePopup();
+                    void zonePopups.openOnly(lostZonePopup);
                 }
                 return;
             }
@@ -1218,11 +1115,11 @@ export class SimulationBattleFieldView implements Component {
                 worldY >= oppPanelBounds.minY && worldY <= oppPanelBounds.maxY;
             if (onOppPanel) {
                 e.stopImmediatePropagation();
-                if (opponentLostZonePopupGroup) {
-                    closeOpponentLostZonePopup();
+                if (opponentLostZonePopup.isOpen()) {
+                    opponentLostZonePopup.close();
                 } else {
                     guideRenderer.show(guideElement, '상대방의 로스트 존입니다.', 3000);
-                    void openOpponentLostZonePopup();
+                    void zonePopups.openOnly(opponentLostZonePopup);
                 }
                 return;
             }
@@ -1230,11 +1127,11 @@ export class SimulationBattleFieldView implements Component {
             // ── 2b) Your Tomb panel (tombstone-shaped) ────────────────────────────────
             if (isPointInsideYourTomb(worldX, worldY, tombPanelFrame, w, h)) {
                 e.stopImmediatePropagation();
-                if (tombPopupGroup) {
-                    closeTombPopup();
+                if (tombPopup.isOpen()) {
+                    tombPopup.close();
                 } else {
                     guideRenderer.show(guideElement, '당신의 무덤입니다.', 3000);
-                    void openTombPopup();
+                    void zonePopups.openOnly(tombPopup);
                 }
                 return;
             }
@@ -1242,126 +1139,29 @@ export class SimulationBattleFieldView implements Component {
             // ── 2c) Opponent Tomb panel (inverted tombstone) ──────────────────────────
             if (isPointInsideOpponentTomb(worldX, worldY, opponentTombPanelFrame, w, h)) {
                 e.stopImmediatePropagation();
-                if (opponentTombPopupGroup) {
-                    closeOpponentTombPopup();
+                if (opponentTombPopup.isOpen()) {
+                    opponentTombPopup.close();
                 } else {
                     guideRenderer.show(guideElement, '상대방의 무덤입니다.', 3000);
-                    void openOpponentTombPopup();
+                    void zonePopups.openOnly(opponentTombPopup);
                 }
                 return;
             }
 
-            // ── 3) A popup is open → consume the click, check buttons, close on outside ─
-            // Only one popup can be open at a time (opens are modal-mutex'd above), so exactly
-            // one of these branches runs.
-            if (lostZonePopupGroup) {
+            // ── 3) 창이 열려 있으면 그 창이 누름을 먹는다 ──────────────────────────
+            //
+            // 쪽 넘기기 단추면 넘기고, 창 밖이면 닫고, 창 안이면 아무것도 안 하고 먹는다.
+            // 창 뒤의 카드가 집히면 안 되기 때문이다.
+            //
+            // 전에는 이 판단이 창마다 한 벌씩 네 벌 적혀 있었다. 이제 창이 스스로 한다.
+            sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
+            if (zonePopups.handleClick(sharedRaycaster, worldX, worldY, w, h)) {
                 e.stopImmediatePropagation();
-
-                sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
-                const hits = sharedRaycaster.intersectObjects(lostZonePopupGroup.children, true);
-                for (const hit of hits) {
-                    const bt = hit.object.userData.buttonType;
-                    if (bt === 'prev') {
-                        if (lostZonePage > 0) { lostZonePage--; void reloadLostZonePopup(); }
-                        return;
-                    }
-                    if (bt === 'next') {
-                        if (lostZonePage < lostZoneTotalPages() - 1) { lostZonePage++; void reloadLostZonePopup(); }
-                        return;
-                    }
-                }
-
-                const popupBounds = computeCardGridPopupBounds(lostZonePopupFrame, w, h);
-                const onPopup =
-                    worldX >= popupBounds.minX && worldX <= popupBounds.maxX &&
-                    worldY >= popupBounds.minY && worldY <= popupBounds.maxY;
-                if (!onPopup) closeLostZonePopup();
-                return;
             }
-
-            if (opponentLostZonePopupGroup) {
-                e.stopImmediatePropagation();
-
-                sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
-                const hits = sharedRaycaster.intersectObjects(opponentLostZonePopupGroup.children, true);
-                for (const hit of hits) {
-                    const bt = hit.object.userData.buttonType;
-                    if (bt === 'prev') {
-                        if (opponentLostZonePage > 0) { opponentLostZonePage--; void reloadOpponentLostZonePopup(); }
-                        return;
-                    }
-                    if (bt === 'next') {
-                        if (opponentLostZonePage < opponentLostZoneTotalPages() - 1) {
-                            opponentLostZonePage++; void reloadOpponentLostZonePopup();
-                        }
-                        return;
-                    }
-                }
-
-                // Opponent popup uses the SAME world bounds as Your popup (both centered, same size).
-                const popupBounds = computeCardGridPopupBounds(opponentLostZonePopupFrame, w, h);
-                const onPopup =
-                    worldX >= popupBounds.minX && worldX <= popupBounds.maxX &&
-                    worldY >= popupBounds.minY && worldY <= popupBounds.maxY;
-                if (!onPopup) closeOpponentLostZonePopup();
-                return;
-            }
-
-            if (tombPopupGroup) {
-                e.stopImmediatePropagation();
-
-                sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
-                const hits = sharedRaycaster.intersectObjects(tombPopupGroup.children, true);
-                for (const hit of hits) {
-                    const bt = hit.object.userData.buttonType;
-                    if (bt === 'prev') {
-                        if (tombPage > 0) { tombPage--; void reloadTombPopup(); }
-                        return;
-                    }
-                    if (bt === 'next') {
-                        if (tombPage < tombTotalPages() - 1) { tombPage++; void reloadTombPopup(); }
-                        return;
-                    }
-                }
-
-                // Tomb popup shares the lost-zone popup's world bounds (centred, same size).
-                const popupBounds = computeCardGridPopupBounds(tombPopupFrame, w, h);
-                const onPopup =
-                    worldX >= popupBounds.minX && worldX <= popupBounds.maxX &&
-                    worldY >= popupBounds.minY && worldY <= popupBounds.maxY;
-                if (!onPopup) closeTombPopup();
-                return;
-            }
-
-            if (opponentTombPopupGroup) {
-                e.stopImmediatePropagation();
-
-                sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
-                const hits = sharedRaycaster.intersectObjects(opponentTombPopupGroup.children, true);
-                for (const hit of hits) {
-                    const bt = hit.object.userData.buttonType;
-                    if (bt === 'prev') {
-                        if (opponentTombPage > 0) { opponentTombPage--; void reloadOpponentTombPopup(); }
-                        return;
-                    }
-                    if (bt === 'next') {
-                        if (opponentTombPage < opponentTombTotalPages() - 1) {
-                            opponentTombPage++; void reloadOpponentTombPopup();
-                        }
-                        return;
-                    }
-                }
-
-                const popupBounds = computeCardGridPopupBounds(opponentTombPopupFrame, w, h);
-                const onPopup =
-                    worldX >= popupBounds.minX && worldX <= popupBounds.maxX &&
-                    worldY >= popupBounds.minY && worldY <= popupBounds.maxY;
-                if (!onPopup) closeOpponentTombPopup();
-            }
-        }, true);
+        });
 
         // Page button click
-        rendererManager.getDomElement().addEventListener('mousedown', (e: MouseEvent) => {
+        pointerRouter.add('hud', (e: MouseEvent) => {
             if (e.button !== 0) return;
             sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
             const hits = sharedRaycaster.intersectObjects(handPageButtonsGroup.children, false);
@@ -1655,7 +1455,7 @@ export class SimulationBattleFieldView implements Component {
 
         // Active panel button click + opponent card click (attack targeting).
         // stopImmediatePropagation prevents HandInteractionBridge from stealing the same click.
-        rendererManager.getDomElement().addEventListener('mousedown', withResolving(async (e: MouseEvent) => {
+        pointerRouter.add('target', withResolving(async (e: MouseEvent) => {
             if (e.button !== 0) return;
             sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
 
@@ -1927,7 +1727,8 @@ export class SimulationBattleFieldView implements Component {
         rendererManager.getDomElement().addEventListener('contextmenu', (e: Event) => {
             e.preventDefault();
         });
-        rendererManager.getDomElement().addEventListener('mousedown', async (e: MouseEvent) => {
+        // 오른쪽 단추. 왼쪽과 겨루지 않지만 누름 순서를 한 자리에서 보게 같이 둔다.
+        pointerRouter.add('target', (e: MouseEvent) => void (async () => {
             if (e.button !== 2) return;
             e.preventDefault();
 
@@ -1987,7 +1788,7 @@ export class SimulationBattleFieldView implements Component {
             activePanelGroup = await activePanelRenderer.build(activePanelFrame, clickPos, buttonSpecs);
             scene.add(activePanelGroup);
             interactionState = 'panelVisible';
-        });
+        })());
 
         // Field energy → card attachment. Intercepts clicks BEFORE bridge when fieldEnergyActive.
         //
@@ -1996,6 +1797,8 @@ export class SimulationBattleFieldView implements Component {
         // 요구하는 스킬이 추가될 예정이라 총량만으로는 판정할 수 없다.
         // 화면은 그 위에 얹은 그림만 든다.
         const cardEnergyBadge = new CardEnergyBadgeRenderer();
+        // 카드가 새 크기로 다시 재진 뒤에 얹는다. 아이콘 크기가 카드 크기에서 나온다.
+        onResize.add('attached', () => void cardEnergyBadge.resizeAll(handCardFrame));
 
         // Race HUD에서 선택 중인 종족. 필드 에너지를 카드에 붙일 때 이 값이 그대로 기록되므로
         // 부착 로직(attachEnergyToCard)보다 앞에 선언한다. prev/next 클릭 존이 갱신한다.
@@ -2125,7 +1928,7 @@ export class SimulationBattleFieldView implements Component {
 
 
         // Intercept card clicks when field energy is active — before bridge
-        rendererManager.getDomElement().addEventListener('mousedown', (e: MouseEvent) => {
+        pointerRouter.add('intercept', (e: MouseEvent) => {
             if (e.button !== 0 || !fieldEnergyActive) return;
             sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
             const hits = sharedRaycaster.intersectObjects(handGroup.children, true);
@@ -2904,10 +2707,10 @@ export class SimulationBattleFieldView implements Component {
         const openLeonikPopup = async (sourceEntry: HandEntry): Promise<void> => {
             if (leonikPopupGroup) return;
             // Modal mutex — close every other centred popup first.
-            if (lostZonePopupGroup) closeLostZonePopup();
-            if (opponentLostZonePopupGroup) closeOpponentLostZonePopup();
-            if (tombPopupGroup) closeTombPopup();
-            if (opponentTombPopupGroup) closeOpponentTombPopup();
+            lostZonePopup.close();
+            opponentLostZonePopup.close();
+            tombPopup.close();
+            opponentTombPopup.close();
 
             leonikSourceEntry = sourceEntry;
             leonikEligibleDeckIndices = collectLeonikEligibleIndices();
@@ -3447,6 +3250,13 @@ export class SimulationBattleFieldView implements Component {
                 },
             },
         );
+        // 등록을 다 했다. 이제 듣기 시작한다.
+        //
+        // 손패 끌어다 놓기보다 앞에 붙는다. 창이 열려 있을 때 누름이 손패로 새어 나가면
+        // 안 되기 때문이다. 전에는 capture 표시로 그것을 맞췄다.
+        pointerRouter.attach('mousedown', (target, type, listener, options) =>
+            this.listen(target, type, listener, options as AddEventListenerOptions));
+
         bridge.attach();
 
         // 카드 한 장을 뽑고 화면에 붙인다. 뽑을 수 있는지는 전투가 판단한다.
@@ -3824,10 +3634,10 @@ export class SimulationBattleFieldView implements Component {
             try {
                 do {
                     popupRebuildAgain = false;
-                    await reloadTombPopup();
-                    await reloadOpponentTombPopup();
-                    await reloadLostZonePopup();
-                    await reloadOpponentLostZonePopup();
+                    await tombPopup.reload();
+                    await opponentTombPopup.reload();
+                    await lostZonePopup.reload();
+                    await opponentLostZonePopup.reload();
                     await reloadLeonikPopup();
                 } while (popupRebuildAgain);
             } finally {
@@ -3843,24 +3653,12 @@ export class SimulationBattleFieldView implements Component {
             }, 150);
         };
 
-        this.listen(window, 'resize', () => {
-            const width = window.innerWidth;
-            const height = window.innerHeight;
-
+        // 남은 것들을 등록한다. 만드는 자리가 여기저기라 아직 한데 모여 있는 것도 있다.
+        //
+        // 손패 카드는 목록을 훑어야 하고, HUD 는 DOM 이라 같은 모양이 아니다.
+        onResize.add('layout', (width, height) => {
             cameraManager.updateAspect(width, height);
             rendererManager.resize(width, height);
-
-            backgroundRenderer.resize(backgroundFrame, backgroundGroup, width, height);
-            yourFieldAreaRenderer.resize(yourFieldAreaFrame, yourFieldAreaGroup, width, height);
-            opponentFieldAreaRenderer.resize(opponentFieldAreaFrame, opponentFieldAreaGroup, width, height);
-
-            // 무덤 판과 로스트 존 판도 다시 잰다. 판 모양이 창 너비와 높이에서 나오고,
-            // 누르는 자리는 그때그때 창 크기로 다시 재므로, 안 다시 그리면 그림과
-            // 누르는 자리가 어긋난다.
-            tombPanelRenderer.resize(tombPanelFrame, tombPanelGroup, width, height);
-            opponentTombPanelRenderer.resize(opponentTombPanelFrame, opponentTombPanelGroup, width, height);
-            lostZonePanelRenderer.resize(lostZonePanelFrame, lostZonePanelGroup, width, height);
-            opponentLostZonePanelRenderer.resize(opponentLostZonePanelFrame, opponentLostZonePanelGroup, width, height);
 
             const cardRenderer = handRenderer.getCardRenderer();
             for (const entry of entries) {
@@ -3876,10 +3674,6 @@ export class SimulationBattleFieldView implements Component {
                 height,
                 opponentAliveIds(),
             );
-            handPageButtonsRenderer.resize(handPageButtonsFrame, handPageButtonsGroup, width, height);
-            // 턴 종료 버튼도 다시 잰다. 육각형 자리가 창 크기에서 나오므로,
-            // 안 다시 재면 네온 테두리와 누름 자리가 처음 크기에 남는다.
-            turnEndButtonRenderer.resize(turnEndButtonFrame, turnEndButtonGroup, width, height);
 
             energyRenderer.update(energyFrame, energyElement, width, height);
             opponentEnergyRenderer.resize(opponentFieldEnergyAreaFrame, opponentEnergyGroup, width, height);
@@ -3889,57 +3683,52 @@ export class SimulationBattleFieldView implements Component {
             guideRenderer.update(guideFrame, guideElement, width, height);
             timerRenderer.update(timerFrame, timerElement, width, height);
             turnRenderer.update(turnFrame, turnElement, width, height);
-            masterHpRenderer.resize(masterHpFrame, masterHpGroup, width, height);
-            opponentMasterHpRenderer.resize(opponentMasterHpFrame, opponentMasterHpGroup, width, height);
+        });
 
-            // 본체를 덮은 판과 필드 두 곳의 겨냥 자리를 다시 잰다. 셋 다 만들 때 창 크기를
-            // 재고 그 뒤로 안 쟀다. 배경만 따라 줄어들고 이 셋은 옛 자리에 남아 있어서,
-            // 겨냥 테두리가 대상에서 벗어난 데 그려졌다.
-            masterAreaRenderer.resize(masterAreaFrame, masterGroup, width, height);
-
-            fieldNeonHostRenderer.resize(
-                opponentFieldNeonHost, opponentFieldAreaFrame, width, height,
-            );
-            fieldNeonHostRenderer.resize(
-                yourFieldNeonHost, yourFieldAreaFrame, width, height,
-            );
-
-            // 붙어 있는 테두리는 붙일 때 크기를 읽어 둔 것이라, 대상이 커지거나 작아지면
-            // 다시 읽어야 한다. 카드에 붙은 것도 함께 다시 읽는다.
+        // 붙어 있는 테두리는 붙일 때 대상의 크기를 읽어 둔 것이라, 대상이 다시 재진 뒤에
+        // 다시 읽어야 한다.
+        onResize.add('attached', () => {
             enemyNeonEffect.refreshSizes();
             allyTargetNeonEffect.refreshSizes();
             neonEffect.refreshSizes();
+        });
 
-            // 스킬 자리에 서 있는 카드를 새 스킬 자리로 옮긴다. 그 자리도 창 높이에서 나온다.
-            if (skillTripParked.size > 0) {
-                const slot = createCardSkillPositionFrame(height);
-                for (const group of skillTripParked) {
-                    group.position.set(slot.x, slot.y, group.position.z);
-                }
-
+        // 스킬 자리에 서 있는 카드를 새 스킬 자리로 옮긴다. 그 자리도 창 높이에서 나온다.
+        onResize.add('attached', (_width, height) => {
+            if (skillTripParked.size === 0) return;
+            const slot = createCardSkillPositionFrame(height);
+            for (const group of skillTripParked) {
+                group.position.set(slot.x, slot.y, group.position.z);
             }
+        });
 
-            // 도는 중인 연출도 창 크기에 맞춘다. 안 돌고 있으면 아무것도 안 한다.
+        // 도는 중인 연출도 창 크기에 맞춘다. 안 돌고 있으면 아무것도 안 한다.
+        onResize.add('attached', (width, height) => {
             for (const effect of resizableEffects) effect.resize(width, height);
             for (const effect of runningEffects) effect.resize(width, height);
+        });
 
-            // 액티브 패널을 카드 따라 옮긴다. 카드가 새 자리로 간 뒤라야 하므로 맨 마지막에 한다.
-            if (activePanelGroup && activePanelAnchorOnCard) {
-                const cardWidth = handCardFrame.cardWidthRatio * width;
-                const cardHeight = cardWidth * handCardFrame.cardAspect;
-                const cardPos = activePanelAnchorOnCard.entry.group.position;
-                activePanelRenderer.resize(
-                    activePanelFrame,
-                    activePanelGroup,
-                    {
-                        x: cardPos.x + activePanelAnchorOnCard.xRatio * cardWidth,
-                        y: cardPos.y + activePanelAnchorOnCard.yRatio * cardHeight,
-                    },
-                    width,
-                );
-            }
+        // 액티브 패널은 카드를 따라간다. 카드가 새 자리로 간 뒤여야 하므로 맨 마지막이다.
+        onResize.add('last', (width) => {
+            if (!activePanelGroup || !activePanelAnchorOnCard) return;
+            const cardWidth = handCardFrame.cardWidthRatio * width;
+            const cardHeight = cardWidth * handCardFrame.cardAspect;
+            const cardPos = activePanelAnchorOnCard.entry.group.position;
+            activePanelRenderer.resize(
+                activePanelFrame,
+                activePanelGroup,
+                {
+                    x: cardPos.x + activePanelAnchorOnCard.xRatio * cardWidth,
+                    y: cardPos.y + activePanelAnchorOnCard.yRatio * cardHeight,
+                },
+                width,
+            );
+        });
 
-            requestPopupRebuild();
+        onResize.add('last', () => requestPopupRebuild());
+
+        this.listen(window, 'resize', () => {
+            onResize.apply(window.innerWidth, window.innerHeight);
         });
     }
 }
