@@ -138,8 +138,8 @@
 | **R2-110** | Structure | Platform | [규칙·진행 중인 판·그리기 셋의 경계를 유지하는지 검사](R2-110-boundary-check.md) | R2-107 | **완료** |
 | **R2-111** | Structure | Battle Ability | [신규 카드 추가 시 기존 카드의 코드를 고치지 않도록 카드별로 분리](R2-111-card-per-file.md) | R2-109 | **완료. 규칙 쪽만. 연출은 R2-116** |
 | **R2-112** | Structure | Battle | [전투 화면이 전투 규칙을 직접 구동하지 않게 분리](R2-112-session-runs-rules.md) | R2-111 | **완료** |
-| **R2-113** | Structure | Battle | 시작 상태를 만드는 일을 전투 화면 밖으로 분리 | R2-112 | 예정. **확인용 화면이라 있는 것이다. 지금 잘못된 자리가 아니다 (규칙 25 의 예외)** |
-| **R2-114** | Rendering | Battle 공용 | 화면이 직접 그리던 다섯 덩어리를 렌더러가 맡게 한다 | R2-107 | 예정 |
+| **R2-113** | Structure | Battle | [전투 화면이 확인용 시작 상태를 직접 만들지 않게 분리](R2-113-simulation-setup.md) | R2-112 | **완료** |
+| **R2-114** | Rendering | Battle 공용 | [전투 화면이 메시를 직접 만들지 않게 분리](R2-114-view-stops-building-meshes.md) | R2-107 | **완료** |
 | **R2-115** | Structure | Battle Field | 필드 영역이 그림을 들지 않게 한다 | R2-107 | 예정 |
 | **R2-116** | Structure | Battle | 전투 화면을 맡은 일별로 가른다 | R2-114 | 예정 |
 | **R2-117** | Structure | Battle Ability | 신규 카드 추가 시 전투 화면을 고치지 않도록 연출을 카드별로 분리 | R2-116 | 예정. **R2-111 의 나머지 절반. 화면이 한 덩어리라 R2-116 뒤에 온다** |
