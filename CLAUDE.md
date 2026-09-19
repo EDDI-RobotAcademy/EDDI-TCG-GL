@@ -42,6 +42,9 @@ src/battle/
 │
 ├── session/         The currently active battle, held in memory
 │
+├── simulation/      The starting board the verification screen opens with —
+│                    replaced by server-provided state when the network path arrives
+│
 └── ui/              Everything that draws
     ├── animation/   Skill-slot position, attack choreography, per-card effects
     ├── hand/ field/ field_energy/ zone/ unit/ turn/ active_panel/ master_hp/ card_grid_popup/
@@ -150,7 +153,10 @@ server
 
 `src/battle/ui/view/SimulationBattleFieldView.ts` is currently the battle verification screen, and it is reachable from the lobby through the test-battle entry.
 
-Its local battle setup — seeding decks, hands, zones, and the opponent field — exists to give a self-contained environment where the battle UI can be verified without a server. **This does not define the authority model of a real match.** When the network battle path arrives, server-provided state and results replace that simulation-only initialization.
+Its local battle setup — seeding decks, hands, zones, and the opponent field — lives in
+`src/battle/simulation/` and exists to give a self-contained environment where the battle UI can
+be verified without a server. It is one call from the view, not lines scattered through the
+drawing code, so the network path removes it by deleting that call. **This does not define the authority model of a real match.** When the network battle path arrives, server-provided state and results replace that simulation-only initialization.
 
 Two things that look alike are not the same:
 
@@ -215,12 +221,10 @@ The **Checked by** column names the rule; blank means a human has to notice.
 | UI | applying a state change it inferred from an event | ✗ | |
 | simulation harness | building a starting state locally | ⭕ | |
 
-One crossing is known and listed as an exception inside `ui-no-domain-object`. Delete the
-exception when you fix the crossing — do not add a new one:
-
-| Crossing | Fixed by |
-|---|---|
-| the battle screen builds hand and field cards itself | R2-113 |
+`ui-no-domain-object` has **no exceptions left** — as of R2-113 nothing under `src/battle/ui/`
+touches a domain object. Do not add one back. `src/battle/simulation/` is outside that rule on
+purpose: building a starting state locally is the one allowed way to hand the domain raw objects,
+and it lives in its own folder so the allowance cannot leak into drawing code.
 
 ### What may cross each boundary
 

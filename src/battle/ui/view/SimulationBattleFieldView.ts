@@ -1,11 +1,17 @@
 import { CameraManager } from "../../../core/camera/CameraManager";
 import { SeaOfSpecterEffect } from "../animation/skill/veln/SeaOfSpecterEffect";
 import { installTween } from "../../../core/tween/Tween";
-import { HandCard } from "../../domain/battle/HandCard";
 import { CardCatalog } from "../../domain/ability/CardCatalog";
+import {
+    SIMULATION_HAND_CARD_IDS, SIMULATION_OPPONENT_CARD_IDS, SIMULATION_OPPONENT_ENERGY,
+    seedSimulationBattle,
+} from "../../simulation/SimulationBattleSetup";
+import { createOpponentMasterAreaFrame } from "../master_area/frame/OpponentMasterAreaFrame";
+import { OpponentMasterAreaRendererV2 } from "../master_area/renderer/OpponentMasterAreaRendererV2";
+import { CardEnergyBadgeRenderer } from "../card_energy/renderer/CardEnergyBadgeRenderer";
+import { LeonikPopupPartsRenderer } from "../leonik_popup/renderer/LeonikPopupPartsRenderer";
 import { AttackChoice, BattleCommand } from "../../domain/flow/BattleCommand";
 import { BattleEvent } from "../../domain/flow/BattleEvent";
-import { FieldCard } from "../../domain/battle/FieldCard";
 import { findCardAbility, cardIdsTargeting } from "../../domain/ability/CardAbility";
 import { AbilityTarget } from "../../domain/ability/AbilityTarget";
 import { RendererManager } from "../../../core/renderer/RendererManager";
@@ -329,8 +335,6 @@ export class SimulationBattleFieldView implements Component {
         // 판을 차리는 열 군데만 아직 전투를 직접 쓴다. R2-113 에서 뺀다.
         const view = session.read();
 
-        // 이 화면의 시작 필드 에너지다. 실제 대전에서는 0 에서 시작해 턴마다 는다.
-        battle.setFieldEnergy(19);
 
         const rendererManager = new RendererManager(container);
         // 감출 때 이것만 감춘다. 함께 쓰는 자리를 감추면 다른 화면까지 사라진다.
@@ -410,36 +414,10 @@ export class SimulationBattleFieldView implements Component {
         };
         scene.add(yourFieldNeonHost);
 
-        // Opponent master (본체) — legacy OPPONENT_MASETER area coordinates
-        //
-        // 배경 그림 위에 덮어 두는 보이지 않는 판이다. 이 판을 눌러 본체를 겨누고, 겨냥
-        // 테두리도 이 판에 붙는다. 배경은 창 크기를 따라가므로 이 판도 따라가야 한다.
-        const computeMasterArea = (viewportWidth: number, viewportHeight: number) => {
-            const x1 = (0.4605885 - 0.5) * viewportWidth;
-            const y1 = (0.5 - 0.1920103) * viewportHeight;
-            const x2 = (0.5410156 - 0.5) * viewportWidth;
-            const y2 = (0.5 - 0.0476804) * viewportHeight;
-            return {
-                width: Math.abs(x2 - x1),
-                height: Math.abs(y2 - y1),
-                centerX: (x1 + x2) / 2,
-                centerY: (y1 + y2) / 2,
-            };
-        };
-        const masterArea = computeMasterArea(window.innerWidth, window.innerHeight);
-        const masterW = masterArea.width;
-        const masterH = masterArea.height;
-        const masterCX = masterArea.centerX;
-        const masterCY = masterArea.centerY;
-
-        const masterMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, opacity: 0, transparent: true });
-        const masterMesh = new THREE.Mesh(new THREE.PlaneGeometry(masterW, masterH), masterMaterial);
-        masterMesh.renderOrder = 1;
-
-        const masterGroup = new THREE.Group();
-        masterGroup.position.set(masterCX, masterCY, 0);
-        masterGroup.add(masterMesh);
-        masterGroup.userData = { baseCardWidth: masterW, baseCardHeight: masterH };
+        // 상대 본체를 누를 수 있는 영역. 보이지 않는 판이다.
+        const masterAreaFrame = createOpponentMasterAreaFrame();
+        const masterAreaRenderer = new OpponentMasterAreaRendererV2();
+        const masterGroup = await masterAreaRenderer.build(masterAreaFrame);
         scene.add(masterGroup);
 
         // 상대 본체 HP는 전투가 든다. 여기서는 표기만 맞춘다.
@@ -470,43 +448,13 @@ export class SimulationBattleFieldView implements Component {
         //  // 죽음의 대지 (ITEM) — drain 2 opponent field energy
         //  // 레오닉의 부름 (SUPPORT) — pick 2 hero-or-below UNITs from deck
         //  // 시체 폭발 (ITEM) — sacrifice undead ally → 2x10 dmg to enemies
-        // 손패의 시작 카드다. 실제 대전에서는 서버가 준다.
-        const handCardIds = [
-            2, 19, 93, 26,
-            27,
-            9,   // 에너지 번 (ITEM)
-            25,  // 파멸의 계약 (ITEM)
-            35,  // 사기 전환 (ITEM)
-            20,  // 망자의 늪 (SUPPORT)
-            36,  // 죽음의 대지 (ITEM)
-            30,  // 레오닉의 부름 (SUPPORT)
-            33,  // 시체 폭발 (ITEM)
-        ];
-        const hand = resolveCards(handCardIds, 'hand');
+        // 손패의 시작 카드는 확인용 차림표가 정한다.
+        const hand = resolveCards([...SIMULATION_HAND_CARD_IDS], 'hand');
 
         // 섞을 때 쓸 씨앗을 만든다. 도메인 안에서는 무작위를 못 쓰므로 밖에서 만들어 넣는다.
         // 씨앗을 적어 두면 같은 순서를 다시 만들 수 있다. 재접속과 다시 보기에 그것이 필요하다.
         const makeShuffleSeed = (): number => Math.floor(Math.random() * 0xffffffff);
 
-        // Draw pile — remaining 35 cards after subtracting 1 of each of (2, 19, 26, 27, 93) from
-        // the 40-card deck spec. Array order is draw order (index 0 = next draw).
-        battle.seedYourDeck([
-            8, 8, 8,          // 죽음의 낫 x3 (legendary)
-            9, 9,             // 에너지 번 x2 (hero)
-            25, 25, 25,       // 파멸의 계약 x3 (hero)
-            27, 27, 27,       // 영혼 수확자 벨른 x3 (hero)
-            151, 151,         // 차갑게 불타는 암흑 에너지 x2 (hero)
-            20, 20, 20,       // 망자의 늪 x3 (uncommon)
-            2, 2,             // 넘쳐 흐르는 사기 x2 (uncommon, 3 - 1 in hand)
-            26, 26,           // 망령 x2 (uncommon, 3 - 1 in hand)
-            30,               // 레오닉의 부름 x1 (uncommon)
-            31, 31, 31,       // 구울 x3 (normal)
-            32, 32, 32,       // 스켈레톤 워리어 x3 (normal)
-            33, 33,           // 시체 폭발 x2 (normal)
-            35, 35,           // 사기 전환 x2 (normal)
-            36, 36,           // 죽음의 대지 x2 (normal)
-            93, 93, 93, 93,   // 일반 에너지 x4 (energy, 5 - 1 in hand)
-        ]);
 
         const handCardFrame = createDefaultHandCardFrame();
         const handLayoutFrame = createDefaultBattleFieldHandLayoutFrame();
@@ -518,12 +466,6 @@ export class SimulationBattleFieldView implements Component {
 
         // handOrder/placedOrder track HandEntry references, not cardIds — the 40-card deck contains
         // duplicate cardIds (e.g., 8×3, 93×4), so cardId-keyed lookups would collapse them together.
-        // 전투의 손패에도 같은 카드를 넣는다. 신원은 화면 카드의 번호를 쓴다.
-        // 이 화면은 전에 자기 배열만 들고 전투의 손패를 비워 뒀다. 담을 곳이 비어 있으면
-        // 옆에 하나 더 만들게 되고, 그러면 전투가 무엇을 할 수 있는지 알 수 없다.
-        for (const e of entries) {
-            battle.addToHand(new HandCard(e.cardIndex, e.card.cardId, [], 0));
-        }
 
 
         const handOrder: HandEntry[] = [...entries];
@@ -607,25 +549,19 @@ export class SimulationBattleFieldView implements Component {
         // Add mythic unit (네더 블레이드, cardId 19) to the opponent field for scythe-targeting tests:
         //   scythe vs <MYTHICAL → instant kill; scythe vs MYTHICAL → 30 damage.
         // 2 copies for testing duplicate-target picks (e.g., 시체 폭발) + multi-NB scenarios.
-        // 상대 필드의 시작 배치다. 실제 대전에서는 서버가 준다.
-        const opponentCardIds = [31, 32, 32, 26, 27, 19, 19];
-        const opponentCards = resolveCards(opponentCardIds, 'opponent');
-
-        // Seed energy on opponent units for energy-burn testing:
-        //   index 1 = 스켈레톤 워리어 #1 → 1 energy (partial drain: removes 1, deals 10 dmg)
-        //   index 3 = 길 잃은 망령 → 2 energy (full drain: removes 2, no damage)
-        //   all others → 0 energy (no drain: deals 20 dmg).
-        if (opponentCards[1]) opponentCards[1] = { ...opponentCards[1], energyCount: 1 };
-        if (opponentCards[3]) opponentCards[3] = { ...opponentCards[3], energyCount: 2 };
+        // 상대 필드의 시작 배치도 확인용 차림표가 정한다.
+        const opponentCards = resolveCards([...SIMULATION_OPPONENT_CARD_IDS], 'opponent');
+        SIMULATION_OPPONENT_ENERGY.forEach((count, index) => {
+            if (opponentCards[index]) {
+                opponentCards[index] = { ...opponentCards[index], energyCount: count };
+            }
+        });
         const opponentLayoutFrame = createDefaultOpponentFieldLayoutFrame();
         const opponentRenderer = new OpponentFieldRendererV2();
         const opponentGroup = await opponentRenderer.build(opponentCards, handCardFrame, opponentLayoutFrame);
         scene.add(opponentGroup);
 
         // ── Your Lost Zone — clickable panel at bottom-left + modal popup of ally cards.
-        // Seed with 12 test cards — exactly two full rows at 6 columns. Exercises horizontal
-        // spacing (vs. hand layout) AND vertical row spacing / aspect ratio of the popup grid.
-        for (const id of [31, 32, 26, 27, 93, 19, 2, 8, 9, 20, 25, 33]) battle.sendToYourLostZone(id);
 
         const lostZonePanelFrame = createDefaultYourLostZonePanelFrame();
         const lostZonePopupFrame = createDefaultYourLostZonePopupFrame();
@@ -644,8 +580,6 @@ export class SimulationBattleFieldView implements Component {
         const opponentLostZonePanelGroup = await opponentLostZonePanelRenderer.build(opponentLostZonePanelFrame);
         scene.add(opponentLostZonePanelGroup);
 
-        // Seed opponent repo with 12 test cards so pagination (2 pages at 10/page) is exercised.
-        for (const id of [31, 32, 26, 27, 93, 19, 2, 8, 9, 20, 25, 33]) battle.sendToOpponentLostZone(id);
 
         // ── Turn-end button — right-side click zone that hands control to the opponent.
         const turnEndButtonFrame = createDefaultTurnEndButtonFrame();
@@ -677,14 +611,6 @@ export class SimulationBattleFieldView implements Component {
             }
         });
 
-        // ── OPPONENT DECK — PILOT-ONLY DUMMY SEED ──
-        // 상대 덱은 비어서 시작한다. 실제 대전에서는 서버가 준 것으로 채운다.
-        // it with the server-provided deck snapshot — the server is the authority on opponent
-        // deck contents. Because the dummy seed lives HERE (in the pilot) rather than inside
-        // the repository itself, it never leaks into production callers that reuse the repo.
-        battle.seedOpponentDeck([
-            31, 32, 33, 35, 36, 26, 27, 25, 30, 20, 2, 8, 9, 93, 151,
-        ]);
 
         let opponentLostZonePopupGroup: THREE.Group | null = null;
         let opponentLostZonePage = 0;
@@ -737,8 +663,6 @@ export class SimulationBattleFieldView implements Component {
         const tombPanelGroup = await tombPanelRenderer.build(tombPanelFrame);
         scene.add(tombPanelGroup);
 
-        // Pilot-only dummy seed for testing pagination; production seed will come from network.
-        for (const id of [31, 32, 33, 35, 36, 26, 27, 25, 30, 20, 2, 8]) battle.sendToYourTomb(id);
 
         let tombPopupGroup: THREE.Group | null = null;
         let tombPage = 0;
@@ -789,8 +713,6 @@ export class SimulationBattleFieldView implements Component {
         const opponentTombPanelGroup = await opponentTombPanelRenderer.build(opponentTombPanelFrame);
         scene.add(opponentTombPanelGroup);
 
-        // Pilot-only dummy seed for testing pagination (12 cards = 2 pages).
-        for (const id of [31, 32, 33, 35, 36, 26, 27, 25, 30, 20, 2, 8]) battle.sendToOpponentTomb(id);
 
         let opponentTombPopupGroup: THREE.Group | null = null;
         let opponentTombPage = 0;
@@ -877,23 +799,21 @@ export class SimulationBattleFieldView implements Component {
         const lostZoneTotalPages = (): number =>
             Math.max(1, Math.ceil(view.yourLostZoneCards().length / lostZoneCardsPerPage));
 
-        // 상대 유닛의 체력과 붙은 에너지, 그리고 살아 있는 차례는 전투가 든다.
-        // 전에는 이 화면이 지도 둘과 배열 하나로 따로 들고 있었다.
-        for (let i = 0; i < opponentCards.length; i++) {
-            const oc = opponentCards[i];
-            const hp = cardCatalog.getHp(oc.cardId);
-            battle.placeOnOpponentField(new FieldCard(
-                i,                                   // 신원. 이 화면에서는 만들 때의 차례를 쓴다
-                oc.cardId,
-                [],
-                0,                                   // 화면 좌표 번호를 안 쓴다
-                typeof hp === 'number' ? hp : 0,
-                // 시작 에너지는 그 카드의 종족으로 붙인다.
-                oc.energyCount > 0
-                    ? new Map([[oc.raceId as CardRace, oc.energyCount]])
-                    : new Map(),
-            ));
-        }
+        // 확인용 판을 여기서 한 번에 차린다.
+        //
+        // 전에는 이 열 줄이 그리는 코드 사이사이에 흩어져 있었다. 무덤 그리는 코드 옆에
+        // 무덤 채우는 줄이 있는 식이었다. 네트워크가 붙으면 이 한 줄만 빠진다.
+        //
+        // 손패와 상대 필드를 여기서 넘기는 것은 신원 번호가 화면이 만든 순서라서다.
+        // 진짜 대전에서는 그 번호도 서버가 준다.
+        seedSimulationBattle(
+            battle,
+            cardCatalog,
+            entries.map((e) => ({battleCardId: e.cardIndex, cardId: e.card.cardId})),
+            opponentCards.map((oc) => ({
+                cardId: oc.cardId, energyCount: oc.energyCount, raceId: oc.raceId,
+            })),
+        );
 
         // 살아 있는 차례는 전투가 든 상대 필드 목록 그 자체다.
         // 상대 필드 카드가 어느 자리에 서는지도 이 차례로 정해진다.
@@ -2096,7 +2016,7 @@ export class SimulationBattleFieldView implements Component {
         // (스킬N 언데드/휴먼/트런트필요에너지)로 정의되어 있고, 앞으로 여러 종족을 동시에
         // 요구하는 스킬이 추가될 예정이라 총량만으로는 판정할 수 없다.
         // 화면은 그 위에 얹은 그림만 든다.
-        const cardEnergyMeshes = new Map<HandEntry, { iconMesh: THREE.Mesh; textMesh: THREE.Mesh }>();
+        const cardEnergyBadge = new CardEnergyBadgeRenderer();
 
         // Race HUD에서 선택 중인 종족. 필드 에너지를 카드에 붙일 때 이 값이 그대로 기록되므로
         // 부착 로직(attachEnergyToCard)보다 앞에 선언한다. prev/next 클릭 존이 갱신한다.
@@ -2104,10 +2024,6 @@ export class SimulationBattleFieldView implements Component {
         const MAX_RACE_ID = 3;
 
         // 카드 UI(아이콘 위 숫자)와 Count HUD는 종족 구분 없이 총합 하나만 보여준다.
-        function totalCardEnergy(entry: HandEntry): number {
-            return view.yourUnitEnergyCount(entry.cardIndex);
-        }
-
         // 카드 종족은 전투에 넘겨 주는 창구가 이미 읽는다. 화면이 따로 읽던 것을 지웠다.
         const cardRaceOf = (cardId: number): CardRace | null => cardCatalog.getRace(cardId);
 
@@ -2116,20 +2032,6 @@ export class SimulationBattleFieldView implements Component {
             [CardRace.UNDEAD]: '언데드',
             [CardRace.TRENT]: '트런트',
         };
-
-        function loadTexturePromise(src: string): Promise<THREE.Texture> {
-            return new Promise((resolve, reject) => {
-                new THREE.TextureLoader().load(src, (tex) => {
-                    tex.colorSpace = THREE.SRGBColorSpace;
-                    tex.magFilter = THREE.LinearFilter;
-                    tex.minFilter = THREE.LinearFilter;
-                    tex.generateMipmaps = false;
-                    resolve(tex);
-                }, undefined, reject);
-            });
-        }
-
-        let energyIconTexture: THREE.Texture | null = null;
 
         // Shared renderer for per-card energy visuals (icon + count text + the global Count HUD).
         // Used by attachEnergyToCard (field-energy → card) AND by the overflow-morale flow
@@ -2147,44 +2049,11 @@ export class SimulationBattleFieldView implements Component {
             if (newCount < shown) return;
             shownCardEnergy.set(entry, newCount);
 
-            // 저장은 전투가 한다 — 여기서는 아이콘/숫자/HUD만 갱신.
+            // 저장은 전투가 한다 — 여기서는 숫자 표기와 HUD만 갱신.
             countRenderer.setCount(newCount);
             countRenderer.update(countFrame, countElement, window.innerWidth, window.innerHeight);
 
-            const group = entry.group;
-            const userData = group.userData as { baseCardWidth?: number; baseCardHeight?: number };
-            const cardW = userData.baseCardWidth ?? 100;
-            const cardH = userData.baseCardHeight ?? 160;
-            const eSlot = handCardFrame.slots.energy;
-            const eX = eSlot.offsetXRatio * cardW;
-            const eY = eSlot.offsetYRatio * cardH;
-
-            const existing = cardEnergyMeshes.get(entry);
-            if (existing) {
-                group.remove(existing.textMesh);
-                existing.textMesh.geometry.dispose();
-                (existing.textMesh.material as THREE.MeshBasicMaterial).dispose();
-                const newText = createEnergyCanvasText(newCount, eX, eY, handCardFrame.cardWidthRatio * 0.2 * window.innerWidth);
-                group.add(newText);
-                cardEnergyMeshes.set(entry, { iconMesh: existing.iconMesh, textMesh: newText });
-            } else {
-                if (!energyIconTexture) {
-                    energyIconTexture = await loadTexturePromise('resource/battle_field_unit/energy/unit_card_energy.png');
-                }
-                const slotW = eSlot.widthRatio * cardW;
-                const slotH = slotW * eSlot.aspect;
-                const iconMat = new THREE.MeshBasicMaterial({ map: energyIconTexture, transparent: true, opacity: 1 });
-                const iconGeo = new THREE.PlaneGeometry(slotW, slotH);
-                const iconMesh = new THREE.Mesh(iconGeo, iconMat);
-                iconMesh.position.set(eX, eY, 0);
-                iconMesh.renderOrder = 2;
-                group.add(iconMesh);
-
-                const textMesh = createEnergyCanvasText(newCount, eX, eY, handCardFrame.cardWidthRatio * 0.2 * window.innerWidth);
-                group.add(textMesh);
-
-                cardEnergyMeshes.set(entry, { iconMesh, textMesh });
-            }
+            await cardEnergyBadge.draw(entry.group, newCount, handCardFrame);
         }
 
         // ── 차갑게 불타는 암흑 에너지 마크 ───────────────────────────────────────────
@@ -2275,27 +2144,6 @@ export class SimulationBattleFieldView implements Component {
             console.log(`Energy attached to card ${entry.card.cardId}: ${RACE_LABEL[race]} +1 → ${cardEnergy} total. Available: ${view.yourFieldEnergy()}`);
         }
 
-        function createEnergyCanvasText(value: number, x: number, y: number, baseScale: number): THREE.Mesh {
-            const canvas = document.createElement('canvas');
-            canvas.width = 128;
-            canvas.height = 128;
-            const ctx = canvas.getContext('2d')!;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 96px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(value.toString(), canvas.width / 2, canvas.height / 2);
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.needsUpdate = true;
-            const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
-            const geo = new THREE.PlaneGeometry(1, 1);
-            const mesh = new THREE.Mesh(geo, mat);
-            mesh.position.set(x, y, 0.01);
-            mesh.scale.set(baseScale, baseScale, 1);
-            mesh.renderOrder = 3;
-            return mesh;
-        }
 
         // Intercept card clicks when field energy is active — before bridge
         rendererManager.getDomElement().addEventListener('mousedown', (e: MouseEvent) => {
@@ -2945,51 +2793,9 @@ export class SimulationBattleFieldView implements Component {
         // NeonBorderEffect (the effect attached when an ally card is picked up in hand) so
         // the Leonik popup's selection highlight reads identically to the rest of the game.
         // Colours come from createAllyTargetingNeonBorderFrame (green family).
+        const leonikPopupParts = new LeonikPopupPartsRenderer();
         const leonikBorderPalette = createAllyTargetingNeonBorderFrame();
         const LEONIK_BORDER_THICKNESS = leonikBorderPalette.lineThickness;  // px margin around the card
-        const buildLeonikBorderMaterial = (planeW: number, planeH: number): THREE.ShaderMaterial => {
-            // Glow extent in UV space — shader uses min-edge distance and smoothsteps it
-            // against borderX/borderY to fade the ring inward.
-            const borderX = (LEONIK_BORDER_THICKNESS / 2) / planeW;
-            const borderY = (LEONIK_BORDER_THICKNESS / 2) / planeH;
-            return new THREE.ShaderMaterial({
-                transparent: true,
-                depthWrite: false,
-                blending: THREE.AdditiveBlending,
-                uniforms: {
-                    baseColor: { value: new THREE.Color(leonikBorderPalette.baseColor) },
-                    glowColor: { value: new THREE.Color(leonikBorderPalette.glowColor) },
-                    time:      { value: 0.0 },
-                    borderX:   { value: borderX },
-                    borderY:   { value: borderY },
-                },
-                vertexShader: `
-                    varying vec2 vUv;
-                    void main() {
-                        vUv = uv;
-                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                    }
-                `,
-                fragmentShader: `
-                    uniform vec3 baseColor;
-                    uniform vec3 glowColor;
-                    uniform float time;
-                    uniform float borderX;
-                    uniform float borderY;
-                    varying vec2 vUv;
-                    void main() {
-                        float dx = min(vUv.x, 1.0 - vUv.x);
-                        float dy = min(vUv.y, 1.0 - vUv.y);
-                        float ex = 1.0 - smoothstep(0.0, borderX, dx);
-                        float ey = 1.0 - smoothstep(0.0, borderY, dy);
-                        float glow = max(ex, ey);
-                        float pulse = sin(time * 5.0) * 0.3 + 0.7;
-                        vec3 finalColor = mix(baseColor, glowColor, pulse);
-                        gl_FragColor = vec4(finalColor, glow * pulse * 0.85);
-                    }
-                `,
-            });
-        };
 
         // Given an absIdx, return its (col, row) position on the CURRENT page, or null if
         // the index is on a different page. Used by addBorder for positioning + by the
@@ -3020,13 +2826,11 @@ export class SimulationBattleFieldView implements Component {
             if (leonikBorderByAbsIdx.has(absIdx)) return;
             const pos = leonikCardPositionForAbsIdx(absIdx);
             if (!pos) return;
-            const planeW = pos.cw + LEONIK_BORDER_THICKNESS * 2;
-            const planeH = pos.ch + LEONIK_BORDER_THICKNESS * 2;
-            const material = buildLeonikBorderMaterial(planeW, planeH);
-            const geometry = new THREE.PlaneGeometry(planeW, planeH);
-            const mesh = new THREE.Mesh(geometry, material);
-            mesh.position.set(pos.cx, pos.cy, leonikBorderPalette.zOffset);
-            mesh.renderOrder = leonikPopupFrame.renderOrder + 5;
+            const {mesh, material} = leonikPopupParts.buildBorder(
+                leonikBorderPalette, LEONIK_BORDER_THICKNESS,
+                pos.cw, pos.ch, pos.cx, pos.cy,
+                leonikPopupFrame.renderOrder + 5,
+            );
             leonikPopupGroup.add(mesh);
             leonikBorderByAbsIdx.set(absIdx, { mesh, material });
             leonikActivePulseMats.add(material);
@@ -3071,45 +2875,6 @@ export class SimulationBattleFieldView implements Component {
             Math.max(1, Math.ceil(leonikEligibleDeckIndices.length / leonikCardsPerPage));
 
         // Cached confirm-button texture so rebuilds don't re-render the canvas.
-        let leonikConfirmTexture: THREE.CanvasTexture | null = null;
-        const buildLeonikConfirmTexture = (): THREE.CanvasTexture => {
-            if (leonikConfirmTexture) return leonikConfirmTexture;
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 128;
-            const ctx = canvas.getContext('2d')!;
-            // Rounded dark-gold plate with "확인" text.
-            const radius = 24;
-            ctx.fillStyle = '#2d1f08';
-            ctx.strokeStyle = '#d4af37';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(radius, 0);
-            ctx.lineTo(canvas.width - radius, 0);
-            ctx.quadraticCurveTo(canvas.width, 0, canvas.width, radius);
-            ctx.lineTo(canvas.width, canvas.height - radius);
-            ctx.quadraticCurveTo(canvas.width, canvas.height, canvas.width - radius, canvas.height);
-            ctx.lineTo(radius, canvas.height);
-            ctx.quadraticCurveTo(0, canvas.height, 0, canvas.height - radius);
-            ctx.lineTo(0, radius);
-            ctx.quadraticCurveTo(0, 0, radius, 0);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-            ctx.fillStyle = '#ffd868';
-            ctx.font = 'bold 60px "Inter", "Roboto", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('확인', canvas.width / 2, canvas.height / 2 + 2);
-            const tex = new THREE.CanvasTexture(canvas);
-            tex.colorSpace = THREE.SRGBColorSpace;
-            tex.magFilter = THREE.LinearFilter;
-            tex.minFilter = THREE.LinearFilter;
-            tex.generateMipmaps = false;
-            leonikConfirmTexture = tex;
-            return tex;
-        };
-
         const buildLeonikPopupForCurrentPage = async (): Promise<THREE.Group> => {
             const start = leonikPopupPage * leonikCardsPerPage;
             const pageDeckIndices = leonikEligibleDeckIndices.slice(start, start + leonikCardsPerPage);
@@ -3123,17 +2888,13 @@ export class SimulationBattleFieldView implements Component {
             // Confirm button — centred at popup centre, between prev/next pagination buttons.
             // Material handle stashed so selection-change handlers can re-tint without
             // rebuilding the whole popup (that's what caused the flicker before).
-            const confirmTex = buildLeonikConfirmTexture();
-            const confirmMat = new THREE.MeshBasicMaterial({ map: confirmTex, transparent: true });
             // Slightly smaller button (was 0.16) — the confirm plate was too prominent.
             const btnW = bounds.width * 0.12;
-            const btnH = btnW * 0.5;
-            const confirmGeo = new THREE.PlaneGeometry(btnW, btnH);
-            const confirmMesh = new THREE.Mesh(confirmGeo, confirmMat);
-            confirmMesh.position.set(bounds.centerX, bounds.centerY, 0);
-            confirmMesh.renderOrder = leonikPopupFrame.renderOrder + 12;
-            confirmMesh.userData.buttonType = 'confirm';
-            confirmMat.opacity = leonikSelectedPopupIndices.size === LEONIK_MAX_PICK ? 1.0 : 0.45;
+            const {mesh: confirmMesh, material: confirmMat} = leonikPopupParts.buildConfirmButton(
+                btnW, btnW * 0.5, bounds.centerX, bounds.centerY,
+                leonikPopupFrame.renderOrder + 12,
+                leonikSelectedPopupIndices.size === LEONIK_MAX_PICK,
+            );
             group.add(confirmMesh);
             leonikConfirmMat = confirmMat;
 
@@ -3750,8 +3511,6 @@ export class SimulationBattleFieldView implements Component {
         // HUD's bottom edge at (100-82.4)=17.6% vh from top, the exact mirror of the player's
         // static TOP edge at 82.4% vh. This matches the opponent shaded-area mesh whose
         // stable anchor is also bottomEdgeYRatio = 0.176.
-        // 이 화면의 시작 상대 필드 에너지다. 실제 대전에서는 서버가 준다.
-        battle.setOpponentFieldEnergy(15);
 
         // Opponent field-energy SHADED AREA — a Three.js mesh at the 180°-mirror of the
         // player's Field Energy HUD. This is the visual target for the upcoming 죽음의 대지
@@ -4148,14 +3907,7 @@ export class SimulationBattleFieldView implements Component {
             // 본체를 덮은 판과 필드 두 곳의 겨냥 자리를 다시 잰다. 셋 다 만들 때 창 크기를
             // 재고 그 뒤로 안 쟀다. 배경만 따라 줄어들고 이 셋은 옛 자리에 남아 있어서,
             // 겨냥 테두리가 대상에서 벗어난 데 그려졌다.
-            const nextMasterArea = computeMasterArea(width, height);
-            masterMesh.geometry?.dispose();
-            masterMesh.geometry = new THREE.PlaneGeometry(nextMasterArea.width, nextMasterArea.height);
-            masterGroup.position.set(nextMasterArea.centerX, nextMasterArea.centerY, 0);
-            masterGroup.userData = {
-                baseCardWidth: nextMasterArea.width,
-                baseCardHeight: nextMasterArea.height,
-            };
+            masterAreaRenderer.resize(masterAreaFrame, masterGroup, width, height);
 
             opponentFieldNeonHost.position.set(
                 opponentFieldAreaFrame.xPercent * width,
