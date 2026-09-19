@@ -430,6 +430,11 @@ When adding a screen: implement `Component`, expose `getInstance`, add a route e
 
 `resource/image-paths.json` is the manifest consumed by `TextureManager.preloadTextures(...)`. `python/useful_tool/image_resource_to_json_convert.py` generates it. `resource.zip` is the bundled asset archive — everything under `resource/` is gitignored (png/jpg/mp3/ttf/otf/webp/csv/xlsx/json), so expect to unzip `resource.zip` in a fresh checkout.
 
+Build output is gitignored too (`dist/`, `test/dist/`). A fresh checkout has no
+`bundle.js`, so the top-level `index.html` will not open until you run a `npm run <scenario>`
+once. Do not commit bundles back: every rebuild rewrites a ~1MB file whole, which buries the
+source change in the diff.
+
 ## Feature-per-directory layout outside `src/battle/`
 
 `src/` has ~180 top-level feature folders (`my_deck_card`, `card_filter_panel`, `global_navigation_bar_button_click_detect`, …) for the lobby, shop, my-card and deck-building screens. This flat naming is intentional — features are sliced by concept, not nested by layer.
