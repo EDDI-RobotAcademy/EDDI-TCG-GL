@@ -11,7 +11,12 @@ export class CardEnergyBadgeRenderer {
     private iconTexture: THREE.Texture | null = null;
 
     // 카드에 붙여 둔 것. 다시 그릴 때 숫자만 갈아 끼운다.
-    private attached = new Map<THREE.Group, {icon: THREE.Mesh; text: THREE.Mesh}>();
+    //
+    // 몇 개였는지도 함께 적어 둔다. 창 크기가 바뀌면 아이콘과 숫자를 새 크기로 다시
+    // 그려야 하는데, 그때 개수를 밖에서 다시 받지 않아도 되게 한다.
+    private attached = new Map<
+        THREE.Group, {icon: THREE.Mesh; text: THREE.Mesh; count: number}
+    >();
 
     // 카드에 에너지 표기를 그린다. 이미 있으면 숫자만 바꾼다.
     public async draw(
@@ -33,7 +38,7 @@ export class CardEnergyBadgeRenderer {
             (existing.text.material as THREE.MeshBasicMaterial).dispose();
             const text = this.buildCountText(count, x, y, textScale);
             cardGroup.add(text);
-            this.attached.set(cardGroup, {icon: existing.icon, text});
+            this.attached.set(cardGroup, {icon: existing.icon, text, count});
             return;
         }
 
@@ -56,7 +61,21 @@ export class CardEnergyBadgeRenderer {
         const text = this.buildCountText(count, x, y, textScale);
         cardGroup.add(text);
 
-        this.attached.set(cardGroup, {icon, text});
+        this.attached.set(cardGroup, {icon, text, count});
+    }
+
+    // 창 크기가 바뀌었다. 붙어 있는 모든 카드의 아이콘과 숫자를 새 크기로 다시 그린다.
+    //
+    // 아이콘 크기와 숫자 크기가 카드 크기에서 나오고, 카드는 창 크기를 따라간다. 그래서
+    // 카드만 다시 재면 숫자가 옛 크기로 남는다. 작게 만들어 붙이고 키우면 숫자가 안 커졌다.
+    public async resizeAll(frame: HandCardFrame): Promise<void> {
+        // 도는 중에 지도가 바뀔 수 있으므로 먼저 베껴 둔다.
+        const entries = [...this.attached.entries()];
+        for (const [cardGroup, held] of entries) {
+            // 아이콘은 크기와 자리를 다시 잡고, 숫자는 새로 구워 얹는다.
+            this.dispose(cardGroup);
+            await this.draw(cardGroup, held.count, frame);
+        }
     }
 
     // 이 카드에 에너지 표기가 붙어 있는가.

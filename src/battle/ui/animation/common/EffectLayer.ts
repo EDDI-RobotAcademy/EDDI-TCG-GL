@@ -16,10 +16,18 @@ import * as THREE from "three";
 // 크기는 자리만큼 정확하지 않다. 가로에서 크기를 가져간 그림도 세로가 늘어난 만큼 함께
 // 늘어나므로, 창의 가로세로 비율이 크게 달라지면 동그란 것이 조금 납작해진다. 연출이
 // 끝나면 사라지는 것이라 여기까지로 둔다.
+// 화면 전체를 덮는 그림 하나. 비율로 늘리면 안 되고 새 창 크기로 다시 맞춰야 한다.
+interface FullscreenPiece {
+    readonly object: THREE.Object3D;
+    // 새 창 크기로 제 판과 제 셰이더 값을 다시 맞춘다. 그리는 쪽이 어떻게 하는지 안다.
+    readonly refit: (viewportWidth: number, viewportHeight: number) => void;
+}
+
 export class EffectLayer {
     private readonly group = new THREE.Group();
     private builtWidth = 0;
     private builtHeight = 0;
+    private readonly fullscreen: FullscreenPiece[] = [];
 
     // 그림 하나를 겹에 담는다. 화면에 직접 붙이는 자리를 이것으로 바꾼다.
     //
@@ -43,6 +51,24 @@ export class EffectLayer {
         this.group.add(object);
     }
 
+    // 화면 전체를 덮는 그림을 담는다.
+    //
+    // 이것은 겹째 늘리면 어긋난다. 셰이더 안에 창 크기가 숫자로 들어가 있어서, 그 안에서
+    // 옛 크기로 계산한 무늬를 겹이 또 늘리면 두 번 늘어난 것이 된다. 칼자국처럼 날이
+    // 선 그림에서 눈에 띈다.
+    //
+    // 그래서 겹이 늘어난 만큼 거꾸로 줄여 제 크기를 지키게 하고, 새 창 크기는 refit 으로
+    // 알려 준다. 판을 다시 만들고 셰이더 값을 고치는 일은 그리는 쪽이 한다.
+    public addFullscreen(
+        scene: THREE.Scene, object: THREE.Object3D,
+        refit: (viewportWidth: number, viewportHeight: number) => void,
+    ): void {
+        this.add(scene, object);
+        this.fullscreen.push({object, refit});
+        // 지금 겹이 이미 늘어나 있으면 그만큼 거꾸로 줄여 둔다.
+        this.counterScale(object);
+    }
+
     // 창 크기가 바뀌었을 때. 담긴 것이 없으면 할 일이 없다.
     public resize(viewportWidth: number, viewportHeight: number): void {
         if (this.group.children.length === 0) return;
@@ -50,6 +76,22 @@ export class EffectLayer {
         this.group.scale.set(
             viewportWidth / this.builtWidth,
             viewportHeight / this.builtHeight,
+            1,
+        );
+
+        // 화면 전체를 덮는 것은 겹의 늘림을 되돌리고 새 창 크기로 다시 맞춘다.
+        for (const piece of this.fullscreen) {
+            if (!piece.object.parent) continue;
+            this.counterScale(piece.object);
+            piece.refit(viewportWidth, viewportHeight);
+        }
+    }
+
+    private counterScale(object: THREE.Object3D): void {
+        const s = this.group.scale;
+        object.scale.set(
+            s.x === 0 ? 1 : 1 / s.x,
+            s.y === 0 ? 1 : 1 / s.y,
             1,
         );
     }
