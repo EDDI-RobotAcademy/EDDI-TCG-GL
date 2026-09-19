@@ -12,7 +12,8 @@
  * [R2-107] 이후 battle 은 셋으로 갈렸다. 그 사이의 경계를 R2-110 에서 걸었다:
  *   battle/domain/   규칙과 상태        — ui 와 session 을 모른다
  *   battle/session/  진행 중인 판 하나
- *   battle/ui/       그리는 것          — domain/flow 와 domain/ability 만 쓴다
+ *   battle/ui/       그리는 것          — 판은 domain/read 를 지나서 본다
+ *   battle/simulation/ 확인용 시작 판    — 여기만 규칙 물건을 직접 만든다 (규칙 25 의 예외)
  *
  * 참고 문서:
  *   docs/refactoring/R2-3-dependency-rules.md
@@ -76,20 +77,17 @@ module.exports = {
                 '지금 넘는 것은 없다. 새로 생기면 여기서 잡힌다.',
             severity: 'error',
             from: { path: '^src/battle/domain/' },
-            to: { path: '^src/battle/(ui|session)/' },
+            to: { path: '^src/battle/(ui|session|simulation)/' },
         },
         {
             name: 'ui-no-domain-object',
             comment:
                 '[R2-110] 그리는 쪽은 규칙 쪽의 물건(유닛, 손패 카드, 필드 카드)을 직접 받지 ' +
                 '않는다. 주고받는 말(domain/flow)과 카드에 적힌 것(domain/ability)만 쓴다. ' +
-                '지금 넘는 곳이 하나 있고 아래 exception 에 적었다. 고쳐질 때 예외를 지운다.',
+                '판을 읽을 때는 읽기 창구(domain/read)를 지난다. ' +
+                '[R2-113] 마지막으로 넘던 곳이 없어져 예외가 비었다. 다시 채우지 않는다.',
             severity: 'error',
-            from: {
-                path: '^src/battle/ui/',
-                // R2-113 에서 판 차리기를 화면 밖으로 뺀다 — 손패/필드 카드를 직접 만든다
-                pathNot: '^src/battle/ui/view/SimulationBattleFieldView\\.ts$',
-            },
+            from: { path: '^src/battle/ui/' },
             to: { path: '^src/battle/domain/battle/' },
         },
         {

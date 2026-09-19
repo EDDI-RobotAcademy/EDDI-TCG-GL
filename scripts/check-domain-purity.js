@@ -31,6 +31,16 @@ const CHECKS = [
         message: 'THREE 사용 금지 — 직렬화 가능해야 한다 (스냅샷, 재접속 복원)',
     },
     {
+        name: '[R2-114] 메시를 만드는 것은 렌더러뿐이다',
+        roots: ['src/battle/ui/view'],
+        pattern: /new\s+THREE\.(Mesh|Sprite|Line|Points)\s*\(/,
+        message:
+            '전투 화면이 메시를 직접 만들 수 없다 — 렌더러에 맡기고 부르기만 한다. ' +
+            '직접 만들면 창 크기가 바뀔 때 그 자리마다 따로 손봐야 하고, 실제로 그 때문에 ' +
+            '안 보이는 타격 영역이 옛 자리에 남는 문제가 여러 번 났다 (R2-88, R2-89). ' +
+            '좌표와 그룹은 화면이 써도 된다. 막는 것은 THREE 자체가 아니라 메시를 만드는 것이다.',
+    },
+    {
         name: '규칙 4 보강, 시각 비결정성',
         roots: ['src/battle/domain'],
         pattern: /\bDate\.now\s*\(|\bnew\s+Date\s*\(/,
