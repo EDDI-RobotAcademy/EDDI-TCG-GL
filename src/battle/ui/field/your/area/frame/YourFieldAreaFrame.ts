@@ -1,3 +1,5 @@
+import {AreaBounds, computeAreaBounds} from "../../../../../../core/frame/AreaBounds";
+
 export interface YourFieldAreaFrame {
     readonly color: number;
     readonly opacity: number;
@@ -24,27 +26,9 @@ export function createDefaultYourFieldAreaFrame(): YourFieldAreaFrame {
     };
 }
 
-export interface YourFieldAreaBounds {
-    readonly minX: number;
-    readonly maxX: number;
-    readonly minY: number;
-    readonly maxY: number;
-}
-
-// World-space axis-aligned bounds of the field area. Used for drop-hit tests.
+// 이 영역의 실제 자리. 셈하는 식은 여러 영역이 함께 쓴다.
 export function computeYourFieldAreaBounds(
-    frame: YourFieldAreaFrame,
-    viewportWidth: number,
-    viewportHeight: number,
-): YourFieldAreaBounds {
-    const centerX = frame.xPercent * viewportWidth;
-    const centerY = frame.yPercent * viewportHeight;
-    const halfWidth = (frame.widthPercent * viewportWidth) / 2;
-    const halfHeight = (frame.heightPercent * viewportHeight) / 2;
-    return {
-        minX: centerX - halfWidth,
-        maxX: centerX + halfWidth,
-        minY: centerY - halfHeight,
-        maxY: centerY + halfHeight,
-    };
+    frame: YourFieldAreaFrame, viewportWidth: number, viewportHeight: number,
+): AreaBounds {
+    return computeAreaBounds(frame, viewportWidth, viewportHeight);
 }

@@ -32,17 +32,33 @@ export class MasterHpRendererV2 implements FrameRenderer<MasterHpFrame> {
 
     // HP가 실제로 바뀐 경우에만 텍스처를 교체한다. 같은 값으로 반복 호출해도
     // 로딩이 다시 돌지 않는다.
+    //
+    // 연출 둘이 겹치면 각자 자기가 들고 있던 값으로 부른다. 뒤늦게 도착한 쪽이 더 오래된
+    // 값을 들고 있으면 숫자가 되돌아간다. 실제로 그런 일이 있었다 — 네더 블레이드 단일기
+    // 중에 파멸의 계약을 쓰면 계약의 피해만 보였다.
+    //
+    // 본체 체력은 줄기만 한다. 그래서 내려가는 쪽만 그린다. 회복하는 카드가 생기면 이
+    // 규칙을 다시 봐야 한다.
     public async setHp(group: THREE.Group, frame: MasterHpFrame, hp: number): Promise<void> {
         const userData = group.userData as { currentHp?: number };
         const next = Math.max(0, Math.round(hp));
-        if (userData.currentHp === next) return;
+        const shown = userData.currentHp;
+        if (shown !== undefined && next >= shown) return;
         userData.currentHp = next;
 
         const mesh = group.children[0] as THREE.Mesh | undefined;
         if (!mesh) return;
+
+        const texture = await this.loadTexture(resolveMasterHpImageSrc(frame, next));
+        // 그림을 읽는 동안 더 낮은 값이 들어왔으면 이 그림은 이미 낡은 것이다.
+        if (userData.currentHp !== next) {
+            texture.dispose();
+            return;
+        }
+
         const material = mesh.material as THREE.MeshBasicMaterial;
         const previous = material.map;
-        material.map = await this.loadTexture(resolveMasterHpImageSrc(frame, next));
+        material.map = texture;
         material.needsUpdate = true;
         previous?.dispose();
     }
