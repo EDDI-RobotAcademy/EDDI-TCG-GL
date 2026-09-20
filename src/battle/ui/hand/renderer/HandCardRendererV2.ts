@@ -135,7 +135,11 @@ export class HandCardRendererV2 {
             group.add(iconMesh);
         });
 
-        const textScale = frame.cardWidthRatio * 0.2 * window.innerWidth;
+        // 숫자 크기는 **만들 때의 카드 너비** 에서 낸다. 지금 창 너비를 보면 안 된다.
+        //
+        // 이 함수는 만들 때가 아니라 나중에 부른다. 그때 카드 겹은 이미 늘어나 있고, 이
+        // 숫자는 그 겹의 자식이라 자동으로 따라 늘어난다. 창 너비를 또 보면 두 번 늘어난다.
+        const textScale = 0.2 * cardWidth;
         const textMesh = this.createEnergyTextMesh(newCount, position, textScale);
         textMesh.userData.slotType = 'energyText';
         group.add(textMesh);

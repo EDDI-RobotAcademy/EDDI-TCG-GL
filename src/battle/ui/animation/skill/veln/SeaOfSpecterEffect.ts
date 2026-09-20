@@ -312,7 +312,8 @@ export class SeaOfSpecterEffect {
         this.layer.add(this.scene, darkAura);
         // Screen edges darken slightly — darkness creeping inward
         const edgeDarken = this.createEdgeDarken(w, h);
-        this.layer.add(this.scene, edgeDarken);
+        // 화면을 덮는 것이라 비율로 늘리지 않고 창 크기에 맞춘다.
+        this.layer.addFullscreen(this.scene, edgeDarken, this.refitScreenCover(edgeDarken));
 
         this.basics.shakeScenePromise(cardW * 0.05, 800);
         await this.basics.delay(600);
@@ -366,7 +367,7 @@ export class SeaOfSpecterEffect {
 
         // Phase 3: Progressive darkening — overlaps with magic circle fade
         const darken = this.createProgressiveDarken();
-        this.layer.add(this.scene, darken);
+        this.layer.addFullscreen(this.scene, darken, this.refitScreenCover(darken));
         await this.animateProgressiveDarken(darken, 600);
 
         // Phase 4: Dementors fly — no gap after darken
@@ -501,6 +502,19 @@ export class SeaOfSpecterEffect {
     }
 
     // Edge darkening — screen borders darken as darkness is summoned
+
+    // 화면을 덮는 음영을 새 창 크기로 다시 맞춘다.
+    //
+    // 이 음영은 가로세로 중 큰 쪽의 두 배인 정사각형이고, 어두워지는 모양을 그 정사각형의
+    // 가운데에서부터 잰다. 비율로 늘리면 정사각형이 찌그러져 둥근 음영이 타원이 된다.
+    // 그래서 늘리지 않고 새 창 크기로 정사각형을 다시 만든다.
+    private refitScreenCover(mesh: THREE.Mesh, sizeFactor: number = 2) {
+        return (viewportWidth: number, viewportHeight: number): void => {
+            const size = Math.max(viewportWidth, viewportHeight) * sizeFactor;
+            mesh.geometry?.dispose();
+            mesh.geometry = new THREE.PlaneGeometry(size, size);
+        };
+    }
 
     private createEdgeDarken(w: number, h: number): THREE.Mesh {
         const size = Math.max(w, h) * 2;
@@ -982,7 +996,8 @@ export class SeaOfSpecterEffect {
         // Phase B: Freeze — face fills screen, eyes burning, 공포의 순간 (600ms)
         // Frost creeps in during this freeze
         const frostMesh = this.createFrostOverlay(w, h);
-        this.layer.add(this.scene, frostMesh);
+        // 화면을 덮는 서릿발. 비율로 늘리면 무늬가 찌그러진다.
+        this.layer.addFullscreen(this.scene, frostMesh, this.refitScreenCover(frostMesh, 2));
         const frostMat = frostMesh.material as THREE.ShaderMaterial;
         const frostStart = performance.now();
         const frostTick = () => {
@@ -1014,7 +1029,9 @@ export class SeaOfSpecterEffect {
 
         // Soul stream overlay
         const soulStream = this.createSoulStreamOverlay(w, h);
-        this.layer.add(this.scene, soulStream);
+        this.layer.addFullscreen(
+            this.scene, soulStream, this.refitScreenCover(soulStream, 2.5),
+        );
         const soulMat = soulStream.material as THREE.ShaderMaterial;
 
         const sceneOrigX = this.scene.position.x;
@@ -1078,7 +1095,7 @@ export class SeaOfSpecterEffect {
         const fadeMesh = new THREE.Mesh(fadeGeo, fadeMat);
         fadeMesh.position.set(0, 0, 6);
         fadeMesh.renderOrder = 18;
-        this.layer.add(this.scene, fadeMesh);
+        this.layer.addFullscreen(this.scene, fadeMesh, this.refitScreenCover(fadeMesh, 3));
 
         await new Promise<void>(resolve => {
             const startT = performance.now();
