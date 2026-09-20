@@ -13,6 +13,8 @@ import { LeonikPopupPartsRenderer } from "../leonik_popup/renderer/LeonikPopupPa
 import { PagedCardPopup, ExclusivePopups } from "../card_grid_popup/PagedCardPopup";
 import { ViewportResize } from "../resize/ViewportResize";
 import { PointerRouter } from "../input/PointerRouter";
+import { CardDropTarget, CardPresentationContext, DropHit } from "../card/CardPresentation";
+import { findCardPresentation } from "../card/CardPresentationRegistry";
 import { FieldNeonHostRenderer } from "../field/neon_host/renderer/FieldNeonHostRenderer";
 import { computeOpponentFieldAreaBounds } from "../field/opponent/area/frame/OpponentFieldAreaFrame";
 import { isInsideArea } from "../../../core/frame/AreaBounds";
@@ -835,24 +837,12 @@ export class SimulationBattleFieldView implements Component {
         const attackAnimation = new AttackAnimationV2(scene);
         // 벨른의 광역기. 공격 연출과 다른 카드의 것이라 따로 든다.
         const seaOfSpecterEffect = new SeaOfSpecterEffect(scene);
-        const scytheCutEffect = new ScytheCutEffect(scene);
-        const energyBurnEffect = new EnergyBurnEffect(scene);
         // DoomContract takes extra deps: it uses a render-target + warp shader pipeline, which
         // needs the WebGLRenderer, the active camera, and a hook into AnimationLoop's render
         // path (setRenderOverride) to intercept per-frame rendering during the warp phase.
-        const doomContractEffect = new DoomContractEffect(
-            scene,
-            rendererManager.getRenderer(),
-            camera,
-            animationLoop,
-        );
         const corpseExplosionEffect = new CorpseExplosionEffect(scene);
-        const deadLandsEffect = new DeadLandsEffect(scene);
         const leonikSummonEffect = new LeonikSummonEffect(scene);
         const netherBladeEntranceEffect = new NetherBladeEntranceEffect(scene);
-        const moraleConvertEffect = new MoraleConvertEffect(scene);
-        const overflowMoraleEffect = new OverflowMoraleEffect(scene);
-        const swampEffect = new SwampEffect(scene);
         // 창 크기가 바뀌면 도는 중인 연출도 함께 늘고 줄어야 한다. 한 자리에 모아 두고
         // 한꺼번에 알린다. 안 돌고 있는 연출은 알려도 아무 일도 안 한다.
         //
@@ -860,16 +850,9 @@ export class SimulationBattleFieldView implements Component {
         const resizableEffects: Array<{ resize(w: number, h: number): void }> = [
             attackAnimation,
             seaOfSpecterEffect,
-            scytheCutEffect,
-            energyBurnEffect,
-            doomContractEffect,
             corpseExplosionEffect,
-            deadLandsEffect,
             leonikSummonEffect,
             netherBladeEntranceEffect,
-            moraleConvertEffect,
-            overflowMoraleEffect,
-            swampEffect,
         ];
 
         // 쓸 때마다 새로 만드는 연출은 위 목록에 못 넣는다. 도는 동안만 여기 담아 두고,
@@ -1797,8 +1780,6 @@ export class SimulationBattleFieldView implements Component {
         // 요구하는 스킬이 추가될 예정이라 총량만으로는 판정할 수 없다.
         // 화면은 그 위에 얹은 그림만 든다.
         const cardEnergyBadge = new CardEnergyBadgeRenderer();
-        // 카드가 새 크기로 다시 재진 뒤에 얹는다. 아이콘 크기가 카드 크기에서 나온다.
-        onResize.add('attached', () => void cardEnergyBadge.resizeAll(handCardFrame));
 
         // Race HUD에서 선택 중인 종족. 필드 에너지를 카드에 붙일 때 이 값이 그대로 기록되므로
         // 부착 로직(attachEnergyToCard)보다 앞에 선언한다. prev/next 클릭 존이 갱신한다.
@@ -1956,18 +1937,14 @@ export class SimulationBattleFieldView implements Component {
             return found;
         };
 
-        const SCYTHE_CARD_ID = 8;
 
-        const ENERGY_BURN_CARD_ID = 9;
 
         const OPPONENT_TARGETING_ITEM_IDS: readonly number[] = cardIdsTargeting(AbilityTarget.OPPONENT_UNIT);
 
-        const MORALE_CONVERT_CARD_ID = 35;
 
         const OVERFLOW_MORALE_CARD_ID = 2;
         const DEATH_ENERGY_CARD_ID = ability(OVERFLOW_MORALE_CARD_ID).numbers.pullCardId;
 
-        const COLD_DARK_ENERGY_CARD_ID = 151;
 
         // 이 에너지를 보유한 아군 유닛. 보유 개수가 아니라 보유 여부만 의미가 있다.
 
@@ -1976,10 +1953,8 @@ export class SimulationBattleFieldView implements Component {
         const ALLY_TARGETING_ITEM_IDS: readonly number[] = cardIdsTargeting(AbilityTarget.ALLY_UNIT);
 
         const SWAMP_OF_DEAD_CARD_ID = 20;
-        const SWAMP_DRAW_COUNT = ability(SWAMP_OF_DEAD_CARD_ID).numbers.drawCount;
 
         const DOOM_CONTRACT_CARD_ID = 25;
-        const DOOM_CONTRACT_DAMAGE = ability(DOOM_CONTRACT_CARD_ID).numbers.damage;
         const FIELD_NEON_ENTITY_ID = -1;  // sentinel — distinct from any card.cardIndex
 
         const DEAD_LANDS_CARD_ID = 36;
@@ -2007,27 +1982,6 @@ export class SimulationBattleFieldView implements Component {
                 }
             }
             return null;
-        };
-
-        const applyScytheEffect = async (
-            target: OpponentEntry, events: readonly BattleEvent[],
-        ): Promise<void> => {
-            const damaged = events.find((ev) => ev.type === 'damaged');
-            const killing = events.some(
-                (ev) => ev.type === 'defeated' && ev.target.kind === 'unit',
-            );
-            if (damaged && damaged.type === 'damaged') {
-                console.log(`[scythe] target cardId=${target.card.cardId} HP: ${damaged.hpBefore} → ${damaged.hpAfter}`);
-            }
-
-            // Play the cut animation. For killing hits it hides the target and plays the split
-            // halves; for mythic-survives it plays a dark flash without splitting.
-            await scytheCutEffect.play(target.group, target.card.cardId, killing);
-
-            if (killing) {
-                reflowOpponentField();
-                console.log(`[scythe] opponent idx=${target.cardIndex} defeated. Remaining: ${view.opponentAliveCount()}`);
-            }
         };
 
         // Flash-and-shake feedback shared by energy-burn damage and (future) other item hits.
@@ -2064,177 +2018,11 @@ export class SimulationBattleFieldView implements Component {
         };
 
         // 에너지 번 연출. 무엇이 일어났는지는 전투가 이미 정했다. 여기서는 그리기만 한다.
-        const applyEnergyBurnEffect = async (
-            target: OpponentEntry, events: readonly BattleEvent[],
-        ): Promise<void> => {
-            const drainedEvent = events.find((ev) => ev.type === 'energyDrained');
-            const energyDrained = drainedEvent && drainedEvent.type === 'energyDrained'
-                ? drainedEvent.amount : 0;
-            const newEnergy = drainedEvent && drainedEvent.type === 'energyDrained'
-                ? drainedEvent.countAfter : opponentEnergyOf(target.cardIndex);
-            // 그리는 자리는 연출이 끝난 뒤라, 그때 참인 값으로 그린다. 같은 유닛에 에너지
-            // 번을 빠르게 두 번 쓰면 연출 둘이 겹치고, 각자 들고 있던 값을 쓰면 되돌아간다.
-
-            const damagedEvent = events.find(
-                (ev) => ev.type === 'damaged' && ev.target.kind === 'unit',
-            );
-            const damage = damagedEvent && damagedEvent.type === 'damaged' ? damagedEvent.amount : 0;
-            const killing = events.some((ev) => ev.type === 'defeated' && ev.target.kind === 'unit');
-
-            console.log(`[energy-burn] target cardId=${target.card.cardId} drained ${energyDrained} → ${newEnergy}, damage=${damage}${killing ? ' (defeated — card burns away)' : ''}`);
-
-            // Play the effect (passes killing so the card dissolves inside the flame) + damage
-            // feedback in parallel. The icon refreshes ~1s in AFTER motes visually consume, but
-            // ONLY on survive — a killing hit dissolves the whole card, so updating its energy
-            // icon mid-burn is wasted (and would flash the text back on while the card fades).
-            await Promise.all([
-                energyBurnEffect.play(target.group, energyDrained, killing),
-                (async () => {
-                    if (damage > 0) {
-                        await new Promise((r) => setTimeout(r, 500));
-                        flashAndShakeTarget(target.group);
-                    }
-                })(),
-                (async () => {
-                    if (killing) return;
-                    if (energyDrained <= 0) return;  // no drain → icons unchanged
-                    // Let the mote-burn shader visuals get well underway before the icons on the
-                    // card start to burn — ties the on-card drain visually to the mote burning.
-                    await new Promise((r) => setTimeout(r, 600));
-                    await energyBurnEffect.playEnergyIconBurnAway(target.group);
-                    // After burn, redraw with the new (reduced) count — shows any remaining energy.
-                    opponentRenderer.getCardRenderer().updateEnergyCount(
-                        target.group, opponentEnergyOf(target.cardIndex), handCardFrame,
-                    );
-                })(),
-            ]);
-
-            if (killing) {
-                reflowOpponentField();
-            }
-        };
-
         // 카드를 화면에서 치운다. 무덤에 넣는 것은 전투가 이미 했다.
         const removeHandCardFromScreen = (entry: HandEntry, idx: number): void => {
             handOrder.splice(idx, 1);
             handGroup.remove(entry.group);
             handRenderer.getCardRenderer().dispose(entry.group);
-        };
-
-        // 파멸의 계약:
-        //   1) 15 dmg to every alive opponent unit (HP state + death reflow)
-        //   2) 15 dmg to the opponent master body
-        //   3) Draw 1 card from the OPPONENT's deck → push to the OPPONENT's lost zone.
-        //      (Not Your deck. In production this source will be the server-driven opponent
-        //      deck snapshot.)
-        // State mutations are timed to the effect's BOOM phase (~1400ms in) so the numbers
-        // change on-screen the same beat the grimoire explodes.
-        // 전투가 돌려준 일어난 일을 보고 화면을 고친다. 값은 이미 다 바뀌었다.
-        const applyDoomContractToScreen = (events: readonly BattleEvent[]): void => {
-            console.log(`[doom-contract] AoE ${DOOM_CONTRACT_DAMAGE} dmg to all opponent units + master; opponent deck → opponent lost zone`);
-            let anyDefeated = false;
-            for (const ev of events) {
-                if (ev.type === 'damaged') {
-                    const t = ev.target;
-                    if (t.kind === 'unit') {
-                        console.log(`  opponent idx=${t.battleCardId} HP: ${ev.hpBefore} → ${ev.hpAfter}${ev.hpAfter <= 0 ? ' (defeated)' : ''}`);
-                    } else if (t.kind === 'opponentMaster') {
-                        opponentMasterHpRenderer.setHp(opponentMasterHpGroup, opponentMasterHpFrame, ev.hpAfter);
-                        console.log(`[opponent-master-hp] doom contract → ${ev.hpBefore} → ${ev.hpAfter}`);
-                    }
-                } else if (ev.type === 'defeated' && ev.target.kind === 'unit') {
-                    const id = ev.target.battleCardId;
-                    const e = opponentEntries.find((oe) => oe.cardIndex === id);
-                    if (e) e.group.visible = false;
-                    anyDefeated = true;
-                } else if (ev.type === 'defeated' && ev.target.kind === 'opponentMaster') {
-                    masterGroup.visible = false;
-                } else if (ev.type === 'cardMoved' && ev.to === 'opponentLostZone') {
-                    console.log(`  opponent deck → opponent lost zone: cardId ${ev.cardId} (opp deck remaining: ${view.opponentDeckRemainingCount()})`);
-                }
-            }
-            if (anyDefeated) reflowOpponentField();
-        };
-
-        const applyDoomContractEffect = async (events: readonly BattleEvent[]): Promise<void> => {
-            // Effect timeline (DoomContractEffect.play phases): emerge 350 + shake 500 + suck
-            // 500 + boom 300 + fade 400 ≈ 2050ms. The BOOM begins ~1350ms in — schedule the
-            // screen update to land at that moment so units visibly die with the flash.
-            const boomMs = 1380;
-            const effectPromise = doomContractEffect.play();
-            setTimeout(() => applyDoomContractToScreen(events), boomMs);
-            await effectPromise;
-        };
-
-        // 망자의 늪 — swamp + wraiths + spectral cards visual. Pre-draws cardIds from the
-        // deck, then plays SwampEffect. Each spectral card's arrival at the hand triggers
-        // `onCardArrive`, which resolves the real card and appends it to Your Hand. If the
-        // deck runs dry at < 3 cards, only that many wraiths/cards spawn.
-        // Async, fire-and-forget from onDrop.
-        const applySwampEffect = async (events: readonly BattleEvent[]): Promise<void> => {
-            // 뽑는 것은 전투가 이미 했다. 화면은 돌려받은 카드 번호로 그린다.
-            const drawn = events
-                .filter((ev) => ev.type === 'cardMoved' && ev.from === 'yourDeck' && ev.to === 'hand')
-                .map((ev) => ev as {cardId: number; battleCardId: number});
-            const drawnIds = drawn.map((it) => it.cardId);
-            // 알갱이가 닿을 때마다 앞에서부터 하나씩 꺼내 쓴다.
-            let swampArrival = 0;
-            if (drawnIds.length === 0) {
-                console.log(`[swamp] deck empty — effect skipped`);
-                return;
-            }
-            console.log(`[swamp] drawing ${drawnIds.length}/${SWAMP_DRAW_COUNT}: cardIds=${drawnIds.join(',')}`);
-
-            // Swamp plays over the your-field rectangle.
-            const yourField = computeYourFieldAreaBounds(
-                yourFieldAreaFrame, window.innerWidth, window.innerHeight,
-            );
-            const fieldCenter = new THREE.Vector3(yourField.centerX, yourField.centerY, 2);
-            const fieldW = yourField.width;
-            const fieldH = yourField.height;
-
-            // Deck world position — sits LEFT of the Field Energy HUD (HUD centre at
-            // screen ~0.940). Screen (0.81, 0.87) puts the deck visibly left of the big
-            // energy number, in the bottom-right cluster.
-            const deckPos = new THREE.Vector3(
-                (0.81 - 0.5) * window.innerWidth,
-                (0.5 - 0.87) * window.innerHeight,
-                2,
-            );
-
-            // Spectral cards fly to the Your Hand area. Use the hand layout's baseline for a
-            // reasonable centre destination. The actual cards land wherever appendCard + reflow
-            // places them (page overflow handled separately).
-            const handDest = new THREE.Vector3(
-                0,
-                handLayoutFrame.baselineYHeightRatio * window.innerHeight +
-                    handLayoutFrame.baselineYWidthOffsetRatio * window.innerWidth,
-                2,
-            );
-
-            await swampEffect.play(
-                fieldCenter,
-                fieldW,
-                fieldH,
-                deckPos,
-                handDest,
-                drawnIds,
-                (cardId) => {
-                    const resolved = resolveCards([cardId], 'swamp-draw');
-                    if (resolved.length === 0) return;
-                    // handRenderer.appendCard returns a Promise; we fire-and-forget and let the
-                    // texture load asynchronously. handOrder push happens once the append resolves.
-                    // 전투가 매긴 번호를 그대로 쓴다.
-                    const issued = drawn[swampArrival++]?.battleCardId;
-                    void handRenderer.appendCard(
-                        handGroup, resolved[0], handCardFrame, issued,
-                    ).then((newEntry) => {
-                        handOrder.push(newEntry);
-                        reflowHandAndPlaced();
-                    });
-                    console.log(`  swamp card landed — cardId=${cardId}`);
-                },
-            );
         };
 
         // Hit-test for a placed ally card at world coords — used by 사기 전환 drops.
@@ -2253,114 +2041,138 @@ export class SimulationBattleFieldView implements Component {
             return null;
         };
 
-        // 사기 전환 — sacrifice a placed ally for field energy, with a death-energy transfer
-        // animation: a violet/green aura blooms where the ally was, then N motes (N = energy
-        // gain) arc along a bezier toward the Field Energy HUD. Each mote's arrival bumps the
-        // displayed energy count by 1 — so the number climbs visibly in sync with the flow.
-        //
-        // Fire-and-forget from the pilot's perspective (onDrop doesn't await it).
-        const applyMoraleConvertEffect = async (
-            target: HandEntry, events: readonly BattleEvent[],
-        ): Promise<void> => {
-            const hpNum = cardCatalog.getHp(target.card.cardId);
-            // 얼마나 얻는지는 전투가 이미 셌다. 여기서는 그 값으로 화면을 그린다.
-            const gained = events.find(
-                (ev) => ev.type === 'valueChanged' && ev.what === 'fieldEnergy',
-            );
-            const energyBefore = gained && gained.type === 'valueChanged' ? gained.before : view.yourFieldEnergy();
-            const energyGain = gained && gained.type === 'valueChanged' ? gained.after - gained.before : 0;
-
-            // Capture the source world position BEFORE removing the mesh.
-            const sourceWorld = new THREE.Vector3(
-                target.group.position.x,
-                target.group.position.y,
-                5,
-            );
-
-            // 유닛을 무덤으로 보내는 것도 전투가 이미 했다. 여기서는 화면에서 치운다.
-            const placedIdx = placedOrder.indexOf(target);
-            if (placedIdx >= 0) {
-                placedOrder.splice(placedIdx, 1);
-                handGroup.remove(target.group);
-                handRenderer.getCardRenderer().dispose(target.group);
+        // 카드가 정한 자리에 무엇이 있는지 찾는다. 없으면 null — 카드가 제자리로 돌아간다.
+        const resolveCardDropHit = (
+            dropTarget: CardDropTarget, dropX: number, dropY: number,
+        ): DropHit | null => {
+            if (dropTarget === 'opponentUnit') {
+                const target = hitOpponentAt(dropX, dropY);
+                return target ? {kind: 'opponentUnit', entry: target} : null;
             }
-            reflowHandAndPlaced();
-
-            console.log(`[morale-convert] target cardId=${target.card.cardId} HP=${hpNum} → +${energyGain} energy pending (via animation); target → tomb`);
-
-            if (energyGain <= 0) return;  // nothing to tick (HP 0-4)
-
-            // 알갱이가 하나씩 닿을 때마다 숫자를 하나씩 올려 보인다. 실제 값은 이미 다 올랐다.
-            let shownEnergy = energyBefore;
-
-            // Field Energy HUD destination in world coords. The HUD is a DOM element positioned
-            // via createDefaultFieldEnergyHudFrame — bottom-right corner, NOT top-right where
-            // the sand timer lives:
-            //   leftPercent '90.4%', widthPercent '7.2%'  → x-centre ≈ 0.940 of viewport width
-            //   topPercent  '82.4%' + (~7.2% height since image is squarish) → y-centre ≈ 0.89
-            const destWorld = new THREE.Vector3(
-                (0.940 - 0.5) * window.innerWidth,
-                (0.5 - 0.89)  * window.innerHeight,
-                5,
-            );
-
-            // One mote per unit of energy gain. Arrival bumps the counter + updates the HUD.
-            await moraleConvertEffect.play(sourceWorld, destWorld, energyGain, () => {
-                shownEnergy += 1;
-                energyRenderer.setEnergy(shownEnergy);
-                energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
-            });
-
-            // 알갱이마다 올려 보이는 숫자는 이 연출이 시작할 때의 값에서 세는 것이다.
-            // 도는 동안 다른 데서 필드 에너지가 바뀌면 그 값이 어긋난다.
-            //
-            // 필드 에너지는 오르기도 하고 내려가기도 해서, 본체 체력처럼 한쪽만 그리는
-            // 방법으로 막을 수 없다. 그래서 끝나고 지금 참인 값으로 맞춘다.
-            energyRenderer.setEnergy(view.yourFieldEnergy());
-            energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
-
-            console.log(`[morale-convert] effect complete; total field energy = ${view.yourFieldEnergy()}`);
+            if (dropTarget === 'allyUnit') {
+                const target = hitAllyAt(dropX, dropY);
+                return target ? {kind: 'allyUnit', entry: target} : null;
+            }
+            const area = dropTarget === 'opponentFieldArea'
+                ? computeOpponentFieldAreaBounds(
+                    opponentFieldAreaFrame, window.innerWidth, window.innerHeight,
+                )
+                : computeYourFieldAreaBounds(
+                    yourFieldAreaFrame, window.innerWidth, window.innerHeight,
+                );
+            return isInsideArea(area, dropX, dropY) ? {kind: 'area'} : null;
         };
 
-        // 넘쳐흐르는 사기 — drop on a placed ally to pull up to OVERFLOW_MORALE_MAX copies of
-        // death-energy (cardId 93) out of the deck and attach them to that ally. If the deck
-        // has fewer than MAX, attach however many were available (0-2). The card itself still
-        // gets consumed (moved to tomb) regardless of how many energies were pulled — matches
-        // the card's passive text "덱에서 찾아 최대 0~2개를 선택하여 유닛에게 수급".
-        const applyOverflowMoraleEffect = async (
-            target: HandEntry, events: readonly BattleEvent[],
-        ): Promise<void> => {
-            // 덱에서 꺼내 붙이는 것은 전투가 이미 했다. 화면은 몇 개가 붙었는지만 본다.
-            const attachedEvents = events.filter((ev) => ev.type === 'energyAttached');
-            const attached = attachedEvents.length;
-            console.log(`[overflow-morale] target cardId=${target.card.cardId} → pulled ${attached} death-energy from deck (deck remaining=${view.yourDeckRemainingCount()})`);
-
-            // Deck world-position — same convention as SwampEffect (screen 0.81, 0.87),
-            // sitting left of the Field Energy HUD.
-            const deckPos = new THREE.Vector3(
-                (0.81 - 0.5) * window.innerWidth,
-                (0.5 - 0.87) * window.innerHeight,
-                5,
-            );
-            // Target is the placed ally the card was dropped on.
-            const targetPos = new THREE.Vector3(
-                target.group.position.x,
-                target.group.position.y,
-                5,
-            );
-
-            // Each mote's arrival bumps the target's energy count by 1 so the icon + HUD
-            // tick in sync with the visible absorption. If attached === 0 the effect still
-            // plays the gather aura (deck "searched", nothing found) and fades — no motes.
-            // 덱에서 뽑은 에너지 카드(죽음의 에너지)의 종족이 그대로 부착된다.
-            const pulledRace = cardRaceOf(DEATH_ENERGY_CARD_ID) ?? CardRace.UNDEAD;
-            // 알갱이가 하나씩 닿을 때마다 앞에서부터 꺼내 쓴다.
-            let overflowArrival = 0;
-            await overflowMoraleEffect.play(deckPos, targetPos, attached, () => {
-                const ev = attachedEvents[overflowArrival++];
-                const newCount = ev && ev.type === 'energyAttached' ? ev.totalAfter : 0;
-                void updateCardEnergyVisual(target, newCount);
-            });
+        // 카드 연출이 쓸 수 있는 것을 모아 건넨다.
+        //
+        // 화면을 통째로 넘기지 않는다. 넘기면 카드가 아무거나 만질 수 있게 되고, 갈림길을
+        // 파일로 흩어 놓은 것이 될 뿐이다. 여기 적힌 것이 곧 [카드 연출이 할 수 있는 일] 이다.
+        const cardPresentationContext: CardPresentationContext = {
+            scene,
+            createEffect: (make) => make(scene, {
+                renderer: rendererManager.getRenderer(),
+                camera,
+                animationLoop,
+            }),
+            send,
+            view,
+            catalog: cardCatalog,
+            hand: {
+                cardFrame: handCardFrame,
+                removeCard: (entry, handIndex) => removeHandCardFromScreen(entry, handIndex),
+                reflow: () => reflowHandAndPlaced(),
+                appendCard: (cardId, battleCardId) => {
+                    const resolved = resolveCards([cardId], 'card-draw');
+                    if (resolved.length === 0) return;
+                    // 그림을 읽는 동안 기다리지 않는다. 다 읽히면 줄을 다시 세운다.
+                    void handRenderer.appendCard(
+                        handGroup, resolved[0], handCardFrame, battleCardId,
+                    ).then((newEntry) => {
+                        handOrder.push(newEntry);
+                        reflowHandAndPlaced();
+                    });
+                },
+                worldCenter: () => ({
+                    x: 0,
+                    y: handLayoutFrame.baselineYHeightRatio * window.innerHeight +
+                        handLayoutFrame.baselineYWidthOffsetRatio * window.innerWidth,
+                }),
+            },
+            whileRunning: (effect, run) => whileRunning(effect, run),
+            opponentField: {
+                reflow: () => reflowOpponentField(),
+                flashAndShake: (group) => flashAndShakeTarget(group),
+                redrawEnergyCount: (entry, count) =>
+                    opponentRenderer.getCardRenderer()
+                        .updateEnergyCount(entry.group, count, handCardFrame),
+                hideUnit: (battleCardId) => {
+                    const target = opponentEntries.find((oe) => oe.cardIndex === battleCardId);
+                    if (target) target.group.visible = false;
+                },
+            },
+            yourField: {
+                removeUnit: (entry) => {
+                    const placedIdx = placedOrder.indexOf(entry);
+                    if (placedIdx < 0) return;
+                    placedOrder.splice(placedIdx, 1);
+                    handGroup.remove(entry.group);
+                    handRenderer.getCardRenderer().dispose(entry.group);
+                },
+                bounds: () => computeYourFieldAreaBounds(
+                    yourFieldAreaFrame, window.innerWidth, window.innerHeight,
+                ),
+            },
+            fieldEnergy: {
+                // 표기가 오른쪽 아래에 있다. 모래시계가 있는 오른쪽 위가 아니다.
+                worldPosition: () => ({
+                    x: (0.940 - 0.5) * window.innerWidth,
+                    y: (0.5 - 0.89) * window.innerHeight,
+                }),
+                setEnergy: (count) => {
+                    energyRenderer.setEnergy(count);
+                    energyRenderer.update(
+                        energyFrame, energyElement, window.innerWidth, window.innerHeight,
+                    );
+                },
+                syncToTruth: () => {
+                    energyRenderer.setEnergy(view.yourFieldEnergy());
+                    energyRenderer.update(
+                        energyFrame, energyElement, window.innerWidth, window.innerHeight,
+                    );
+                },
+            },
+            cardEnergy: {
+                setCount: (entry, count) => void updateCardEnergyVisual(entry, count),
+                attachColdDarkMarks: (entry) => attachColdDarkTraitMarks(entry),
+            },
+            // 덱이 오른쪽 아래, 필드 에너지 표기 왼쪽에 있다.
+            deckWorldPosition: () => ({
+                x: (0.81 - 0.5) * window.innerWidth,
+                y: (0.5 - 0.87) * window.innerHeight,
+            }),
+            opponentMaster: {
+                setHp: (hp) => void opponentMasterHpRenderer.setHp(
+                    opponentMasterHpGroup, opponentMasterHpFrame, hp,
+                ),
+                hide: () => { masterGroup.visible = false; },
+            },
+            opponentFieldEnergy: {
+                bounds: () => computeOpponentFieldEnergyBounds(
+                    opponentFieldEnergyAreaFrame, window.innerWidth, window.innerHeight,
+                ),
+                setEnergy: (count) => {
+                    opponentEnergyRenderer.setEnergy(count);
+                    opponentEnergyRenderer.refresh(
+                        opponentFieldEnergyAreaFrame, opponentEnergyGroup,
+                        window.innerWidth, window.innerHeight,
+                    );
+                },
+                setOffset: (dx, dy) =>
+                    opponentEnergyRenderer.setOffset(opponentEnergyGroup, dx, dy),
+                setDamageLevel: (level) =>
+                    opponentEnergyRenderer.setDamageLevel(opponentEnergyGroup, level),
+            },
+            canvasElement: rendererManager.getDomElement(),
         };
 
         // ─── 시체 폭발 (Corpse Explosion) — sacrifice + 2-pick targeting state ──────
@@ -2986,68 +2798,45 @@ export class SimulationBattleFieldView implements Component {
                     const kind = droppedEntry.card.cardKind;
                     const cardId = droppedEntry.card.cardId;
 
+                    // 옮긴 카드는 카드 종류와 상관없이 제 파일이 받는다.
+                    //
+                    // 어디에 떨어져야 하는지는 카드가 정하고, 그 자리에 무엇이 있는지 찾는
+                    // 일은 화면이 한다. 찾은 것을 넘겨 준다.
+                    //
+                    // 종류 판정보다 먼저다. 전에 ITEM 안에만 두었더니 ENERGY 인 죽음의
+                    // 에너지와 SUPPORT 인 넘쳐 흐르는 사기가 아무 데도 안 걸렸다.
+                    const presentation = findCardPresentation(cardId);
+                    if (presentation) {
+                        const dropCx = group.position.x;
+                        const dropCy = group.position.y;
+                        const dropped = {
+                            battleCardId: droppedEntry.cardIndex,
+                            cardId,
+                            handIndex,
+                            entry: droppedEntry,
+                        };
+                        const hit = resolveCardDropHit(presentation.dropTarget, dropCx, dropCy);
+                        if (hit) presentation.onDrop(cardPresentationContext, dropped, hit);
+
+                        neonEffect.detachAll();
+                        enemyNeonEffect.detachAll();
+                        allyTargetNeonEffect.detachAll();
+                        selectedAttackerEntry = null;
+                        interactionState = 'idle';
+                        reflowHandAndPlaced();
+                        return;
+                    }
+
                     // ITEM: scythe / energy-burn consume + hit opponent. Drop-location uses the
                     // card's visual center (group.position) rather than the cursor — feels more natural.
                     if (kind === CardKind.ITEM) {
                         const dropCx = group.position.x;
                         const dropCy = group.position.y;
-                        const isOpponentTargeting = OPPONENT_TARGETING_ITEM_IDS.includes(cardId);
-                        const opponentTarget = isOpponentTargeting ? hitOpponentAt(dropCx, dropCy) : null;
-                        if (opponentTarget) {
-                            if (cardId === SCYTHE_CARD_ID) {
-                                // 카드를 쓴다. 피해와 카드 이동은 전투가 한다.
-                                void applyScytheEffect(opponentTarget, send({
-                                    type: 'useCardOnUnit',
-                                    battleCardId: droppedEntry.cardIndex,
-                                    targetBattleCardId: opponentTarget.cardIndex,
-                                }));
-                                removeHandCardFromScreen(droppedEntry, handIndex);
-                            } else if (cardId === ENERGY_BURN_CARD_ID) {
-                                // 카드를 쓴다. 에너지 빼기와 피해와 카드 이동은 전투가 한다.
-                                void applyEnergyBurnEffect(opponentTarget, send({
-                                    type: 'useCardOnUnit',
-                                    battleCardId: droppedEntry.cardIndex,
-                                    targetBattleCardId: opponentTarget.cardIndex,
-                                }));
-                                removeHandCardFromScreen(droppedEntry, handIndex);
-                            }
-                        } else if (cardId === DOOM_CONTRACT_CARD_ID) {
-                            // AoE + deck drain — MUST land on the OPPONENT field area. Dropping
-                            // on your own field or somewhere on the hand leaves it unused (snap
-                            // back).
-                            const insideOppField = isInsideArea(
-                                computeOpponentFieldAreaBounds(
-                                    opponentFieldAreaFrame, window.innerWidth, window.innerHeight,
-                                ),
-                                dropCx, dropCy,
-                            );
-                            if (insideOppField) {
-                                // 카드를 쓴다. 피해와 카드 이동은 전투가 한다.
-                                const events = send({
-                                    type: 'useCardOnField',
-                                    battleCardId: droppedEntry.cardIndex,
-                                    side: 'opponent',
-                                });
-                                void applyDoomContractEffect(events);
-                                removeHandCardFromScreen(droppedEntry, handIndex);
-                            }
-                        } else if (cardId === MORALE_CONVERT_CARD_ID) {
-                            // 사기 전환 — MUST land on a placed ally, else snap back unused.
-                            const allyTarget = hitAllyAt(dropCx, dropCy);
-                            if (allyTarget) {
-                                // 카드를 쓴다. 유닛을 무덤으로 보내고 에너지를 얻는 것은 전투가 한다.
-                                void applyMoraleConvertEffect(allyTarget, send({
-                                    type: 'useCardOnUnit',
-                                    battleCardId: droppedEntry.cardIndex,
-                                    targetBattleCardId: allyTarget.cardIndex,
-                                }));
-                                removeHandCardFromScreen(droppedEntry, handIndex);
-                            }
-                        } else if (cardId === CORPSE_EXPLOSION_CARD_ID) {
-                            // 시체 폭발 — MUST land on an UNDEAD ally. Snap back if hit nothing
-                            // or hit a non-undead ally. On valid hit: sacrifice that ally + enter
-                            // the 2-pick targeting state (DO NOT consume corpse-explosion yet —
-                            // it's consumed at the end of the second damage pick).
+                        if (cardId === CORPSE_EXPLOSION_CARD_ID) {
+                            // 시체 폭발 — 언데드 아군 위에 떨어뜨려야 한다. 아무것도 못 맞히거나
+                            // 언데드가 아니면 제자리로 돌아간다. 맞히면 그 아군을 제물로 바치고
+                            // 적 둘을 고르는 상태로 들어간다. 카드는 아직 안 쓴다 — 둘째 고르기가
+                            // 끝날 때 쓰인다.
                             const allyTarget = hitAllyAt(dropCx, dropCy);
                             if (allyTarget && allyTarget.card.raceId === CardRace.UNDEAD) {
                                 // 제물을 받고 적을 고르라고 기다리기 시작하는 것은 전투가 한다.
@@ -3063,57 +2852,6 @@ export class SimulationBattleFieldView implements Component {
                                 console.log(`[corpse-explosion] target cardId=${allyTarget.card.cardId} is not UNDEAD — snap back`);
                             } else {
                                 console.log('[corpse-explosion] drop missed any placed ally — snap back');
-                            }
-                        } else if (cardId === DEAD_LANDS_CARD_ID) {
-                            // 죽음의 대지 — MUST land on the OPPONENT field area (same bounds
-                            // check as 파멸의 계약). On hit: card → tomb immediately, then the
-                            // DeadLandsEffect plays. The count decrement fires at the effect's
-                            // SHATTER peak (~1.3 s in), NOT at drop time — so the visual
-                            // tearing/shattering of the HUD is in sync with the number drop.
-                            const insideOppField = isInsideArea(
-                                computeOpponentFieldAreaBounds(
-                                    opponentFieldAreaFrame, window.innerWidth, window.innerHeight,
-                                ),
-                                dropCx, dropCy,
-                            );
-                            if (insideOppField) {
-                                // 카드를 쓴다. 값을 바꾸고 카드를 무덤에 넣는 것은 전투가 한다.
-                                const events = send({
-                                    type: 'useCardOnField',
-                                    battleCardId: droppedEntry.cardIndex,
-                                    side: 'opponent',
-                                });
-                                const drained = events.find(
-                                    (ev) => ev.type === 'valueChanged' && ev.what === 'opponentFieldEnergy',
-                                );
-                                const deadLandsDrain = drained && drained.type === 'valueChanged'
-                                    ? {before: drained.before, after: drained.after}
-                                    : null;
-                                removeHandCardFromScreen(droppedEntry, handIndex);
-
-                                // Resolve the opponent HUD's world centre + world size from the
-                                // shaded-area bounds (same frame that defines the 180°-mirror).
-                                const bounds = computeOpponentFieldEnergyBounds(
-                                    opponentFieldEnergyAreaFrame,
-                                    window.innerWidth,
-                                    window.innerHeight,
-                                );
-                                const targetWorld = new THREE.Vector3(bounds.centerX, bounds.centerY, 5);
-
-                                void deadLandsEffect.play(
-                                    targetWorld,
-                                    { width: bounds.width, height: bounds.height },
-                                    opponentEnergyTarget,
-                                    rendererManager.getDomElement(),
-                                    () => {
-                                        // 값은 이미 전투가 바꿨다. 여기서는 그때 받은 것을 화면에 쓴다.
-                                        if (deadLandsDrain) {
-                                            opponentEnergyRenderer.setEnergy(deadLandsDrain.after);
-                                            opponentEnergyRenderer.refresh(opponentFieldEnergyAreaFrame, opponentEnergyGroup, window.innerWidth, window.innerHeight);
-                                            console.log(`[dead-lands] opponent field energy ${deadLandsDrain.before} → ${deadLandsDrain.after}`);
-                                        }
-                                    },
-                                );
                             }
                         }
                         neonEffect.detachAll();
@@ -3164,84 +2902,11 @@ export class SimulationBattleFieldView implements Component {
                                 await triggerNetherBladePassive(entry);
                             })();
                         }
-                    } else if (inside && kind === CardKind.SUPPORT && cardId === SWAMP_OF_DEAD_CARD_ID) {
-                        // 망자의 늪 — 뽑는 것과 카드 이동은 전투가 한다.
-                        void applySwampEffect(send({
-                            type: 'useCardOnField',
-                            battleCardId: droppedEntry.cardIndex,
-                            side: 'your',
-                        }));
-                        removeHandCardFromScreen(droppedEntry, handIndex);
                     } else if (inside && kind === CardKind.SUPPORT && cardId === LEONIK_SUMMON_CARD_ID) {
                         // 레오닉의 부름 — 고르는 창을 열기만 한다. 여기서 카드를 쓰지 않는다.
                         // 고르기를 마치고 확인을 누를 때 전투에게 보낸다.
                         // 필드 밖에 떨어뜨릴 때는 그대로 돌아간다.
                         void openLeonikPopup(droppedEntry);
-                    } else if (kind === CardKind.SUPPORT && cardId === OVERFLOW_MORALE_CARD_ID) {
-                        // 넘쳐흐르는 사기 — MUST land on a placed ally, else snap back unused.
-                        // Uses the card's visual centre (same convention as the ITEM ally-target
-                        // branch above) instead of the cursor for a more natural drop feel.
-                        const dropCx = group.position.x;
-                        const dropCy = group.position.y;
-                        const allyTarget = hitAllyAt(dropCx, dropCy);
-                        if (allyTarget) {
-                            // 덱에서 꺼내고 붙이고 무덤에 넣는 것은 전투가 한다.
-                            void applyOverflowMoraleEffect(allyTarget, send({
-                                type: 'useCardOnUnit',
-                                battleCardId: droppedEntry.cardIndex,
-                                targetBattleCardId: allyTarget.cardIndex,
-                            }));
-                            removeHandCardFromScreen(droppedEntry, handIndex);
-                        }
-                    } else if (
-                        kind === CardKind.ENERGY &&
-                        (cardId === DEATH_ENERGY_CARD_ID || cardId === COLD_DARK_ENERGY_CARD_ID)
-                    ) {
-                        // 죽음의 에너지 / 차갑게 불타는 암흑 에너지 —
-                        // drop onto a placed ally to attach 1 energy. 쓴 카드를 무덤으로
-                        // 보내는 것은 전투가 한다. No field
-                        // energy is spent; this is a hand-to-unit direct attach.
-                        //
-                        // Effect reuses the OverflowMoraleEffect.playDirectAttach variant so
-                        // the "gather around target → impact (shockwave + flash + shrink)"
-                        // visual beat matches the energies arriving from Overflowing Morale.
-                        // The card is consumed immediately so the hand reflows before the
-                        // effect finishes; the energy count bump is deferred to the impact
-                        // callback so it ticks exactly when the shockwave fires.
-                        const dropCx = group.position.x;
-                        const dropCy = group.position.y;
-                        const allyTarget = hitAllyAt(dropCx, dropCy);
-                        if (allyTarget) {
-                            // 둘 다 전투가 붙인다. 카드를 무덤으로 보내는 것도 전투가 한다.
-                            const attachEvents = send({
-                                type: 'useCardOnUnit',
-                                battleCardId: droppedEntry.cardIndex,
-                                targetBattleCardId: allyTarget.cardIndex,
-                            });
-                            removeHandCardFromScreen(droppedEntry, handIndex);
-                            const targetWorld = new THREE.Vector3(
-                                allyTarget.group.position.x,
-                                allyTarget.group.position.y,
-                                5,
-                            );
-                            // 손패에서 직접 떨군 에너지 카드 자신의 종족이 부착된다.
-                            const droppedRace = cardRaceOf(cardId) ?? CardRace.UNDEAD;
-                            const isColdDark = cardId === COLD_DARK_ENERGY_CARD_ID;
-                            void overflowMoraleEffect.playDirectAttach(targetWorld, () => {
-                                // 붙이는 것은 전투가 한다. 여기서는 붙은 결과를 그린다.
-                                const attached = attachEvents?.find((ev) => ev.type === 'energyAttached');
-                                const newCount = attached && attached.type === 'energyAttached'
-                                    ? attached.totalAfter
-                                    : view.yourUnitEnergyCount(allyTarget.cardIndex);
-                                void updateCardEnergyVisual(allyTarget, newCount);
-                                if (isColdDark) {
-                                    // 종족 에너지에 더해 앞으로 때릴 때마다 따라붙는 능력이 생긴다.
-                                    // 그 사실은 카드에 붙는 두 마크가 알리므로 배너는 안 띄운다.
-                                    attachColdDarkTraitMarks(allyTarget);
-                                }
-                                console.log(`[${isColdDark ? 'cold-dark-energy' : 'death-energy'}] attached ${RACE_LABEL[droppedRace]} 1 → placed cardId=${allyTarget.card.cardId} total=${newCount}`);
-                            });
-                        }
                     }
                     neonEffect.detachAll();
                     selectedAttackerEntry = null;
