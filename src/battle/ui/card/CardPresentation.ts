@@ -77,12 +77,22 @@ export interface OpponentFieldPresentation {
     redrawEnergyCount(entry: OpponentEntry, count: number): void;
     // 쓰러진 유닛을 화면에서 감춘다. 무덤으로 보내는 것은 전투가 이미 했다.
     hideUnit(battleCardId: number): void;
+    // 이 유닛이 화면에서 있는 자리. 연출이 거기로 날아간다.
+    unitWorldPosition(battleCardId: number): {x: number; y: number} | null;
+    // 아직 화면에 보이는가.
+    isUnitVisible(battleCardId: number): boolean;
+    // 이 영역이 화면에서 차지하는 자리.
+    bounds(): AreaBoundsView;
 }
 
 // 내 필드를 다루는 것.
 export interface YourFieldPresentation {
     // 필드에 서 있던 유닛을 화면에서 치운다. 무덤으로 보내는 것은 전투가 이미 했다.
     removeUnit(entry: HandEntry): void;
+    // 줄에서만 빼고 그림은 남긴다. 그 그림이 날아가는 연출에 쓰일 때 그렇게 한다.
+    dropFromLineup(entry: HandEntry): void;
+    // 남겨 둔 그림을 이제 놓아준다.
+    disposeUnit(entry: HandEntry): void;
     // 이 필드 영역이 화면에서 차지하는 자리. 영역 전체에 도는 연출이 쓴다.
     bounds(): AreaBoundsView;
 }
@@ -114,6 +124,10 @@ export interface OpponentMasterPresentation {
     setHp(hp: number): void;
     // 쓰러진 본체를 감춘다.
     hide(): void;
+    // 화면에서 본체가 있는 자리. 연출이 거기로 날아간다.
+    worldPosition(): {x: number; y: number};
+    // 아직 화면에 보이는가. 이미 감췄는지 가릴 때 쓴다.
+    isVisible(): boolean;
 }
 
 // 상대 필드 에너지 표기를 다루는 것.
@@ -169,6 +183,7 @@ export interface CardPresentationContext {
     readonly hand: HandPresentation;
     readonly opponentField: OpponentFieldPresentation;
     readonly yourField: YourFieldPresentation;
+    readonly picking: PickingPresentation;
     readonly opponentMaster: OpponentMasterPresentation;
     readonly opponentFieldEnergy: OpponentFieldEnergyPresentation;
     readonly fieldEnergy: FieldEnergyPresentation;
@@ -188,6 +203,40 @@ export interface CardPresentationContext {
         effect: {resize(viewportWidth: number, viewportHeight: number): void},
         run: () => Promise<void>,
     ): Promise<void>;
+}
+
+// 카드를 쓴 뒤 사용자가 대상을 눌러 고르는 동안, 사용자가 누른 것.
+export type PickTarget =
+    | {readonly kind: 'opponentUnit'; readonly entry: OpponentEntry}
+    | {readonly kind: 'opponentMaster'};
+
+// 카드를 쓴 뒤 사용자가 대상을 눌러 고르는 동안의 것이다.
+//
+// 이 동안 화면은 딴 일을 안 받는다. 손패를 집을 수 없고, 누른 것은 전부 이 고르기로 간다.
+// 그래서 화면이 [지금 고르는 중인가] 를 알아야 하고, 무엇을 누를 수 있는지와 눌렀을 때
+// 무슨 일이 일어나는지는 카드가 안다.
+//
+// 몇 개를 더 받아야 하는지는 전투가 안다 (R2-103). 카드는 전투에 보내고 남은 개수를
+// 돌려받는다. 화면도 카드도 그 수를 따로 세지 않는다.
+export interface CardPickSession {
+    // 무엇을 누를 수 있나. 겨냥 테두리를 어디에 붙일지도 이것으로 정한다.
+    readonly pickable: 'opponentUnitOrMaster';
+    // 사용자가 하나 눌렀다.
+    onPick(target: PickTarget): void;
+    // 그만둔다 — 고르는 중에 턴이 넘어갔다. 아무 일도 안 일어난 것으로 둔다.
+    onCancel(): void;
+}
+
+// 고르기를 열고 닫는 것.
+export interface PickingPresentation {
+    // 고르기를 시작한다. 이때부터 누른 것이 이 고르기로 간다.
+    begin(session: CardPickSession): void;
+    // 끝난다. 화면이 제 일로 돌아간다.
+    end(): void;
+    // 누를 수 있는 것에 붉은 테두리를 씌운다. 무엇을 고를 수 있는지 보여 준다.
+    markPickable(): void;
+    // 테두리를 걷는다.
+    clearPickable(): void;
 }
 
 export interface CardPresentation {

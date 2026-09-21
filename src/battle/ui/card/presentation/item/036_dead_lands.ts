@@ -1,8 +1,8 @@
 import * as THREE from "three";
-import {DeadLandsEffect} from "../../animation/card/item/036_dead_lands/DeadLandsEffect";
+import {DeadLandsEffect} from "../../../animation/card/item/036_dead_lands/DeadLandsEffect";
 import {
     CardPresentation, CardPresentationContext, DropHit, DroppedCard,
-} from "../CardPresentation";
+} from "../../CardPresentation";
 
 // 죽음의 대지 — 상대 필드 에너지를 빨아낸다.
 //

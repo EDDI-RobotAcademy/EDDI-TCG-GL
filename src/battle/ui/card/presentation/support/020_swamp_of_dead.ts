@@ -1,9 +1,9 @@
 import * as THREE from "three";
-import {SwampEffect} from "../../animation/card/support/020_swamp/SwampEffect";
-import {findCardAbility} from "../../../domain/ability/CardAbility";
+import {SwampEffect} from "../../../animation/card/support/020_swamp/SwampEffect";
+import {findCardAbility} from "../../../../domain/ability/CardAbility";
 import {
     CardPresentation, CardPresentationContext, DropHit, DroppedCard,
-} from "../CardPresentation";
+} from "../../CardPresentation";
 
 // 망자의 늪 — 내 필드에 늪이 깔리고 덱에서 카드를 뽑는다.
 //

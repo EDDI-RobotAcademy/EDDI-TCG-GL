@@ -1,14 +1,15 @@
 import {CardPresentation} from "./CardPresentation";
 
-import {ScythePresentation} from "./presentation/008_scythe";
-import {EnergyBurnPresentation} from "./presentation/009_energy_burn";
-import {DoomContractPresentation} from "./presentation/025_doom_contract";
-import {DeadLandsPresentation} from "./presentation/036_dead_lands";
-import {MoraleConvertPresentation} from "./presentation/035_morale_convert";
-import {OverflowMoralePresentation} from "./presentation/002_overflow_morale";
-import {DeathEnergyPresentation} from "./presentation/093_death_energy";
-import {ColdDarkEnergyPresentation} from "./presentation/151_cold_dark_energy";
-import {SwampOfDeadPresentation} from "./presentation/020_swamp_of_dead";
+import {ScythePresentation} from "./presentation/item/008_scythe";
+import {EnergyBurnPresentation} from "./presentation/item/009_energy_burn";
+import {DoomContractPresentation} from "./presentation/item/025_doom_contract";
+import {DeadLandsPresentation} from "./presentation/item/036_dead_lands";
+import {MoraleConvertPresentation} from "./presentation/item/035_morale_convert";
+import {OverflowMoralePresentation} from "./presentation/support/002_overflow_morale";
+import {DeathEnergyPresentation} from "./presentation/energy/093_death_energy";
+import {ColdDarkEnergyPresentation} from "./presentation/energy/151_cold_dark_energy";
+import {SwampOfDeadPresentation} from "./presentation/support/020_swamp_of_dead";
+import {CorpseExplosionPresentation} from "./presentation/item/033_corpse_explosion";
 
 // 화면에서 쓰는 법을 아는 카드의 명부다.
 //
@@ -26,6 +27,7 @@ const PRESENTATIONS: readonly CardPresentation[] = [
     DeathEnergyPresentation,
     ColdDarkEnergyPresentation,
     SwampOfDeadPresentation,
+    CorpseExplosionPresentation,
 ];
 
 const BY_CARD_ID = new Map<number, CardPresentation>(

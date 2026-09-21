@@ -1,8 +1,8 @@
 import * as THREE from "three";
-import {MoraleConvertEffect} from "../../animation/card/item/035_morale_convert/MoraleConvertEffect";
+import {MoraleConvertEffect} from "../../../animation/card/item/035_morale_convert/MoraleConvertEffect";
 import {
     CardPresentation, CardPresentationContext, DropHit, DroppedCard,
-} from "../CardPresentation";
+} from "../../CardPresentation";
 
 // 사기 전환 — 아군 유닛 하나를 무덤으로 보내고 그 체력만큼 필드 에너지를 얻는다.
 //
