@@ -120,6 +120,7 @@ function waitForSecondPassivePick(
         }
 
         ctx.picking.begin({
+            kind: 'battlefield',
             pickable: 'opponentUnitOrMaster',
             onPick: (target) => void ctx.whileResolving(
                 () => resolveSecondPassive(ctx, unit, target, done),

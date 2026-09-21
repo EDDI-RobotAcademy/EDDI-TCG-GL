@@ -23,7 +23,7 @@ export const DeadLandsPresentation: CardPresentation = {
             battleCardId: dropped.battleCardId,
             side: 'opponent',
         });
-        ctx.hand.removeCard(dropped.entry, dropped.handIndex);
+        ctx.hand.removeCard(dropped.entry);
 
         const drained = events.find(
             (ev) => ev.type === 'valueChanged' && ev.what === 'opponentFieldEnergy',

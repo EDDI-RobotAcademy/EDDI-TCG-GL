@@ -24,7 +24,7 @@ export const SwampOfDeadPresentation: CardPresentation = {
             battleCardId: dropped.battleCardId,
             side: 'your',
         });
-        ctx.hand.removeCard(dropped.entry, dropped.handIndex);
+        ctx.hand.removeCard(dropped.entry);
 
         const drawn = events
             .filter((ev) => ev.type === 'cardMoved' && ev.from === 'yourDeck' && ev.to === 'hand')

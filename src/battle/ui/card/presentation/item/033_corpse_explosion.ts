@@ -19,14 +19,12 @@ export const CorpseExplosionPresentation: CardPresentation = {
     cardId: 33,
     dropTarget: 'allyUnit',
 
+    // 언데드 아군에게만 된다. 집었을 때 언데드에만 테두리가 붙는 것도 이 판단을 쓴다.
+    canDropOnAlly: (entry) => entry.card.raceId === CardRace.UNDEAD,
+
     onDrop(ctx: CardPresentationContext, dropped: DroppedCard, hit: DropHit): boolean {
         if (hit.kind !== 'allyUnit') return false;
         const sacrificed = hit.entry;
-
-        if (sacrificed.card.raceId !== CardRace.UNDEAD) {
-            console.log(`[corpse-explosion] target cardId=${sacrificed.card.cardId} is not UNDEAD — snap back`);
-            return false;
-        }
 
         // 제물을 받고 적을 고르라고 기다리기 시작하는 것은 전투가 한다.
         const started = ctx.send({
@@ -41,6 +39,7 @@ export const CorpseExplosionPresentation: CardPresentation = {
         // 제물은 아직 안 치운다. 고르는 내내 제자리에 서 있어야 한다.
         const picks: PickTarget[] = [];
         ctx.picking.begin({
+            kind: 'battlefield',
             pickable: 'opponentUnitOrMaster',
 
             onPick: (target) => {
@@ -152,7 +151,7 @@ async function resolve(
     ctx.yourField.disposeUnit(sacrificed);
 
     // 쓴 카드를 손패에서 치운다. 무덤으로 보낸 것은 전투가 했다.
-    ctx.hand.removeCard(dropped.entry, dropped.handIndex);
+    ctx.hand.removeCard(dropped.entry);
     ctx.hand.reflow();
     ctx.picking.end();
     console.log('[corpse-explosion] effect resolved — corpse-explosion card → tomb.');
