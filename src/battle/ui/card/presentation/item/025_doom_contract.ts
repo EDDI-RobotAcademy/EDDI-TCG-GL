@@ -1,8 +1,9 @@
-import {DoomContractEffect} from "../../animation/card/item/025_doom_contract/DoomContractEffect";
-import {findCardAbility} from "../../../domain/ability/CardAbility";
+import {DoomContractEffect} from "../../../animation/card/item/025_doom_contract/DoomContractEffect";
+import {findCardAbility} from "../../../../domain/ability/CardAbility";
+import {BattleEvent} from "../../../../domain/flow/BattleEvent";
 import {
     CardPresentation, CardPresentationContext, DropHit, DroppedCard,
-} from "../CardPresentation";
+} from "../../CardPresentation";
 
 // 파멸의 계약 — 상대 필드 전체와 본체를 때리고, 상대 덱 한 장을 로스트 존으로 보낸다.
 //
@@ -39,14 +40,13 @@ export const DoomContractPresentation: CardPresentation = {
 
 // 전투가 돌려준 일어난 일을 보고 화면을 고친다. 값은 이미 다 바뀌었다.
 function applyToScreen(
-    ctx: CardPresentationContext, events: readonly {type: string}[],
+    ctx: CardPresentationContext, events: readonly BattleEvent[],
 ): void {
     const damage = findCardAbility(25)?.numbers.damage ?? 0;
     console.log(`[doom-contract] AoE ${damage} dmg to all opponent units + master; opponent deck → opponent lost zone`);
 
     let anyDefeated = false;
-    for (const raw of events) {
-        const ev = raw as never as import('../../../domain/flow/BattleEvent').BattleEvent;
+    for (const ev of events) {
         if (ev.type === 'damaged') {
             if (ev.target.kind === 'unit') {
                 console.log(`  opponent idx=${ev.target.battleCardId} HP: ${ev.hpBefore} → ${ev.hpAfter}${ev.hpAfter <= 0 ? ' (defeated)' : ''}`);

@@ -1,8 +1,8 @@
 import * as THREE from "three";
-import {OverflowMoraleEffect} from "../../animation/card/support/002_overflow_morale/OverflowMoraleEffect";
+import {OverflowMoraleEffect} from "../../../animation/card/support/002_overflow_morale/OverflowMoraleEffect";
 import {
     CardPresentation, CardPresentationContext, DropHit, DroppedCard,
-} from "../CardPresentation";
+} from "../../CardPresentation";
 
 // 넘쳐 흐르는 사기 — 덱에서 죽음의 에너지를 찾아 아군 유닛에게 붙인다.
 //

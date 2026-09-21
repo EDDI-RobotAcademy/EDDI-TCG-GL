@@ -1,4 +1,4 @@
-import {CardPresentation} from "../CardPresentation";
+import {CardPresentation} from "../../CardPresentation";
 import {attachEnergyToAlly} from "./093_death_energy";
 
 // 차갑게 불타는 암흑 에너지 — 손패에서 아군 유닛에게 바로 붙인다.

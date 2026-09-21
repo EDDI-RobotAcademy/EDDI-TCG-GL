@@ -13,7 +13,9 @@ import { LeonikPopupPartsRenderer } from "../leonik_popup/renderer/LeonikPopupPa
 import { PagedCardPopup, ExclusivePopups } from "../card_grid_popup/PagedCardPopup";
 import { ViewportResize } from "../resize/ViewportResize";
 import { PointerRouter } from "../input/PointerRouter";
-import { CardDropTarget, CardPresentationContext, DropHit } from "../card/CardPresentation";
+import {
+    CardDropTarget, CardPickSession, CardPresentationContext, DropHit, PickTarget,
+} from "../card/CardPresentation";
 import { findCardPresentation } from "../card/CardPresentationRegistry";
 import { FieldNeonHostRenderer } from "../field/neon_host/renderer/FieldNeonHostRenderer";
 import { computeOpponentFieldAreaBounds } from "../field/opponent/area/frame/OpponentFieldAreaFrame";
@@ -356,6 +358,34 @@ export class SimulationBattleFieldView implements Component {
 
         // 누름을 누가 먼저 받을지 정한다. 등록하는 자리가 어디든 칸 이름이 순서를 정한다.
         const pointerRouter = new PointerRouter(rendererManager.getDomElement());
+
+        // 지금 사용자가 대상을 눌러 고르는 중인가. 카드가 채운다.
+        //
+        // 이 동안 화면은 딴 일을 안 받는다. 손패를 집을 수 없고, 누른 것은 전부 이 고르기로
+        // 간다. 무엇을 누를 수 있는지와 눌렀을 때 무슨 일이 일어나는지는 카드가 안다.
+        let activePickSession: CardPickSession | null = null;
+
+        // 고르는 중에 누른 것이 무엇인가. 본체를 먼저 보고 그다음 상대 유닛을 본다.
+        //
+        // 본체가 더 작아서 먼저 봐야 한다. 상대 유닛 쪽을 먼저 보면 겹친 자리에서 본체를
+        // 못 누른다. 아무것도 못 맞히면 null — 그 누름은 그냥 먹힌다.
+        const resolvePickTarget = (): PickTarget | null => {
+            if (view.isOpponentMasterAlive()) {
+                const masterHits = sharedRaycaster.intersectObjects(masterGroup.children, true);
+                if (masterHits.length > 0) return {kind: 'opponentMaster'};
+            }
+
+            // 보이는 상대 유닛만. 맞은 것에서 그 유닛의 덩어리까지 거슬러 올라간다.
+            const hits = sharedRaycaster.intersectObjects(opponentGroup.children, true);
+            for (const hit of hits) {
+                let walk: THREE.Object3D | null = hit.object;
+                while (walk && walk.parent !== opponentGroup) walk = walk.parent;
+                if (!(walk instanceof THREE.Group) || !walk.visible) continue;
+                const entry = opponentEntries.find((oe) => oe.group === walk);
+                if (entry) return {kind: 'opponentUnit', entry};
+            }
+            return null;
+        };
         const sceneManager = new SceneManager();
         const cameraManager = CameraManager.getInstance();
 
@@ -808,15 +838,17 @@ export class SimulationBattleFieldView implements Component {
             if (netherBladePassive2State !== null) {
                 const state = netherBladePassive2State;
                 netherBladePassive2State = null;
+                activePickSession = null;
                 // await 중인 체인이 영원히 멈추지 않도록 반드시 resolve하되, 중단 플래그를 세워
                 // 다음 네더 블레이드의 AoE로 넘어가지 않게 한다.
                 passiveChainAborted = true;
                 state.onResolve();
                 console.log('[nether-blade] passive 2 픽 미완료 — 취소하고 턴 넘김');
             }
-            if (corpseExplosionState !== null) {
-                corpseExplosionState = null;
-                console.log('[corpse-explosion] 타겟 선택 미완료 — 취소 (희생 유닛·시전 카드 유지)');
+            // 고르는 중에 턴이 넘어갔다. 그만두는 것은 전투가 이미 했고, 화면 쪽은 그 카드가 안다.
+            if (activePickSession !== null) {
+                activePickSession.onCancel();
+                console.log('[pick] 고르기 미완료 — 취소');
             }
             // 패널 / attackMode 타겟팅 + 선택 네온까지 한 번에 정리.
             clearAllSelection();
@@ -840,7 +872,6 @@ export class SimulationBattleFieldView implements Component {
         // DoomContract takes extra deps: it uses a render-target + warp shader pipeline, which
         // needs the WebGLRenderer, the active camera, and a hook into AnimationLoop's render
         // path (setRenderOverride) to intercept per-frame rendering during the warp phase.
-        const corpseExplosionEffect = new CorpseExplosionEffect(scene);
         const leonikSummonEffect = new LeonikSummonEffect(scene);
         const netherBladeEntranceEffect = new NetherBladeEntranceEffect(scene);
         // 창 크기가 바뀌면 도는 중인 연출도 함께 늘고 줄어야 한다. 한 자리에 모아 두고
@@ -850,7 +881,6 @@ export class SimulationBattleFieldView implements Component {
         const resizableEffects: Array<{ resize(w: number, h: number): void }> = [
             attackAnimation,
             seaOfSpecterEffect,
-            corpseExplosionEffect,
             leonikSummonEffect,
             netherBladeEntranceEffect,
         ];
@@ -955,106 +985,19 @@ export class SimulationBattleFieldView implements Component {
                 return;
             }
 
-            // ── -0.5) Corpse Explosion 2-pick targeting state ─────────────────────────
-            // Clicks on opponent units / master are RECORDED silently — NO flash/shake or
-            // any visual mutation per click. Hit feedback (flash+shake), damage, kills,
-            // hide, and reflow ALL run inside applyCorpseExplosionDamage after the user
-            // has spent both picks, so the shake's position-restore can't race the reflow.
-            // Clicks elsewhere are absorbed (modal). Targets stay alive through both picks.
-            if (corpseExplosionState !== null) {
+            // ── -0.5) 카드를 쓴 뒤 사용자가 대상을 눌러 고르는 중 ──────────────────
+            //
+            // 이 동안은 누른 것이 전부 이 고르기로 간다. 무엇을 누를 수 있는지와 눌렀을 때
+            // 무슨 일이 일어나는지는 카드가 안다. 화면은 누른 것이 무엇인지만 찾아 준다.
+            if (activePickSession !== null) {
                 e.stopImmediatePropagation();
-
                 sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
-
-                // 고른 것을 전투에 보낸다. 몇 개를 더 받아야 하는지는 전투가 안다.
-                //
-                // 다 골랐으면 전투가 그 자리에서 제물을 무덤으로 보내고 적을 때린다.
-                // 화면은 그 일어난 일로 그린다.
-                const recordPick = (pick: CorpseExplosionPick): void => {
-                    if (!corpseExplosionState) return;
-                    corpseExplosionState.picks.push(pick);
-
-                    const events = send({
-                        type: 'pickChoiceTarget',
-                        pick: pick.kind === 'master'
-                            ? { kind: 'opponentMaster' }
-                            : { kind: 'opponentUnit', battleCardId: pick.cardIndex },
-                    });
-
-                    const picked = events.find((ev) => ev.type === 'choicePicked');
-                    const remaining = picked && picked.type === 'choicePicked' ? picked.remaining : 0;
-                    console.log(`[corpse-explosion] pick ${corpseExplosionState.picks.length} → ${pick.kind}${pick.kind === 'opponent' ? ` idx=${pick.cardIndex}` : ''}, 남은 ${remaining}`);
-
-                    if (remaining <= 0) {
-                        // Detach red neon at pick completion so the targeting borders go
-                        // away the instant the corpse starts flying (not after the effect
-                        // resolves) — keeps the visual focus on the corpse + projectiles.
-                        enemyNeonEffect.detachAll();
-                        void runResolving(() => resolveCorpseExplosion(events));
-                    }
-                };
-
-                // Master first (smaller target; raycast doesn't intersect opponent group).
-                if (view.isOpponentMasterAlive()) {
-                    const masterHits = sharedRaycaster.intersectObjects(masterGroup.children, true);
-                    if (masterHits.length > 0) {
-                        recordPick({ kind: 'master' });
-                        return;
-                    }
-                }
-
-                // Opponent units — visible only. Walk up to the entry group like attackMode.
-                const oppHits = sharedRaycaster.intersectObjects(opponentGroup.children, true);
-                for (const hit of oppHits) {
-                    let walkGroup: THREE.Object3D | null = hit.object;
-                    while (walkGroup && walkGroup.parent !== opponentGroup) {
-                        walkGroup = walkGroup.parent;
-                    }
-                    if (!(walkGroup instanceof THREE.Group) || !walkGroup.visible) continue;
-                    const targetEntry = opponentEntries.find((oe) => oe.group === walkGroup);
-                    if (!targetEntry) continue;
-                    recordPick({ kind: 'opponent', cardIndex: targetEntry.cardIndex });
-                    return;
-                }
-
-                // Click off any valid target — absorb, no-op.
+                const target = resolvePickTarget();
+                // 아무것도 못 맞혔으면 그 누름은 그냥 먹는다.
+                if (target) activePickSession.onPick(target);
                 return;
             }
 
-            // ── -0.4) Nether Blade passive 2 single-pick targeting state ───────────────
-            // Auto-entered after passive 1 resolves on deployment. Modal: only clicks on a
-            // visible opponent or the master register; everything else is absorbed. On a
-            // valid pick, resolveNetherBladePassive2 fires the move-and-return motion +
-            // applies 20 dmg to that target.
-            if (netherBladePassive2State !== null) {
-                e.stopImmediatePropagation();
-
-                sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
-
-                // Master first (own raycast tree).
-                if (view.isOpponentMasterAlive()) {
-                    const masterHits = sharedRaycaster.intersectObjects(masterGroup.children, true);
-                    if (masterHits.length > 0) {
-                        void runResolving(() => resolveNetherBladePassive2({ kind: 'master' }));
-                        return;
-                    }
-                }
-                // Opponent units.
-                const oppHits = sharedRaycaster.intersectObjects(opponentGroup.children, true);
-                for (const hit of oppHits) {
-                    let walkGroup: THREE.Object3D | null = hit.object;
-                    while (walkGroup && walkGroup.parent !== opponentGroup) {
-                        walkGroup = walkGroup.parent;
-                    }
-                    if (!(walkGroup instanceof THREE.Group) || !walkGroup.visible) continue;
-                    const target = opponentEntries.find((oe) => oe.group === walkGroup);
-                    if (!target) continue;
-                    void runResolving(() => resolveNetherBladePassive2({ kind: 'opponent', cardIndex: target.cardIndex }));
-                    return;
-                }
-                // Click off any valid target — absorb, no-op.
-                return;
-            }
 
             // ── 0) Turn-end button (hexagon) ───────────────────────────────────────────
             // Only active while NO popup is open (popup checks below handle their own consume).
@@ -1251,6 +1194,22 @@ export class SimulationBattleFieldView implements Component {
                     enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, masterGroup);
                 }
                 netherBladePassive2State = { deployedEntry, onResolve: resolve };
+
+                // 고르는 동안의 누름은 고르기 창구가 받는다. 시체 폭발과 같은 자리를 쓴다.
+                activePickSession = {
+                    pickable: 'opponentUnitOrMaster',
+                    onPick: (target) => void runResolving(() =>
+                        resolveNetherBladePassive2(
+                            target.kind === 'opponentMaster'
+                                ? {kind: 'master'}
+                                : {kind: 'opponent', cardIndex: target.entry.cardIndex},
+                        ),
+                    ),
+                    onCancel: () => {
+                        activePickSession = null;
+                        enemyNeonEffect.detachAll();
+                    },
+                };
                 console.log('[nether-blade] passive 2 → choose opponent unit or master (red highlights)');
             });
         };
@@ -1262,6 +1221,7 @@ export class SimulationBattleFieldView implements Component {
             // (the await below yields to the event loop and we don't want re-entry).
             enemyNeonEffect.detachAll();
             netherBladePassive2State = null;
+            activePickSession = null;
 
             // Capture the picked target's world position BEFORE the cast so the slash
             // flies to where the unit currently sits.
@@ -2109,6 +2069,33 @@ export class SimulationBattleFieldView implements Component {
                     const target = opponentEntries.find((oe) => oe.cardIndex === battleCardId);
                     if (target) target.group.visible = false;
                 },
+                unitWorldPosition: (battleCardId) => {
+                    const target = opponentEntries.find((oe) => oe.cardIndex === battleCardId);
+                    return target
+                        ? {x: target.group.position.x, y: target.group.position.y}
+                        : null;
+                },
+                isUnitVisible: (battleCardId) => {
+                    const target = opponentEntries.find((oe) => oe.cardIndex === battleCardId);
+                    return target ? target.group.visible : false;
+                },
+                bounds: () => computeOpponentFieldAreaBounds(
+                    opponentFieldAreaFrame, window.innerWidth, window.innerHeight,
+                ),
+            },
+            picking: {
+                begin: (session) => { activePickSession = session; },
+                end: () => { activePickSession = null; },
+                markPickable: () => {
+                    // 보이는 상대 유닛 전부와 본체에 붉은 테두리를 씌운다.
+                    for (const oe of opponentEntries) {
+                        if (oe.group.visible) enemyNeonEffect.attach(oe.cardIndex, oe.group);
+                    }
+                    if (view.isOpponentMasterAlive()) {
+                        enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, masterGroup);
+                    }
+                },
+                clearPickable: () => enemyNeonEffect.detachAll(),
             },
             yourField: {
                 removeUnit: (entry) => {
@@ -2121,6 +2108,15 @@ export class SimulationBattleFieldView implements Component {
                 bounds: () => computeYourFieldAreaBounds(
                     yourFieldAreaFrame, window.innerWidth, window.innerHeight,
                 ),
+                dropFromLineup: (entry) => {
+                    // 줄에서만 뺀다. 그림은 제자리에 남아 있어서 날아가는 연출이 쓸 수 있다.
+                    const idx = placedOrder.indexOf(entry);
+                    if (idx >= 0) placedOrder.splice(idx, 1);
+                },
+                disposeUnit: (entry) => {
+                    handGroup.remove(entry.group);
+                    handRenderer.getCardRenderer().dispose(entry.group);
+                },
             },
             fieldEnergy: {
                 // 표기가 오른쪽 아래에 있다. 모래시계가 있는 오른쪽 위가 아니다.
@@ -2155,6 +2151,8 @@ export class SimulationBattleFieldView implements Component {
                     opponentMasterHpGroup, opponentMasterHpFrame, hp,
                 ),
                 hide: () => { masterGroup.visible = false; },
+                worldPosition: () => ({x: masterGroup.position.x, y: masterGroup.position.y}),
+                isVisible: () => masterGroup.visible,
             },
             opponentFieldEnergy: {
                 bounds: () => computeOpponentFieldEnergyBounds(
@@ -2173,169 +2171,6 @@ export class SimulationBattleFieldView implements Component {
                     opponentEnergyRenderer.setDamageLevel(opponentEnergyGroup, level),
             },
             canvasElement: rendererManager.getDomElement(),
-        };
-
-        // ─── 시체 폭발 (Corpse Explosion) — sacrifice + 2-pick targeting state ──────
-        // Picks are RECORDED (not applied) on each click — the source card stays in hand
-        // and targets stay alive through both picks, so the user can legitimately point at
-        // the same target twice for 20 damage on one. Damage / kill / bury / hide all run
-        // in applyCorpseExplosionDamage AFTER both picks land. Hand pickup is gated off
-        // while this state is active so the user can't drag another card mid-flow.
-        type CorpseExplosionPick =
-            | { readonly kind: 'master' }
-            | { readonly kind: 'opponent'; readonly cardIndex: number };
-        let corpseExplosionState: {
-            sourceEntry: HandEntry;
-            // The sacrificed undead unit — STAYS in placedOrder + on the field as a normal
-            // unit during target selection. Removed from placedOrder + tombed + flown in
-            // resolveCorpseExplosion (after the user has picked both targets) so the unit
-            // visibly sits in its slot the whole time the user is picking.
-            sacrificed: HandEntry;
-            picks: CorpseExplosionPick[];
-        } | null = null;
-
-        const enterCorpseExplosionTargeting = (sourceEntry: HandEntry, sacrificed: HandEntry): void => {
-            // Sacrificed unit STAYS in placedOrder + visible at its slot until the user
-            // finishes picking. No tomb / splice / reflow here — the only state change is
-            // entering the targeting mode + painting red neons on enemies.
-            console.log(`[corpse-explosion] target locked: undead ally cardId=${sacrificed.card.cardId}. Pick 2 enemy targets — the sacrifice flies after both picks.`);
-
-            corpseExplosionState = { sourceEntry, sacrificed, picks: [] };
-
-            // Red neon on every visible opponent unit + the master body.
-            for (const oe of opponentEntries) {
-                if (oe.group.visible) enemyNeonEffect.attach(oe.cardIndex, oe.group);
-            }
-            if (view.isOpponentMasterAlive()) {
-                enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, masterGroup);
-            }
-        };
-
-        // Async resolution: drives CorpseExplosionEffect (corpse flies → explodes →
-        // projectiles fan out to each pick). Damage ticks per projectile arrival; the
-        // visual feedback for each hit comes from the effect's per-projectile impact
-        // flash, NOT flashAndShakeTarget — so no shake races against the post-effect
-        // bury+reflow. After the effect resolves, dead targets get buried + hidden +
-        // reflowed in one synchronous pass; the corpse mesh disposes; state exits.
-        // 시체 폭발 연출. 제물을 보내는 것도 때리는 것도 전투가 이미 했다.
-        // 여기서는 화면에서 치우고 그린다.
-        const resolveCorpseExplosion = async (events: readonly BattleEvent[]): Promise<void> => {
-            if (!corpseExplosionState) return;
-            const state = corpseExplosionState;
-            const sacrificed = state.sacrificed;
-
-            // ── NOW remove the sacrificed unit from placedOrder. The mesh
-            // stays in handGroup at its slot position (orphan from reflow) so the
-            // CorpseExplosionEffect can animate it from there. The OTHER placed
-            // allies reflow to fill the empty slot in the same frame.
-            // 무덤으로 보낸 것은 전투가 했다.
-            const sIdx = placedOrder.indexOf(sacrificed);
-            if (sIdx >= 0) placedOrder.splice(sIdx, 1);
-            reflowHandAndPlaced();
-            console.log(`[corpse-explosion] sacrificed undead cardId=${sacrificed.card.cardId} → tomb; corpse flies now.`);
-
-            // Per-pick world target positions (duplicates allowed when same target is
-            // picked twice; effect fires N projectiles regardless).
-            const projectileTargets: THREE.Vector3[] = state.picks.map((p) => {
-                if (p.kind === 'master') {
-                    return new THREE.Vector3(masterGroup.position.x, masterGroup.position.y, 5);
-                }
-                const entry = opponentEntries.find((oe) => oe.cardIndex === p.cardIndex);
-                return entry
-                    ? new THREE.Vector3(entry.group.position.x, entry.group.position.y, 5)
-                    : new THREE.Vector3(0, 0, 5);
-            });
-
-            // Landing position — opponent field area CENTRE. opponentFieldAreaFrame's
-            // xPercent / yPercent are already in WORLD coords (y-up, origin at screen
-            // centre) — xPercent 0 = horizontal centre, yPercent 0.153 = upper half. So
-            // multiply by viewport directly, NO (x-0.5) / (0.5-y) re-centering.
-            const opponentField = computeOpponentFieldAreaBounds(
-                opponentFieldAreaFrame, window.innerWidth, window.innerHeight,
-            );
-            const landingPos = new THREE.Vector3(
-                opponentField.centerX, opponentField.centerY, 5,
-            );
-
-            // Per-projectile arrival: tick HP for that pick. The effect handles the
-            // visual impact (impact flash sprite at target position) — we don't call
-            // flashAndShakeTarget so there's no shake-vs-reflow race.
-            // 발이 하나 닿을 때마다 그 발의 결과를 그린다. 값은 전투가 이미 바꿨다.
-            //
-            // 일어난 일에 담긴 [맞았다] 를 순서대로 쓴다. 본체가 맞은 것과 유닛이 맞은 것이
-            // 고른 순서대로 들어 있다.
-            const damagedEvents = events.filter(
-                (ev) => ev.type === 'damaged',
-            ) as Extract<BattleEvent, {type: 'damaged'}>[];
-
-            const onProjectileLand = (idx: number): void => {
-                const ev = damagedEvents[idx];
-                if (!ev) return;
-                if (ev.target.kind === 'opponentMaster') {
-                    void opponentMasterHpRenderer.setHp(
-                        opponentMasterHpGroup, opponentMasterHpFrame, ev.hpAfter,
-                    );
-                    console.log(`[corpse-explosion] projectile → MASTER ${ev.hpBefore} → ${ev.hpAfter}`);
-                    return;
-                }
-                if (ev.target.kind !== 'unit') return;
-                const targetIdx = ev.target.battleCardId;
-                const entry = opponentEntries.find((oe) => oe.cardIndex === targetIdx);
-                console.log(`[corpse-explosion] projectile → opponent idx=${targetIdx}${entry ? ` cardId=${entry.card.cardId}` : ''} ${ev.hpBefore} → ${ev.hpAfter}`);
-            };
-
-            await corpseExplosionEffect.play(
-                sacrificed.group,
-                landingPos,
-                projectileTargets,
-                rendererManager.getDomElement(),
-                onProjectileLand,
-            );
-
-            // ── Post-effect: bury + hide + reflow in one pass ──────────────────────
-            const uniqueOpponentIdxs = new Set<number>();
-            let masterPicked = false;
-            for (const p of state.picks) {
-                if (p.kind === 'master') masterPicked = true;
-                else uniqueOpponentIdxs.add(p.cardIndex);
-            }
-
-            const masterDied = masterPicked && !view.isOpponentMasterAlive() && masterGroup.visible;
-            // 여기부터는 화면 정리만 한다. 무덤과 필드에서 빼는 것은 이미 끝났다.
-            const deadOpponentIndices: number[] = [];
-            for (const idx of uniqueOpponentIdxs) {
-                if (isOpponentAlive(idx)) continue;
-                const entry = opponentEntries.find((oe) => oe.cardIndex === idx);
-                if (!entry || !entry.group.visible) continue;
-                deadOpponentIndices.push(idx);
-            }
-            for (const idx of deadOpponentIndices) {
-                const e = opponentEntries.find((oe) => oe.cardIndex === idx);
-                if (e) e.group.visible = false;
-            }
-            if (masterDied) {
-                masterGroup.visible = false;
-                console.log('[corpse-explosion] opponent MASTER defeated!');
-            }
-            if (deadOpponentIndices.length > 0) reflowOpponentField();
-
-            // ── Dispose corpse mesh ───────────────────────────────────────────────
-            handGroup.remove(sacrificed.group);
-            handRenderer.getCardRenderer().dispose(sacrificed.group);
-
-            exitCorpseExplosionTargeting();
-        };
-
-        const exitCorpseExplosionTargeting = (): void => {
-            if (!corpseExplosionState) return;
-            const sourceEntry = corpseExplosionState.sourceEntry;
-            corpseExplosionState = null;
-            enemyNeonEffect.detachAll();
-            // 무덤으로 보낸 것은 전투가 했다. 화면에서 치우기만 한다.
-            const idx = handOrder.indexOf(sourceEntry);
-            if (idx >= 0) removeHandCardFromScreen(sourceEntry, idx);
-            reflowHandAndPlaced();
-            console.log(`[corpse-explosion] effect resolved — corpse-explosion card → tomb.`);
         };
 
         // ─── 레오닉의 부름 (Leonik's Summon) popup ───────────────────────────────────
@@ -2702,7 +2537,7 @@ export class SimulationBattleFieldView implements Component {
                 // interruptible by another hand action.
                 canPickup: () =>
                     view.isYourTurn() &&
-                    corpseExplosionState === null &&
+                    activePickSession === null &&
                     netherBladePassive2State === null,
                 onPickup: (entityId, group) => {
                     clearActivePanel();
@@ -2818,9 +2653,15 @@ export class SimulationBattleFieldView implements Component {
                         const hit = resolveCardDropHit(presentation.dropTarget, dropCx, dropCy);
                         if (hit) presentation.onDrop(cardPresentationContext, dropped, hit);
 
-                        neonEffect.detachAll();
-                        enemyNeonEffect.detachAll();
-                        allyTargetNeonEffect.detachAll();
+                        // 집을 때 켜 둔 겨냥 테두리를 놓을 때 끈다.
+                        //
+                        // 고르기가 시작됐으면 안 끈다. 그 카드가 [무엇을 누를 수 있는지]
+                        // 알리려고 방금 켠 것이라, 여기서 끄면 안내가 사라진다.
+                        if (activePickSession === null) {
+                            neonEffect.detachAll();
+                            enemyNeonEffect.detachAll();
+                            allyTargetNeonEffect.detachAll();
+                        }
                         selectedAttackerEntry = null;
                         interactionState = 'idle';
                         reflowHandAndPlaced();
@@ -2832,28 +2673,6 @@ export class SimulationBattleFieldView implements Component {
                     if (kind === CardKind.ITEM) {
                         const dropCx = group.position.x;
                         const dropCy = group.position.y;
-                        if (cardId === CORPSE_EXPLOSION_CARD_ID) {
-                            // 시체 폭발 — 언데드 아군 위에 떨어뜨려야 한다. 아무것도 못 맞히거나
-                            // 언데드가 아니면 제자리로 돌아간다. 맞히면 그 아군을 제물로 바치고
-                            // 적 둘을 고르는 상태로 들어간다. 카드는 아직 안 쓴다 — 둘째 고르기가
-                            // 끝날 때 쓰인다.
-                            const allyTarget = hitAllyAt(dropCx, dropCy);
-                            if (allyTarget && allyTarget.card.raceId === CardRace.UNDEAD) {
-                                // 제물을 받고 적을 고르라고 기다리기 시작하는 것은 전투가 한다.
-                                const started = send({
-                                    type: 'useCardOnUnit',
-                                    battleCardId: droppedEntry.cardIndex,
-                                    targetBattleCardId: allyTarget.cardIndex,
-                                });
-                                if (started.some((ev) => ev.type === 'choiceStarted')) {
-                                    enterCorpseExplosionTargeting(droppedEntry, allyTarget);
-                                }
-                            } else if (allyTarget) {
-                                console.log(`[corpse-explosion] target cardId=${allyTarget.card.cardId} is not UNDEAD — snap back`);
-                            } else {
-                                console.log('[corpse-explosion] drop missed any placed ally — snap back');
-                            }
-                        }
                         neonEffect.detachAll();
                         selectedAttackerEntry = null;
                         interactionState = 'idle';

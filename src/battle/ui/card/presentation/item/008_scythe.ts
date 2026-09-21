@@ -1,7 +1,7 @@
-import {ScytheCutEffect} from "../../animation/card/item/008_scythe/ScytheCutEffect";
+import {ScytheCutEffect} from "../../../animation/card/item/008_scythe/ScytheCutEffect";
 import {
     CardPresentation, CardPresentationContext, DropHit, DroppedCard,
-} from "../CardPresentation";
+} from "../../CardPresentation";
 
 // 죽음의 낫 — 상대 유닛 하나를 벤다.
 //

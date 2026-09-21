@@ -1,8 +1,8 @@
 import * as THREE from "three";
-import {OverflowMoraleEffect} from "../../animation/card/support/002_overflow_morale/OverflowMoraleEffect";
+import {OverflowMoraleEffect} from "../../../animation/card/support/002_overflow_morale/OverflowMoraleEffect";
 import {
     CardPresentation, CardPresentationContext, DropHit, DroppedCard,
-} from "../CardPresentation";
+} from "../../CardPresentation";
 
 // 죽음의 에너지 — 손패에서 아군 유닛에게 바로 붙인다. 필드 에너지를 안 쓴다.
 //

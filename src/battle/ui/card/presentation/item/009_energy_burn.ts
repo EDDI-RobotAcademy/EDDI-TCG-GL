@@ -1,7 +1,7 @@
-import {EnergyBurnEffect} from "../../animation/card/item/009_energy_burn/EnergyBurnEffect";
+import {EnergyBurnEffect} from "../../../animation/card/item/009_energy_burn/EnergyBurnEffect";
 import {
     CardPresentation, CardPresentationContext, DropHit, DroppedCard,
-} from "../CardPresentation";
+} from "../../CardPresentation";
 
 // 에너지 번 — 상대 유닛에 붙은 에너지를 빨아내고, 모자란 만큼 때린다.
 export const EnergyBurnPresentation: CardPresentation = {
