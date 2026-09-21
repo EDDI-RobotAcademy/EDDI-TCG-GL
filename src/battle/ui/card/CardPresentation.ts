@@ -174,6 +174,8 @@ export interface CardPresentationContext {
     readonly scene: THREE.Scene;
     // 연출 하나를 만든다. 만드는 데 필요한 장비는 창구가 안다.
     createEffect<T>(make: EffectFactory<T>): T;
+    // 돌릴 때 장비가 필요한 연출이 있다. 화면을 찍어 일그러뜨리는 것이 그렇다.
+    withEffectGear<T>(run: (gear: EffectGear) => Promise<T>): Promise<T>;
     // 사용자가 한 일 하나를 보내고 무슨 일이 있었는지 받는다.
     readonly send: (command: BattleCommand) => BattleEvent[];
     // 화면에 보여 줄 것만 추린 창구.
@@ -184,6 +186,16 @@ export interface CardPresentationContext {
     readonly opponentField: OpponentFieldPresentation;
     readonly yourField: YourFieldPresentation;
     readonly picking: PickingPresentation;
+    readonly skillTrip: SkillTripPresentation;
+    // 따라붙은 것을 그린다. 붙이는 것은 전투가 이미 했다.
+    //
+    // 차갑게 불타는 암흑 에너지를 지닌 유닛이 때리면 맞은 쪽에 암흑 화염과 빙결이
+    // 따라붙는다. 그 표시를 그리는 일이다. 때리는 카드마다 적지 않고 여기 한 곳에 둔다.
+    showCarriedStatus(events: readonly BattleEvent[]): void;
+    // 이 일이 끝날 때까지 턴 넘김을 미룬다. 도는 중에 모래시계가 끝나면 끝난 뒤에 넘긴다.
+    whileResolving<T>(work: () => Promise<T>): Promise<T>;
+    // 도는 중에 턴이 넘어가 그만두어야 하는가.
+    isAborted(): boolean;
     readonly opponentMaster: OpponentMasterPresentation;
     readonly opponentFieldEnergy: OpponentFieldEnergyPresentation;
     readonly fieldEnergy: FieldEnergyPresentation;
@@ -239,10 +251,35 @@ export interface PickingPresentation {
     clearPickable(): void;
 }
 
+// 필드에 선 유닛이 스킬을 쓸 때의 움직임.
+export interface SkillTripPresentation {
+    // 유닛을 스킬 자리로 보내고, 그 자리에서 할 일을 하고, 제자리로 되돌린다.
+    //
+    // 가는 도중에 창 크기가 바뀌면 갈 곳도 달라진다. 그 처리는 이 안에 있다 (R2-93).
+    play(
+        unit: THREE.Group,
+        atPanel: (panelPosition: THREE.Vector3) => Promise<void>,
+    ): Promise<void>;
+}
+
 export interface CardPresentation {
     readonly cardId: number;
-    // 어디에 떨어뜨려야 쓸 수 있나.
-    readonly dropTarget: CardDropTarget;
+    // 어디에 떨어뜨려야 쓸 수 있나. 유닛 카드는 필드에 놓는 것이라 안 쓴다.
+    readonly dropTarget?: CardDropTarget;
     // 떨어뜨렸다. 썼으면 true, 못 썼으면 false — 못 쓰면 카드가 제자리로 돌아간다.
-    onDrop(ctx: CardPresentationContext, dropped: DroppedCard, hit: DropHit): boolean;
+    onDrop?(ctx: CardPresentationContext, dropped: DroppedCard, hit: DropHit): boolean;
+
+    // 이 카드를 유닛으로 필드에 냈다. 낼 때 도는 패시브가 있으면 여기서 돈다.
+    //
+    // 손패에서 필드로 옮기는 것은 화면이 한다. 이 칸은 그 뒤에 불린다.
+    onDeploy?(ctx: CardPresentationContext, unit: DeployedUnit): Promise<void>;
+
+    // 내 턴이 시작됐다. 필드에 서 있는 동안 턴마다 도는 패시브가 있으면 여기서 돈다.
+    onTurnStart?(ctx: CardPresentationContext, unit: DeployedUnit): Promise<void>;
+}
+
+// 필드에 서 있는 이 카드의 유닛.
+export interface DeployedUnit {
+    readonly battleCardId: number;
+    readonly group: THREE.Group;
 }

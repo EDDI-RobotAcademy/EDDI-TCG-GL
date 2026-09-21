@@ -835,17 +835,11 @@ export class SimulationBattleFieldView implements Component {
         // 기다리던 것을 놓는 것은 전투가 한다. 턴을 끝내는 자리에서 함께 한다 (R2-103).
         // 여기서는 화면이 든 것만 치운다. 기다리던 약속을 안 풀면 그 자리에서 영영 멈춘다.
         function cancelPendingTargeting(): void {
-            if (netherBladePassive2State !== null) {
-                const state = netherBladePassive2State;
-                netherBladePassive2State = null;
-                activePickSession = null;
-                // await 중인 체인이 영원히 멈추지 않도록 반드시 resolve하되, 중단 플래그를 세워
-                // 다음 네더 블레이드의 AoE로 넘어가지 않게 한다.
-                passiveChainAborted = true;
-                state.onResolve();
-                console.log('[nether-blade] passive 2 픽 미완료 — 취소하고 턴 넘김');
-            }
             // 고르는 중에 턴이 넘어갔다. 그만두는 것은 전투가 이미 했고, 화면 쪽은 그 카드가 안다.
+            //
+            // 기다리던 약속을 반드시 풀어야 한다. 안 풀면 그 자리에서 영영 멈춘다. 그리고
+            // 중단 표시를 세워 다음 카드의 패시브로 넘어가지 않게 한다.
+            passiveChainAborted = true;
             if (activePickSession !== null) {
                 activePickSession.onCancel();
                 console.log('[pick] 고르기 미완료 — 취소');
@@ -873,7 +867,6 @@ export class SimulationBattleFieldView implements Component {
         // needs the WebGLRenderer, the active camera, and a hook into AnimationLoop's render
         // path (setRenderOverride) to intercept per-frame rendering during the warp phase.
         const leonikSummonEffect = new LeonikSummonEffect(scene);
-        const netherBladeEntranceEffect = new NetherBladeEntranceEffect(scene);
         // 창 크기가 바뀌면 도는 중인 연출도 함께 늘고 줄어야 한다. 한 자리에 모아 두고
         // 한꺼번에 알린다. 안 돌고 있는 연출은 알려도 아무 일도 안 한다.
         //
@@ -882,7 +875,6 @@ export class SimulationBattleFieldView implements Component {
             attackAnimation,
             seaOfSpecterEffect,
             leonikSummonEffect,
-            netherBladeEntranceEffect,
         ];
 
         // 쓸 때마다 새로 만드는 연출은 위 목록에 못 넣는다. 도는 동안만 여기 담아 두고,
@@ -1155,249 +1147,6 @@ export class SimulationBattleFieldView implements Component {
             skillTripParked.delete(group);
         };
 
-        // 출격 시 두번째 패시브 (단일기) — auto-entered after passive 1 resolves. User picks
-        // ONE opponent unit OR the master; the deployed unit then performs the same move-
-        // and-return motion before damage applies. State is null when not active.
-        type NetherBladePassive2Pick =
-            | { readonly kind: 'master' }
-            | { readonly kind: 'opponent'; readonly cardIndex: number };
-        // State carries the resolver of the Promise returned by enterNetherBladePassive2 —
-        // resolve() fires after the picker's damage application so chained callers (deploy
-        // chain + turn-start loop) can sequentially `await` multiple Nether Blade passes.
-        let netherBladePassive2State: {
-            deployedEntry: HandEntry;
-            onResolve: () => void;
-        } | null = null;
-
-        const enterNetherBladePassive2 = (deployedEntry: HandEntry): Promise<void> => {
-            return new Promise<void>((resolve) => {
-                const hasOpponents = view.opponentAliveCount() > 0 &&
-                    opponentEntries.some((oe) =>
-                        oe.group.visible && isOpponentAlive(oe.cardIndex),
-                    );
-                // 칠 것이 있는지, 고르라고 기다리는지는 전투가 정한다.
-                // 첫 패시브가 돌려준 일어난 일에 [묻기 시작했다] 가 없으면 물을 것이 없다는 뜻이다.
-                const started = netherBladeChoiceEvents.some((ev) => ev.type === 'choiceStarted');
-                const hasMaster = view.isOpponentMasterAlive();
-                if (!started) {
-                    console.log('[nether-blade] passive 2 → no valid targets, skipped');
-                    resolve();
-                    return;
-                }
-
-                for (const oe of opponentEntries) {
-                    if (oe.group.visible && isOpponentAlive(oe.cardIndex)) {
-                        enemyNeonEffect.attach(oe.cardIndex, oe.group);
-                    }
-                }
-                if (hasMaster) {
-                    enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, masterGroup);
-                }
-                netherBladePassive2State = { deployedEntry, onResolve: resolve };
-
-                // 고르는 동안의 누름은 고르기 창구가 받는다. 시체 폭발과 같은 자리를 쓴다.
-                activePickSession = {
-                    pickable: 'opponentUnitOrMaster',
-                    onPick: (target) => void runResolving(() =>
-                        resolveNetherBladePassive2(
-                            target.kind === 'opponentMaster'
-                                ? {kind: 'master'}
-                                : {kind: 'opponent', cardIndex: target.entry.cardIndex},
-                        ),
-                    ),
-                    onCancel: () => {
-                        activePickSession = null;
-                        enemyNeonEffect.detachAll();
-                    },
-                };
-                console.log('[nether-blade] passive 2 → choose opponent unit or master (red highlights)');
-            });
-        };
-
-        const resolveNetherBladePassive2 = async (pick: NetherBladePassive2Pick): Promise<void> => {
-            if (!netherBladePassive2State) return;
-            const state = netherBladePassive2State;
-            // Detach neons + null state up-front so the modal lock releases immediately
-            // (the await below yields to the event loop and we don't want re-entry).
-            enemyNeonEffect.detachAll();
-            netherBladePassive2State = null;
-            activePickSession = null;
-
-            // Capture the picked target's world position BEFORE the cast so the slash
-            // flies to where the unit currently sits.
-            let singleTarget: THREE.Vector3 | null = null;
-            if (pick.kind === 'master') {
-                if (view.isOpponentMasterAlive()) {
-                    singleTarget = masterGroup.getWorldPosition(new THREE.Vector3());
-                }
-            } else {
-                const target = opponentEntries.find((oe) => oe.cardIndex === pick.cardIndex);
-                if (target && target.group.visible) {
-                    singleTarget = target.group.getWorldPosition(new THREE.Vector3());
-                }
-            }
-            const canvasEl = document.querySelector('canvas') as HTMLElement | null;
-            // 조각낼 대상. 본체는 투명 히트박스라 찢을 아트가 없으므로 null로 넘긴다.
-            const ripTarget = pick.kind === 'opponent'
-                ? opponentEntries.find((oe) => oe.cardIndex === pick.cardIndex) ?? null
-                : null;
-
-            // 치명타 여부를 **연출 전에** 계산한다. 죽는 일격이면 갈라진 카드를 되돌리지
-            // 않아, 조각이 흩어진 자리가 그대로 사망이 된다. 연출이 끝난 뒤 되살아났다가
-            // 아래 데미지 처리로 사라지면 카드가 깜빡이는 것처럼 보인다.
-            const lethal = pick.kind === 'opponent'
-                && view.wouldDefeat({
-                    kind: 'opponentUnit', battleCardId: pick.cardIndex,
-                });
-
-            await playSkillPanelMoveOnly(state.deployedEntry.group, async (_panelPos) => {
-                if (!canvasEl || !singleTarget) {
-                    await new Promise<void>((r) => setTimeout(r, 300));
-                    return;
-                }
-                // 단일기 — gather/hold는 광역기와 공유하고, 그 뒤로 화면 전체를 가로지르는
-                // 검풍이 날아간 다음 지정한 카드로 모여들어 그 카드를 조각낸다.
-                const effect = new NetherBladeSecondPassiveEffect(scene);
-                await whileRunning(effect, () => effect.play(
-                    singleTarget,
-                    ripTarget ? ripTarget.group : null,
-                    canvasEl,
-                    rendererManager.getRenderer(),
-                    camera,
-                    undefined,
-                    lethal,
-                ));
-            });
-
-            // 고른 것을 전투에 보낸다. 때리는 것도 쓰러뜨리는 것도 전투가 한다.
-            const pickEvents = send({
-                type: 'pickChoiceTarget',
-                pick: pick.kind === 'master'
-                    ? { kind: 'opponentMaster' }
-                    : { kind: 'opponentUnit', battleCardId: pick.cardIndex },
-            });
-
-            // 따라붙은 것은 전투가 이미 붙였다. 여기서는 그린다.
-            showColdDarkTraits(pickEvents);
-
-            for (const ev of pickEvents) {
-                if (ev.type === 'damaged' && ev.target.kind === 'opponentMaster') {
-                    void opponentMasterHpRenderer.setHp(
-                        opponentMasterHpGroup, opponentMasterHpFrame, ev.hpAfter,
-                    );
-                    console.log(`[nether-blade] passive 2 → MASTER ${ev.hpBefore} → ${ev.hpAfter}`);
-                } else if (ev.type === 'damaged' && ev.target.kind === 'unit') {
-                    const idx = ev.target.battleCardId;
-                    const target = opponentEntries.find((oe) => oe.cardIndex === idx);
-                    console.log(`[nether-blade] passive 2 → opponent idx=${idx}${target ? ` cardId=${target.card.cardId}` : ''} ${ev.hpBefore} → ${ev.hpAfter}`);
-                } else if (ev.type === 'defeated' && ev.target.kind === 'opponentMaster') {
-                    masterGroup.visible = false;
-                    console.log('[nether-blade] opponent MASTER defeated by passive 2!');
-                } else if (ev.type === 'defeated' && ev.target.kind === 'unit') {
-                    const deadId = ev.target.battleCardId;
-                    const e = opponentEntries.find((oe) => oe.cardIndex === deadId);
-                    if (e) e.group.visible = false;
-                    reflowOpponentField();
-                }
-            }
-
-            // Settle window — mirrors AoE's pause so the picked-target damage lands and
-            // the field reflows visibly before the next placed Nether Blade (if any) takes
-            // its turn at the skill panel.
-            await new Promise<void>((r) => setTimeout(r, NETHER_BLADE_PHASE_SETTLE_MS));
-
-            // Signal completion to whatever caller was awaiting enterNetherBladePassive2.
-            state.onResolve();
-        };
-
-        // 광역기 패시브 (passive 1, AoE EveryUnitField) — extracted so it can be invoked
-        // independently from BOTH on-deploy AND every turn-start ('f' key). Card travels
-        // to the skill-panel slot, holds, returns, applies 10 dmg to every visible opponent
-        // unit (master excluded), then reflows the opponent field, then awaits a short
-        // SETTLE window so the field state-change visibly lands BEFORE the next phase
-        // (passive 2 picker) starts. This guarantees the user sees AoE → damage → reflow
-        // before the single-target picker comes up — the damage isn't visually merged
-        // into "after both passives".
-        const NETHER_BLADE_PHASE_SETTLE_MS = 450;
-        // 첫 패시브가 돌려준 일어난 일. 둘째 패시브를 기다리는지 보는 데 쓴다.
-        let netherBladeChoiceEvents: readonly BattleEvent[] = [];
-
-        const triggerNetherBladeAoEPassive = async (deployedEntry: HandEntry): Promise<void> => {
-            // Yield once so any pending sync layout work (e.g., onDrop's trailing reflow)
-            // lands before we capture origPos inside playSkillPanelMoveOnly.
-            await Promise.resolve();
-
-            // Capture target world positions BEFORE the move, while opponent units are
-            // still in their grid slots. The slash mesh will fly from the panel slot to
-            // each captured position.
-            const aoeTargets: THREE.Vector3[] = [];
-            for (const idx of opponentAliveIds()) {
-                const target = opponentEntries.find((oe) => oe.cardIndex === idx);
-                if (!target || !target.group.visible) continue;
-                aoeTargets.push(target.group.getWorldPosition(new THREE.Vector3()));
-            }
-            const canvasEl = document.querySelector('canvas') as HTMLElement | null;
-
-            await playSkillPanelMoveOnly(deployedEntry.group, async (panelPos) => {
-                if (!canvasEl || aoeTargets.length === 0) {
-                    // Fall back to the brief hold if we can't render visuals.
-                    await new Promise<void>((r) => setTimeout(r, 300));
-                    return;
-                }
-                // Wave 2 + shatter run FULLSCREEN over the entire battle screen
-                // — same scale as wave 1 — so the cuts tear across the whole
-                // field, not just the opponent's row.
-                const effect = new NetherBladeFirstPassiveEffect(scene);
-                await whileRunning(effect, () => effect.play(
-                    panelPos, aoeTargets, canvasEl, () => { /* per-strike SFX hook */ },
-                    rendererManager.getRenderer(), camera,
-                ));
-            });
-
-            // 때리는 것과 둘째 패시브를 기다리기 시작하는 것은 전투가 한다.
-            // 연출을 기다린 뒤에 보내는 이유는, 첫 패시브가 끝난 결과를 보고 골라야 하기 때문이다.
-            const passiveEvents = send({
-                type: 'triggerDeployPassive',
-                battleCardId: deployedEntry.cardIndex,
-            });
-            netherBladeChoiceEvents = passiveEvents;
-
-            // 따라붙은 것은 전투가 이미 붙였다. 여기서는 그린다.
-            showColdDarkTraits(passiveEvents);
-
-            const deadIndices: number[] = [];
-            for (const ev of passiveEvents) {
-                if (ev.type === 'damaged' && ev.target.kind === 'unit') {
-                    const idx = ev.target.battleCardId;
-                    const target = opponentEntries.find((oe) => oe.cardIndex === idx);
-                    console.log(`[nether-blade] AoE → opponent idx=${idx}${target ? ` cardId=${target.card.cardId}` : ''} ${ev.hpBefore} → ${ev.hpAfter}`);
-                } else if (ev.type === 'defeated' && ev.target.kind === 'unit') {
-                    deadIndices.push(ev.target.battleCardId);
-                }
-            }
-            for (const idx of deadIndices) {
-                const e = opponentEntries.find((oe) => oe.cardIndex === idx);
-                if (e) e.group.visible = false;
-            }
-            if (deadIndices.length > 0) reflowOpponentField();
-
-            // Phase-settle window — gives the user time to read the new field state
-            // before passive 2's picker enters.
-            await new Promise<void>((r) => setTimeout(r, NETHER_BLADE_PHASE_SETTLE_MS));
-        };
-
-        // 출격 시 패시브 풀체인 — passive 1 (AoE) → passive 2 (single-target picker, awaited).
-        // Same chain runs every turn-start while the unit is alive; this wrapper is shared
-        // so deploy and turn-start use identical logic.
-        const triggerNetherBladePassive = async (deployedEntry: HandEntry): Promise<void> => {
-            await runResolving(() => triggerNetherBladeAoEPassive(deployedEntry));
-            // 만료로 턴이 넘어갔으면 픽 단계로 들어가지 않는다.
-            if (passiveChainAborted) return;
-            await enterNetherBladePassive2(deployedEntry);
-        };
-
-        // Active panel button click + opponent card click (attack targeting).
-        // stopImmediatePropagation prevents HandInteractionBridge from stealing the same click.
         pointerRouter.add('target', withResolving(async (e: MouseEvent) => {
             if (e.button !== 0) return;
             sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
@@ -1458,10 +1207,9 @@ export class SimulationBattleFieldView implements Component {
 
                             if (atkEntry) {
                                 clearAllSelection();
-                                // 네더 블레이드 — only the bare move-to-panel + return motion
-                                // (no dark vortex / dementors / magic circle yet — the
-                                // mythical-tier effect is intentionally deferred). 벨른
-                                // (and other cards) keeps the full playAoESkill sequence.
+                                // 네더 블레이드는 스킬 자리로 나갔다 돌아오기만 한다. 신화
+                                // 등급에 맞는 광역기 연출은 아직 안 만들었다. 벨른은 온전한
+                                // 광역기 연출을 그대로 쓴다.
                                 if (atkEntry.card.cardId === NETHER_BLADE_CARD_ID) {
                                     await playSkillPanelMoveOnly(atkEntry.group);
                                 } else {
@@ -2034,6 +1782,11 @@ export class SimulationBattleFieldView implements Component {
                 camera,
                 animationLoop,
             }),
+            withEffectGear: (run) => run({
+                renderer: rendererManager.getRenderer(),
+                camera,
+                animationLoop,
+            }),
             send,
             view,
             catalog: cardCatalog,
@@ -2171,6 +1924,12 @@ export class SimulationBattleFieldView implements Component {
                     opponentEnergyRenderer.setDamageLevel(opponentEnergyGroup, level),
             },
             canvasElement: rendererManager.getDomElement(),
+            skillTrip: {
+                play: (unit, atPanel) => playSkillPanelMoveOnly(unit, atPanel),
+            },
+            showCarriedStatus: (events) => showColdDarkTraits(events),
+            whileResolving: (work) => runResolving(work),
+            isAborted: () => passiveChainAborted,
         };
 
         // ─── 레오닉의 부름 (Leonik's Summon) popup ───────────────────────────────────
@@ -2537,8 +2296,7 @@ export class SimulationBattleFieldView implements Component {
                 // interruptible by another hand action.
                 canPickup: () =>
                     view.isYourTurn() &&
-                    activePickSession === null &&
-                    netherBladePassive2State === null,
+                    activePickSession === null,
                 onPickup: (entityId, group) => {
                     clearActivePanel();
                     group.renderOrder = 100;
@@ -2641,7 +2399,8 @@ export class SimulationBattleFieldView implements Component {
                     // 종류 판정보다 먼저다. 전에 ITEM 안에만 두었더니 ENERGY 인 죽음의
                     // 에너지와 SUPPORT 인 넘쳐 흐르는 사기가 아무 데도 안 걸렸다.
                     const presentation = findCardPresentation(cardId);
-                    if (presentation) {
+                    // 떨어뜨려 쓰는 카드만 여기서 받는다. 유닛 카드는 필드에 놓는 길로 간다.
+                    if (presentation?.dropTarget && presentation.onDrop) {
                         const dropCx = group.position.x;
                         const dropCy = group.position.y;
                         const dropped = {
@@ -2704,22 +2463,19 @@ export class SimulationBattleFieldView implements Component {
                     if (played) {
                         handOrder.splice(handIndex, 1);
                         placedOrder.push(droppedEntry);
-                        // 출격한 턴을 기록 — 이번 턴에는 공격/스킬 패널이 열리지 않는다.
-                        // 나온 턴은 전투가 적어 둔다.
-                        // 출격 시 — entrance scene → passive chain. Fire-and-forget; the
-                        // placement reflow at the bottom of onDrop runs synchronously first.
-                        // The entrance is deploy-ONLY (no replay on turn-start).
-                        if (cardId === NETHER_BLADE_CARD_ID) {
+                        // 나온 턴은 전투가 적어 둔다. 이번 턴에는 공격·스킬 패널이 안 열린다.
+                        //
+                        // 낼 때 도는 패시브가 있으면 그 카드가 돌린다. 기다리지 않는다 —
+                        // 아래의 줄 세우기가 먼저 끝나야 카드가 제자리에 선다.
+                        const deployed = findCardPresentation(cardId);
+                        if (deployed?.onDeploy) {
                             const entry = droppedEntry;
-                            void (async () => {
-                                // 새 체인의 시작 — 이전 턴에 중단됐던 플래그를 여기서 푼다.
-                                passiveChainAborted = false;
-                                await runResolving(() =>
-                                    netherBladeEntranceEffect.play(rendererManager.getDomElement()),
-                                );
-                                if (passiveChainAborted) return;
-                                await triggerNetherBladePassive(entry);
-                            })();
+                            // 새 사슬의 시작. 지난 턴에 중단된 표시를 여기서 푼다.
+                            passiveChainAborted = false;
+                            void deployed.onDeploy(cardPresentationContext, {
+                                battleCardId: entry.cardIndex,
+                                group: entry.group,
+                            });
                         }
                     } else if (inside && kind === CardKind.SUPPORT && cardId === LEONIK_SUMMON_CARD_ID) {
                         // 레오닉의 부름 — 고르는 창을 열기만 한다. 여기서 카드를 쓰지 않는다.
@@ -3061,22 +2817,29 @@ export class SimulationBattleFieldView implements Component {
 
             console.log(`[turn-state] opponent → your (${reason}) · TURN ${view.turnNumber()} · field energy ${view.yourFieldEnergy()}`);
 
-            // ── 네더 블레이드 매 턴 패시브 풀체인 발동 ─────────────────────────
-            // Each placed + alive Nether Blade re-fires passive 1 (AoE) → passive 2 (single
-            // pick) every turn. enterNetherBladePassive2 returns a Promise that resolves
-            // when the user finishes their pick, so multiple Nether Blades cleanly take
-            // turns: NB#1 AoE → NB#1 picker (modal, awaits user click) → NB#2 AoE → … .
-            const netherBladesOnField = placedOrder.filter(
-                (e) => e.card.cardId === NETHER_BLADE_CARD_ID && e.group.visible,
-            );
+            // ── 턴마다 도는 패시브 ──────────────────────────────────────────────
+            //
+            // 필드에 서 있는 카드 중 턴 시작 때 도는 패시브를 가진 것을 차례로 돌린다.
+            // 그 카드가 사용자에게 고르라고 기다리면 여기서 기다린다. 그래서 여럿이 서
+            // 있어도 하나씩 차례를 지킨다 — 첫째의 고르기가 끝나야 둘째가 나간다.
+            //
+            // 어느 카드가 그런 패시브를 가졌는지는 카드가 안다. 화면이 카드 번호로 고르지 않는다.
+            const turnStartUnits = placedOrder.filter((e) => {
+                if (!e.group.visible) return false;
+                return findCardPresentation(e.card.cardId)?.onTurnStart !== undefined;
+            });
             passiveChainAborted = false;
-            for (const entry of netherBladesOnField) {
+            for (const entry of turnStartUnits) {
                 if (passiveChainAborted) {
-                    console.log('[nether-blade] 턴이 넘어가 남은 패시브 체인 중단');
+                    console.log('[passive] 턴이 넘어가 남은 패시브 중단');
                     break;
                 }
-                console.log(`[nether-blade] turn-start passive chain · TURN ${view.turnNumber()}`);
-                await triggerNetherBladePassive(entry);
+                const presentation = findCardPresentation(entry.card.cardId);
+                console.log(`[passive] turn-start · cardId=${entry.card.cardId} · TURN ${view.turnNumber()}`);
+                await presentation?.onTurnStart?.(cardPresentationContext, {
+                    battleCardId: entry.cardIndex,
+                    group: entry.group,
+                });
             }
         }
 

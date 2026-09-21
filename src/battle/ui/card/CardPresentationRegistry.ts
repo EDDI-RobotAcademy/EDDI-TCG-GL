@@ -10,6 +10,7 @@ import {DeathEnergyPresentation} from "./presentation/energy/093_death_energy";
 import {ColdDarkEnergyPresentation} from "./presentation/energy/151_cold_dark_energy";
 import {SwampOfDeadPresentation} from "./presentation/support/020_swamp_of_dead";
 import {CorpseExplosionPresentation} from "./presentation/item/033_corpse_explosion";
+import {NetherBladePresentation} from "./presentation/unit/019_nether_blade";
 
 // 화면에서 쓰는 법을 아는 카드의 명부다.
 //
@@ -28,6 +29,7 @@ const PRESENTATIONS: readonly CardPresentation[] = [
     ColdDarkEnergyPresentation,
     SwampOfDeadPresentation,
     CorpseExplosionPresentation,
+    NetherBladePresentation,
 ];
 
 const BY_CARD_ID = new Map<number, CardPresentation>(
