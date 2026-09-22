@@ -91,11 +91,7 @@ import { ColdDarkTraitMarkEffect } from "../animation/card/energy/151_cold_dark_
 
 
 
-import {
-    createDefaultTurnEndButtonFrame,
-    isPointInsideTurnEndButton,
-} from "../turn/end_button/frame/TurnEndButtonFrame";
-import { TurnEndButtonRendererV2 } from "../turn/end_button/renderer/TurnEndButtonRendererV2";
+import { TurnControl } from "../turn/control/TurnControl";
 import { BattleSessionImpl } from "../../session/BattleSessionImpl";
 import {
     createDefaultMasterHpFrame,
@@ -107,10 +103,6 @@ import { createDefaultGuideMessageHudFrame } from "../../../common/guide_message
 
 declare const TWEEN: { Tween: any; Easing: any; update: (time?: number) => void };
 import { GuideMessageHudRendererV2 } from "../../../common/guide_message/renderer/GuideMessageHudRendererV2";
-import { createDefaultSandTimerHudFrame } from "../../../common/timer/frame/SandTimerHudFrame";
-import { SandTimerHudRendererV2 } from "../../../common/timer/renderer/SandTimerHudRendererV2";
-import { createDefaultTurnHudFrame } from "../turn/hud/frame/TurnHudFrame";
-import { TurnHudRendererV2 } from "../turn/hud/renderer/TurnHudRendererV2";
 
 import {Component} from "../../../router/Component";
 
@@ -550,35 +542,37 @@ export class SimulationBattleFieldView implements Component {
         const opponentGroup = await opponentRenderer.build(opponentCards, handCardFrame, opponentLayoutFrame);
         scene.add(opponentGroup);
 
-        // ── 턴 종료 단추 — 오른쪽의 육각형. 누르면 상대에게 차례를 넘긴다.
-        const turnEndButtonFrame = createDefaultTurnEndButtonFrame();
-        const turnEndButtonRenderer = new TurnEndButtonRendererV2();
-        const turnEndButtonGroup = await turnEndButtonRenderer.build(turnEndButtonFrame);
-        scene.add(turnEndButtonGroup);
-        // 육각형 자리가 창 크기에서 나온다. 안 다시 재면 네온 테두리와 누름 자리가 처음 크기에 남는다.
-        onResize.add('layout', (w, h) => turnEndButtonRenderer.resize(turnEndButtonFrame, turnEndButtonGroup, w, h));
-
-        // 마우스가 단추 위에 올라오면 네온 테두리를 켠다. 여기가 눌리는 자리라고 알리는 것이다.
+        // 차례 넘기기 — 모래시계와 턴 수 표기, 턴 종료 단추, 그리고 넘기는 일까지 한 곳이 든다.
         //
-        // 육각형 안인지로 본다. 네모로 재면 모서리 바깥에서도 켜진다.
-        let turnEndButtonHovered = false;
-        const setTurnEndButtonHover = (hover: boolean): void => {
-            if (turnEndButtonHovered === hover) return;
-            turnEndButtonHovered = hover;
-            turnEndButtonRenderer.setHover(turnEndButtonGroup, hover);
-        };
-        this.listen(rendererManager.getDomElement(), 'mousemove', (e: MouseEvent) => {
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            const worldX = e.clientX - w / 2;
-            const worldY = h / 2 - e.clientY;
-            setTurnEndButtonHover(
-                isPointInsideTurnEndButton(worldX, worldY, turnEndButtonFrame, w, h),
-            );
-        });
-        // 화면 밖으로 나가면 끈다. 나가는 순간에는 mousemove 가 안 온다.
-        this.listen(rendererManager.getDomElement(), 'mouseleave', () => {
-            setTurnEndButtonHover(false);
+        // 넘어가는 길이 넷이다 — 단추, 모래시계, f 키, 보류했던 넘김. 넷이 하는 일은 같다.
+        //
+        // 넘어간 뒤에 화면이 무엇을 옮기는지는 여기가 정하지 않는다. 아래 세 자리가 그것을
+        // 아는 쪽을 부른다.
+        const turn = await TurnControl.build({
+            scene,
+            canvasElement: rendererManager.getDomElement(),
+            appendToBody: (element) => this.appendToBody(element),
+            listen: (target, type, handler) => this.listen(target, type, handler),
+            onResize,
+            send,
+            isYourTurn: () => view.isYourTurn(),
+            turnNumber: () => view.turnNumber(),
+            yourFieldEnergy: () => view.yourFieldEnergy(),
+            announce: (message) => guideRenderer.show(guideElement, message, 3000),
+            cancelPendingTargeting: () => cancelPendingTargeting(),
+            onTurnEnded: (events) => applyDarkFlameToScreen(events),
+            onTurnBegan: async (events) => {
+                // 남은 필드 에너지 전체다. 종족 표기 위의 작은 개수 고르개가 아니다.
+                fieldEnergy.syncToTruth();
+                await appendDrawnCardsToScreen(events, 'turn-start');
+                for (const ev of events) {
+                    if (ev.type === 'statusCleared' && ev.what === 'frozen') {
+                        frozenBurningEffect.setState(ev.battleCardId, { freeze: false });
+                        console.log(`[cold-dark-energy] idx=${ev.battleCardId} 빙결 해제 — 이번 턴 재빙결 불가`);
+                    }
+                }
+            },
+            runTurnStartPassives: () => runTurnStartPassives(),
         });
 
         // 무덤과 로스트 존 넷. 판을 세우고 창을 다는 일은 그 폴더가 한다.
@@ -690,34 +684,9 @@ export class SimulationBattleFieldView implements Component {
         }
 
 
-        // ── 모래시계 만료 시의 턴 넘김 조정 ──────────────────────────────────────────
-        // 만료 시점의 상태를 두 가지로 구분한다.
-        //   · 타겟팅 중(선택 미완료) — 아무것도 하지 못한 상태로 즉시 턴을 넘긴다.
-        //   · 선택 완료 후 동작 진행 중 — 동작이 전부 끝난 뒤에 넘기고, 그 시점부터 타이머를
-        //     다시 돌린다 (endYourTurn/beginYourTurn이 각자 reset을 호출하므로 자동).
-        let resolvingDepth = 0;           // >0 이면 되돌릴 수 없는 동작이 진행 중
-        let turnPassDeferred = false;     // 만료됐지만 동작 종료를 기다리는 중
-        let passiveChainAborted = false;  // 턴이 넘어가 네더 블레이드 체인을 중단해야 함
-
-        // 선택 완료 이후의 비가역 동작을 감싼다. 진행 중 만료가 걸리면 끝난 직후 턴을 넘긴다.
-        async function runResolving<T>(work: () => Promise<T>): Promise<T> {
-            resolvingDepth += 1;
-            try {
-                return await work();
-            } finally {
-                resolvingDepth -= 1;
-                if (resolvingDepth === 0 && turnPassDeferred) {
-                    turnPassDeferred = false;
-                    console.log('[turn-state] 동작 완료 — 보류했던 턴 넘김 실행');
-                    passTurnOnExpiry('timer expired (deferred)');
-                }
-            }
-        }
-
-        // 리스너 전체를 한 단위로 묶어 "선택 완료 → 동작 실행 → 뒷정리"가 중간에 끊기지 않게
-        // 한다. 리스너가 끝나기 전에는 보류된 턴 넘김이 실행되지 않는다.
-        const withResolving = (handler: (e: MouseEvent) => Promise<void>) =>
-            (e: MouseEvent): void => { void runResolving(() => handler(e)); };
+        // 턴이 넘어가 남은 패시브를 중단해야 한다는 표시. 세우는 것은 고르기를 치우는
+        // 자리이고, 보는 것은 패시브를 차례로 돌리는 자리와 카드 연출이다.
+        let passiveChainAborted = false;
 
         // 아직 선택이 끝나지 않은 타겟팅을 전부 취소한다. 되돌릴 상태만 정리하므로 희생 유닛은
         // 필드에, 시전 카드는 손패에 그대로 남는다 — 말 그대로 아무것도 하지 못한 상태.
@@ -741,15 +710,6 @@ export class SimulationBattleFieldView implements Component {
             }
             // 패널 / attackMode 타겟팅 + 선택 네온까지 한 번에 정리.
             clearAllSelection();
-        }
-
-        function passTurnOnExpiry(reason: string): void {
-            cancelPendingTargeting();
-            if (view.isYourTurn()) {
-                endYourTurn(reason);
-            } else {
-                void beginYourTurn(reason);
-            }
         }
 
         const animationLoop = new AnimationLoop(rendererManager, sceneManager, cameraManager);
@@ -796,7 +756,7 @@ export class SimulationBattleFieldView implements Component {
             neonEffect.updateAnimation();
             enemyNeonEffect.updateAnimation();
             allyTargetNeonEffect.updateAnimation();
-            turnEndButtonRenderer.updateAnimation(turnEndButtonGroup, turnEndButtonFrame);
+            turn.updateAnimation();
             frozenBurningEffect.updateAnimation(elapsed, delta);
             traitMarkEffect.updateAnimation(elapsed);
         });
@@ -844,20 +804,12 @@ export class SimulationBattleFieldView implements Component {
             }
 
 
-            // ── 0) Turn-end button (hexagon) ───────────────────────────────────────────
-            // Only active while NO popup is open (popup checks below handle their own consume).
-            // Only effective while it's YOUR turn — idempotent otherwise. Hit-test is a true
-            // point-in-hexagon check, not a bounding rect — clicks just outside the hex corners
-            // don't register. On a real transfer, the 60-second hourglass restarts from the top
-            // so the new turn owner (the opponent) gets a fresh budget, and the guide banner
-            // announces the handover the same way the drag hint greets you on entry — all of
-            // which lives in endYourTurn(), shared with the hourglass-expiry trigger.
-            if (!zonePanels.anyOpen()) {
-                if (isPointInsideTurnEndButton(worldX, worldY, turnEndButtonFrame, w, h)) {
-                    e.stopImmediatePropagation();
-                    endYourTurn('turn-end button');
-                    return;
-                }
+            // ── 턴 종료 단추 ──────────────────────────────────────────────────
+            // 창이 하나도 열려 있지 않을 때만 받는다. 열려 있으면 그 창이 먹는다.
+            // 눌렸는지 보는 것도 넘기는 것도 차례 넘기기가 한다.
+            if (!zonePanels.anyOpen() && turn.handleClick(worldX, worldY, w, h)) {
+                e.stopImmediatePropagation();
+                return;
             }
 
             // ── 판 넷과 열린 창 ──────────────────────────────────────────────────
@@ -940,7 +892,9 @@ export class SimulationBattleFieldView implements Component {
             skillTripParked.delete(group);
         };
 
-        pointerRouter.add('target', withResolving(async (e: MouseEvent) => {
+        // 리스너 전체를 한 단위로 묶어 "고르기 완료 → 동작 실행 → 뒷정리"가 중간에 끊기지
+        // 않게 한다. 리스너가 끝나기 전에는 보류된 턴 넘김이 실행되지 않는다.
+        pointerRouter.add('target', (e: MouseEvent) => void turn.whileResolving(async () => {
             if (e.button !== 0) return;
             sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
 
@@ -1655,7 +1609,7 @@ export class SimulationBattleFieldView implements Component {
             showCarriedStatus: (events) => showColdDarkTraits(events),
             resolveCards: (cardIds, label) => resolveCards([...cardIds], label),
             makeShuffleSeed: () => makeShuffleSeed(),
-            whileResolving: (work) => runResolving(work),
+            whileResolving: (work) => turn.whileResolving(work),
             isAborted: () => passiveChainAborted,
         };
 
@@ -1889,39 +1843,17 @@ export class SimulationBattleFieldView implements Component {
             await drawOneCard('draw');
         });
 
-        // Pilot E new — guide message / sand timer / turn HUDs
+        // 화면 가운데에 잠깐 띄우는 안내. 부르는 곳이 여럿이라 여기서 세운다 —
+        // 차례가 바뀔 때, 스킬을 못 쓸 때, 구역 판을 누를 때.
         const guideFrame = createDefaultGuideMessageHudFrame();
         const guideRenderer = new GuideMessageHudRendererV2();
         const guideElement = await guideRenderer.build(guideFrame);
         this.appendToBody(guideElement);
         guideRenderer.show(guideElement, '카드를 드래그하여 이동하세요!', 3000);
 
-        const timerFrame = createDefaultSandTimerHudFrame();
-        const timerRenderer = new SandTimerHudRendererV2();
-        const timerElement = await timerRenderer.build(timerFrame);
-        this.appendToBody(timerElement);
-
-        const turnFrame = createDefaultTurnHudFrame();
-        const turnRenderer = new TurnHudRendererV2(1);
-        const turnElement = await turnRenderer.build(turnFrame);
-        this.appendToBody(turnElement);
-
-        // ── 턴 전환 단일 진입점 ───────────────────────────────────────────────────────
-        // Both transitions have two triggers now (button/hourglass, 'f' key/hourglass), so the
-        // side effects live in one function each instead of being duplicated per trigger.
-
-        // your → opponent. Triggers: 턴 종료 버튼 클릭, 모래시계 만료.
-        // No-op unless it's currently your turn (idempotent).
-        function endYourTurn(reason: string): void {
-            // 넘어갈 수 있는지도, 암흑 화염을 정산하는 것도 전투가 한다.
-            const events = send({type: 'endYourTurn'});
-            if (events.some((ev) => ev.type === 'rejected')) return;
-
-            timerRenderer.reset(timerElement);
-            guideRenderer.show(guideElement, '상대방의 턴입니다.', 3000);
-            console.log(`[turn-state] your → opponent (${reason}) · TURN ${view.turnNumber()}`);
-            applyDarkFlameToScreen(events);
-        }
+        // 화면이 다 차려졌다. 이제부터 모래시계를 돌린다 — 그림을 읽는 동안 흘러간 시간을
+        // 사용자의 차례에서 깎지 않는다.
+        turn.startCountdown();
 
         // 암흑 화염으로 깎이고 쓰러진 것을 화면에 옮긴다. 값은 이미 다 바뀌었다.
         function applyDarkFlameToScreen(events: readonly BattleEvent[]): void {
@@ -1941,47 +1873,14 @@ export class SimulationBattleFieldView implements Component {
             if (anyDefeated) reflowOpponentField();
         }
 
-        // opponent → your. Triggers: 'f' 키, 모래시계 만료. Each full opponent→your cycle counts
-        // as one turn, so we (a) increment TURN, (b) bump the main FIELD ENERGY by 1, (c) restart
-        // the 60 s hourglass, and (d) DRAW one card from your deck into your hand (standard
-        // turn-start draw), plus (e) announce the handback on the guide banner. No-op unless it's
-        // currently the opponent's turn (idempotent).
-        async function beginYourTurn(reason: string): Promise<void> {
-            // 턴이 오르는 것, 필드 에너지가 느는 것, 빙결이 풀리는 것, 한 장 뽑는 것을
-            // 전투가 한 번에 한다.
-            const events = send({type: 'beginYourTurn'});
-            if (events.some((ev) => ev.type === 'rejected')) {
-                console.log(`[turn-state] ${reason} ignored — already your turn`);
-                return;
-            }
-            guideRenderer.show(guideElement, '당신의 턴입니다.', 3000);
-
-            turnRenderer.setTurn(view.turnNumber());
-            turnRenderer.update(turnFrame, turnElement, window.innerWidth, window.innerHeight);
-
-            // 남은 필드 에너지 전체다. 종족 표기 위의 작은 개수 고르개가 아니다.
-            fieldEnergy.syncToTruth();
-
-            timerRenderer.reset(timerElement);
-
-            // 뽑은 카드와 풀린 빙결을 화면에 옮긴다. 값은 이미 다 바뀌었다.
-            await appendDrawnCardsToScreen(events, 'turn-start');
-            for (const ev of events) {
-                if (ev.type === 'statusCleared' && ev.what === 'frozen') {
-                    frozenBurningEffect.setState(ev.battleCardId, { freeze: false });
-                    console.log(`[cold-dark-energy] idx=${ev.battleCardId} 빙결 해제 — 이번 턴 재빙결 불가`);
-                }
-            }
-
-            console.log(`[turn-state] opponent → your (${reason}) · TURN ${view.turnNumber()} · field energy ${view.yourFieldEnergy()}`);
-
-            // ── 턴마다 도는 패시브 ──────────────────────────────────────────────
-            //
-            // 필드에 서 있는 카드 중 턴 시작 때 도는 패시브를 가진 것을 차례로 돌린다.
-            // 그 카드가 사용자에게 고르라고 기다리면 여기서 기다린다. 그래서 여럿이 서
-            // 있어도 하나씩 차례를 지킨다 — 첫째의 고르기가 끝나야 둘째가 나간다.
-            //
-            // 어느 카드가 그런 패시브를 가졌는지는 카드가 안다. 화면이 카드 번호로 고르지 않는다.
+        // ── 차례가 시작될 때 도는 패시브 ────────────────────────────────────────
+        //
+        // 필드에 서 있는 카드 중 차례가 시작될 때 도는 것을 차례로 돌린다. 그 카드가
+        // 사용자에게 고르라고 기다리면 여기서 기다린다. 그래서 여럿이 서 있어도 하나씩
+        // 차례를 지킨다 — 첫째의 고르기가 끝나야 둘째가 나간다.
+        //
+        // 어느 카드가 그런 것을 가졌는지는 카드가 안다. 화면이 카드 번호로 고르지 않는다.
+        async function runTurnStartPassives(): Promise<void> {
             const turnStartUnits = placedOrder.filter((e) => {
                 if (!e.group.visible) return false;
                 return findCardPresentation(e.card.cardId)?.onTurnStart !== undefined;
@@ -2000,25 +1899,6 @@ export class SimulationBattleFieldView implements Component {
                 });
             }
         }
-
-        this.listen(document, 'keydown', (e: KeyboardEvent) => {
-            if (e.key !== 'f' && e.key !== 'F') return;
-            void beginYourTurn(`'f' key`);
-        });
-
-        // ── 모래시계 만료 → 자동 턴 넘김 ──────────────────────────────────────────────
-        // 만료 시점에 턴을 쥔 쪽이 턴을 잃는다. 단, 선택이 완료되어 되돌릴 수 없는 동작이
-        // 진행 중이면 즉시 넘기지 않고 보류한다 — runResolving의 finally가 동작 종료 직후
-        // passTurnOnExpiry를 호출하고, 거기서 타이머가 새로 시작된다. 타겟팅 중(선택 미완료)
-        // 이라면 cancelPendingTargeting이 아무 일도 없던 상태로 되돌린 뒤 그대로 넘어간다.
-        timerRenderer.setOnExpire(timerElement, () => {
-            if (resolvingDepth > 0) {
-                turnPassDeferred = true;
-                console.log('[turn-state] 모래시계 만료 — 진행 중인 동작 완료 후 턴 넘김 예약');
-                return;  // 여기서 타이머를 재시작하지 않는다. 동작이 끝난 시점부터 다시 돈다.
-            }
-            passTurnOnExpiry('timer expired');
-        });
 
         // 열려 있는 팝업을 창 크기에 맞춰 다시 만든다.
         //
@@ -2081,8 +1961,6 @@ export class SimulationBattleFieldView implements Component {
             );
 
             guideRenderer.update(guideFrame, guideElement, width, height);
-            timerRenderer.update(timerFrame, timerElement, width, height);
-            turnRenderer.update(turnFrame, turnElement, width, height);
         });
 
         // 붙어 있는 테두리는 붙일 때 대상의 크기를 읽어 둔 것이라, 대상이 다시 재진 뒤에
