@@ -857,93 +857,105 @@ export class SimulationBattleFieldView implements Component {
         // 사용자가 하는 순서가 상태 넷이다. 전에는 그 넷과 사이를 옮기는 곳이 화면 안 열두
         // 군데에 흩어져 있었고, 누름 처리기 하나가 267줄이었다.
         //
-        // 때린 결과를 화면에 옮기는 것은 아래 여섯 자리가 받는다. 무엇이 어디 그려져 있는지
-        // 아는 쪽이 한다.
+        // 기대는 것을 갈래 넷으로 나눠 넘긴다 — 바탕, 패널, 대상 고르기, 결과 그리기.
+        // 패널을 고치러 온 사람이 결과 그리기 열까지 읽지 않아도 된다.
         const attack = await AttackControl.build({
-            scene,
-            pointerRouter,
-            onResize,
-            canvasElement: rendererManager.getDomElement(),
-            listen: (target, type, handler) => this.listen(target, type, handler),
-            send,
-            view,
-            handCardFrame,
-            skillImages: (cardId) => skillImagePaths[String(cardId)] ?? [],
-            isDeployed: (entry) => placedOrder.includes(entry),
-            pointerWorld: (event) => {
-                sharedRaycaster.setFromCamera(ndcFromEvent(event), camera);
-                const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
-                const at = new THREE.Vector3();
-                return sharedRaycaster.ray.intersectPlane(plane, at)
-                    ? {x: at.x, y: at.y}
-                    : null;
+            // 넷이 함께 쓰는 바탕.
+            base: {
+                pointerRouter,
+                onResize,
+                canvasElement: rendererManager.getDomElement(),
+                listen: (target, type, handler) => this.listen(target, type, handler),
+                send,
+                view,
+                whileResolving: (work) => turn.whileResolving(work),
             },
-            hitButtonIn: (group) => {
-                const hits = sharedRaycaster.intersectObjects(group.children, false);
-                if (hits.length === 0) return null;
-                const buttonType = hits[0].object.userData.buttonType;
-                return typeof buttonType === 'string' ? buttonType : null;
+            // 패널을 열고 닫는다.
+            panel: {
+                scene,
+                handCardFrame,
+                skillImages: (cardId) => skillImagePaths[String(cardId)] ?? [],
+                isDeployed: (entry) => placedOrder.includes(entry),
+                pointerWorld: (event) => {
+                    sharedRaycaster.setFromCamera(ndcFromEvent(event), camera);
+                    const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+                    const at = new THREE.Vector3();
+                    return sharedRaycaster.ray.intersectPlane(plane, at)
+                        ? {x: at.x, y: at.y}
+                        : null;
+                },
+                hitButtonIn: (group) => {
+                    const hits = sharedRaycaster.intersectObjects(group.children, false);
+                    if (hits.length === 0) return null;
+                    const buttonType = hits[0].object.userData.buttonType;
+                    return typeof buttonType === 'string' ? buttonType : null;
+                },
+                announce: (message) => guideRenderer.show(guideElement, message, 3000),
             },
-            aimAt: (event) => sharedRaycaster.setFromCamera(ndcFromEvent(event), camera),
-            hitOpponentMasterAt: () =>
-                sharedRaycaster.intersectObjects(masterGroup.children, true).length > 0,
-            // 쓰러져 안 보이는 것은 안 잡는다. 광선은 안 보이는 것도 맞히므로 걸러야 한다 —
-            // 옛 자리에 남아 있는 죽은 카드가 안 그러면 눌린다.
-            hitOpponentUnitAt: () => {
-                const hits = sharedRaycaster.intersectObjects(opponentGroup.children, true);
-                for (const hit of hits) {
-                    let walkGroup: THREE.Object3D | null = hit.object;
-                    while (walkGroup && walkGroup.parent !== opponentGroup) {
-                        walkGroup = walkGroup.parent;
+            // 대상을 고른다.
+            targeting: {
+                aimAt: (event) => sharedRaycaster.setFromCamera(ndcFromEvent(event), camera),
+                hitOpponentMasterAt: () =>
+                    sharedRaycaster.intersectObjects(masterGroup.children, true).length > 0,
+                // 쓰러져 안 보이는 것은 안 잡는다. 광선은 안 보이는 것도 맞히므로 걸러야 한다 —
+                // 옛 자리에 남아 있는 죽은 카드가 안 그러면 눌린다.
+                hitOpponentUnitAt: () => {
+                    const hits = sharedRaycaster.intersectObjects(opponentGroup.children, true);
+                    for (const hit of hits) {
+                        let walkGroup: THREE.Object3D | null = hit.object;
+                        while (walkGroup && walkGroup.parent !== opponentGroup) {
+                            walkGroup = walkGroup.parent;
+                        }
+                        if (!(walkGroup instanceof THREE.Group) || !walkGroup.visible) continue;
+                        const found = opponentEntries.find((oe) => oe.group === walkGroup);
+                        if (found) return found;
                     }
-                    if (!(walkGroup instanceof THREE.Group) || !walkGroup.visible) continue;
-                    const found = opponentEntries.find((oe) => oe.group === walkGroup);
-                    if (found) return found;
-                }
-                return null;
+                    return null;
+                },
+                markTargets: () => {
+                    for (const oe of opponentEntries) {
+                        if (oe.group.visible) enemyNeonEffect.attach(oe.cardIndex, oe.group);
+                    }
+                    if (view.isOpponentMasterAlive()) {
+                        enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, masterGroup);
+                    }
+                },
+                clearTargets: () => enemyNeonEffect.detachAll(),
+                hasSelectionBorder: () => neonEffect.hasActive(),
+                clearSelectionBorder: () => neonEffect.detachAll(),
             },
-            announce: (message) => guideRenderer.show(guideElement, message, 3000),
-            markTargets: () => {
-                for (const oe of opponentEntries) {
-                    if (oe.group.visible) enemyNeonEffect.attach(oe.cardIndex, oe.group);
-                }
-                if (view.isOpponentMasterAlive()) {
-                    enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, masterGroup);
-                }
+            // 맞은 결과를 화면에 옮긴다. 값은 이미 다 바뀌었다.
+            result: {
+                flashUnit: (group, shake) => {
+                    if (shake) flashAndShakeTarget(group);
+                    else flashTarget(group);
+                },
+                hideUnit: (battleCardId) => {
+                    const target = opponentEntries.find((oe) => oe.cardIndex === battleCardId);
+                    if (target) target.group.visible = false;
+                },
+                reflowOpponentField: () => reflowOpponentField(),
+                setMasterHp: (hp) => opponentMasterHpRenderer.setHp(
+                    opponentMasterHpGroup, opponentMasterHpFrame, hp,
+                ),
+                hideMaster: () => { masterGroup.visible = false; },
+                opponentUnitGroup: (battleCardId) =>
+                    opponentEntries.find((oe) => oe.cardIndex === battleCardId)?.group ?? null,
+                opponentMasterGroup: () => masterGroup,
+                showCarriedStatus: (events) => showColdDarkTraits(events),
+                playAttack: (attacker, target, kind) => withSkillTripHome(
+                    attacker, (trip) => attackAnimation.playAttack(attacker, target, kind, trip),
+                ),
+                // 어느 카드가 어떤 광역기 연출을 쓰는지는 화면이 안다. 네더 블레이드는 신화
+                // 등급에 맞는 광역기 연출을 아직 안 만들어서 스킬 자리로 나갔다 오기만 한다.
+                playAoESkill: async (cardId, group) => {
+                    if (cardId === NETHER_BLADE_CARD_ID) {
+                        await playSkillPanelMoveOnly(group);
+                        return;
+                    }
+                    await withSkillTripHome(group, (trip) => seaOfSpecterEffect.play(group, trip));
+                },
             },
-            clearTargets: () => enemyNeonEffect.detachAll(),
-            hasSelectionBorder: () => neonEffect.hasActive(),
-            clearSelectionBorder: () => neonEffect.detachAll(),
-            flashUnit: (group, shake) => {
-                if (shake) flashAndShakeTarget(group);
-                else flashTarget(group);
-            },
-            hideUnit: (battleCardId) => {
-                const target = opponentEntries.find((oe) => oe.cardIndex === battleCardId);
-                if (target) target.group.visible = false;
-            },
-            reflowOpponentField: () => reflowOpponentField(),
-            setMasterHp: (hp) => opponentMasterHpRenderer.setHp(
-                opponentMasterHpGroup, opponentMasterHpFrame, hp,
-            ),
-            hideMaster: () => { masterGroup.visible = false; },
-            opponentUnitGroup: (battleCardId) =>
-                opponentEntries.find((oe) => oe.cardIndex === battleCardId)?.group ?? null,
-            opponentMasterGroup: () => masterGroup,
-            showCarriedStatus: (events) => showColdDarkTraits(events),
-            playAttack: (attacker, target, kind) => withSkillTripHome(
-                attacker, (trip) => attackAnimation.playAttack(attacker, target, kind, trip),
-            ),
-            // 어느 카드가 어떤 광역기 연출을 쓰는지는 화면이 안다. 네더 블레이드는 신화
-            // 등급에 맞는 광역기 연출을 아직 안 만들어서 스킬 자리로 나갔다 오기만 한다.
-            playAoESkill: async (cardId, group) => {
-                if (cardId === NETHER_BLADE_CARD_ID) {
-                    await playSkillPanelMoveOnly(group);
-                    return;
-                }
-                await withSkillTripHome(group, (trip) => seaOfSpecterEffect.play(group, trip));
-            },
-            whileResolving: (work) => turn.whileResolving(work),
         });
 
         // 필드 에너지 — 표기 셋과 상대 쪽 판, 그리고 유닛에 붙이는 일까지 한 곳이 든다.
