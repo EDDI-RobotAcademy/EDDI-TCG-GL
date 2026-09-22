@@ -5,10 +5,36 @@ interface ImageInfo {
     reference_path: string;
 }
 
+// 그림 한 장을 읽은 뒤 붙이는 설정. **이 프로젝트의 선명한 기준값이다.**
+//
+// 카드 그림이 점으로 그린 그림(픽셀 아트)이라 밉맵을 만들면 뭉개진다. 밉맵은 작게 줄여
+// 그릴 때 쓰려고 미리 만들어 두는 작은 그림들인데, 만드는 과정에서 옆 점들이 섞인다.
+// 사진이면 부드러워져 좋지만 점으로 그린 그림은 글자와 테두리가 흐려진다.
+//
+// colorSpace 도 함께 봐야 한다. LinearSRGBColorSpace 로 읽으면 화면에 낼 때 한 번 더
+// 밝기가 바뀌어 색이 뜬다. 그림 파일은 SRGB 로 저장되어 있으므로 SRGB 로 읽는다.
+//
+// 전에는 이 파일 안에 그림 읽는 자리가 둘이었고 설정이 서로 달랐다. 미리 읽는 쪽이
+// 밉맵을 켜서 로비·상점·내 카드·덱이 다 뿌옇게 나왔고, 전투는 이 창구를 안 쓰고 제 손으로
+// 읽어서 피해 갔다 — 그 사정이 전투 렌더러 주석에 [TextureManager 를 쓰면 흐릿해진다] 로
+// 남아 있었다. 둘이 같은 것을 쓰게 해서 다시 갈라지지 않게 한다 (R2-130).
+//
+// **밝기를 더 올리는 것(anisotropy)은 안 쓴다.** 밉맵이 있어야 듣는 설정이라 여기서는
+// 아무 일도 안 한다.
+function applyCrispSettings(texture: THREE.Texture): void {
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.magFilter = THREE.LinearFilter;
+    texture.minFilter = THREE.LinearFilter;
+    texture.generateMipmaps = false;
+}
+
 export class TextureManager {
     private static instance: TextureManager;
     private isTexturesPreloaded: boolean = false
 
+    // 그리는 기계를 여기 두고 있었다. 밉맵을 켜 놓고 그 위에 선명도를 더 올리는 설정
+    // (anisotropy) 을 붙이는 데만 썼다. 밉맵을 끄면서 그 설정이 아무 일도 안 하게 되어
+    // 읽는 곳이 없어졌다 (R2-130). 넣는 곳만 남아 있으므로 쓸 일이 생기면 그때 다시 본다.
     private renderer: THREE.WebGLRenderer | undefined;
 
     private battleFieldUnitCardTextureList: { [id: number]: THREE.Texture } = {};
@@ -237,16 +263,7 @@ export class TextureManager {
                 textureLoader.load(
                     imagePath,
                     (texture) => {
-                        texture.colorSpace = THREE.LinearSRGBColorSpace;
-                        // texture.magFilter = THREE.LinearFilter;
-                        // texture.minFilter = THREE.LinearFilter;
-                        // texture.generateMipmaps = false;
-                        texture.minFilter = THREE.LinearMipMapLinearFilter;
-                        texture.magFilter = THREE.LinearFilter;
-                        texture.generateMipmaps = true;  // 이제 안전하게 사용 가능
-                        if (this.renderer) {
-                            texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
-                        }
+                        applyCrispSettings(texture);
                         textureList[id] = texture;
                         resolve();
                     },
@@ -472,10 +489,7 @@ export class TextureManager {
                     textureLoader.load(
                         path,
                         (texture) => {
-                            texture.colorSpace = THREE.SRGBColorSpace;
-                            texture.magFilter = THREE.LinearFilter;
-                            texture.minFilter = THREE.LinearFilter;
-                            texture.generateMipmaps = false;
+                            applyCrispSettings(texture);
                             skillTextureList[+unitId][skillId + 1] = texture;
                             resolve();
                         },
