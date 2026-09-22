@@ -91,6 +91,16 @@ export class Battle {
         battle.yourMaster.restoreFrom(snapshot.yourMasterHp);
         battle.opponentMaster.restoreFrom(snapshot.opponentMasterHp);
         battle.pendingChoice = snapshot.pendingChoice;
+
+        // 다음에 줄 번호를 적어 둔 것보다 뒤로 밀어 둔다.
+        //
+        // 되돌릴 때는 손패와 필드를 적어 둔 것에서 바로 채우므로, 번호를 받아 적어 두는
+        // 자리를 안 지난다. 그대로 두면 다음에 주는 번호가 0 이 되어 이미 있는 카드와
+        // 겹치고, 화면이 그 번호로 가리키던 것과 전투가 그 번호로 찾는 것이 달라진다.
+        for (const it of snapshot.handCards) battle.markCardIdUsed(it.battleCardId);
+        for (const it of snapshot.yourFieldCards) battle.markCardIdUsed(it.battleCardId);
+        for (const it of snapshot.opponentFieldCards) battle.markCardIdUsed(it.battleCardId);
+
         return battle;
     }
 
@@ -103,7 +113,6 @@ export class Battle {
         return this.nextCardId++;
     }
 
-    // 밖에서 번호를 정해 넣은 경우 그 다음부터 주도록 맞춘다.
     // ── 기다리는 고르기 ────────────────────────────────────────────────────
 
     getPendingChoice(): PendingChoice | null {

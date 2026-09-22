@@ -274,14 +274,32 @@ Do not cache a derived value as state. Do not store the same truth in two places
 
 ## Battle session
 
-`src/battle/session/` holds the currently active battle in memory. It offers `start` / `restore` /
-`send` / `read` / `getCurrent` / `end`.
+`src/battle/session/` holds the currently active battle in memory. It offers exactly four things:
+`restore(snapshot, catalog)` / `send(command)` / `read()` / `end()`.
+
+**It never hands the `Battle` out.** Not from `restore`, not from a getter — as of R2-126 there is
+no method that returns one. Before that, `start()` returned the aggregate and the screen kept it in
+a variable, which put all 33 state-mutating operations one dot away; the import-based
+`ui-no-domain-object` rule could not see it, because the type arrived by inference. The fix was to
+remove the return value, not to add a check: **a check reports a breach, a closed door prevents
+one.** Do not add a method that returns a `Battle`, a `FieldCard`, or a `HandCard`.
+
+**There is one way in, and a snapshot is it.** `restore` takes a `BattleSnapshot` — plain values,
+no domain objects. The verification board writes one by hand (`src/battle/simulation/`); a real
+match will receive one from the server. Same door, different author. That is why the network path
+adds no new entry point.
+
+If you build a snapshot by hand, note that `Battle.restore` fills the hand and the fields directly
+and therefore skips the place where issued card numbers are recorded — it pushes `nextCardId` past
+the highest id in the snapshot itself. Anything else that restores state in bulk must do the same,
+or the next drawn card collides with a card already on the board (R2-126).
 
 **Whoever holds the battle runs its rules.** `send(command)` applies a command and returns the
-events; `read()` hands out the ReadModel. The screen never constructs a `BattleCommandHandler`
-and never calls `handle` — it does not know where the rules run. That is the swappable point,
-and it appeared because the responsibility moved, not because an adapter was designed for it
-(Rule 27). When the network battle path arrives, `send` is what changes; its callers do not.
+events; `read()` hands out the ReadModel — **ask for it after `restore`**, since it binds to the
+battle that exists when you call it. The screen never constructs a `BattleCommandHandler` and never
+calls `handle` — it does not know where the rules run. That is the swappable point, and it appeared
+because the responsibility moved, not because an adapter was designed for it (Rule 27). When the
+network battle path arrives, `send` is what changes; its callers do not.
 
 **It is not a persistence repository.** If persistent storage is introduced later, create a separate boundary for it. Do not rename or reuse `session` for persistence.
 

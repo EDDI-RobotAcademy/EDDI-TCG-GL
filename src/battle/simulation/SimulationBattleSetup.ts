@@ -1,8 +1,11 @@
 import {Battle} from "../domain/battle/Battle";
-import {HandCard} from "../domain/battle/HandCard";
-import {FieldCard} from "../domain/battle/FieldCard";
+import {Master} from "../domain/battle/Master";
+import {BattleSnapshot} from "../domain/battle/BattleSnapshot";
+import {FieldCardSnapshot} from "../domain/battle/FieldCardSnapshot";
+import {HandCardSnapshot} from "../domain/battle/HandCardSnapshot";
 import {CardCatalog} from "../domain/ability/CardCatalog";
 import {CardRace} from "../../card/race";
+import {IdGenerator} from "../../common/id_generator/IdGenerator";
 
 // 확인용 화면이 켜질 때 판에 미리 놓아 두는 것이다.
 //
@@ -13,6 +16,14 @@ import {CardRace} from "../../card/race";
 //
 // 네트워크가 붙으면 이 파일을 안 부른다. 서버가 준 것으로 채운다. 그래서 그리는 코드
 // 사이사이에 흩어 두지 않고 여기 한곳에 모았다 (지침의 [확인 / 검증 방식] 참고).
+//
+// **전투 상태를 만지지 않는다. 값만 적는다.** 전에는 판을 넘겨받아 열 군데를 직접 고쳤고,
+// 그러려면 전투 화면이 판을 받아 여기로 넘겨 줘야 했다. 그 길로 전투 화면이 판 전체를
+// 손에 들었다.
+//
+// 지금은 판 하나를 통째로 적어 둔 것을 만들어 내놓는다. 그것으로 판을 되돌리는 문은
+// 이미 있었다 — 재접속용으로 만들어 둔 것이다. 진짜 대전에서 서버가 보내 주는 것도 같은
+// 것이라, 들어오는 문이 하나로 맞는다.
 
 // 손패의 시작 카드.
 export const SIMULATION_HAND_CARD_IDS: readonly number[] = [
@@ -89,43 +100,72 @@ export interface SimulationOpponentUnit {
     readonly raceId: number;
 }
 
-// 판을 차린다.
+// 확인용 판의 시작 상태를 적어 둔 것을 만든다.
 //
 // 손패와 상대 필드는 화면이 그린 것을 받는다. 신원 번호가 화면이 만든 순서라서다.
 // 진짜 대전에서는 그 번호도 서버가 준다.
-export function seedSimulationBattle(
-    battle: Battle,
+export function simulationBattleSnapshot(
     catalog: CardCatalog,
     hand: readonly SimulationHandCard[],
     opponentUnits: readonly SimulationOpponentUnit[],
-): void {
-    battle.setFieldEnergy(YOUR_FIELD_ENERGY);
-    battle.setOpponentFieldEnergy(OPPONENT_FIELD_ENERGY);
+): BattleSnapshot {
+    return {
+        battleId: IdGenerator.generateId("Battle"),
+        turnOwner: 'your',
+        turnNumber: Battle.FIRST_TURN,
 
-    battle.seedYourDeck([...YOUR_DECK]);
-    battle.seedOpponentDeck([...OPPONENT_DECK]);
+        fieldEnergy: YOUR_FIELD_ENERGY,
+        opponentFieldEnergy: OPPONENT_FIELD_ENERGY,
 
-    for (const card of hand) {
-        battle.addToHand(new HandCard(card.battleCardId, card.cardId, [], 0));
-    }
+        yourDeckCards: [...YOUR_DECK],
+        opponentDeckCards: [...OPPONENT_DECK],
 
-    for (const id of TOMB_CARDS) battle.sendToYourTomb(id);
-    for (const id of TOMB_CARDS) battle.sendToOpponentTomb(id);
-    for (const id of LOST_ZONE_CARDS) battle.sendToYourLostZone(id);
-    for (const id of LOST_ZONE_CARDS) battle.sendToOpponentLostZone(id);
+        yourTombCards: [...TOMB_CARDS],
+        opponentTombCards: [...TOMB_CARDS],
+        yourLostZoneCards: [...LOST_ZONE_CARDS],
+        opponentLostZoneCards: [...LOST_ZONE_CARDS],
 
-    opponentUnits.forEach((unit, index) => {
+        yourFieldCards: [],
+        opponentFieldCards: opponentUnits.map(toOpponentFieldCard(catalog)),
+        handCards: hand.map(toHandCard),
+
+        // 양쪽 다 꽉 찬 체력으로 시작한다.
+        yourMasterHp: Master.START_HP,
+        opponentMasterHp: Master.START_HP,
+
+        pendingChoice: null,
+    };
+}
+
+function toHandCard(card: SimulationHandCard): HandCardSnapshot {
+    return {
+        battleCardId: card.battleCardId,
+        cardId: card.cardId,
+        attributeMarkIds: [],
+        // 화면 좌표 번호를 안 쓴다.
+        positionId: 0,
+    };
+}
+
+function toOpponentFieldCard(catalog: CardCatalog) {
+    return (unit: SimulationOpponentUnit, index: number): FieldCardSnapshot => {
         const hp = catalog.getHp(unit.cardId);
-        battle.placeOnOpponentField(new FieldCard(
-            index,                               // 신원. 이 화면에서는 만들 때의 차례를 쓴다
-            unit.cardId,
-            [],
-            0,                                   // 화면 좌표 번호를 안 쓴다
-            typeof hp === 'number' ? hp : 0,
+        return {
+            // 신원. 이 화면에서는 만들 때의 차례를 쓴다.
+            battleCardId: index,
+            cardId: unit.cardId,
+            attributeMarkIds: [],
+            positionId: 0,
+            hp: typeof hp === 'number' ? hp : 0,
             // 시작 에너지는 그 카드의 종족으로 붙인다.
-            unit.energyCount > 0
-                ? new Map([[unit.raceId as CardRace, unit.energyCount]])
-                : new Map(),
-        ));
-    });
+            energyByRace: unit.energyCount > 0
+                ? [{race: unit.raceId as CardRace, count: unit.energyCount}]
+                : [],
+            deployedTurn: 0,
+            frozen: false,
+            freezeImmune: false,
+            darkFlame: false,
+            coldDarkEnergy: false,
+        };
+    };
 }

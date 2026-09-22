@@ -4,7 +4,7 @@ import { installTween } from "../../../core/tween/Tween";
 import { CardCatalog } from "../../domain/ability/CardCatalog";
 import {
     SIMULATION_HAND_CARD_IDS, SIMULATION_OPPONENT_CARD_IDS, SIMULATION_OPPONENT_ENERGY,
-    seedSimulationBattle,
+    simulationBattleSnapshot,
 } from "../../simulation/SimulationBattleSetup";
 import { createOpponentMasterAreaFrame } from "../master_area/frame/OpponentMasterAreaFrame";
 import { OpponentMasterAreaRendererV2 } from "../master_area/renderer/OpponentMasterAreaRendererV2";
@@ -277,15 +277,10 @@ export class SimulationBattleFieldView implements Component {
         // 규칙을 구동하는 것은 판을 든 쪽이 맡는다. 화면은 규칙 기계를 만들지도, 쥐지도
         // 않는다. 전에는 화면이 제 손으로 만들어 제 안에서 돌렸다 (규칙 25).
         const session = BattleSessionImpl.getInstance();
-        const battle = session.start(cardCatalog);
 
         // 사용자가 한 일 하나를 보내고, 무슨 일이 있었는지 받는다.
         // 어디서 셈하는지는 화면이 모른다.
         const send = (command: BattleCommand): BattleEvent[] => session.send(command);
-
-        // 화면은 전투 안을 직접 안 본다. 이 창구를 본다.
-        // 판을 차리는 열 군데만 아직 전투를 직접 쓴다. R2-113 에서 뺀다.
-        const view = session.read();
 
 
         // 창 크기가 바뀔 때 다시 재야 하는 것을 모은다. 만드는 자리에서 바로 등록한다.
@@ -541,6 +536,31 @@ export class SimulationBattleFieldView implements Component {
         const opponentGroup = await opponentRenderer.build(opponentCards, handCardFrame, opponentLayoutFrame);
         scene.add(opponentGroup);
 
+        // 확인용 판을 여기서 한 번에 차린다.
+        //
+        // 전에는 이 열 줄이 그리는 코드 사이사이에 흩어져 있었다. 무덤 그리는 코드 옆에
+        // 무덤 채우는 줄이 있는 식이었다.
+        //
+        // **화면은 판을 손에 들지 않는다.** 확인용 판이 시작 상태를 값으로 적어 주고,
+        // 세션이 그것으로 판을 차린다. 네트워크가 붙으면 적어 주는 쪽만 서버로 바뀐다.
+        //
+        // 손패와 상대 필드를 여기서 넘기는 것은 신원 번호가 화면이 만든 순서라서다.
+        // 진짜 대전에서는 그 번호도 서버가 준다.
+        session.restore(
+            simulationBattleSnapshot(
+                cardCatalog,
+                entries.map((e) => ({battleCardId: e.cardIndex, cardId: e.card.cardId})),
+                opponentCards.map((oc) => ({
+                    cardId: oc.cardId, energyCount: oc.energyCount, raceId: oc.raceId,
+                })),
+            ),
+            cardCatalog,
+        );
+
+        // 화면은 전투 안을 직접 안 본다. 이 창구를 본다.
+        // 판을 차린 뒤에 받는다 — 차리기 전에 받으면 빈 판을 가리킨다.
+        const view = session.read();
+
         // 차례 넘기기 — 모래시계와 턴 수 표기, 턴 종료 단추, 그리고 넘기는 일까지 한 곳이 든다.
         //
         // 넘어가는 길이 넷이다 — 단추, 모래시계, f 키, 보류했던 넘김. 넷이 하는 일은 같다.
@@ -588,22 +608,6 @@ export class SimulationBattleFieldView implements Component {
 
 
 
-
-        // 확인용 판을 여기서 한 번에 차린다.
-        //
-        // 전에는 이 열 줄이 그리는 코드 사이사이에 흩어져 있었다. 무덤 그리는 코드 옆에
-        // 무덤 채우는 줄이 있는 식이었다. 네트워크가 붙으면 이 한 줄만 빠진다.
-        //
-        // 손패와 상대 필드를 여기서 넘기는 것은 신원 번호가 화면이 만든 순서라서다.
-        // 진짜 대전에서는 그 번호도 서버가 준다.
-        seedSimulationBattle(
-            battle,
-            cardCatalog,
-            entries.map((e) => ({battleCardId: e.cardIndex, cardId: e.card.cardId})),
-            opponentCards.map((oc) => ({
-                cardId: oc.cardId, energyCount: oc.energyCount, raceId: oc.raceId,
-            })),
-        );
 
         // 살아 있는 차례는 전투가 든 상대 필드 목록 그 자체다.
         // 상대 필드 카드가 어느 자리에 서는지도 이 차례로 정해진다.
