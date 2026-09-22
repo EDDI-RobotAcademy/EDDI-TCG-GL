@@ -1,4 +1,3 @@
-import {Battle} from "../domain/battle/Battle";
 import {BattleSnapshot} from "../domain/battle/BattleSnapshot";
 import {BattleCommand} from "../domain/flow/BattleCommand";
 import {BattleEvent} from "../domain/flow/BattleEvent";
@@ -15,20 +14,21 @@ import {BattleReadModel} from "../domain/read/BattleReadModel";
 //
 // 실제 대전에서 셈하는 곳은 서버다. 여기가 그 자리를 대신 맡고 있는 것이고, 네트워크가
 // 붙을 때 이 안이 바뀐다. 부르는 쪽은 안 바뀐다.
+// **판을 내주지 않는다.** 전에는 판을 시작하면 판 자체를 돌려주었고, 그래서 전투 화면이
+// 그것을 변수에 담아 들고 있었다. 들고 있으면 고치는 손잡이 서른셋에 닿는다 — 명령을
+// 거치지 않고, 규칙을 안 태우고.
+//
+// 들어오는 문은 [적어 둔 것으로 판을 차린다] 하나다. 확인용 판이면 우리가 손으로 적은
+// 것이 오고, 진짜 대전이면 서버가 적어 보낸 것이 온다. 문은 같다.
 export interface BattleSession {
-    // 판을 하나 시작한다. 카드에 적힌 것을 알려 주는 곳을 함께 받는다.
-    start(catalog: CardCatalog): Battle;
-    restore(snapshot: BattleSnapshot, catalog: CardCatalog): Battle;
+    // 적어 둔 것으로 판을 차린다. 카드에 적힌 것을 알려 주는 곳을 함께 받는다.
+    restore(snapshot: BattleSnapshot, catalog: CardCatalog): void;
 
     // 사용자가 한 일 하나를 보내고, 무슨 일이 있었는지 받는다.
     send(command: BattleCommand): BattleEvent[];
 
-    // 화면에 보여 줄 것만 추린 창구.
+    // 화면에 보여 줄 것만 추린 창구. 판을 차린 뒤에 받는다.
     read(): BattleReadModel;
 
-    // 진행 중인 전투가 없으면 null 이다. 전투 화면 밖에서 부를 수 있다.
-    getCurrent(): Battle | null;
-    // 전투 화면 안에서 부른다. 없으면 부르는 쪽이 잘못 부른 것이다.
-    getCurrentOrThrow(): Battle;
     end(): void;
 }

@@ -91,6 +91,31 @@ module.exports = {
             to: { path: '^src/battle/domain/battle/' },
         },
         {
+            name: 'no-rules-engine-outside-session',
+            comment:
+                '[R2-127] 규칙을 구동하는 것은 판을 든 쪽뿐이다. 그리는 쪽도, 확인용 판도 ' +
+                '규칙 기계를 만들지 않고 handle 을 부르지 않는다. 부르면 셈하는 권한이 ' +
+                '그쪽으로 옮겨 가고, 서버가 셈하기 시작하는 날 두 쪽 답이 갈린다 (규칙 25). ' +
+                '경계 표에서 [화면·연출이 전투 상태를 고치면 안 된다] 가 비어 있던 자리다.',
+            severity: 'error',
+            from: { path: '^src/battle/(ui|simulation)/' },
+            to: { path: '^src/battle/domain/flow/BattleCommandHandler' },
+        },
+        {
+            name: 'simulation-writes-values-only',
+            comment:
+                '[R2-127] 확인용 판은 시작 상태를 값으로 적는다. 판을 만지지 않는다. ' +
+                '전에는 판을 넘겨받아 열 군데를 직접 고쳤고, 그 길로 전투 화면이 판 전체를 ' +
+                '손에 들었다 (R2-126). 적어 둔 것과 그 안에 담기는 것, 그리고 첫 턴 번호를 ' +
+                '읽는 Battle 만 들인다.',
+            severity: 'error',
+            from: { path: '^src/battle/simulation/' },
+            to: {
+                path: '^src/battle/domain/battle/',
+                pathNot: '^src/battle/domain/battle/(Battle|Master|BattleSnapshot|FieldCardSnapshot|HandCardSnapshot)\\.ts$',
+            },
+        },
+        {
             name: 'frame-no-three',
             comment:
                 '[R2-110] Frame 은 [지금 이게 어떻게 보이는가] 만 든다. THREE 를 알면 그 값이 ' +

@@ -1,7 +1,6 @@
 import {Battle} from "../domain/battle/Battle";
 import {BattleSnapshot} from "../domain/battle/BattleSnapshot";
 import {BattleSession} from "./BattleSession";
-import {IdGenerator} from "../../common/id_generator/IdGenerator";
 import {BattleCommand} from "../domain/flow/BattleCommand";
 import {BattleEvent} from "../domain/flow/BattleEvent";
 import {BattleCommandHandler} from "../domain/flow/BattleCommandHandler";
@@ -25,19 +24,11 @@ export class BattleSessionImpl implements BattleSession {
         return BattleSessionImpl.instance;
     }
 
-    start(catalog: CardCatalog): Battle {
-        return this.begin(Battle.start(IdGenerator.generateId("Battle")), catalog);
-    }
-
-    restore(snapshot: BattleSnapshot, catalog: CardCatalog): Battle {
-        return this.begin(Battle.restore(snapshot), catalog);
-    }
-
-    private begin(battle: Battle, catalog: CardCatalog): Battle {
+    restore(snapshot: BattleSnapshot, catalog: CardCatalog): void {
+        const battle = Battle.restore(snapshot);
         this.current = battle;
         this.handler = new BattleCommandHandler(catalog);
         this.readModel = new BattleReadModel(battle, catalog);
-        return battle;
     }
 
     // 사용자가 한 일 하나를 규칙에 걸고, 무슨 일이 있었는지 돌려준다.
@@ -56,17 +47,6 @@ export class BattleSessionImpl implements BattleSession {
             throw new Error("진행 중인 전투가 없습니다.");
         }
         return this.readModel;
-    }
-
-    getCurrent(): Battle | null {
-        return this.current;
-    }
-
-    getCurrentOrThrow(): Battle {
-        if (!this.current) {
-            throw new Error("진행 중인 전투가 없습니다.");
-        }
-        return this.current;
     }
 
     end(): void {

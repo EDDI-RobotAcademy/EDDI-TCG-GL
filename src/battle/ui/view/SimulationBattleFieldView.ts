@@ -4,7 +4,7 @@ import { installTween } from "../../../core/tween/Tween";
 import { CardCatalog } from "../../domain/ability/CardCatalog";
 import {
     SIMULATION_HAND_CARD_IDS, SIMULATION_OPPONENT_CARD_IDS, SIMULATION_OPPONENT_ENERGY,
-    seedSimulationBattle,
+    simulationBattleSnapshot,
 } from "../../simulation/SimulationBattleSetup";
 import { createOpponentMasterAreaFrame } from "../master_area/frame/OpponentMasterAreaFrame";
 import { OpponentMasterAreaRendererV2 } from "../master_area/renderer/OpponentMasterAreaRendererV2";
@@ -21,8 +21,6 @@ import { computeOpponentFieldAreaBounds } from "../field/opponent/area/frame/Opp
 import { isInsideArea } from "../../../core/frame/AreaBounds";
 import { BattleCommand } from "../../domain/flow/BattleCommand";
 import { BattleEvent } from "../../domain/flow/BattleEvent";
-import { findCardAbility, cardIdsTargeting } from "../../domain/ability/CardAbility";
-import { AbilityTarget } from "../../domain/ability/AbilityTarget";
 import { RendererManager } from "../../../core/renderer/RendererManager";
 import { SceneManager } from "../../../core/scene/SceneManager";
 import { AnimationLoop } from "../../../core/animation/AnimationLoop";
@@ -277,15 +275,10 @@ export class SimulationBattleFieldView implements Component {
         // 규칙을 구동하는 것은 판을 든 쪽이 맡는다. 화면은 규칙 기계를 만들지도, 쥐지도
         // 않는다. 전에는 화면이 제 손으로 만들어 제 안에서 돌렸다 (규칙 25).
         const session = BattleSessionImpl.getInstance();
-        const battle = session.start(cardCatalog);
 
         // 사용자가 한 일 하나를 보내고, 무슨 일이 있었는지 받는다.
         // 어디서 셈하는지는 화면이 모른다.
         const send = (command: BattleCommand): BattleEvent[] => session.send(command);
-
-        // 화면은 전투 안을 직접 안 본다. 이 창구를 본다.
-        // 판을 차리는 열 군데만 아직 전투를 직접 쓴다. R2-113 에서 뺀다.
-        const view = session.read();
 
 
         // 창 크기가 바뀔 때 다시 재야 하는 것을 모은다. 만드는 자리에서 바로 등록한다.
@@ -541,6 +534,31 @@ export class SimulationBattleFieldView implements Component {
         const opponentGroup = await opponentRenderer.build(opponentCards, handCardFrame, opponentLayoutFrame);
         scene.add(opponentGroup);
 
+        // 확인용 판을 여기서 한 번에 차린다.
+        //
+        // 전에는 이 열 줄이 그리는 코드 사이사이에 흩어져 있었다. 무덤 그리는 코드 옆에
+        // 무덤 채우는 줄이 있는 식이었다.
+        //
+        // **화면은 판을 손에 들지 않는다.** 확인용 판이 시작 상태를 값으로 적어 주고,
+        // 세션이 그것으로 판을 차린다. 네트워크가 붙으면 적어 주는 쪽만 서버로 바뀐다.
+        //
+        // 손패와 상대 필드를 여기서 넘기는 것은 신원 번호가 화면이 만든 순서라서다.
+        // 진짜 대전에서는 그 번호도 서버가 준다.
+        session.restore(
+            simulationBattleSnapshot(
+                cardCatalog,
+                entries.map((e) => ({battleCardId: e.cardIndex, cardId: e.card.cardId})),
+                opponentCards.map((oc) => ({
+                    cardId: oc.cardId, energyCount: oc.energyCount, raceId: oc.raceId,
+                })),
+            ),
+            cardCatalog,
+        );
+
+        // 화면은 전투 안을 직접 안 본다. 이 창구를 본다.
+        // 판을 차린 뒤에 받는다 — 차리기 전에 받으면 빈 판을 가리킨다.
+        const view = session.read();
+
         // 차례 넘기기 — 모래시계와 턴 수 표기, 턴 종료 단추, 그리고 넘기는 일까지 한 곳이 든다.
         //
         // 넘어가는 길이 넷이다 — 단추, 모래시계, f 키, 보류했던 넘김. 넷이 하는 일은 같다.
@@ -588,22 +606,6 @@ export class SimulationBattleFieldView implements Component {
 
 
 
-
-        // 확인용 판을 여기서 한 번에 차린다.
-        //
-        // 전에는 이 열 줄이 그리는 코드 사이사이에 흩어져 있었다. 무덤 그리는 코드 옆에
-        // 무덤 채우는 줄이 있는 식이었다. 네트워크가 붙으면 이 한 줄만 빠진다.
-        //
-        // 손패와 상대 필드를 여기서 넘기는 것은 신원 번호가 화면이 만든 순서라서다.
-        // 진짜 대전에서는 그 번호도 서버가 준다.
-        seedSimulationBattle(
-            battle,
-            cardCatalog,
-            entries.map((e) => ({battleCardId: e.cardIndex, cardId: e.card.cardId})),
-            opponentCards.map((oc) => ({
-                cardId: oc.cardId, energyCount: oc.energyCount, raceId: oc.raceId,
-            })),
-        );
 
         // 살아 있는 차례는 전투가 든 상대 필드 목록 그 자체다.
         // 상대 필드 카드가 어느 자리에 서는지도 이 차례로 정해진다.
@@ -1047,27 +1049,36 @@ export class SimulationBattleFieldView implements Component {
             }
         }
 
-        // 카드 능력의 숫자와 고르는 방식은 battle/ability/CardAbility 에 값으로 적혀 있다.
-        // 전에는 이 화면 파일 안에 흩어져 있어서, 카드를 더할 때마다 이 파일이 커졌다.
-        const ability = (cardId: number) => {
-            const found = findCardAbility(cardId);
-            if (!found) throw new Error(`카드 능력을 찾을 수 없다: ${cardId}`);
-            return found;
-        };
-
-
-
-        const OPPONENT_TARGETING_ITEM_IDS: readonly number[] = cardIdsTargeting(AbilityTarget.OPPONENT_UNIT);
-
-
-
-
-        // 이 에너지를 보유한 아군 유닛. 보유 개수가 아니라 보유 여부만 의미가 있다.
-
-        // 상대 유닛의 상태이상은 전투가 든다. 암흑 화염, 빙결, 재빙결 불가.
-
-        const ALLY_TARGETING_ITEM_IDS: readonly number[] = cardIdsTargeting(AbilityTarget.ALLY_UNIT);
-
+        // ── 손패에서 지금 쓸 수 있는 카드 표시 ──────────────────────────────────
+        //
+        // **아직 없다.** 만들 때 무엇을 어디에 두는지만 적어 둔다.
+        //
+        // 여기 카드 번호 목록 둘이 있었다 — 상대를 겨냥하는 카드, 아군을 겨냥하는 카드.
+        // 카드 능력 표에서 뽑아 온 것이었다. 그 모양으로는 못 한다.
+        //
+        //   · 겨냥 방식 여섯 중 둘만 집어 온다. 손패에서 쓰는 카드 열하나 중 여섯만 덮었다
+        //   · 겨냥 방식이 늘면 목록을 더해야 한다. 카드가 늘 때마다 이 파일이 커진다
+        //   · [무엇을 겨냥하나] 만 답한다. [지금 쓸 수 있나] 는 그 위에 둘이 더 붙는다
+        //
+        // 쓸 수 있는지는 셋이 함께 정한다. 세는 곳이 다 다르다.
+        //
+        //   내 차례인가              전투가 안다. 읽기 창구가 이미 내놓는다
+        //   전투가 받아 주는가        카드마다 다르다. 그 카드가 안다
+        //   겨냥할 것이 있는가        카드가 제 조건을 들고, 화면이 그것으로 센다.
+        //                            집었을 때 테두리를 씌우는 자리가 이미 세고 있다 —
+        //                            [놓을 수 있는 아군이 없다] 를 거기서 적는다
+        //
+        // 만들 때 두는 자리. 이 구조에 이미 있는 칸에 얹는다.
+        //
+        //   domain/card/rules/<카드>.ts   카드가 제 파일에 [지금 쓸 수 있나] 를 적는다.
+        //                                 CardRule 에 칸 하나를 더한다. 안 채운 카드는
+        //                                 늘 쓸 수 있다는 뜻이다 (지금 칸 다섯과 같은 규칙)
+        //   domain/read/BattleReadModel   화면은 그 답만 받는다. 사용자가 쓰는 말로
+        //   ui/hand/entity/CardFace       받은 참거짓을 손패 카드 한 장이 든다
+        //   ui/hand/renderer              그 값이 거짓이면 흐리게 그린다
+        //
+        // **카드 번호가 어디에도 안 나오는 것이 맞는 모양이다.** 카드가 늘어도 이 넷은
+        // 안 바뀐다. 목록을 다시 만들고 싶어지면 그것이 잘못 가고 있다는 표다 (규칙 24).
 
         const FIELD_NEON_ENTITY_ID = -1;  // sentinel — distinct from any card.cardIndex
 

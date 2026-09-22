@@ -113,6 +113,7 @@ export function findCardAbility(cardId: number): CardAbility | null {
 }
 
 // 카드를 집었을 때 무엇에 테두리를 칠지 정하는 데 쓴다.
-export function cardIdsTargeting(target: AbilityTarget): readonly number[] {
-    return CARD_ABILITIES.filter((it) => it.target === target).map((it) => it.cardId);
-}
+// 겨냥 방식으로 카드 번호를 모아 주던 것이 여기 있었다. 부르는 곳이 없어져 지웠다
+// (R2-128). 손패에서 쓸 수 있는 카드를 표시하는 일에 쓰려던 것인데, 카드 번호 목록은
+// 그 일에 맞는 모양이 아니다 — 전투 화면의 [손패에서 지금 쓸 수 있는 카드 표시] 주석에
+// 무엇이 맞는 모양인지 적어 두었다.
