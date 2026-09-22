@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import {CardRace} from "../../../../card/race";
+import {CardRace, RACE_LABEL} from "../../../../card/race";
 import {HandCardFrame} from "../../hand/frame/HandCardFrame";
 import {HandEntry} from "../../hand/renderer/BattleFieldHandRendererV2";
 import {CardEnergyBadgeRenderer} from "../../card_energy/renderer/CardEnergyBadgeRenderer";
@@ -44,13 +44,6 @@ import {OpponentFieldEnergyHudRendererV2} from "../opponent/renderer/OpponentFie
 //
 // 상대 쪽 표기도 여기가 든다. 내 표기를 화면 한가운데를 기준으로 뒤집은 자리에 있고,
 // 죽음의 대지가 부수는 대상이 바로 그 판이다.
-
-// 로그와 안내에 쓰는 종족 이름.
-export const RACE_LABEL: Record<number, string> = {
-    [CardRace.HUMAN]: '휴먼',
-    [CardRace.UNDEAD]: '언데드',
-    [CardRace.TRENT]: '트런트',
-};
 
 const MAX_RACE_ID = 3;
 
