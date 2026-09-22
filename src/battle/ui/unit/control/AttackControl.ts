@@ -49,8 +49,30 @@ export interface OpponentUnitOnScreen {
 type InteractionState = 'idle' | 'cardSelected' | 'panelVisible' | 'attackMode';
 
 // 때리기가 바깥에 기대는 것.
+//
+// **갈래 넷으로 나눠 적는다.** 서른하나를 한 줄로 늘어놓으면, 패널을 고치러 온 사람이
+// 맞은 결과를 그리는 열까지 다 읽어야 어느 것이 제 것인지 안다.
+//
+// 넷은 서로 안 겹친다 — 패널을 고칠 때 [결과 그리기] 를 볼 일이 없고 그 반대도 없다.
+// 바탕만 넷이 함께 쓴다.
+//
+// 나눈 것은 **적는 자리** 뿐이다. 파일을 쪼개지 않았고 상태 넷(고른 것 없음 / 유닛을
+// 집었다 / 패널이 열렸다 / 대상을 고르는 중)은 그대로 한 곳이 든다. 상태가 갈래 셋을
+// 가로지르므로, 쪼개면 그 상태를 누가 드는지가 다시 문제가 된다 (R2-124 에서 한 곳으로
+// 모은 것이다).
 export interface AttackDeps {
-    readonly scene: THREE.Scene;
+    // 넷이 함께 쓰는 바탕.
+    readonly base: AttackBaseDeps;
+    // 패널을 열고 닫는 데 쓰는 것.
+    readonly panel: AttackPanelDeps;
+    // 대상을 고르는 데 쓰는 것.
+    readonly targeting: AttackTargetingDeps;
+    // 맞은 결과를 화면에 옮기는 데 쓰는 것.
+    readonly result: AttackResultDeps;
+}
+
+// 넷이 함께 쓰는 것. 하나에만 쓰이는 것이 여기 있으면 잘못 온 것이다.
+export interface AttackBaseDeps {
     readonly pointerRouter: PointerRouter;
     readonly onResize: ViewportResize;
     readonly canvasElement: HTMLElement;
@@ -59,32 +81,46 @@ export interface AttackDeps {
     readonly send: (command: BattleCommand) => BattleEvent[];
     // 화면에 보여 줄 것만 추린 창구.
     readonly view: BattleReadModel;
+    // 이 일이 끝날 때까지 턴 넘김을 미룬다.
+    whileResolving<T>(work: () => Promise<T>): Promise<T>;
+}
+
+// 오른쪽 단추로 액티브 패널을 열고, 그 단추를 누르는 데 쓰는 것.
+export interface AttackPanelDeps {
+    // 패널을 여기에 올린다.
+    readonly scene: THREE.Scene;
     // 패널이 선 자리를 카드 크기에 대한 비율로 적어 두는 데 쓴다.
     readonly handCardFrame: HandCardFrame;
     // 이 카드의 스킬 그림. 몇 장인지가 스킬 단추 수를 정한다.
     skillImages(cardId: number): readonly string[];
     // 이 유닛이 필드에 나와 있는가. 손에 든 카드로는 패널을 열지 않는다.
     isDeployed(entry: HandEntry): boolean;
-    // 공용 광선을 누른 자리로 맞춘다. 아래의 찾는 것들이 그 광선을 쓴다.
-    aimAt(event: MouseEvent): void;
     // 누른 자리가 화면의 어디인가. 못 맞히면 null.
     pointerWorld(event: MouseEvent): {x: number; y: number} | null;
     // 이 덩어리 안에서 방금 누른 것이 어느 단추인가. 단추가 아니면 null.
     hitButtonIn(group: THREE.Object3D): string | null;
+    // 왜 안 되는지 알린다 — 이번 턴에 나온 유닛이다, 에너지가 모자란다.
+    announce(message: string): void;
+}
+
+// 단일기를 고른 뒤 누구를 때릴지 고르는 데 쓰는 것.
+export interface AttackTargetingDeps {
+    // 공용 광선을 누른 자리로 맞춘다. 아래의 찾는 것들이 그 광선을 쓴다.
+    aimAt(event: MouseEvent): void;
     // 맞춰 둔 광선에 상대 유닛이 걸리는가. 쓰러져 안 보이는 것은 안 잡는다.
     hitOpponentUnitAt(): OpponentUnitOnScreen | null;
     // 맞춰 둔 광선에 상대 본체가 걸리는가.
     hitOpponentMasterAt(): boolean;
-    // 화면 가운데에 잠깐 띄우는 안내.
-    announce(message: string): void;
     // 누를 수 있는 상대에게 붉은 테두리를 씌우고 걷는다.
     markTargets(): void;
     clearTargets(): void;
     // 집은 내 유닛에 둘렀던 테두리.
     hasSelectionBorder(): boolean;
     clearSelectionBorder(): void;
-    // 맞은 것을 화면에 옮기는 일.
-    //
+}
+
+// 값은 이미 다 바뀌었다. 그 결과를 화면에 옮기는 데 쓰는 것.
+export interface AttackResultDeps {
     // 붉게 번쩍이는 것과 흔드는 것은 상대 필드가 이미 내놓고 있다. 흔들지 여부만 여기서
     // 정한다 — 광역기는 흔들고 단일기는 안 흔든다.
     flashUnit(group: THREE.Group, shake: boolean): void;
@@ -101,8 +137,6 @@ export interface AttackDeps {
     playAttack(attacker: THREE.Group, target: THREE.Group, kind: string): Promise<void>;
     // 광역기 움직임. 어느 카드가 어떤 연출을 쓰는지는 부르는 쪽이 안다.
     playAoESkill(cardId: number, group: THREE.Group): Promise<void>;
-    // 이 일이 끝날 때까지 턴 넘김을 미룬다.
-    whileResolving<T>(work: () => Promise<T>): Promise<T>;
 }
 
 export class AttackControl {
@@ -137,22 +171,22 @@ export class AttackControl {
         //
         // 처리기 전체를 한 단위로 묶어 [고르기 완료 → 동작 실행 → 뒷정리] 가 중간에
         // 끊기지 않게 한다. 끝나기 전에는 보류된 턴 넘김이 실행되지 않는다.
-        deps.pointerRouter.add('target', (event: MouseEvent) => {
+        deps.base.pointerRouter.add('target', (event: MouseEvent) => {
             if (event.button !== 0) return;
-            void deps.whileResolving(() => control.handleLeftClick(event));
+            void deps.base.whileResolving(() => control.handleLeftClick(event));
         });
 
         // 오른쪽 단추. 왼쪽과 겨루지 않지만 누름 순서를 한 자리에서 보게 같이 둔다.
-        deps.listen(deps.canvasElement, 'contextmenu', (event: never) => {
+        deps.base.listen(deps.base.canvasElement, 'contextmenu', (event: never) => {
             (event as unknown as Event).preventDefault();
         });
-        deps.pointerRouter.add('target', (event: MouseEvent) => {
+        deps.base.pointerRouter.add('target', (event: MouseEvent) => {
             if (event.button !== 2) return;
             void control.handleRightClick(event);
         });
 
         // 패널은 카드를 따라간다. 카드가 새 자리로 간 뒤여야 하므로 맨 마지막이다.
-        deps.onResize.add('last', (width) => control.reanchorPanel(width));
+        deps.base.onResize.add('last', (width) => control.reanchorPanel(width));
 
         return control;
     }
@@ -178,16 +212,16 @@ export class AttackControl {
             this.panelGroup = null;
         }
         this.panelAnchor = null;
-        this.deps.clearTargets();
+        this.deps.targeting.clearTargets();
         if (this.state === 'panelVisible' || this.state === 'attackMode') {
-            this.state = this.deps.hasSelectionBorder() ? 'cardSelected' : 'idle';
+            this.state = this.deps.targeting.hasSelectionBorder() ? 'cardSelected' : 'idle';
         }
     }
 
     // 고르던 것을 전부 치운다.
     public clearAll(): void {
         this.closePanel();
-        this.deps.clearSelectionBorder();
+        this.deps.targeting.clearSelectionBorder();
         this.goIdle();
     }
 
@@ -203,32 +237,32 @@ export class AttackControl {
         if (this.state !== 'cardSelected') return;
 
         const entry = this.attacker;
-        if (!entry || !this.deps.isDeployed(entry)) return;
+        if (!entry || !this.deps.panel.isDeployed(entry)) return;
 
         // 출격 멀미 — 이번 턴에 나온 유닛은 공격도 스킬도 쓸 수 없으므로 패널 자체를
         // 열지 않는다. 이유를 알 수 없으면 무반응처럼 보이므로 안내로 알린다.
-        if (!this.deps.view.canYourUnitAct(entry.cardIndex)) {
-            this.deps.announce('이번 턴에 출격한 유닛으로 공격할 수 없습니다.');
+        if (!this.deps.base.view.canYourUnitAct(entry.cardIndex)) {
+            this.deps.panel.announce('이번 턴에 출격한 유닛으로 공격할 수 없습니다.');
             console.log(
                 `[summoning-sickness] cardId=${entry.card.cardId}` +
-                ` deployed on TURN ${this.deps.view.turnNumber()} — panel blocked`,
+                ` deployed on TURN ${this.deps.base.view.turnNumber()} — panel blocked`,
             );
             return;
         }
 
-        const at = this.deps.pointerWorld(event);
+        const at = this.deps.panel.pointerWorld(event);
         if (!at) return;
 
         // 단추 차례 — 일반 공격, 스킬 하나씩, 자세히.
         const specs: ActivePanelButtonSpec[] = [this.panelFrame.generalButton];
-        const skills = this.deps.skillImages(entry.card.cardId);
+        const skills = this.deps.panel.skillImages(entry.card.cardId);
         for (let i = 0; i < skills.length; i++) {
             specs.push({type: `skill${i + 1}`, imageSrc: skills[i]});
         }
         specs.push(this.panelFrame.detailsButton);
 
-        const cardWidth = this.deps.handCardFrame.cardWidthRatio * window.innerWidth;
-        const cardHeight = cardWidth * this.deps.handCardFrame.cardAspect;
+        const cardWidth = this.deps.panel.handCardFrame.cardWidthRatio * window.innerWidth;
+        const cardHeight = cardWidth * this.deps.panel.handCardFrame.cardAspect;
         this.panelAnchor = {
             entry,
             xRatio: (at.x - entry.group.position.x) / cardWidth,
@@ -236,14 +270,14 @@ export class AttackControl {
         };
 
         this.panelGroup = await this.panelRenderer.build(this.panelFrame, at, specs);
-        this.deps.scene.add(this.panelGroup);
+        this.deps.panel.scene.add(this.panelGroup);
         this.state = 'panelVisible';
     }
 
     private reanchorPanel(width: number): void {
         if (!this.panelGroup || !this.panelAnchor) return;
-        const cardWidth = this.deps.handCardFrame.cardWidthRatio * width;
-        const cardHeight = cardWidth * this.deps.handCardFrame.cardAspect;
+        const cardWidth = this.deps.panel.handCardFrame.cardWidthRatio * width;
+        const cardHeight = cardWidth * this.deps.panel.handCardFrame.cardAspect;
         const cardPos = this.panelAnchor.entry.group.position;
         this.panelRenderer.resize(
             this.panelFrame,
@@ -260,7 +294,7 @@ export class AttackControl {
 
     private async handleLeftClick(event: MouseEvent): Promise<void> {
         // 광선은 한 번만 맞춘다. 아래 셋이 같은 광선을 쓴다.
-        this.deps.aimAt(event);
+        this.deps.targeting.aimAt(event);
         if (await this.handlePanelButton(event)) return;
         if (await this.handleMaster(event)) return;
         await this.handleOpponentUnit(event);
@@ -268,7 +302,7 @@ export class AttackControl {
 
     private async handlePanelButton(event: MouseEvent): Promise<boolean> {
         if (!this.panelGroup || this.state !== 'panelVisible') return false;
-        const button = this.deps.hitButtonIn(this.panelGroup);
+        const button = this.deps.panel.hitButtonIn(this.panelGroup);
         if (button === null) return false;
 
         event.stopImmediatePropagation();
@@ -287,7 +321,7 @@ export class AttackControl {
         // 누구를 치는지만 묻는다. 대상을 골라야 하는 공격인지 여기서 갈리기 때문이다.
         // 얼마나 아픈지는 안 묻는다. 전투가 명령을 받고 정한다.
         const range = cardId != null
-            ? this.deps.view.attackRange(cardId, slot)
+            ? this.deps.base.view.attackRange(cardId, slot)
             : SkillType.Single;
 
         if (!this.checkSkillEnergy(button, entry, cardId, slot)) return true;
@@ -309,9 +343,9 @@ export class AttackControl {
     ): boolean {
         if (slot === null || cardId == null || !entry) return true;
 
-        const missing = this.deps.view.missingSkillEnergy(entry.cardIndex, cardId, slot);
+        const missing = this.deps.base.view.missingSkillEnergy(entry.cardIndex, cardId, slot);
         if (missing) {
-            this.deps.announce('에너지가 부족하여 스킬을 사용할 수 없습니다.');
+            this.deps.panel.announce('에너지가 부족하여 스킬을 사용할 수 없습니다.');
             console.log(
                 `[skill-energy] ${button} blocked — cardId=${cardId}` +
                 ` ${RACE_LABEL[missing.race] ?? missing.race} 보유 ${missing.have}` +
@@ -321,7 +355,7 @@ export class AttackControl {
             return false;
         }
 
-        const cost = this.deps.view.skillCost(cardId, slot);
+        const cost = this.deps.base.view.skillCost(cardId, slot);
         const costText = cost.size === 0
             ? '비용 없음'
             : [...cost].map(([race, n]) => `${RACE_LABEL[race] ?? race} ${n}`).join(', ');
@@ -338,7 +372,7 @@ export class AttackControl {
     ): Promise<void> {
         console.log(`${button} (AoE) → hitting all opponents`);
 
-        const events = this.deps.send({
+        const events = this.deps.base.send({
             type: 'attackEveryOpponent',
             attackerBattleCardId: entry?.cardIndex ?? -1,
             attack: slot ?? 'general',
@@ -346,11 +380,11 @@ export class AttackControl {
 
         if (entry) {
             this.clearAll();
-            await this.deps.playAoESkill(entry.card.cardId, entry.group);
+            await this.deps.result.playAoESkill(entry.card.cardId, entry.group);
         }
 
         // 따라붙은 것은 전투가 이미 붙였다. 여기서는 그린다.
-        this.deps.showCarriedStatus(events);
+        this.deps.result.showCarriedStatus(events);
         this.reflectDamage(events, `${button} (AoE)`, AOE_LOOK);
         this.clearAll();
     }
@@ -360,13 +394,13 @@ export class AttackControl {
         this.state = 'attackMode';
         this.chosenAttack = slot ?? 'general';
         this.chosenButton = button;
-        this.deps.markTargets();
+        this.deps.targeting.markTargets();
         console.log(`${button} (Single) — choose opponent target or master`);
     }
 
     private async handleMaster(event: MouseEvent): Promise<boolean> {
-        if (this.state !== 'attackMode' || !this.deps.view.isOpponentMasterAlive()) return false;
-        if (!this.deps.hitOpponentMasterAt()) return false;
+        if (this.state !== 'attackMode' || !this.deps.base.view.isOpponentMasterAlive()) return false;
+        if (!this.deps.targeting.hitOpponentMasterAt()) return false;
 
         event.stopImmediatePropagation();
         const attacker = this.attacker;
@@ -374,15 +408,15 @@ export class AttackControl {
         this.clearAll();
 
         // 때리는 것은 전투가 한다. 연출을 기다리기 전에 값을 다 바꾼다.
-        const events = this.deps.send({
+        const events = this.deps.base.send({
             type: 'attackOpponentMaster',
             attackerBattleCardId: attacker?.cardIndex ?? -1,
             attack: this.chosenAttack,
         });
 
         if (attacker) {
-            await this.deps.playAttack(
-                attacker.group, this.deps.opponentMasterGroup(), button,
+            await this.deps.result.playAttack(
+                attacker.group, this.deps.result.opponentMasterGroup(), button,
             );
         }
         this.reflectDamage(events, `attack on MASTER (${button})`, SINGLE_LOOK);
@@ -391,7 +425,7 @@ export class AttackControl {
 
     private async handleOpponentUnit(event: MouseEvent): Promise<void> {
         if (this.state !== 'attackMode') return;
-        const target = this.deps.hitOpponentUnitAt();
+        const target = this.deps.targeting.hitOpponentUnitAt();
         if (!target) return;
 
         event.stopImmediatePropagation();
@@ -401,7 +435,7 @@ export class AttackControl {
         this.clearAll();
 
         // 때리는 것과 쓰러뜨리는 것은 전투가 한다. 연출을 기다리기 전에 값을 다 바꾼다.
-        const events = this.deps.send({
+        const events = this.deps.base.send({
             type: 'attackUnit',
             attackerBattleCardId: attacker?.cardIndex ?? -1,
             targetBattleCardId: target.cardIndex,
@@ -409,11 +443,11 @@ export class AttackControl {
         });
 
         if (attacker) {
-            await this.deps.playAttack(attacker.group, target.group, button);
+            await this.deps.result.playAttack(attacker.group, target.group, button);
         }
 
         // 따라붙은 것은 전투가 이미 붙였다. 여기서는 그린다.
-        this.deps.showCarriedStatus(events);
+        this.deps.result.showCarriedStatus(events);
         console.log(
             `Single-target attack: attacker=${attackerId} (${button})` +
             ` → opponent idx=${target.cardIndex} cardId=${target.card.cardId}`,
@@ -434,8 +468,8 @@ export class AttackControl {
         for (const ev of events) {
             if (ev.type === 'damaged' && ev.target.kind === 'unit') {
                 const id = ev.target.battleCardId;
-                const group = this.deps.opponentUnitGroup(id);
-                if (group) this.deps.flashUnit(group, look.shake);
+                const group = this.deps.result.opponentUnitGroup(id);
+                if (group) this.deps.result.flashUnit(group, look.shake);
                 console.log(
                     `  opponent idx=${id} HP: ${ev.hpBefore} → ${ev.hpAfter}` +
                     `${ev.hpAfter <= 0 ? ' (defeated)' : ''}`,
@@ -446,21 +480,21 @@ export class AttackControl {
                 // 다 보이고 나서 사라져야 무엇이 쓰러졌는지 보인다.
                 anyDefeated = true;
                 setTimeout(() => {
-                    this.deps.hideUnit(id);
-                    this.deps.reflowOpponentField();
+                    this.deps.result.hideUnit(id);
+                    this.deps.result.reflowOpponentField();
                 }, look.hideDelayMs);
             } else if (ev.type === 'damaged' && ev.target.kind === 'opponentMaster') {
-                this.deps.setMasterHp(ev.hpAfter);
+                this.deps.result.setMasterHp(ev.hpAfter);
                 console.log(`[opponent-master-hp] ${label} → ${ev.hpBefore} → ${ev.hpAfter}`);
             } else if (ev.type === 'defeated' && ev.target.kind === 'opponentMaster') {
                 setTimeout(() => {
-                    this.deps.hideMaster();
+                    this.deps.result.hideMaster();
                     console.log('Opponent MASTER defeated!');
                 }, MASTER_HIDE_DELAY_MS);
             }
         }
         if (anyDefeated) {
-            console.log(`Remaining opponents: ${this.deps.view.opponentAliveCount()}`);
+            console.log(`Remaining opponents: ${this.deps.base.view.opponentAliveCount()}`);
         }
     }
 }
