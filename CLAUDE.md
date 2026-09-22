@@ -47,13 +47,34 @@ src/battle/
 │
 └── ui/              Everything that draws
     ├── animation/   Skill-slot position, attack choreography, per-card effects
+    ├── card/        One file per card: what happens on screen after it is played
     ├── hand/ field/ field_energy/ zone/ unit/ turn/ active_panel/ master_hp/ card_grid_popup/
-    │       each: frame/ · renderer/ (and interaction/ · page/ · entity/ where needed)
+    │       each: frame/ · renderer/ (and control/ · interaction/ · page/ · entity/ where needed)
     └── view/        Assembly: input → Command, Event → presentation / effect
 ```
 
-This is the shape on disk as of R2-109. The two `domain/` subfolders marked *create when
+This is the shape on disk as of R2-125. The two `domain/` subfolders marked *create when
 actually needed* do not exist yet.
+
+`control/` is the one that arrived last, and it is what took the view from 4,240 lines to 1,661.
+One feature owns its **building, its pointer handling, and its resize** together — before, those
+three lived thousands of lines apart and adding a fourth piece meant finding all three. A
+`control/` holds the *order of a user action*: what gets cleared when, which branch a click
+takes, which list an entry moves between. It does **not** hold what a thing looks like (that is
+`frame/` + `renderer/`) and it does not hold what one card does (that is `ui/card/`).
+
+| feature | control | what it owns |
+|---|---|---|
+| unit | `AttackControl` | panel → skill → target, and the four interaction states |
+| field_energy | `FieldEnergyPanels` | the three HUDs, the arrows, attaching energy to a unit |
+| turn | `TurnControl` | the four paths that hand the turn over |
+| hand | `HandDragControl` | pick up, drop, and the three routes a drop takes |
+| zone | `ZonePanels` | the four tomb / lost-zone panels and their popups |
+
+A `control/` reaches the screen through narrow callbacks it declares in one `Deps` interface at
+the top of the file. **Read that interface first** — it is the complete list of what the feature
+is allowed to touch, the same way `CardPresentationContext` is for cards (Rule 24). Growing it
+to add a card is a failure; growing it to add a *kind* of interaction is expected.
 
 `system/` is the one that arrived: `flow/` answers *what does this card do*, `system/` answers
 *what does this mark on a unit do*. A rule belongs in `system/` when it reads a unit's status
@@ -363,9 +384,9 @@ These are the migration backlog, not the pattern to copy:
 
 These numbers were measured on the date of the last update and go stale as the migration proceeds. Re-measure before relying on them.
 
-- `src/battle/ui/view/SimulationBattleFieldView.ts` is ~4,230 lines. It constructs meshes in 17 places, holds card ordering and pending-selection state, and branches per card. Splitting it is planned; do not add to it casually.
-- The screen mutates battle state directly in 18 places, bypassing commands. Eight of those are the simulation harness building a starting state, which is fine there. Most of the rest are cards the battle does not handle yet — 차갑게 불타는 암흑 에너지, 시체 폭발, 네더 블레이드 — so the screen computes them instead. Those move in R2-102 through R2-105.
-- The screen reads inside the battle in 58 places. There is no read model yet.
+- `src/battle/ui/view/SimulationBattleFieldView.ts` is ~1,660 lines, down from 4,240. What is left is assembly: scene and camera setup, the shared raycaster and pointer stages, the hand and opponent-field lists, the `CardPresentationContext`, and the `Deps` object each `control/` is handed. It no longer runs battle rules, reads inside the battle, constructs meshes, or branches per card. **Adding a feature means adding a `control/`, not a block here.**
+- One per-card branch is left in the view: which AoE-skill effect a card plays. `CardPresentation` has no slot for that yet; R2-131 adds one.
+- The screen no longer mutates battle state or reads inside it — `BattleSession.send` / `BattleReadModel` are the only ways in and out. `src/battle/simulation/` is the one place that builds raw state, on purpose.
 - `card/unit/generate.ts`, `card/support/generate.ts`, `card/item/generate.ts`, `card/energy/generate.ts` are a parallel rendering pipeline slated for absorption. Don't add new card-building logic there.
 - `*_position/` feature folders are proto-layouts: they hold layout values but are named "Position".
 

@@ -55,7 +55,6 @@ import {
     computeHandCardCenter,
 } from "../hand/frame/BattleFieldHandLayoutFrame";
 import { BattleFieldHandRendererV2 } from "../hand/renderer/BattleFieldHandRendererV2";
-import { HandInteractionBridge } from "../hand/interaction/HandInteractionBridge";
 
 import { createDefaultHandPageButtonsFrame } from "../hand/page/frame/HandPageButtonsFrame";
 import { HandPageButtonsRendererV2 } from "../hand/page/renderer/HandPageButtonsRendererV2";
@@ -91,6 +90,7 @@ import { ColdDarkTraitMarkEffect } from "../animation/card/energy/151_cold_dark_
 
 import { TurnControl } from "../turn/control/TurnControl";
 import { AttackControl } from "../unit/control/AttackControl";
+import { HandDragControl } from "../hand/control/HandDragControl";
 import { BattleSessionImpl } from "../../session/BattleSessionImpl";
 import {
     createDefaultMasterHpFrame,
@@ -1336,188 +1336,113 @@ export class SimulationBattleFieldView implements Component {
             isAborted: () => passiveChainAborted,
         };
 
-        // Pilot C — click / drag / drop
-        const bridge = new HandInteractionBridge(
-            rendererManager.getDomElement(),
+        // 손패 끌어다 놓기 — 집기, 놓기, 그리고 놓은 뒤 어느 길로 보내는지까지 한 곳이 든다.
+        //
+        // 카드 열둘이 전부 여기를 지난다. 손에서 나가는 길은 하나고, 놓인 뒤에 무슨 일이
+        // 일어나는지만 카드마다 다르다.
+        //
+        // 무엇에 테두리를 씌우는지와 카드가 놓인 뒤에 무엇을 하는지는 아래 자리가 받는다.
+        HandDragControl.build({
+            canvasElement: rendererManager.getDomElement(),
             camera,
             scene,
-            {
-                // Hand is locked during the opponent's turn — no card can leave Your Hand.
-                // Returning false cancels the pickup before any drag starts, so the card
-                // doesn't visually "lift" at all.
-                // Block pickup while a 시체 폭발 2-pick targeting flow OR a 네더 블레이드
-                // passive 2 single-pick flow is in progress — neither card flow should be
-                // interruptible by another hand action.
-                canPickup: () =>
-                    view.isYourTurn() &&
-                    pickSessions.length === 0,
-                onPickup: (entityId, group) => {
-                    attack.closePanel();
-                    group.renderOrder = 100;
-                    group.position.z = 1;
-                    neonEffect.detachAll();
-                    neonEffect.attach(entityId, group);
-                    const pickedEntry = findEntryByGroup(group) ?? null;
-                    attack.select(pickedEntry);
-
-                    // 집은 카드를 어디에 놓을 수 있는지 테두리로 알린다.
-                    //
-                    // 어디에 놓을 수 있는지는 카드가 정한다. 전에는 카드 번호로 다섯 갈래를
-                    // 갈라 봤고, 카드가 늘 때마다 그 다섯을 고쳐야 했다.
-                    const pickedCardId = pickedEntry?.card.cardId;
-                    const picked = pickedCardId != null
-                        ? findCardPresentation(pickedCardId) : null;
-
-                    if (picked?.dropTarget === 'opponentUnit') {
-                        // 보이는 상대 유닛 전부. 본체는 안 된다.
-                        for (const oe of opponentEntries) {
-                            if (oe.group.visible) enemyNeonEffect.attach(oe.cardIndex, oe.group);
-                        }
-                    } else if (picked?.dropTarget === 'opponentFieldArea') {
-                        // 유닛 하나가 아니라 상대 필드 영역 전체다.
-                        enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, opponentFieldNeonHost);
-                    } else if (picked?.dropTarget === 'yourFieldArea') {
-                        allyTargetNeonEffect.attach(FIELD_NEON_ENTITY_ID, yourFieldNeonHost);
-                    } else if (picked?.dropTarget === 'allyUnit') {
-                        // 필드에 선 아군. 카드가 고르는 조건을 더 두었으면 그것만.
-                        //
-                        // 테두리의 신원은 놓인 차례를 쓴다. 카드 번호는 같은 아군이 둘일 때
-                        // 겹친다.
-                        let count = 0;
-                        for (let i = 0; i < placedOrder.length; i++) {
-                            const entry = placedOrder[i];
-                            if (!entry.group.visible) continue;
-                            if (picked.canDropOnAlly && !picked.canDropOnAlly(entry)) continue;
-                            allyTargetNeonEffect.attach(i, entry.group);
-                            count++;
-                        }
-                        if (count === 0) {
-                            console.log(`[pickup] cardId=${pickedCardId} 놓을 수 있는 아군이 없다 — 제자리로 돌아간다`);
-                        }
+            send,
+            isYourTurn: () => view.isYourTurn(),
+            isPicking: () => pickSessions.length > 0,
+            entryOf: (group) => findEntryByGroup(group) ?? null,
+            handIndexOf: (entry) => handOrder.indexOf(entry),
+            isUnitCard: (entry) => entry.card.cardKind === CardKind.UNIT,
+            attachPickedBorder: (entityId, group) => neonEffect.attach(entityId, group),
+            clearPickedBorder: () => neonEffect.detachAll(),
+            // 어디에 놓을 수 있는지는 카드가 정한다. 그 종류마다 무엇에 테두리를 씌우는지는
+            // 화면이 안다 — 상대 유닛들, 상대 필드 영역, 내 필드 영역, 필드에 선 아군.
+            markDropTargetsFor: (cardId) => {
+                const picked = findCardPresentation(cardId);
+                if (!picked?.dropTarget) return;
+                if (picked.dropTarget === 'opponentUnit') {
+                    // 보이는 상대 유닛 전부. 본체는 안 된다.
+                    for (const oe of opponentEntries) {
+                        if (oe.group.visible) enemyNeonEffect.attach(oe.cardIndex, oe.group);
                     }
-                },
-                onDrop: (_entityId, group, worldX, worldY) => {
-                    group.renderOrder = 0;
-                    group.position.z = 0;
-
-                    const droppedEntry = findEntryByGroup(group);
-                    const handIndex = droppedEntry ? handOrder.indexOf(droppedEntry) : -1;
-
-                    // Always clear ALL targeting borders on release (red enemy border for scythe/
-                    // energy-burn/doom contract, green ally border for 사기 전환).
-                    enemyNeonEffect.detachAll();
-                    allyTargetNeonEffect.detachAll();
-
-                    if (!droppedEntry || handIndex < 0) {
-                        reflowHandAndPlaced();
-                        return;
-                    }
-
-                    const kind = droppedEntry.card.cardKind;
-                    const cardId = droppedEntry.card.cardId;
-
-                    // 옮긴 카드는 카드 종류와 상관없이 제 파일이 받는다.
+                } else if (picked.dropTarget === 'opponentFieldArea') {
+                    // 유닛 하나가 아니라 상대 필드 영역 전체다.
+                    enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, opponentFieldNeonHost);
+                } else if (picked.dropTarget === 'yourFieldArea') {
+                    allyTargetNeonEffect.attach(FIELD_NEON_ENTITY_ID, yourFieldNeonHost);
+                } else if (picked.dropTarget === 'allyUnit') {
+                    // 필드에 선 아군. 카드가 고르는 조건을 더 두었으면 그것만.
                     //
-                    // 어디에 떨어져야 하는지는 카드가 정하고, 그 자리에 무엇이 있는지 찾는
-                    // 일은 화면이 한다. 찾은 것을 넘겨 준다.
-                    //
-                    // 종류 판정보다 먼저다. 전에 ITEM 안에만 두었더니 ENERGY 인 죽음의
-                    // 에너지와 SUPPORT 인 넘쳐 흐르는 사기가 아무 데도 안 걸렸다.
-                    const presentation = findCardPresentation(cardId);
-                    // 떨어뜨려 쓰는 카드만 여기서 받는다. 유닛 카드는 필드에 놓는 길로 간다.
-                    if (presentation?.dropTarget && presentation.onDrop) {
-                        const dropCx = group.position.x;
-                        const dropCy = group.position.y;
-                        const dropped = {
-                            battleCardId: droppedEntry.cardIndex,
-                            cardId,
-                            entry: droppedEntry,
-                        };
-                        const hit = resolveCardDropHit(
-                            presentation.dropTarget, dropCx, dropCy,
-                            presentation.canDropOnAlly?.bind(presentation),
-                        );
-                        // 카드가 던지더라도 제자리 복귀는 반드시 한다. 안 그러면 카드가
-                        // 떨어뜨린 자리에 그대로 멈춰 있는다.
-                        try {
-                            if (hit) presentation.onDrop(cardPresentationContext, dropped, hit);
-                        } catch (error) {
-                            console.error(`[card] cardId=${cardId} 사용 중 오류`, error);
-                        }
-
-                        // 집은 카드에 둘렀던 테두리는 놓는 순간 끈다. 카드가 손에서
-                        // 떠났으므로 어느 경우에도 남으면 안 된다.
-                        neonEffect.detachAll();
-
-                        // 어디에 놓을 수 있는지 알리던 테두리는, 고르기가 시작됐으면 안 끈다.
-                        // 그 카드가 [이제 무엇을 누를 수 있는지] 알리려고 방금 다시 켠 것이라
-                        // 여기서 끄면 안내가 사라진다.
-                        if (pickSessions.length === 0) {
-                            enemyNeonEffect.detachAll();
-                            allyTargetNeonEffect.detachAll();
-                        }
-                        attack.goIdle();
-                        reflowHandAndPlaced();
-                        return;
+                    // 테두리의 신원은 놓인 차례를 쓴다. 카드 번호는 같은 아군이 둘일 때
+                    // 겹친다.
+                    let count = 0;
+                    for (let i = 0; i < placedOrder.length; i++) {
+                        const entry = placedOrder[i];
+                        if (!entry.group.visible) continue;
+                        if (picked.canDropOnAlly && !picked.canDropOnAlly(entry)) continue;
+                        allyTargetNeonEffect.attach(i, entry.group);
+                        count++;
                     }
-
-                    // 아이템·서포트·에너지 카드는 위에서 제 파일이 받는다. 여기 오는 것은
-                    // 필드에 놓는 유닛 카드와, 아직 못 쓰는 카드다.
-                    //
-                    // 못 쓰는 카드는 아래에서 전투가 거절하고 제자리로 돌아간다.
-                    if (kind !== CardKind.UNIT) {
-                        neonEffect.detachAll();
-                        attack.goIdle();
-                        reflowHandAndPlaced();
-                        return;
+                    if (count === 0) {
+                        console.log(`[pickup] cardId=${cardId} 놓을 수 있는 아군이 없다 — 제자리로 돌아간다`);
                     }
-
-                    // UNIT → YourField placement. SUPPORT (망자의 늪) also requires being dropped
-                    // onto YOUR field area to activate; other SUPPORT/ENERGY/TRAP fall through to
-                    // snap back — matches legacy MouseDropHandler's no-op handlers.
-                    const bounds = computeYourFieldAreaBounds(
-                        yourFieldAreaFrame,
-                        window.innerWidth,
-                        window.innerHeight,
-                    );
-                    const inside =
-                        worldX >= bounds.minX && worldX <= bounds.maxX &&
-                        worldY >= bounds.minY && worldY <= bounds.maxY;
-                    // 필드 안에 떨어졌는지는 화면이 본다. 카드가 어디에 떨어졌는지는
-                    // 화면에서만 알 수 있는 일이라 전투가 판단할 수 없다.
-                    //
-                    // 낼 수 있는 카드인지와 손패에서 빼고 필드에 놓는 것은 전투가 한다.
-                    const playEvents = inside
-                        ? send({type: 'playCardToField', battleCardId: droppedEntry.cardIndex})
-                        : [];
-                    const played = playEvents.some(
-                        (ev) => ev.type === 'cardMoved' && ev.to === 'yourField',
-                    );
-                    if (played) {
-                        // 여기는 떨어뜨린 그 자리라 번호가 아직 맞다.
-                        handOrder.splice(handIndex, 1);
-                        placedOrder.push(droppedEntry);
-                        // 나온 턴은 전투가 적어 둔다. 이번 턴에는 공격·스킬 패널이 안 열린다.
-                        //
-                        // 낼 때 도는 패시브가 있으면 그 카드가 돌린다. 기다리지 않는다 —
-                        // 아래의 줄 세우기가 먼저 끝나야 카드가 제자리에 선다.
-                        const deployed = findCardPresentation(cardId);
-                        if (deployed?.onDeploy) {
-                            const entry = droppedEntry;
-                            // 새 사슬의 시작. 지난 턴에 중단된 표시를 여기서 푼다.
-                            passiveChainAborted = false;
-                            void deployed.onDeploy(cardPresentationContext, {
-                                battleCardId: entry.cardIndex,
-                                group: entry.group,
-                            });
-                        }
-                    }
-                    neonEffect.detachAll();
-                    attack.goIdle();
-                    reflowHandAndPlaced();
-                },
+                }
             },
-        );
+            clearDropTargetMarks: () => {
+                enemyNeonEffect.detachAll();
+                allyTargetNeonEffect.detachAll();
+            },
+            // 어디에 떨어져야 하는지는 카드가 정하고, 그 자리에 무엇이 있는지 찾는 일은
+            // 화면이 한다. 찾은 것을 넘겨 준다.
+            playDroppedCard: (entry, dropX, dropY) => {
+                const presentation = findCardPresentation(entry.card.cardId);
+                if (!presentation?.dropTarget || !presentation.onDrop) return false;
+                const hit = resolveCardDropHit(
+                    presentation.dropTarget, dropX, dropY,
+                    presentation.canDropOnAlly?.bind(presentation),
+                );
+                // 카드가 던지더라도 제자리 복귀는 반드시 한다. 안 그러면 카드가 떨어뜨린
+                // 자리에 그대로 멈춰 있는다.
+                try {
+                    if (hit) {
+                        presentation.onDrop(cardPresentationContext, {
+                            battleCardId: entry.cardIndex,
+                            cardId: entry.card.cardId,
+                            entry,
+                        }, hit);
+                    }
+                } catch (error) {
+                    console.error(`[card] cardId=${entry.card.cardId} 사용 중 오류`, error);
+                }
+                return true;
+            },
+            isInsideYourField: (worldX, worldY) => isInsideArea(
+                computeYourFieldAreaBounds(
+                    yourFieldAreaFrame, window.innerWidth, window.innerHeight,
+                ),
+                worldX, worldY,
+            ),
+            moveToFieldLineup: (entry, handIndex) => {
+                handOrder.splice(handIndex, 1);
+                placedOrder.push(entry);
+            },
+            // 낼 때 도는 것이 있으면 그 카드가 돌린다. 기다리지 않는다 — 줄 세우기가 먼저
+            // 끝나야 카드가 제자리에 선다.
+            runDeployPassive: (entry) => {
+                const deployed = findCardPresentation(entry.card.cardId);
+                if (!deployed?.onDeploy) return;
+                // 새 사슬의 시작. 지난 턴에 중단된 표시를 여기서 푼다.
+                passiveChainAborted = false;
+                void deployed.onDeploy(cardPresentationContext, {
+                    battleCardId: entry.cardIndex,
+                    group: entry.group,
+                });
+            },
+            reflow: () => reflowHandAndPlaced(),
+            closeAttackPanel: () => attack.closePanel(),
+            selectAttacker: (entry) => attack.select(entry),
+            attackerIdle: () => attack.goIdle(),
+        });
+
         // 등록을 다 했다. 이제 듣기 시작한다.
         //
         // 손패 끌어다 놓기보다 앞에 붙는다. 창이 열려 있을 때 누름이 손패로 새어 나가면
@@ -1525,7 +1450,6 @@ export class SimulationBattleFieldView implements Component {
         pointerRouter.attach('mousedown', (target, type, listener, options) =>
             this.listen(target, type, listener, options as AddEventListenerOptions));
 
-        bridge.attach();
 
         // 카드 한 장을 뽑고 화면에 붙인다. 뽑을 수 있는지는 전투가 판단한다.
         const drawOneCard = async (reason: string): Promise<boolean> => {

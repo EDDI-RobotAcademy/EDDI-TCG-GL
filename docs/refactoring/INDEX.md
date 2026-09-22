@@ -150,7 +150,7 @@
 | **R2-122** | Structure | Battle Energy | [필드 에너지 제어를 전투 화면에서 분리](R2-122-field-energy-out-of-view.md) | R2-121 | **완료. 창 크기와 종족 그림이 어긋나던 것도 고쳤다** |
 | **R2-123** | Structure | Battle Turn | [모래시계와 턴 넘김 제어를 전투 화면에서 분리](R2-123-turn-control-out-of-view.md) | R2-122 | **완료. 넘어가는 길 넷이 흩어져 있던 여섯 군데가 한 곳으로** |
 | **R2-124** | Structure | Battle Unit | [공격과 스킬 고르기 제어를 전투 화면에서 분리](R2-124-attack-control-out-of-view.md) | R2-123 | **완료. 267줄짜리 누름 처리기가 나갔다. 상태를 옮기던 열두 군데가 한 곳으로** |
-| **R2-125** | Structure | Battle Hand | 손패 끌어다 놓기 제어를 전투 화면에서 분리 | R2-124 | 예정. **카드 열둘이 전부 여기를 지난다. 남은 것이 뚜렷해진 뒤에 한다** |
+| **R2-125** | Structure | Battle Hand | [손패 드래그 앤 드롭 제어를 전투 화면에서 분리](R2-125-hand-drag-out-of-view.md) | R2-124 | **완료. 다섯 덩어리가 다 나왔다. 화면 4240 → 1661줄** |
 | **R2-126** | Strategy | Battle Ability | 새 카드 열 장으로 확장 시험 | R2-125 | 예정. **여기부터는 리팩토링이 아니다** |
 | **R2-127** | Rendering | Battle 공용 | 체력과 무기 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정. **숫자 없는 바탕 그림 셋이 있어야 한다** |
 | **R2-128** | Rule | Battle | 멀리건을 더해 1대1 대전이 되게 한다 | R2-113 | 예정 |
