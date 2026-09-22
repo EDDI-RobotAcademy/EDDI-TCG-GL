@@ -148,7 +148,7 @@
 | **R2-120** | Structure | Battle Ability | [덱에서 카드를 골라 가져오는 카드를 카드별로 분리](R2-120-deck-pick-card.md) | R2-118 | **완료. 카드 열둘 전부 제 파일** |
 | **R2-121** | Structure | Battle Zone | [무덤과 로스트 존 제어를 전투 화면에서 분리](R2-121-zone-panels-out-of-view.md) | R2-120 | **완료** |
 | **R2-122** | Structure | Battle Energy | [필드 에너지 제어를 전투 화면에서 분리](R2-122-field-energy-out-of-view.md) | R2-121 | **완료. 창 크기와 종족 그림이 어긋나던 것도 고쳤다** |
-| **R2-123** | Structure | Battle Turn | 모래시계와 턴 넘김 제어를 전투 화면에서 분리 | R2-122 | 예정. **턴 넘김이 여러 곳에서 불린다** |
+| **R2-123** | Structure | Battle Turn | [모래시계와 턴 넘김 제어를 전투 화면에서 분리](R2-123-turn-control-out-of-view.md) | R2-122 | **완료. 넘어가는 길 넷이 흩어져 있던 여섯 군데가 한 곳으로** |
 | **R2-124** | Structure | Battle Unit | 공격과 스킬 고르기 제어를 전투 화면에서 분리 | R2-123 | 예정. **다섯 중 가장 크다. 266줄짜리 누름 처리기 하나에 뭉쳐 있다. 앞의 셋에서 입력을 기능별로 가르는 방법이 자리 잡은 뒤에 한다** |
 | **R2-125** | Structure | Battle Hand | 손패 끌어다 놓기 제어를 전투 화면에서 분리 | R2-124 | 예정. **카드 열둘이 전부 여기를 지난다. 남은 것이 뚜렷해진 뒤에 한다** |
 | **R2-126** | Strategy | Battle Ability | 새 카드 열 장으로 확장 시험 | R2-125 | 예정. **여기부터는 리팩토링이 아니다** |
