@@ -21,7 +21,7 @@ export const DoomContractPresentation: CardPresentation = {
             battleCardId: dropped.battleCardId,
             side: 'opponent',
         });
-        ctx.hand.removeCard(dropped.entry, dropped.handIndex);
+        ctx.hand.removeCard(dropped.entry);
 
         const effect = ctx.createEffect((scene, gear) => new DoomContractEffect(
             scene, gear.renderer, gear.camera, gear.animationLoop,

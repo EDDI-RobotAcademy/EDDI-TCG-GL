@@ -363,7 +363,14 @@ export class SimulationBattleFieldView implements Component {
         //
         // 이 동안 화면은 딴 일을 안 받는다. 손패를 집을 수 없고, 누른 것은 전부 이 고르기로
         // 간다. 무엇을 누를 수 있는지와 눌렀을 때 무슨 일이 일어나는지는 카드가 안다.
-        let activePickSession: CardPickSession | null = null;
+        // **쌓아 둔다.** 레오닉의 부름으로 창을 열어 둔 채로 네더 블레이드를 내면 그 패시브가
+        // 저절로 돌아 또 기다린다. 자리가 하나면 나중 것이 앞의 것을 덮어써서, 네더 블레이드
+        // 고르기를 마친 뒤 레오닉의 창이 눌리지 않았다.
+        //
+        // 나중에 시작한 것이 위에 놓이고, 그것이 끝나면 아래 것이 다시 살아난다.
+        const pickSessions: CardPickSession[] = [];
+        const topPickSession = (): CardPickSession | null =>
+            pickSessions.length > 0 ? pickSessions[pickSessions.length - 1] : null;
 
         // 고르는 중에 누른 것이 무엇인가. 본체를 먼저 보고 그다음 상대 유닛을 본다.
         //
@@ -835,19 +842,17 @@ export class SimulationBattleFieldView implements Component {
         // 기다리던 것을 놓는 것은 전투가 한다. 턴을 끝내는 자리에서 함께 한다 (R2-103).
         // 여기서는 화면이 든 것만 치운다. 기다리던 약속을 안 풀면 그 자리에서 영영 멈춘다.
         function cancelPendingTargeting(): void {
-            if (netherBladePassive2State !== null) {
-                const state = netherBladePassive2State;
-                netherBladePassive2State = null;
-                activePickSession = null;
-                // await 중인 체인이 영원히 멈추지 않도록 반드시 resolve하되, 중단 플래그를 세워
-                // 다음 네더 블레이드의 AoE로 넘어가지 않게 한다.
-                passiveChainAborted = true;
-                state.onResolve();
-                console.log('[nether-blade] passive 2 픽 미완료 — 취소하고 턴 넘김');
-            }
             // 고르는 중에 턴이 넘어갔다. 그만두는 것은 전투가 이미 했고, 화면 쪽은 그 카드가 안다.
-            if (activePickSession !== null) {
-                activePickSession.onCancel();
+            //
+            // 기다리던 약속을 반드시 풀어야 한다. 안 풀면 그 자리에서 영영 멈춘다. 그리고
+            // 중단 표시를 세워 다음 카드의 패시브로 넘어가지 않게 한다.
+            passiveChainAborted = true;
+            // 쌓여 있는 것을 위에서부터 다 그만둔다.
+            while (pickSessions.length > 0) {
+                const session = pickSessions[pickSessions.length - 1];
+                session.onCancel();
+                // 카드가 제 끝내기를 안 불렀으면 여기서 뺀다. 안 그러면 영영 남는다.
+                if (pickSessions[pickSessions.length - 1] === session) pickSessions.pop();
                 console.log('[pick] 고르기 미완료 — 취소');
             }
             // 패널 / attackMode 타겟팅 + 선택 네온까지 한 번에 정리.
@@ -872,8 +877,6 @@ export class SimulationBattleFieldView implements Component {
         // DoomContract takes extra deps: it uses a render-target + warp shader pipeline, which
         // needs the WebGLRenderer, the active camera, and a hook into AnimationLoop's render
         // path (setRenderOverride) to intercept per-frame rendering during the warp phase.
-        const leonikSummonEffect = new LeonikSummonEffect(scene);
-        const netherBladeEntranceEffect = new NetherBladeEntranceEffect(scene);
         // 창 크기가 바뀌면 도는 중인 연출도 함께 늘고 줄어야 한다. 한 자리에 모아 두고
         // 한꺼번에 알린다. 안 돌고 있는 연출은 알려도 아무 일도 안 한다.
         //
@@ -881,8 +884,6 @@ export class SimulationBattleFieldView implements Component {
         const resizableEffects: Array<{ resize(w: number, h: number): void }> = [
             attackAnimation,
             seaOfSpecterEffect,
-            leonikSummonEffect,
-            netherBladeEntranceEffect,
         ];
 
         // 쓸 때마다 새로 만드는 연출은 위 목록에 못 넣는다. 도는 동안만 여기 담아 두고,
@@ -937,64 +938,24 @@ export class SimulationBattleFieldView implements Component {
             const worldX = e.clientX - w / 2;
             const worldY = h / 2 - e.clientY;
 
-            // ── -1) LEONIK popup — full modal lock ─────────────────────────────────────
-            // The Leonik picker is a committed-action popup: until the user clicks CONFIRM
-            // (or explicitly aborts via a future escape), NO other click can fire. Panels,
-            // turn-end, cards — all intercepted. Clicks inside the popup route to card
-            // selection or pagination/confirm buttons; clicks outside are a no-op.
-            if (leonikPopupGroup) {
-                e.stopImmediatePropagation();
-
-                sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
-                const hits = sharedRaycaster.intersectObjects(leonikPopupGroup.children, true);
-                for (const hit of hits) {
-                    const bt = hit.object.userData.buttonType;
-                    if (bt === 'prev') {
-                        if (leonikPopupPage > 0) { leonikPopupPage--; void reloadLeonikPopup(); }
-                        return;
-                    }
-                    if (bt === 'next') {
-                        if (leonikPopupPage < leonikTotalPages() - 1) {
-                            leonikPopupPage++; void reloadLeonikPopup();
-                        }
-                        return;
-                    }
-                    if (bt === 'confirm') {
-                        void confirmLeonikSummon();
-                        return;
-                    }
-                }
-
-                // Card-cell hit test — toggle selection with LEONIK_MAX_PICK cap. Clicking
-                // an already-selected card deselects. Clicking a fresh card when the cap
-                // is reached is a no-op (user must deselect one first). Incremental border
-                // add/remove (no popup rebuild) — avoids the one-frame blank flicker.
-                const absIdx = hitLeonikPopupCard(worldX, worldY);
-                if (absIdx >= 0) {
-                    if (leonikSelectedPopupIndices.has(absIdx)) {
-                        leonikSelectedPopupIndices.delete(absIdx);
-                        removeLeonikBorder(absIdx);
-                    } else if (leonikSelectedPopupIndices.size < LEONIK_MAX_PICK) {
-                        leonikSelectedPopupIndices.add(absIdx);
-                        addLeonikBorder(absIdx);
-                    }
-                    updateLeonikConfirmState();
-                    return;
-                }
-                // Outside popup bounds → absorbed, no-op.
-                return;
-            }
 
             // ── -0.5) 카드를 쓴 뒤 사용자가 대상을 눌러 고르는 중 ──────────────────
             //
             // 이 동안은 누른 것이 전부 이 고르기로 간다. 무엇을 누를 수 있는지와 눌렀을 때
             // 무슨 일이 일어나는지는 카드가 안다. 화면은 누른 것이 무엇인지만 찾아 준다.
-            if (activePickSession !== null) {
+            const picking = topPickSession();
+            if (picking !== null) {
                 e.stopImmediatePropagation();
                 sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
+                if (picking.kind === 'ownSurface') {
+                    // 카드가 띄운 제 창이다. 그 안이 어떻게 생겼는지는 카드만 안다.
+                    // 레이캐스터는 미리 맞춰 둔다 — 카드가 단추를 찾을 때 쓴다.
+                    picking.onClickAt(worldX, worldY);
+                    return;
+                }
                 const target = resolvePickTarget();
                 // 아무것도 못 맞혔으면 그 누름은 그냥 먹는다.
-                if (target) activePickSession.onPick(target);
+                if (target) picking.onPick(target);
                 return;
             }
 
@@ -1155,249 +1116,6 @@ export class SimulationBattleFieldView implements Component {
             skillTripParked.delete(group);
         };
 
-        // 출격 시 두번째 패시브 (단일기) — auto-entered after passive 1 resolves. User picks
-        // ONE opponent unit OR the master; the deployed unit then performs the same move-
-        // and-return motion before damage applies. State is null when not active.
-        type NetherBladePassive2Pick =
-            | { readonly kind: 'master' }
-            | { readonly kind: 'opponent'; readonly cardIndex: number };
-        // State carries the resolver of the Promise returned by enterNetherBladePassive2 —
-        // resolve() fires after the picker's damage application so chained callers (deploy
-        // chain + turn-start loop) can sequentially `await` multiple Nether Blade passes.
-        let netherBladePassive2State: {
-            deployedEntry: HandEntry;
-            onResolve: () => void;
-        } | null = null;
-
-        const enterNetherBladePassive2 = (deployedEntry: HandEntry): Promise<void> => {
-            return new Promise<void>((resolve) => {
-                const hasOpponents = view.opponentAliveCount() > 0 &&
-                    opponentEntries.some((oe) =>
-                        oe.group.visible && isOpponentAlive(oe.cardIndex),
-                    );
-                // 칠 것이 있는지, 고르라고 기다리는지는 전투가 정한다.
-                // 첫 패시브가 돌려준 일어난 일에 [묻기 시작했다] 가 없으면 물을 것이 없다는 뜻이다.
-                const started = netherBladeChoiceEvents.some((ev) => ev.type === 'choiceStarted');
-                const hasMaster = view.isOpponentMasterAlive();
-                if (!started) {
-                    console.log('[nether-blade] passive 2 → no valid targets, skipped');
-                    resolve();
-                    return;
-                }
-
-                for (const oe of opponentEntries) {
-                    if (oe.group.visible && isOpponentAlive(oe.cardIndex)) {
-                        enemyNeonEffect.attach(oe.cardIndex, oe.group);
-                    }
-                }
-                if (hasMaster) {
-                    enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, masterGroup);
-                }
-                netherBladePassive2State = { deployedEntry, onResolve: resolve };
-
-                // 고르는 동안의 누름은 고르기 창구가 받는다. 시체 폭발과 같은 자리를 쓴다.
-                activePickSession = {
-                    pickable: 'opponentUnitOrMaster',
-                    onPick: (target) => void runResolving(() =>
-                        resolveNetherBladePassive2(
-                            target.kind === 'opponentMaster'
-                                ? {kind: 'master'}
-                                : {kind: 'opponent', cardIndex: target.entry.cardIndex},
-                        ),
-                    ),
-                    onCancel: () => {
-                        activePickSession = null;
-                        enemyNeonEffect.detachAll();
-                    },
-                };
-                console.log('[nether-blade] passive 2 → choose opponent unit or master (red highlights)');
-            });
-        };
-
-        const resolveNetherBladePassive2 = async (pick: NetherBladePassive2Pick): Promise<void> => {
-            if (!netherBladePassive2State) return;
-            const state = netherBladePassive2State;
-            // Detach neons + null state up-front so the modal lock releases immediately
-            // (the await below yields to the event loop and we don't want re-entry).
-            enemyNeonEffect.detachAll();
-            netherBladePassive2State = null;
-            activePickSession = null;
-
-            // Capture the picked target's world position BEFORE the cast so the slash
-            // flies to where the unit currently sits.
-            let singleTarget: THREE.Vector3 | null = null;
-            if (pick.kind === 'master') {
-                if (view.isOpponentMasterAlive()) {
-                    singleTarget = masterGroup.getWorldPosition(new THREE.Vector3());
-                }
-            } else {
-                const target = opponentEntries.find((oe) => oe.cardIndex === pick.cardIndex);
-                if (target && target.group.visible) {
-                    singleTarget = target.group.getWorldPosition(new THREE.Vector3());
-                }
-            }
-            const canvasEl = document.querySelector('canvas') as HTMLElement | null;
-            // 조각낼 대상. 본체는 투명 히트박스라 찢을 아트가 없으므로 null로 넘긴다.
-            const ripTarget = pick.kind === 'opponent'
-                ? opponentEntries.find((oe) => oe.cardIndex === pick.cardIndex) ?? null
-                : null;
-
-            // 치명타 여부를 **연출 전에** 계산한다. 죽는 일격이면 갈라진 카드를 되돌리지
-            // 않아, 조각이 흩어진 자리가 그대로 사망이 된다. 연출이 끝난 뒤 되살아났다가
-            // 아래 데미지 처리로 사라지면 카드가 깜빡이는 것처럼 보인다.
-            const lethal = pick.kind === 'opponent'
-                && view.wouldDefeat({
-                    kind: 'opponentUnit', battleCardId: pick.cardIndex,
-                });
-
-            await playSkillPanelMoveOnly(state.deployedEntry.group, async (_panelPos) => {
-                if (!canvasEl || !singleTarget) {
-                    await new Promise<void>((r) => setTimeout(r, 300));
-                    return;
-                }
-                // 단일기 — gather/hold는 광역기와 공유하고, 그 뒤로 화면 전체를 가로지르는
-                // 검풍이 날아간 다음 지정한 카드로 모여들어 그 카드를 조각낸다.
-                const effect = new NetherBladeSecondPassiveEffect(scene);
-                await whileRunning(effect, () => effect.play(
-                    singleTarget,
-                    ripTarget ? ripTarget.group : null,
-                    canvasEl,
-                    rendererManager.getRenderer(),
-                    camera,
-                    undefined,
-                    lethal,
-                ));
-            });
-
-            // 고른 것을 전투에 보낸다. 때리는 것도 쓰러뜨리는 것도 전투가 한다.
-            const pickEvents = send({
-                type: 'pickChoiceTarget',
-                pick: pick.kind === 'master'
-                    ? { kind: 'opponentMaster' }
-                    : { kind: 'opponentUnit', battleCardId: pick.cardIndex },
-            });
-
-            // 따라붙은 것은 전투가 이미 붙였다. 여기서는 그린다.
-            showColdDarkTraits(pickEvents);
-
-            for (const ev of pickEvents) {
-                if (ev.type === 'damaged' && ev.target.kind === 'opponentMaster') {
-                    void opponentMasterHpRenderer.setHp(
-                        opponentMasterHpGroup, opponentMasterHpFrame, ev.hpAfter,
-                    );
-                    console.log(`[nether-blade] passive 2 → MASTER ${ev.hpBefore} → ${ev.hpAfter}`);
-                } else if (ev.type === 'damaged' && ev.target.kind === 'unit') {
-                    const idx = ev.target.battleCardId;
-                    const target = opponentEntries.find((oe) => oe.cardIndex === idx);
-                    console.log(`[nether-blade] passive 2 → opponent idx=${idx}${target ? ` cardId=${target.card.cardId}` : ''} ${ev.hpBefore} → ${ev.hpAfter}`);
-                } else if (ev.type === 'defeated' && ev.target.kind === 'opponentMaster') {
-                    masterGroup.visible = false;
-                    console.log('[nether-blade] opponent MASTER defeated by passive 2!');
-                } else if (ev.type === 'defeated' && ev.target.kind === 'unit') {
-                    const deadId = ev.target.battleCardId;
-                    const e = opponentEntries.find((oe) => oe.cardIndex === deadId);
-                    if (e) e.group.visible = false;
-                    reflowOpponentField();
-                }
-            }
-
-            // Settle window — mirrors AoE's pause so the picked-target damage lands and
-            // the field reflows visibly before the next placed Nether Blade (if any) takes
-            // its turn at the skill panel.
-            await new Promise<void>((r) => setTimeout(r, NETHER_BLADE_PHASE_SETTLE_MS));
-
-            // Signal completion to whatever caller was awaiting enterNetherBladePassive2.
-            state.onResolve();
-        };
-
-        // 광역기 패시브 (passive 1, AoE EveryUnitField) — extracted so it can be invoked
-        // independently from BOTH on-deploy AND every turn-start ('f' key). Card travels
-        // to the skill-panel slot, holds, returns, applies 10 dmg to every visible opponent
-        // unit (master excluded), then reflows the opponent field, then awaits a short
-        // SETTLE window so the field state-change visibly lands BEFORE the next phase
-        // (passive 2 picker) starts. This guarantees the user sees AoE → damage → reflow
-        // before the single-target picker comes up — the damage isn't visually merged
-        // into "after both passives".
-        const NETHER_BLADE_PHASE_SETTLE_MS = 450;
-        // 첫 패시브가 돌려준 일어난 일. 둘째 패시브를 기다리는지 보는 데 쓴다.
-        let netherBladeChoiceEvents: readonly BattleEvent[] = [];
-
-        const triggerNetherBladeAoEPassive = async (deployedEntry: HandEntry): Promise<void> => {
-            // Yield once so any pending sync layout work (e.g., onDrop's trailing reflow)
-            // lands before we capture origPos inside playSkillPanelMoveOnly.
-            await Promise.resolve();
-
-            // Capture target world positions BEFORE the move, while opponent units are
-            // still in their grid slots. The slash mesh will fly from the panel slot to
-            // each captured position.
-            const aoeTargets: THREE.Vector3[] = [];
-            for (const idx of opponentAliveIds()) {
-                const target = opponentEntries.find((oe) => oe.cardIndex === idx);
-                if (!target || !target.group.visible) continue;
-                aoeTargets.push(target.group.getWorldPosition(new THREE.Vector3()));
-            }
-            const canvasEl = document.querySelector('canvas') as HTMLElement | null;
-
-            await playSkillPanelMoveOnly(deployedEntry.group, async (panelPos) => {
-                if (!canvasEl || aoeTargets.length === 0) {
-                    // Fall back to the brief hold if we can't render visuals.
-                    await new Promise<void>((r) => setTimeout(r, 300));
-                    return;
-                }
-                // Wave 2 + shatter run FULLSCREEN over the entire battle screen
-                // — same scale as wave 1 — so the cuts tear across the whole
-                // field, not just the opponent's row.
-                const effect = new NetherBladeFirstPassiveEffect(scene);
-                await whileRunning(effect, () => effect.play(
-                    panelPos, aoeTargets, canvasEl, () => { /* per-strike SFX hook */ },
-                    rendererManager.getRenderer(), camera,
-                ));
-            });
-
-            // 때리는 것과 둘째 패시브를 기다리기 시작하는 것은 전투가 한다.
-            // 연출을 기다린 뒤에 보내는 이유는, 첫 패시브가 끝난 결과를 보고 골라야 하기 때문이다.
-            const passiveEvents = send({
-                type: 'triggerDeployPassive',
-                battleCardId: deployedEntry.cardIndex,
-            });
-            netherBladeChoiceEvents = passiveEvents;
-
-            // 따라붙은 것은 전투가 이미 붙였다. 여기서는 그린다.
-            showColdDarkTraits(passiveEvents);
-
-            const deadIndices: number[] = [];
-            for (const ev of passiveEvents) {
-                if (ev.type === 'damaged' && ev.target.kind === 'unit') {
-                    const idx = ev.target.battleCardId;
-                    const target = opponentEntries.find((oe) => oe.cardIndex === idx);
-                    console.log(`[nether-blade] AoE → opponent idx=${idx}${target ? ` cardId=${target.card.cardId}` : ''} ${ev.hpBefore} → ${ev.hpAfter}`);
-                } else if (ev.type === 'defeated' && ev.target.kind === 'unit') {
-                    deadIndices.push(ev.target.battleCardId);
-                }
-            }
-            for (const idx of deadIndices) {
-                const e = opponentEntries.find((oe) => oe.cardIndex === idx);
-                if (e) e.group.visible = false;
-            }
-            if (deadIndices.length > 0) reflowOpponentField();
-
-            // Phase-settle window — gives the user time to read the new field state
-            // before passive 2's picker enters.
-            await new Promise<void>((r) => setTimeout(r, NETHER_BLADE_PHASE_SETTLE_MS));
-        };
-
-        // 출격 시 패시브 풀체인 — passive 1 (AoE) → passive 2 (single-target picker, awaited).
-        // Same chain runs every turn-start while the unit is alive; this wrapper is shared
-        // so deploy and turn-start use identical logic.
-        const triggerNetherBladePassive = async (deployedEntry: HandEntry): Promise<void> => {
-            await runResolving(() => triggerNetherBladeAoEPassive(deployedEntry));
-            // 만료로 턴이 넘어갔으면 픽 단계로 들어가지 않는다.
-            if (passiveChainAborted) return;
-            await enterNetherBladePassive2(deployedEntry);
-        };
-
-        // Active panel button click + opponent card click (attack targeting).
-        // stopImmediatePropagation prevents HandInteractionBridge from stealing the same click.
         pointerRouter.add('target', withResolving(async (e: MouseEvent) => {
             if (e.button !== 0) return;
             sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
@@ -1458,10 +1176,9 @@ export class SimulationBattleFieldView implements Component {
 
                             if (atkEntry) {
                                 clearAllSelection();
-                                // 네더 블레이드 — only the bare move-to-panel + return motion
-                                // (no dark vortex / dementors / magic circle yet — the
-                                // mythical-tier effect is intentionally deferred). 벨른
-                                // (and other cards) keeps the full playAoESkill sequence.
+                                // 네더 블레이드는 스킬 자리로 나갔다 돌아오기만 한다. 신화
+                                // 등급에 맞는 광역기 연출은 아직 안 만들었다. 벨른은 온전한
+                                // 광역기 연출을 그대로 쓴다.
                                 if (atkEntry.card.cardId === NETHER_BLADE_CARD_ID) {
                                     await playSkillPanelMoveOnly(atkEntry.group);
                                 } else {
@@ -1902,8 +1619,6 @@ export class SimulationBattleFieldView implements Component {
         const OPPONENT_TARGETING_ITEM_IDS: readonly number[] = cardIdsTargeting(AbilityTarget.OPPONENT_UNIT);
 
 
-        const OVERFLOW_MORALE_CARD_ID = 2;
-        const DEATH_ENERGY_CARD_ID = ability(OVERFLOW_MORALE_CARD_ID).numbers.pullCardId;
 
 
         // 이 에너지를 보유한 아군 유닛. 보유 개수가 아니라 보유 여부만 의미가 있다.
@@ -1912,18 +1627,11 @@ export class SimulationBattleFieldView implements Component {
 
         const ALLY_TARGETING_ITEM_IDS: readonly number[] = cardIdsTargeting(AbilityTarget.ALLY_UNIT);
 
-        const SWAMP_OF_DEAD_CARD_ID = 20;
 
-        const DOOM_CONTRACT_CARD_ID = 25;
         const FIELD_NEON_ENTITY_ID = -1;  // sentinel — distinct from any card.cardIndex
 
-        const DEAD_LANDS_CARD_ID = 36;
 
-        const LEONIK_SUMMON_CARD_ID = 30;
-        const LEONIK_MAX_PICK = ability(LEONIK_SUMMON_CARD_ID).numbers.maxPick;
-        const LEONIK_MAX_GRADE = ability(LEONIK_SUMMON_CARD_ID).grade!;
 
-        const CORPSE_EXPLOSION_CARD_ID = 33;
 
         const NETHER_BLADE_CARD_ID = 19;
 
@@ -1979,8 +1687,14 @@ export class SimulationBattleFieldView implements Component {
 
         // 에너지 번 연출. 무엇이 일어났는지는 전투가 이미 정했다. 여기서는 그리기만 한다.
         // 카드를 화면에서 치운다. 무덤에 넣는 것은 전투가 이미 했다.
-        const removeHandCardFromScreen = (entry: HandEntry, idx: number): void => {
-            handOrder.splice(idx, 1);
+        // 카드를 화면에서 치운다. 무덤에 넣는 것은 전투가 이미 했다.
+        //
+        // **번호가 아니라 카드로 찾는다.** 전에는 부르는 쪽이 번호를 넘겼는데, 시체 폭발과
+        // 레오닉의 부름은 떨어뜨리고 몇 초 뒤에 빠진다. 그 사이에 다른 카드가 빠지면 번호가
+        // 밀려 엉뚱한 카드가 손패 목록에서 빠지고 정렬이 깨진다.
+        const removeHandCardFromScreen = (entry: HandEntry): void => {
+            const idx = handOrder.indexOf(entry);
+            if (idx >= 0) handOrder.splice(idx, 1);
             handGroup.remove(entry.group);
             handRenderer.getCardRenderer().dispose(entry.group);
         };
@@ -2004,6 +1718,7 @@ export class SimulationBattleFieldView implements Component {
         // 카드가 정한 자리에 무엇이 있는지 찾는다. 없으면 null — 카드가 제자리로 돌아간다.
         const resolveCardDropHit = (
             dropTarget: CardDropTarget, dropX: number, dropY: number,
+            canDropOnAlly?: (entry: HandEntry) => boolean,
         ): DropHit | null => {
             if (dropTarget === 'opponentUnit') {
                 const target = hitOpponentAt(dropX, dropY);
@@ -2011,7 +1726,10 @@ export class SimulationBattleFieldView implements Component {
             }
             if (dropTarget === 'allyUnit') {
                 const target = hitAllyAt(dropX, dropY);
-                return target ? {kind: 'allyUnit', entry: target} : null;
+                if (!target) return null;
+                // 카드가 고르는 조건을 더 두었으면 그것도 본다. 시체 폭발은 언데드만 된다.
+                if (canDropOnAlly && !canDropOnAlly(target)) return null;
+                return {kind: 'allyUnit', entry: target};
             }
             const area = dropTarget === 'opponentFieldArea'
                 ? computeOpponentFieldAreaBounds(
@@ -2034,12 +1752,17 @@ export class SimulationBattleFieldView implements Component {
                 camera,
                 animationLoop,
             }),
+            withEffectGear: (run) => run({
+                renderer: rendererManager.getRenderer(),
+                camera,
+                animationLoop,
+            }),
             send,
             view,
             catalog: cardCatalog,
             hand: {
                 cardFrame: handCardFrame,
-                removeCard: (entry, handIndex) => removeHandCardFromScreen(entry, handIndex),
+                removeCard: (entry) => removeHandCardFromScreen(entry),
                 reflow: () => reflowHandAndPlaced(),
                 appendCard: (cardId, battleCardId) => {
                     const resolved = resolveCards([cardId], 'card-draw');
@@ -2084,8 +1807,8 @@ export class SimulationBattleFieldView implements Component {
                 ),
             },
             picking: {
-                begin: (session) => { activePickSession = session; },
-                end: () => { activePickSession = null; },
+                begin: (session) => { pickSessions.push(session); },
+                end: () => { pickSessions.pop(); },
                 markPickable: () => {
                     // 보이는 상대 유닛 전부와 본체에 붉은 테두리를 씌운다.
                     for (const oe of opponentEntries) {
@@ -2096,6 +1819,14 @@ export class SimulationBattleFieldView implements Component {
                     }
                 },
                 clearPickable: () => enemyNeonEffect.detachAll(),
+                hitButtonIn: (group) => {
+                    const hits = sharedRaycaster.intersectObjects(group.children, true);
+                    for (const hit of hits) {
+                        const buttonType = hit.object.userData.buttonType;
+                        if (typeof buttonType === 'string') return buttonType;
+                    }
+                    return null;
+                },
             },
             yourField: {
                 removeUnit: (entry) => {
@@ -2171,356 +1902,14 @@ export class SimulationBattleFieldView implements Component {
                     opponentEnergyRenderer.setDamageLevel(opponentEnergyGroup, level),
             },
             canvasElement: rendererManager.getDomElement(),
-        };
-
-        // ─── 레오닉의 부름 (Leonik's Summon) popup ───────────────────────────────────
-        // Opens after the card is dropped on Your Field. Shows every deck card whose kind
-        // is UNIT and whose grade ≤ HERO. User picks EXACTLY LEONIK_MAX_PICK; selected cards
-        // get a green border. A centred "확인" button commits: picks leave the deck for the
-        // hand, the Leonik card itself goes to the tomb, and the deck is shuffled.
-        //
-        // State is kept in outer-scope lets so the capture-phase mousedown handler can
-        // branch on the popup being open (mirrors tomb/lost-zone popup pattern).
-        // Custom overrides from tomb's defaults: taller popup (80% vs 60%) + double row
-        // gap so the two rows sit well clear of the centre. Confirm button lives at centerY
-        // (between the rows) and was overlapping card bodies with the default 0.5 gap.
-        const leonikPopupFrame = {
-            ...createDefaultYourTombPopupFrame(),
-            topRatio:      0.10,
-            bottomRatio:   0.90,
-            cardGapYRatio: 1.0,
-        };
-        const leonikPopupRenderer = new CardGridPopupRenderer();
-        const leonikCardsPerPage = leonikPopupFrame.cardColumns * leonikPopupFrame.rowsPerPage;
-
-        let leonikPopupGroup: THREE.Group | null = null;
-        let leonikPopupPage = 0;
-        let leonikSourceEntry: HandEntry | null = null;
-        let leonikEligibleDeckIndices: number[] = [];
-        // Popup-local indices into leonikEligibleDeckIndices (absolute across all pages, not
-        // just the current page) — selection persists across page turns.
-        const leonikSelectedPopupIndices = new Set<number>();
-
-        // Per-selection border meshes on the CURRENT page (absIdx → { mesh, material }).
-        // Only populated for absIdx values that live on the visible page; when the page
-        // turns, this map is rebuilt. Kept separate from leonikSelectedPopupIndices (which
-        // is permanent selection state) so selection persists through page turns but
-        // on-screen meshes are page-scoped.
-        const leonikBorderByAbsIdx = new Map<number, { mesh: THREE.Mesh; material: THREE.ShaderMaterial }>();
-        // Active border shader materials — the shared clock loop ticks u_time on all of
-        // them so pulsation is synchronised and cheap (one RAF, not one per border).
-        const leonikActivePulseMats = new Set<THREE.ShaderMaterial>();
-        // Confirm button material handle — opacity updated inline on selection changes.
-        let leonikConfirmMat: THREE.MeshBasicMaterial | null = null;
-
-        // Single shared RAF loop that drives pulsation on every active border material.
-        // Matches NeonBorderEffect.updateAnimation — increments `time` by timeIncrement
-        // per frame (rather than reading wall-clock) so the visual cadence is identical.
-        let leonikPulseRunning = false;
-        const startLeonikPulseClock = (): void => {
-            if (leonikPulseRunning) return;
-            leonikPulseRunning = true;
-            const step = () => {
-                if (!leonikPulseRunning) return;
-                leonikActivePulseMats.forEach((mat) => {
-                    mat.uniforms.time.value += leonikBorderPalette.timeIncrement;
-                });
-                requestAnimationFrame(step);
-            };
-            requestAnimationFrame(step);
-        };
-
-        // Build a pulsing green neon border material. Uses the SAME shader as
-        // NeonBorderEffect (the effect attached when an ally card is picked up in hand) so
-        // the Leonik popup's selection highlight reads identically to the rest of the game.
-        // Colours come from createAllyTargetingNeonBorderFrame (green family).
-        const leonikPopupParts = new LeonikPopupPartsRenderer();
-        const leonikBorderPalette = createAllyTargetingNeonBorderFrame();
-        const LEONIK_BORDER_THICKNESS = leonikBorderPalette.lineThickness;  // px margin around the card
-
-        // Given an absIdx, return its (col, row) position on the CURRENT page, or null if
-        // the index is on a different page. Used by addBorder for positioning + by the
-        // page-turn rebuild to reseat border meshes.
-        const leonikCardPositionForAbsIdx = (absIdx: number): { cx: number; cy: number; cw: number; ch: number } | null => {
-            const start = leonikPopupPage * leonikCardsPerPage;
-            const end = start + leonikCardsPerPage;
-            if (absIdx < start || absIdx >= end) return null;
-            const i = absIdx - start;
-            const bounds = computeCardGridPopupBounds(leonikPopupFrame, window.innerWidth, window.innerHeight);
-            const cw = window.innerWidth * createDefaultHandCardFrame().cardWidthRatio;
-            const ch = cw * createDefaultHandCardFrame().cardAspect;
-            const stepX = cw * (1 + leonikPopupFrame.cardGapXRatio);
-            const stepY = ch * (1 + leonikPopupFrame.cardGapYRatio);
-            const cols = Math.max(1, leonikPopupFrame.cardColumns);
-            const originX = bounds.centerX - ((cols - 1) * stepX) / 2;
-            const pageRows = Math.max(1, leonikPopupFrame.rowsPerPage);
-            const originY = bounds.centerY + ((pageRows - 1) * stepY) / 2;
-            const col = i % cols;
-            const row = Math.floor(i / cols);
-            return { cx: originX + col * stepX, cy: originY - row * stepY, cw, ch };
-        };
-
-        // Add a pulsing border mesh for the given absIdx (if on the current page). Idempotent.
-        // Plane is card-dimensions + thickness on each side (matches NeonBorderEffect's sizing).
-        const addLeonikBorder = (absIdx: number): void => {
-            if (!leonikPopupGroup) return;
-            if (leonikBorderByAbsIdx.has(absIdx)) return;
-            const pos = leonikCardPositionForAbsIdx(absIdx);
-            if (!pos) return;
-            const {mesh, material} = leonikPopupParts.buildBorder(
-                leonikBorderPalette, LEONIK_BORDER_THICKNESS,
-                pos.cw, pos.ch, pos.cx, pos.cy,
-                leonikPopupFrame.renderOrder + 5,
-            );
-            leonikPopupGroup.add(mesh);
-            leonikBorderByAbsIdx.set(absIdx, { mesh, material });
-            leonikActivePulseMats.add(material);
-        };
-
-        // Remove a specific border mesh + dispose. Idempotent.
-        const removeLeonikBorder = (absIdx: number): void => {
-            if (!leonikPopupGroup) return;
-            const entry = leonikBorderByAbsIdx.get(absIdx);
-            if (!entry) return;
-            leonikPopupGroup.remove(entry.mesh);
-            entry.mesh.geometry.dispose();
-            entry.material.dispose();
-            leonikActivePulseMats.delete(entry.material);
-            leonikBorderByAbsIdx.delete(absIdx);
-        };
-
-        // Re-tint the confirm button's material based on current selection count.
-        const updateLeonikConfirmState = (): void => {
-            if (!leonikConfirmMat) return;
-            const active = leonikSelectedPopupIndices.size === LEONIK_MAX_PICK;
-            leonikConfirmMat.opacity = active ? 1.0 : 0.45;
-        };
-
-        // 레오닉이 덱에서 뽑아 올 수 있는 카드의 덱 안 차례.
-        //
-        // 유닛이고 영웅 이하라는 판정은 카드에 적힌 값으로 정해진다. 화면이 카드 데이터를
-        // 직접 열어 보던 것을 창구로 바꿨다.
-        const collectLeonikEligibleIndices = (): number[] => {
-            const out: number[] = [];
-            const cards = view.yourDeckCards();
-            for (let i = 0; i < cards.length; i++) {
-                const kind = cardCatalog.getKind(cards[i]);
-                const grade = cardCatalog.getGrade(cards[i]);
-                if (kind === null || grade === null) continue;
-                if (kind === CardKind.UNIT && grade <= LEONIK_MAX_GRADE) out.push(i);
-            }
-            return out;
-        };
-
-        const leonikTotalPages = (): number =>
-            Math.max(1, Math.ceil(leonikEligibleDeckIndices.length / leonikCardsPerPage));
-
-        // Cached confirm-button texture so rebuilds don't re-render the canvas.
-        const buildLeonikPopupForCurrentPage = async (): Promise<THREE.Group> => {
-            const start = leonikPopupPage * leonikCardsPerPage;
-            const pageDeckIndices = leonikEligibleDeckIndices.slice(start, start + leonikCardsPerPage);
-            const deckCards = view.yourDeckCards();
-            const pageCardIds = pageDeckIndices.map((di) => deckCards[di]);
-            const resolved = resolveCards(pageCardIds, 'leonik');
-            const group = await leonikPopupRenderer.build(leonikPopupFrame, resolved);
-
-            const bounds = computeCardGridPopupBounds(leonikPopupFrame, window.innerWidth, window.innerHeight);
-
-            // Confirm button — centred at popup centre, between prev/next pagination buttons.
-            // Material handle stashed so selection-change handlers can re-tint without
-            // rebuilding the whole popup (that's what caused the flicker before).
-            // Slightly smaller button (was 0.16) — the confirm plate was too prominent.
-            const btnW = bounds.width * 0.12;
-            const {mesh: confirmMesh, material: confirmMat} = leonikPopupParts.buildConfirmButton(
-                btnW, btnW * 0.5, bounds.centerX, bounds.centerY,
-                leonikPopupFrame.renderOrder + 12,
-                leonikSelectedPopupIndices.size === LEONIK_MAX_PICK,
-            );
-            group.add(confirmMesh);
-            leonikConfirmMat = confirmMat;
-
-            return group;
-        };
-
-        // Populate border meshes for every selected absIdx that lives on the CURRENT page.
-        // Called after the popup group is built (on open + on page turn).
-        const refreshLeonikBordersForPage = (): void => {
-            // Clear any stale entries (in case the map wasn't cleared — belt + braces).
-            leonikBorderByAbsIdx.forEach((_entry, absIdx) => removeLeonikBorder(absIdx));
-            leonikBorderByAbsIdx.clear();
-            leonikSelectedPopupIndices.forEach((absIdx) => addLeonikBorder(absIdx));
-        };
-
-        const openLeonikPopup = async (sourceEntry: HandEntry): Promise<void> => {
-            if (leonikPopupGroup) return;
-            // Modal mutex — close every other centred popup first.
-            lostZonePopup.close();
-            opponentLostZonePopup.close();
-            tombPopup.close();
-            opponentTombPopup.close();
-
-            leonikSourceEntry = sourceEntry;
-            leonikEligibleDeckIndices = collectLeonikEligibleIndices();
-            leonikSelectedPopupIndices.clear();
-            leonikPopupPage = 0;
-
-            if (leonikEligibleDeckIndices.length === 0) {
-                console.log('[leonik] no eligible deck cards (hero-or-below UNIT) — effect no-ops');
-                // 고를 것이 없어도 카드는 쓴 것이 된다. 무덤에 넣고 섞는 것은 전투가 한다.
-                send({
-                    type: 'useCardOnField',
-                    battleCardId: sourceEntry.cardIndex,
-                    side: 'your',
-                    pickedDeckIndexes: [],
-                    shuffleSeed: makeShuffleSeed(),
-                });
-                const idx = handOrder.indexOf(sourceEntry);
-                if (idx >= 0) removeHandCardFromScreen(sourceEntry, idx);
-                leonikSourceEntry = null;
-                reflowHandAndPlaced();
-                return;
-            }
-
-            leonikPopupGroup = await buildLeonikPopupForCurrentPage();
-            scene.add(leonikPopupGroup);
-            refreshLeonikBordersForPage();
-            startLeonikPulseClock();
-        };
-
-        const closeLeonikPopup = (): void => {
-            if (!leonikPopupGroup) return;
-            // Dispose per-selection border materials first (the popup renderer's dispose
-            // walks the whole tree, but the pulse set needs to be cleared explicitly).
-            leonikBorderByAbsIdx.forEach((_entry, absIdx) => removeLeonikBorder(absIdx));
-            leonikBorderByAbsIdx.clear();
-            leonikActivePulseMats.clear();
-            leonikPulseRunning = false;
-
-            scene.remove(leonikPopupGroup);
-            leonikPopupRenderer.dispose(leonikPopupGroup);
-            leonikPopupGroup = null;
-            leonikConfirmMat = null;
-            leonikPopupPage = 0;
-            leonikSelectedPopupIndices.clear();
-            leonikEligibleDeckIndices = [];
-            leonikSourceEntry = null;
-        };
-
-        const reloadLeonikPopup = async (): Promise<void> => {
-            if (!leonikPopupGroup) return;
-            // Tear down current page's borders (new page = new card positions).
-            leonikBorderByAbsIdx.forEach((_entry, absIdx) => removeLeonikBorder(absIdx));
-            leonikBorderByAbsIdx.clear();
-
-            scene.remove(leonikPopupGroup);
-            leonikPopupRenderer.dispose(leonikPopupGroup);
-            leonikPopupGroup = await buildLeonikPopupForCurrentPage();
-            scene.add(leonikPopupGroup);
-            refreshLeonikBordersForPage();
-        };
-
-        // Hit-test: which popup-local index sits under (worldX, worldY)? Returns the
-        // ABSOLUTE eligibleDeckIndices index (not page-relative). Returns -1 if no card.
-        const hitLeonikPopupCard = (worldX: number, worldY: number): number => {
-            const bounds = computeCardGridPopupBounds(leonikPopupFrame, window.innerWidth, window.innerHeight);
-            const cw = window.innerWidth * createDefaultHandCardFrame().cardWidthRatio;
-            const ch = cw * createDefaultHandCardFrame().cardAspect;
-            const stepX = cw * (1 + leonikPopupFrame.cardGapXRatio);
-            const stepY = ch * (1 + leonikPopupFrame.cardGapYRatio);
-            const cols = Math.max(1, leonikPopupFrame.cardColumns);
-            const originX = bounds.centerX - ((cols - 1) * stepX) / 2;
-            const pageRows = Math.max(1, leonikPopupFrame.rowsPerPage);
-            const originY = bounds.centerY + ((pageRows - 1) * stepY) / 2;
-
-            const start = leonikPopupPage * leonikCardsPerPage;
-            const pageLen = Math.min(
-                leonikCardsPerPage,
-                leonikEligibleDeckIndices.length - start,
-            );
-            for (let i = 0; i < pageLen; i++) {
-                const col = i % cols;
-                const row = Math.floor(i / cols);
-                const cx = originX + col * stepX;
-                const cy = originY - row * stepY;
-                if (
-                    worldX >= cx - cw / 2 && worldX <= cx + cw / 2 &&
-                    worldY >= cy - ch / 2 && worldY <= cy + ch / 2
-                ) {
-                    return start + i;
-                }
-            }
-            return -1;
-        };
-
-        const confirmLeonikSummon = async (): Promise<void> => {
-            if (leonikSelectedPopupIndices.size !== LEONIK_MAX_PICK) return;
-            if (!leonikSourceEntry) return;
-
-            // Capture source entry before closeLeonikPopup nulls it.
-            const sourceEntry = leonikSourceEntry;
-
-            // 무엇을 골랐는지만 보낸다. 덱에서 빼고 손패에 넣고 섞는 것은 전투가 한다.
-            const selectedDeckIndices = Array.from(leonikSelectedPopupIndices)
-                .map((i) => leonikEligibleDeckIndices[i]);
-            const events = send({
-                type: 'useCardOnField',
-                battleCardId: sourceEntry.cardIndex,
-                side: 'your',
-                pickedDeckIndexes: selectedDeckIndices,
-                shuffleSeed: makeShuffleSeed(),
-            });
-            const pulled = events
-                .filter((ev) => ev.type === 'cardMoved' && ev.from === 'yourDeck' && ev.to === 'hand')
-                .map((ev) => ev as {cardId: number; battleCardId: number});
-            const pulledIds = pulled.map((it) => it.cardId);
-
-            // Tear down the popup BEFORE the effect plays — the gate visual sits centred
-            // and would be hidden behind a popup overlay otherwise.
-            closeLeonikPopup();
-
-            // Hand baseline — same recipe as the swamp-effect destination calc. Cards
-            // arrive near the centre of the hand baseline; reflowHandAndPlaced shifts them
-            // into actual position after appendCard.
-            const handBaselineY =
-                handLayoutFrame.baselineYHeightRatio * window.innerHeight +
-                handLayoutFrame.baselineYWidthOffsetRatio * window.innerWidth;
-            const handDestinations = pulledIds.map((_id, i) => new THREE.Vector3(
-                // Slight x-spread so the two cards visibly arrive at different spots.
-                (i - (pulledIds.length - 1) / 2) * 80,
-                handBaselineY,
-                5,
-            ));
-
-            const gateCenter = new THREE.Vector3(0, 0, 5);
-
-            // Per-card onArrive callback: appendCard at landing time. The placeholder
-            // mesh fades out a beat after onArrive fires so the swap reads as the card
-            // materialising into the hand.
-            await leonikSummonEffect.play(
-                gateCenter,
-                handDestinations,
-                rendererManager.getDomElement(),
-                (idx: number) => {
-                    const id = pulledIds[idx];
-                    const resolved = resolveCards([id], 'leonik-summon');
-                    if (resolved.length === 0) return;
-                    void (async () => {
-                        // 전투가 매긴 번호를 그대로 쓴다.
-                        const newEntry = await handRenderer.appendCard(
-                            handGroup, resolved[0], handCardFrame, pulled[idx]?.battleCardId,
-                        );
-                        handOrder.push(newEntry);
-                        reflowHandAndPlaced();
-                    })();
-                },
-            );
-
-            // 무덤에 넣고 섞는 것은 전투가 이미 했다. 화면에서 치우기만 한다.
-            const idx = handOrder.indexOf(sourceEntry);
-            if (idx >= 0) removeHandCardFromScreen(sourceEntry, idx);
-            reflowHandAndPlaced();
-
-            console.log(`[leonik] pulled ${pulledIds.join(',')} from deck → hand; leonik → tomb; deck shuffled; remaining=${view.yourDeckRemainingCount()}`);
+            skillTrip: {
+                play: (unit, atPanel) => playSkillPanelMoveOnly(unit, atPanel),
+            },
+            showCarriedStatus: (events) => showColdDarkTraits(events),
+            resolveCards: (cardIds, label) => resolveCards([...cardIds], label),
+            makeShuffleSeed: () => makeShuffleSeed(),
+            whileResolving: (work) => runResolving(work),
+            isAborted: () => passiveChainAborted,
         };
 
         // Pilot C — click / drag / drop
@@ -2537,8 +1926,7 @@ export class SimulationBattleFieldView implements Component {
                 // interruptible by another hand action.
                 canPickup: () =>
                     view.isYourTurn() &&
-                    activePickSession === null &&
-                    netherBladePassive2State === null,
+                    pickSessions.length === 0,
                 onPickup: (entityId, group) => {
                     clearActivePanel();
                     group.renderOrder = 100;
@@ -2548,68 +1936,39 @@ export class SimulationBattleFieldView implements Component {
                     selectedAttackerEntry = findEntryByGroup(group) ?? null;
                     interactionState = 'cardSelected';
 
-                    // Opponent-targeting items (scythe, energy-burn) → red targeting border on all
-                    // visible opponent units (no master).
+                    // 집은 카드를 어디에 놓을 수 있는지 테두리로 알린다.
+                    //
+                    // 어디에 놓을 수 있는지는 카드가 정한다. 전에는 카드 번호로 다섯 갈래를
+                    // 갈라 봤고, 카드가 늘 때마다 그 다섯을 고쳐야 했다.
                     const pickedCardId = selectedAttackerEntry?.card.cardId;
-                    if (pickedCardId != null && OPPONENT_TARGETING_ITEM_IDS.includes(pickedCardId)) {
+                    const picked = pickedCardId != null
+                        ? findCardPresentation(pickedCardId) : null;
+
+                    if (picked?.dropTarget === 'opponentUnit') {
+                        // 보이는 상대 유닛 전부. 본체는 안 된다.
                         for (const oe of opponentEntries) {
-                            if (oe.group.visible) {
-                                enemyNeonEffect.attach(oe.cardIndex, oe.group);
-                            }
+                            if (oe.group.visible) enemyNeonEffect.attach(oe.cardIndex, oe.group);
                         }
-                    }
-
-                    // 파멸의 계약 / 죽음의 대지 → red targeting border on the opponent FIELD
-                    // AREA AS A WHOLE (not individual units). Uses a dedicated wrapper host
-                    // with the right userData keys so NeonBorderEffect sizes the glow to the
-                    // field rectangle.
-                    if (
-                        pickedCardId === DOOM_CONTRACT_CARD_ID ||
-                        pickedCardId === DEAD_LANDS_CARD_ID
-                    ) {
+                    } else if (picked?.dropTarget === 'opponentFieldArea') {
+                        // 유닛 하나가 아니라 상대 필드 영역 전체다.
                         enemyNeonEffect.attach(FIELD_NEON_ENTITY_ID, opponentFieldNeonHost);
-                    }
-
-                    // Ally-targeting items (사기 전환) → green targeting border on every placed
-                    // ally unit on YOUR field. placedOrder holds each HandEntry whose group
-                    // already lives in handGroup at the placed position.
-                    if (pickedCardId != null && ALLY_TARGETING_ITEM_IDS.includes(pickedCardId)) {
-                        for (let i = 0; i < placedOrder.length; i++) {
-                            const entry = placedOrder[i];
-                            if (entry.group.visible) {
-                                // Use the placed index as the neon entityId (distinct from card.cardId,
-                                // which may duplicate across placed allies).
-                                allyTargetNeonEffect.attach(i, entry.group);
-                            }
-                        }
-                    }
-
-                    // 망자의 늪 / 레오닉의 부름 → green targeting border on the WHOLE YOUR
-                    // FIELD AREA (not individual placed cards). Same wrapper-host trick as
-                    // doom contract's opponent-field highlight, just on the player side with
-                    // green neon.
-                    if (
-                        pickedCardId === SWAMP_OF_DEAD_CARD_ID ||
-                        pickedCardId === LEONIK_SUMMON_CARD_ID
-                    ) {
+                    } else if (picked?.dropTarget === 'yourFieldArea') {
                         allyTargetNeonEffect.attach(FIELD_NEON_ENTITY_ID, yourFieldNeonHost);
-                    }
-
-                    // 시체 폭발 → green targeting border on UNDEAD allies ONLY (not all
-                    // placed allies). The card requires an undead sacrifice; non-undead
-                    // allies are not valid drop targets so they shouldn't pulse green.
-                    // If no undead exists, the loop attaches nothing — drop will snap back.
-                    if (pickedCardId === CORPSE_EXPLOSION_CARD_ID) {
-                        let undeadCount = 0;
+                    } else if (picked?.dropTarget === 'allyUnit') {
+                        // 필드에 선 아군. 카드가 고르는 조건을 더 두었으면 그것만.
+                        //
+                        // 테두리의 신원은 놓인 차례를 쓴다. 카드 번호는 같은 아군이 둘일 때
+                        // 겹친다.
+                        let count = 0;
                         for (let i = 0; i < placedOrder.length; i++) {
                             const entry = placedOrder[i];
                             if (!entry.group.visible) continue;
-                            if (entry.card.raceId !== CardRace.UNDEAD) continue;
+                            if (picked.canDropOnAlly && !picked.canDropOnAlly(entry)) continue;
                             allyTargetNeonEffect.attach(i, entry.group);
-                            undeadCount++;
+                            count++;
                         }
-                        if (undeadCount === 0) {
-                            console.log('[corpse-explosion] no undead ally on field — drop will snap back');
+                        if (count === 0) {
+                            console.log(`[pickup] cardId=${pickedCardId} 놓을 수 있는 아군이 없다 — 제자리로 돌아간다`);
                         }
                     }
                 },
@@ -2641,24 +2000,35 @@ export class SimulationBattleFieldView implements Component {
                     // 종류 판정보다 먼저다. 전에 ITEM 안에만 두었더니 ENERGY 인 죽음의
                     // 에너지와 SUPPORT 인 넘쳐 흐르는 사기가 아무 데도 안 걸렸다.
                     const presentation = findCardPresentation(cardId);
-                    if (presentation) {
+                    // 떨어뜨려 쓰는 카드만 여기서 받는다. 유닛 카드는 필드에 놓는 길로 간다.
+                    if (presentation?.dropTarget && presentation.onDrop) {
                         const dropCx = group.position.x;
                         const dropCy = group.position.y;
                         const dropped = {
                             battleCardId: droppedEntry.cardIndex,
                             cardId,
-                            handIndex,
                             entry: droppedEntry,
                         };
-                        const hit = resolveCardDropHit(presentation.dropTarget, dropCx, dropCy);
-                        if (hit) presentation.onDrop(cardPresentationContext, dropped, hit);
+                        const hit = resolveCardDropHit(
+                            presentation.dropTarget, dropCx, dropCy,
+                            presentation.canDropOnAlly?.bind(presentation),
+                        );
+                        // 카드가 던지더라도 제자리 복귀는 반드시 한다. 안 그러면 카드가
+                        // 떨어뜨린 자리에 그대로 멈춰 있는다.
+                        try {
+                            if (hit) presentation.onDrop(cardPresentationContext, dropped, hit);
+                        } catch (error) {
+                            console.error(`[card] cardId=${cardId} 사용 중 오류`, error);
+                        }
 
-                        // 집을 때 켜 둔 겨냥 테두리를 놓을 때 끈다.
-                        //
-                        // 고르기가 시작됐으면 안 끈다. 그 카드가 [무엇을 누를 수 있는지]
-                        // 알리려고 방금 켠 것이라, 여기서 끄면 안내가 사라진다.
-                        if (activePickSession === null) {
-                            neonEffect.detachAll();
+                        // 집은 카드에 둘렀던 테두리는 놓는 순간 끈다. 카드가 손에서
+                        // 떠났으므로 어느 경우에도 남으면 안 된다.
+                        neonEffect.detachAll();
+
+                        // 어디에 놓을 수 있는지 알리던 테두리는, 고르기가 시작됐으면 안 끈다.
+                        // 그 카드가 [이제 무엇을 누를 수 있는지] 알리려고 방금 다시 켠 것이라
+                        // 여기서 끄면 안내가 사라진다.
+                        if (pickSessions.length === 0) {
                             enemyNeonEffect.detachAll();
                             allyTargetNeonEffect.detachAll();
                         }
@@ -2668,11 +2038,11 @@ export class SimulationBattleFieldView implements Component {
                         return;
                     }
 
-                    // ITEM: scythe / energy-burn consume + hit opponent. Drop-location uses the
-                    // card's visual center (group.position) rather than the cursor — feels more natural.
-                    if (kind === CardKind.ITEM) {
-                        const dropCx = group.position.x;
-                        const dropCy = group.position.y;
+                    // 아이템·서포트·에너지 카드는 위에서 제 파일이 받는다. 여기 오는 것은
+                    // 필드에 놓는 유닛 카드와, 아직 못 쓰는 카드다.
+                    //
+                    // 못 쓰는 카드는 아래에서 전투가 거절하고 제자리로 돌아간다.
+                    if (kind !== CardKind.UNIT) {
                         neonEffect.detachAll();
                         selectedAttackerEntry = null;
                         interactionState = 'idle';
@@ -2702,30 +2072,23 @@ export class SimulationBattleFieldView implements Component {
                         (ev) => ev.type === 'cardMoved' && ev.to === 'yourField',
                     );
                     if (played) {
+                        // 여기는 떨어뜨린 그 자리라 번호가 아직 맞다.
                         handOrder.splice(handIndex, 1);
                         placedOrder.push(droppedEntry);
-                        // 출격한 턴을 기록 — 이번 턴에는 공격/스킬 패널이 열리지 않는다.
-                        // 나온 턴은 전투가 적어 둔다.
-                        // 출격 시 — entrance scene → passive chain. Fire-and-forget; the
-                        // placement reflow at the bottom of onDrop runs synchronously first.
-                        // The entrance is deploy-ONLY (no replay on turn-start).
-                        if (cardId === NETHER_BLADE_CARD_ID) {
+                        // 나온 턴은 전투가 적어 둔다. 이번 턴에는 공격·스킬 패널이 안 열린다.
+                        //
+                        // 낼 때 도는 패시브가 있으면 그 카드가 돌린다. 기다리지 않는다 —
+                        // 아래의 줄 세우기가 먼저 끝나야 카드가 제자리에 선다.
+                        const deployed = findCardPresentation(cardId);
+                        if (deployed?.onDeploy) {
                             const entry = droppedEntry;
-                            void (async () => {
-                                // 새 체인의 시작 — 이전 턴에 중단됐던 플래그를 여기서 푼다.
-                                passiveChainAborted = false;
-                                await runResolving(() =>
-                                    netherBladeEntranceEffect.play(rendererManager.getDomElement()),
-                                );
-                                if (passiveChainAborted) return;
-                                await triggerNetherBladePassive(entry);
-                            })();
+                            // 새 사슬의 시작. 지난 턴에 중단된 표시를 여기서 푼다.
+                            passiveChainAborted = false;
+                            void deployed.onDeploy(cardPresentationContext, {
+                                battleCardId: entry.cardIndex,
+                                group: entry.group,
+                            });
                         }
-                    } else if (inside && kind === CardKind.SUPPORT && cardId === LEONIK_SUMMON_CARD_ID) {
-                        // 레오닉의 부름 — 고르는 창을 열기만 한다. 여기서 카드를 쓰지 않는다.
-                        // 고르기를 마치고 확인을 누를 때 전투에게 보낸다.
-                        // 필드 밖에 떨어뜨릴 때는 그대로 돌아간다.
-                        void openLeonikPopup(droppedEntry);
                     }
                     neonEffect.detachAll();
                     selectedAttackerEntry = null;
@@ -3061,22 +2424,29 @@ export class SimulationBattleFieldView implements Component {
 
             console.log(`[turn-state] opponent → your (${reason}) · TURN ${view.turnNumber()} · field energy ${view.yourFieldEnergy()}`);
 
-            // ── 네더 블레이드 매 턴 패시브 풀체인 발동 ─────────────────────────
-            // Each placed + alive Nether Blade re-fires passive 1 (AoE) → passive 2 (single
-            // pick) every turn. enterNetherBladePassive2 returns a Promise that resolves
-            // when the user finishes their pick, so multiple Nether Blades cleanly take
-            // turns: NB#1 AoE → NB#1 picker (modal, awaits user click) → NB#2 AoE → … .
-            const netherBladesOnField = placedOrder.filter(
-                (e) => e.card.cardId === NETHER_BLADE_CARD_ID && e.group.visible,
-            );
+            // ── 턴마다 도는 패시브 ──────────────────────────────────────────────
+            //
+            // 필드에 서 있는 카드 중 턴 시작 때 도는 패시브를 가진 것을 차례로 돌린다.
+            // 그 카드가 사용자에게 고르라고 기다리면 여기서 기다린다. 그래서 여럿이 서
+            // 있어도 하나씩 차례를 지킨다 — 첫째의 고르기가 끝나야 둘째가 나간다.
+            //
+            // 어느 카드가 그런 패시브를 가졌는지는 카드가 안다. 화면이 카드 번호로 고르지 않는다.
+            const turnStartUnits = placedOrder.filter((e) => {
+                if (!e.group.visible) return false;
+                return findCardPresentation(e.card.cardId)?.onTurnStart !== undefined;
+            });
             passiveChainAborted = false;
-            for (const entry of netherBladesOnField) {
+            for (const entry of turnStartUnits) {
                 if (passiveChainAborted) {
-                    console.log('[nether-blade] 턴이 넘어가 남은 패시브 체인 중단');
+                    console.log('[passive] 턴이 넘어가 남은 패시브 중단');
                     break;
                 }
-                console.log(`[nether-blade] turn-start passive chain · TURN ${view.turnNumber()}`);
-                await triggerNetherBladePassive(entry);
+                const presentation = findCardPresentation(entry.card.cardId);
+                console.log(`[passive] turn-start · cardId=${entry.card.cardId} · TURN ${view.turnNumber()}`);
+                await presentation?.onTurnStart?.(cardPresentationContext, {
+                    battleCardId: entry.cardIndex,
+                    group: entry.group,
+                });
             }
         }
 
@@ -3122,7 +2492,10 @@ export class SimulationBattleFieldView implements Component {
                     await opponentTombPopup.reload();
                     await lostZonePopup.reload();
                     await opponentLostZonePopup.reload();
-                    await reloadLeonikPopup();
+                    // 카드가 띄운 창은 그 카드가 다시 그린다. 화면은 알려 주기만 한다.
+                    for (const session of pickSessions) {
+                        if (session.kind === 'ownSurface') session.onViewportChanged?.();
+                    }
                 } while (popupRebuildAgain);
             } finally {
                 popupRebuilding = false;

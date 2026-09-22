@@ -21,7 +21,7 @@ export const ScythePresentation: CardPresentation = {
             battleCardId: dropped.battleCardId,
             targetBattleCardId: target.cardIndex,
         });
-        ctx.hand.removeCard(dropped.entry, dropped.handIndex);
+        ctx.hand.removeCard(dropped.entry);
 
         const damaged = events.find((ev) => ev.type === 'damaged');
         const killing = events.some(

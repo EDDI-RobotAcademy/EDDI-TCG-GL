@@ -21,7 +21,7 @@ export const MoraleConvertPresentation: CardPresentation = {
             battleCardId: dropped.battleCardId,
             targetBattleCardId: target.cardIndex,
         });
-        ctx.hand.removeCard(dropped.entry, dropped.handIndex);
+        ctx.hand.removeCard(dropped.entry);
 
         // 얼마나 얻는지는 전투가 이미 셌다. 여기서는 그 값으로 그린다.
         const gained = events.find(

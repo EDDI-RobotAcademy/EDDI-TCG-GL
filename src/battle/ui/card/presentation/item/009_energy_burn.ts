@@ -18,7 +18,7 @@ export const EnergyBurnPresentation: CardPresentation = {
             battleCardId: dropped.battleCardId,
             targetBattleCardId: target.cardIndex,
         });
-        ctx.hand.removeCard(dropped.entry, dropped.handIndex);
+        ctx.hand.removeCard(dropped.entry);
 
         const drainedEvent = events.find((ev) => ev.type === 'energyDrained');
         const energyDrained = drainedEvent && drainedEvent.type === 'energyDrained'

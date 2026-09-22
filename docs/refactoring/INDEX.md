@@ -144,8 +144,8 @@
 | **R2-116** | Structure | Battle | [전투 화면을 생성, 입력, 연출, 크기 조절 목적별로 분리](R2-116-split-view-by-purpose.md) | R2-114 | **완료. 파일 가르기는 R2-119** |
 | **R2-117** | Structure | Battle Ability | [신규 카드 추가 시 전투 화면을 고치지 않도록 연출을 카드별로 분리](R2-117-card-presentation-per-file.md) | R2-116 | **완료. 아홉 장. 남은 셋은 R2-118** |
 | **R2-118** | Structure | Battle Ability | [카드를 사용한 이후 사용자가 대상을 눌러 고르는 카드를 종류별 폴더에 카드별로 분리](R2-118-card-pick-session.md) | R2-117 | **완료. 시체 폭발. 남은 둘은 모양이 달라 R2-119, R2-120** |
-| **R2-119** | Structure | Battle Ability | 필드에 내거나 턴이 시작될 때 저절로 도는 카드를 카드별로 분리 | R2-118 | 예정. **네더 블레이드. 낼 때와 턴 시작 때 도는 칸이 필요하다** |
-| **R2-120** | Structure | Battle Ability | 카드가 제 창을 열어 고르게 하는 카드를 카드별로 분리 | R2-118 | 예정. **레오닉의 부름. 쪽 넘기기·고른 것 표시·확인 단추를 카드가 든다** |
+| **R2-119** | Structure | Battle Ability | [필드에 내거나 턴 시작 시 패시브 스킬을 사용하는 카드를 카드별로 분리](R2-119-deploy-and-turn-start-passive.md) | R2-118 | **완료** |
+| **R2-120** | Structure | Battle Ability | [덱에서 카드를 골라 가져오는 카드를 카드별로 분리](R2-120-deck-pick-card.md) | R2-118 | **완료. 카드 열둘 전부 제 파일** |
 | **R2-121** | Structure | Battle | 전투 화면을 파일로 가른다 | R2-120 | 예정. **R2-116 에서 미룬 것. 카드별 덩어리가 빠진 뒤에 갈라야 남는 것이 보인다** |
 | **R2-122** | Strategy | Battle Ability | 새 카드 열 장으로 확장 시험 | R2-121 | 예정. **여기부터는 리팩토링이 아니다** |
 | **R2-123** | Rendering | Battle 공용 | 체력과 무기 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정. **숫자 없는 바탕 그림 셋이 있어야 한다** |

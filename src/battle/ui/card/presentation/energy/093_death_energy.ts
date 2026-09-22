@@ -31,7 +31,7 @@ export function attachEnergyToAlly(logName: string, coldDark: boolean) {
             battleCardId: dropped.battleCardId,
             targetBattleCardId: target.cardIndex,
         });
-        ctx.hand.removeCard(dropped.entry, dropped.handIndex);
+        ctx.hand.removeCard(dropped.entry);
 
         const targetWorld = new THREE.Vector3(
             target.group.position.x, target.group.position.y, 5,

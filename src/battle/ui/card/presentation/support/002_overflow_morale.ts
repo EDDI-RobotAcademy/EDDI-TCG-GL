@@ -22,7 +22,7 @@ export const OverflowMoralePresentation: CardPresentation = {
             battleCardId: dropped.battleCardId,
             targetBattleCardId: target.cardIndex,
         });
-        ctx.hand.removeCard(dropped.entry, dropped.handIndex);
+        ctx.hand.removeCard(dropped.entry);
 
         // 화면은 몇 개가 붙었는지만 본다.
         const attachedEvents = events.filter((ev) => ev.type === 'energyAttached');
