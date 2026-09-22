@@ -9,8 +9,8 @@ import {
 import { createOpponentMasterAreaFrame } from "../master_area/frame/OpponentMasterAreaFrame";
 import { OpponentMasterAreaRendererV2 } from "../master_area/renderer/OpponentMasterAreaRendererV2";
 import { CardEnergyBadgeRenderer } from "../card_energy/renderer/CardEnergyBadgeRenderer";
-import { LeonikPopupPartsRenderer } from "../leonik_popup/renderer/LeonikPopupPartsRenderer";
-import { PagedCardPopup, ExclusivePopups } from "../card_grid_popup/PagedCardPopup";
+import { ZonePanels } from "../zone/control/ZonePanels";
+import { createZoneSpecs } from "../zone/control/zoneSpecs";
 import { ViewportResize } from "../resize/ViewportResize";
 import { PointerRouter } from "../input/PointerRouter";
 import {
@@ -92,56 +92,16 @@ import { CardMoveEasing, moveCard } from "../../../animation/motion/CardMove";
 import { SkillTripHandle } from "../animation/common/SkillTripHandle";
 import { FrozenBurningOverlayEffect } from "../animation/card/energy/151_cold_dark_energy/FrozenBurningOverlayEffect";
 import { ColdDarkTraitMarkEffect } from "../animation/card/energy/151_cold_dark_energy/ColdDarkTraitMarkEffect";
-import { ScytheCutEffect } from "../animation/card/item/008_scythe/ScytheCutEffect";
-import { EnergyBurnEffect } from "../animation/card/item/009_energy_burn/EnergyBurnEffect";
-import { DoomContractEffect } from "../animation/card/item/025_doom_contract/DoomContractEffect";
-import { CorpseExplosionEffect } from "../animation/card/item/033_corpse_explosion/CorpseExplosionEffect";
-import { DeadLandsEffect } from "../animation/card/item/036_dead_lands/DeadLandsEffect";
-import { LeonikSummonEffect } from "../animation/card/support/030_leonik_summon/LeonikSummonEffect";
-import { NetherBladeEntranceEffect } from "../animation/card/unit/019_nether_blade/entrance/NetherBladeEntranceEffect";
-import { NetherBladeFirstPassiveEffect } from "../animation/card/unit/019_nether_blade/skill/NetherBladeFirstPassiveEffect";
-import { NetherBladeSecondPassiveEffect } from "../animation/card/unit/019_nether_blade/skill/NetherBladeSecondPassiveEffect";
-import { MoraleConvertEffect } from "../animation/card/item/035_morale_convert/MoraleConvertEffect";
-import { OverflowMoraleEffect } from "../animation/card/support/002_overflow_morale/OverflowMoraleEffect";
-import { SwampEffect } from "../animation/card/support/020_swamp/SwampEffect";
 
-import {
-    createDefaultYourLostZonePanelFrame,
-    computeYourLostZonePanelBounds,
-} from "../zone/your_lost_zone/frame/YourLostZonePanelFrame";
-import {
-    createDefaultYourLostZonePopupFrame,
-} from "../zone/your_lost_zone/frame/YourLostZonePopupFrame";
-import { computeCardGridPopupBounds } from "../card_grid_popup/frame/CardGridPopupFrame";
-import { YourLostZonePanelRendererV2 } from "../zone/your_lost_zone/renderer/YourLostZonePanelRendererV2";
-import { CardGridPopupRenderer } from "../card_grid_popup/renderer/CardGridPopupRenderer";
 
-import {
-    createDefaultOpponentLostZonePanelFrame,
-    computeOpponentLostZonePanelBounds,
-} from "../zone/opponent_lost_zone/frame/OpponentLostZonePanelFrame";
 
-import {
-    createDefaultYourTombPanelFrame,
-    isPointInsideYourTomb,
-} from "../zone/your_tomb/frame/YourTombPanelFrame";
-import { createDefaultYourTombPopupFrame } from "../zone/your_tomb/frame/YourTombPopupFrame";
-import { YourTombPanelRendererV2 } from "../zone/your_tomb/renderer/YourTombPanelRendererV2";
 
-import {
-    createDefaultOpponentTombPanelFrame,
-    isPointInsideOpponentTomb,
-} from "../zone/opponent_tomb/frame/OpponentTombPanelFrame";
-import { createDefaultOpponentTombPopupFrame } from "../zone/opponent_tomb/frame/OpponentTombPopupFrame";
-import { OpponentTombPanelRendererV2 } from "../zone/opponent_tomb/renderer/OpponentTombPanelRendererV2";
 import {
     computeOpponentFieldEnergyBounds,
     createDefaultOpponentFieldEnergyAreaFrame,
 } from "../field_energy/opponent/frame/OpponentFieldEnergyAreaFrame";
 import { OpponentFieldEnergyAreaRendererV2 } from "../field_energy/opponent/renderer/OpponentFieldEnergyAreaRendererV2";
 import { OpponentFieldEnergyHudRendererV2 } from "../field_energy/opponent/renderer/OpponentFieldEnergyHudRendererV2";
-import { createDefaultOpponentLostZonePopupFrame } from "../zone/opponent_lost_zone/frame/OpponentLostZonePopupFrame";
-import { OpponentLostZonePanelRendererV2 } from "../zone/opponent_lost_zone/renderer/OpponentLostZonePanelRendererV2";
 
 import {
     createDefaultTurnEndButtonFrame,
@@ -602,84 +562,48 @@ export class SimulationBattleFieldView implements Component {
         const opponentGroup = await opponentRenderer.build(opponentCards, handCardFrame, opponentLayoutFrame);
         scene.add(opponentGroup);
 
-        // ── Your Lost Zone — clickable panel at bottom-left + modal popup of ally cards.
-
-        const lostZonePanelFrame = createDefaultYourLostZonePanelFrame();
-        const lostZonePopupFrame = createDefaultYourLostZonePopupFrame();
-        const lostZonePanelRenderer = new YourLostZonePanelRendererV2();
-        const lostZonePopupRenderer = new CardGridPopupRenderer();
-        const lostZonePanelGroup = await lostZonePanelRenderer.build(lostZonePanelFrame);
-        scene.add(lostZonePanelGroup);
-        onResize.add('layout', (w, h) => lostZonePanelRenderer.resize(lostZonePanelFrame, lostZonePanelGroup, w, h));
-
-        // ── Opponent Lost Zone — mirror of Your Lost Zone, with its own panel, popup, and repo.
-        const opponentLostZonePanelFrame = createDefaultOpponentLostZonePanelFrame();
-        const opponentLostZonePopupFrame = createDefaultOpponentLostZonePopupFrame();
-        const opponentLostZonePanelRenderer = new OpponentLostZonePanelRendererV2();
-        // Popup reuses CardGridPopupRenderer — popup rendering is generic (takes frame +
-        // cards), so both lost zones share the same renderer. Keeps card layout identical.
-        const opponentLostZonePopupRenderer = new CardGridPopupRenderer();
-        const opponentLostZonePanelGroup = await opponentLostZonePanelRenderer.build(opponentLostZonePanelFrame);
-        scene.add(opponentLostZonePanelGroup);
-        onResize.add('layout', (w, h) => opponentLostZonePanelRenderer.resize(opponentLostZonePanelFrame, opponentLostZonePanelGroup, w, h));
-
-
-        // ── Turn-end button — right-side click zone that hands control to the opponent.
+        // ── 턴 종료 단추 — 오른쪽의 육각형. 누르면 상대에게 차례를 넘긴다.
         const turnEndButtonFrame = createDefaultTurnEndButtonFrame();
         const turnEndButtonRenderer = new TurnEndButtonRendererV2();
         const turnEndButtonGroup = await turnEndButtonRenderer.build(turnEndButtonFrame);
         scene.add(turnEndButtonGroup);
         // 육각형 자리가 창 크기에서 나온다. 안 다시 재면 네온 테두리와 누름 자리가 처음 크기에 남는다.
         onResize.add('layout', (w, h) => turnEndButtonRenderer.resize(turnEndButtonFrame, turnEndButtonGroup, w, h));
-        // Declared here (not next to the 'f' handler that increments it) because the drop
-        // handler runs earlier in the file.
 
-        // Hover → show the red blinking neon border around the hex. Cheap per-mousemove
-        // point-in-hex test + a uniform flip on the shader material.
+        // 마우스가 단추 위에 올라오면 네온 테두리를 켠다. 여기가 눌리는 자리라고 알리는 것이다.
+        //
+        // 육각형 안인지로 본다. 네모로 재면 모서리 바깥에서도 켜진다.
         let turnEndButtonHovered = false;
-        rendererManager.getDomElement().addEventListener('mousemove', (e: MouseEvent) => {
+        const setTurnEndButtonHover = (hover: boolean): void => {
+            if (turnEndButtonHovered === hover) return;
+            turnEndButtonHovered = hover;
+            turnEndButtonRenderer.setHover(turnEndButtonGroup, hover);
+        };
+        this.listen(rendererManager.getDomElement(), 'mousemove', (e: MouseEvent) => {
             const w = window.innerWidth;
             const h = window.innerHeight;
             const worldX = e.clientX - w / 2;
             const worldY = h / 2 - e.clientY;
-            const nowHover = isPointInsideTurnEndButton(worldX, worldY, turnEndButtonFrame, w, h);
-            if (nowHover !== turnEndButtonHovered) {
-                turnEndButtonHovered = nowHover;
-                turnEndButtonRenderer.setHover(turnEndButtonGroup, nowHover);
-            }
+            setTurnEndButtonHover(
+                isPointInsideTurnEndButton(worldX, worldY, turnEndButtonFrame, w, h),
+            );
         });
-        // Also clear hover when the cursor leaves the canvas entirely.
-        rendererManager.getDomElement().addEventListener('mouseleave', () => {
-            if (turnEndButtonHovered) {
-                turnEndButtonHovered = false;
-                turnEndButtonRenderer.setHover(turnEndButtonGroup, false);
-            }
+        // 화면 밖으로 나가면 끈다. 나가는 순간에는 mousemove 가 안 온다.
+        this.listen(rendererManager.getDomElement(), 'mouseleave', () => {
+            setTurnEndButtonHover(false);
         });
 
-
-
-        // ── Your Tomb — gravestone-shaped panel + popup (same as Your Lost Zone). ─────────
-        const tombPanelFrame = createDefaultYourTombPanelFrame();
-        const tombPopupFrame = createDefaultYourTombPopupFrame();
-        const tombPanelRenderer = new YourTombPanelRendererV2();
-        // Reuses the generic lost-zone popup renderer — popup rendering is stateless.
-        const tombPopupRenderer = new CardGridPopupRenderer();
-        const tombPanelGroup = await tombPanelRenderer.build(tombPanelFrame);
-        scene.add(tombPanelGroup);
-        // 판 모양이 창 너비와 높이에서 나오고 누르는 자리는 그때그때 다시 재므로,
-        // 안 다시 그리면 그림과 누르는 자리가 어긋난다.
-        onResize.add('layout', (w, h) => tombPanelRenderer.resize(tombPanelFrame, tombPanelGroup, w, h));
-
-
-
-        // ── Opponent Tomb — 180° mirror of Your Tomb. Same popup reuse pattern as opp LZ. ──
-        const opponentTombPanelFrame = createDefaultOpponentTombPanelFrame();
-        const opponentTombPopupFrame = createDefaultOpponentTombPopupFrame();
-        const opponentTombPanelRenderer = new OpponentTombPanelRendererV2();
-        const opponentTombPopupRenderer = new CardGridPopupRenderer();
-        const opponentTombPanelGroup = await opponentTombPanelRenderer.build(opponentTombPanelFrame);
-        scene.add(opponentTombPanelGroup);
-        onResize.add('layout', (w, h) => opponentTombPanelRenderer.resize(opponentTombPanelFrame, opponentTombPanelGroup, w, h));
+        // 무덤과 로스트 존 넷. 판을 세우고 창을 다는 일은 그 폴더가 한다.
+        //
+        // 넷이 같은 모양이다 — 누를 수 있는 판 하나와 눌렀을 때 열리는 창 하나. 다른 것은
+        // 판이 어떻게 생겼는지와 창이 어느 목록을 보여 주는지 둘뿐이다.
+        const zonePanels = await ZonePanels.build(
+            scene,
+            createZoneSpecs(view),
+            onResize,
+            resolveCards,
+            (message) => guideRenderer.show(guideElement, message, 3000),
+        );
 
 
 
@@ -777,34 +701,6 @@ export class SimulationBattleFieldView implements Component {
             interactionState = 'idle';
         }
 
-        // 무덤 둘과 로스트 존 둘의 창. 한 번에 하나만 열린다.
-        //
-        // 넷의 다른 점은 프레임과 [어느 목록을 보여 주는가] 뿐이다. 그 목록이 넷을 가른다 —
-        // 시체 폭발은 아군을 내 무덤으로, 해골 군주 레오닉은 상대 손패를 상대 로스트 존으로
-        // 보낸다. 열고 닫고 쪽을 넘기는 일만 함께 쓴다.
-        const zonePopups = new ExclusivePopups();
-        const lostZonePopup = zonePopups.register(new PagedCardPopup(
-            scene, lostZonePopupRenderer,
-            {frame: lostZonePopupFrame, cards: () => view.yourLostZoneCards(), label: 'lost-zone'},
-            resolveCards,
-        ));
-        const opponentLostZonePopup = zonePopups.register(new PagedCardPopup(
-            scene, opponentLostZonePopupRenderer,
-            {frame: opponentLostZonePopupFrame, cards: () => view.opponentLostZoneCards(),
-             label: 'opponent-lost-zone'},
-            resolveCards,
-        ));
-        const tombPopup = zonePopups.register(new PagedCardPopup(
-            scene, tombPopupRenderer,
-            {frame: tombPopupFrame, cards: () => view.yourTombCards(), label: 'tomb'},
-            resolveCards,
-        ));
-        const opponentTombPopup = zonePopups.register(new PagedCardPopup(
-            scene, opponentTombPopupRenderer,
-            {frame: opponentTombPopupFrame, cards: () => view.opponentTombCards(),
-             label: 'opponent-tomb'},
-            resolveCards,
-        ));
 
         // ── 모래시계 만료 시의 턴 넘김 조정 ──────────────────────────────────────────
         // 만료 시점의 상태를 두 가지로 구분한다.
@@ -968,7 +864,7 @@ export class SimulationBattleFieldView implements Component {
             // so the new turn owner (the opponent) gets a fresh budget, and the guide banner
             // announces the handover the same way the drag hint greets you on entry — all of
             // which lives in endYourTurn(), shared with the hourglass-expiry trigger.
-            if (!zonePopups.anyOpen()) {
+            if (!zonePanels.anyOpen()) {
                 if (isPointInsideTurnEndButton(worldX, worldY, turnEndButtonFrame, w, h)) {
                     e.stopImmediatePropagation();
                     endYourTurn('turn-end button');
@@ -976,74 +872,14 @@ export class SimulationBattleFieldView implements Component {
                 }
             }
 
-            // ── 1) Your Lost Zone panel ────────────────────────────────────────────────
-            // 네 패널(내/상대 × 로스트 존/무덤)은 아이콘만으로 구분이 어려워, 팝업을 여는
-            // 순간 어느 영역인지 배너로 알린다. 닫을 때는 띄우지 않는다 — 사라지는 팝업의
-            // 이름을 알리는 건 노이즈다.
-            const yourPanelBounds = computeYourLostZonePanelBounds(lostZonePanelFrame, w, h);
-            const onYourPanel =
-                worldX >= yourPanelBounds.minX && worldX <= yourPanelBounds.maxX &&
-                worldY >= yourPanelBounds.minY && worldY <= yourPanelBounds.maxY;
-            if (onYourPanel) {
-                e.stopImmediatePropagation();
-                if (lostZonePopup.isOpen()) {
-                    lostZonePopup.close();
-                } else {
-                    guideRenderer.show(guideElement, '당신의 로스트 존입니다.', 3000);
-                    void zonePopups.openOnly(lostZonePopup);
-                }
-                return;
-            }
-
-            // ── 2) Opponent Lost Zone panel ────────────────────────────────────────────
-            const oppPanelBounds = computeOpponentLostZonePanelBounds(opponentLostZonePanelFrame, w, h);
-            const onOppPanel =
-                worldX >= oppPanelBounds.minX && worldX <= oppPanelBounds.maxX &&
-                worldY >= oppPanelBounds.minY && worldY <= oppPanelBounds.maxY;
-            if (onOppPanel) {
-                e.stopImmediatePropagation();
-                if (opponentLostZonePopup.isOpen()) {
-                    opponentLostZonePopup.close();
-                } else {
-                    guideRenderer.show(guideElement, '상대방의 로스트 존입니다.', 3000);
-                    void zonePopups.openOnly(opponentLostZonePopup);
-                }
-                return;
-            }
-
-            // ── 2b) Your Tomb panel (tombstone-shaped) ────────────────────────────────
-            if (isPointInsideYourTomb(worldX, worldY, tombPanelFrame, w, h)) {
-                e.stopImmediatePropagation();
-                if (tombPopup.isOpen()) {
-                    tombPopup.close();
-                } else {
-                    guideRenderer.show(guideElement, '당신의 무덤입니다.', 3000);
-                    void zonePopups.openOnly(tombPopup);
-                }
-                return;
-            }
-
-            // ── 2c) Opponent Tomb panel (inverted tombstone) ──────────────────────────
-            if (isPointInsideOpponentTomb(worldX, worldY, opponentTombPanelFrame, w, h)) {
-                e.stopImmediatePropagation();
-                if (opponentTombPopup.isOpen()) {
-                    opponentTombPopup.close();
-                } else {
-                    guideRenderer.show(guideElement, '상대방의 무덤입니다.', 3000);
-                    void zonePopups.openOnly(opponentTombPopup);
-                }
-                return;
-            }
-
-            // ── 3) 창이 열려 있으면 그 창이 누름을 먹는다 ──────────────────────────
+            // ── 판 넷과 열린 창 ──────────────────────────────────────────────────
             //
-            // 쪽 넘기기 단추면 넘기고, 창 밖이면 닫고, 창 안이면 아무것도 안 하고 먹는다.
-            // 창 뒤의 카드가 집히면 안 되기 때문이다.
-            //
-            // 전에는 이 판단이 창마다 한 벌씩 네 벌 적혀 있었다. 이제 창이 스스로 한다.
+            // 판을 누르면 그 창이 열리고 닫힌다. 창이 열려 있으면 그 창이 누름을 먹는다.
+            // 넷 중 어느 것인지 가리는 일은 그 폴더가 한다.
             sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
-            if (zonePopups.handleClick(sharedRaycaster, worldX, worldY, w, h)) {
+            if (zonePanels.handleClick(sharedRaycaster, worldX, worldY, w, h)) {
                 e.stopImmediatePropagation();
+                return;
             }
         });
 
@@ -2488,10 +2324,7 @@ export class SimulationBattleFieldView implements Component {
             try {
                 do {
                     popupRebuildAgain = false;
-                    await tombPopup.reload();
-                    await opponentTombPopup.reload();
-                    await lostZonePopup.reload();
-                    await opponentLostZonePopup.reload();
+                    await zonePanels.rebuildOpenPopups();
                     // 카드가 띄운 창은 그 카드가 다시 그린다. 화면은 알려 주기만 한다.
                     for (const session of pickSessions) {
                         if (session.kind === 'ownSurface') session.onViewportChanged?.();
