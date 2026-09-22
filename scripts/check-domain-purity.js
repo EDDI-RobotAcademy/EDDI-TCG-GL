@@ -41,6 +41,22 @@ const CHECKS = [
             '좌표와 그룹은 화면이 써도 된다. 막는 것은 THREE 자체가 아니라 메시를 만드는 것이다.',
     },
     {
+        // [R2-127] 경계 표에서 [누가 검사하나] 가 비어 있던 줄이다.
+        //
+        // 규칙은 브라우저를 몰라야 한다. 브라우저를 알면 그 규칙은 서버에서 못 돈다.
+        // 실제 대전에서 셈하는 곳은 서버이고, 재접속과 다시 보기도 브라우저 없이 같은
+        // 답이 나와야 한다.
+        //
+        // 지금 0곳이다. 0곳일 때만 붙일 수 있다 — 한 곳이라도 새고 나면 검사를 붙이는
+        // 순간 빨간불이 켜지고, 그러면 [일단 예외로 빼자] 가 된다 (R2-121 에서 겪었다).
+        name: '[R2-127] 규칙은 브라우저를 모른다',
+        roots: ['src/battle/domain'],
+        pattern: /\b(window|document|localStorage|sessionStorage|navigator|location|history|alert|fetch|requestAnimationFrame|cancelAnimationFrame|performance)\s*[.(]/,
+        message:
+            '브라우저 것 사용 금지 — 규칙은 서버에서도 돌아야 한다. ' +
+            '창 크기가 필요하면 Command 로 실어 보내고, 시각도 마찬가지다',
+    },
+    {
         name: '규칙 4 보강, 시각 비결정성',
         roots: ['src/battle/domain'],
         pattern: /\bDate\.now\s*\(|\bnew\s+Date\s*\(/,
