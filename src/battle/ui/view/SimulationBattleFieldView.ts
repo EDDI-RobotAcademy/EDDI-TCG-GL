@@ -8,7 +8,6 @@ import {
 } from "../../simulation/SimulationBattleSetup";
 import { createOpponentMasterAreaFrame } from "../master_area/frame/OpponentMasterAreaFrame";
 import { OpponentMasterAreaRendererV2 } from "../master_area/renderer/OpponentMasterAreaRendererV2";
-import { CardEnergyBadgeRenderer } from "../card_energy/renderer/CardEnergyBadgeRenderer";
 import { ZonePanels } from "../zone/control/ZonePanels";
 import { createZoneSpecs } from "../zone/control/zoneSpecs";
 import { ViewportResize } from "../resize/ViewportResize";
@@ -70,12 +69,7 @@ import { CardRace } from "../../../card/race";
 import { CardGrade } from "../../../card/grade";
 import { getSkillType, SkillType } from "../../../card/SkillType";
 
-import { createDefaultFieldEnergyHudFrame } from "../field_energy/your/frame/FieldEnergyHudFrame";
-import { FieldEnergyHudRendererV2 } from "../field_energy/your/renderer/FieldEnergyHudRendererV2";
-import { createDefaultFieldEnergyRaceHudFrame } from "../field_energy/your/frame/FieldEnergyRaceHudFrame";
-import { FieldEnergyRaceHudRendererV2 } from "../field_energy/your/renderer/FieldEnergyRaceHudRendererV2";
-import { createDefaultFieldEnergyCountHudFrame } from "../field_energy/your/frame/FieldEnergyCountHudFrame";
-import { FieldEnergyCountHudRendererV2 } from "../field_energy/your/renderer/FieldEnergyCountHudRendererV2";
+import { FieldEnergyPanels, RACE_LABEL } from "../field_energy/control/FieldEnergyPanels";
 
 import {
     createAllyNeonBorderFrame,
@@ -96,12 +90,6 @@ import { ColdDarkTraitMarkEffect } from "../animation/card/energy/151_cold_dark_
 
 
 
-import {
-    computeOpponentFieldEnergyBounds,
-    createDefaultOpponentFieldEnergyAreaFrame,
-} from "../field_energy/opponent/frame/OpponentFieldEnergyAreaFrame";
-import { OpponentFieldEnergyAreaRendererV2 } from "../field_energy/opponent/renderer/OpponentFieldEnergyAreaRendererV2";
-import { OpponentFieldEnergyHudRendererV2 } from "../field_energy/opponent/renderer/OpponentFieldEnergyHudRendererV2";
 
 import {
     createDefaultTurnEndButtonFrame,
@@ -1286,51 +1274,46 @@ export class SimulationBattleFieldView implements Component {
             interactionState = 'panelVisible';
         })());
 
-        // Field energy → card attachment. Intercepts clicks BEFORE bridge when fieldEnergyActive.
+        // 필드 에너지 — 표기 셋과 상대 쪽 판, 그리고 유닛에 붙이는 일까지 한 곳이 든다.
         //
         // 카드에 붙은 에너지는 전투가 든다. 종족마다 따로 센다 — 스킬 비용이 종족별 3개 열
         // (스킬N 언데드/휴먼/트런트필요에너지)로 정의되어 있고, 앞으로 여러 종족을 동시에
         // 요구하는 스킬이 추가될 예정이라 총량만으로는 판정할 수 없다.
         // 화면은 그 위에 얹은 그림만 든다.
-        const cardEnergyBadge = new CardEnergyBadgeRenderer();
-
-        // Race HUD에서 선택 중인 종족. 필드 에너지를 카드에 붙일 때 이 값이 그대로 기록되므로
-        // 부착 로직(attachEnergyToCard)보다 앞에 선언한다. prev/next 클릭 존이 갱신한다.
-        let currentRaceId = 1;
-        const MAX_RACE_ID = 3;
-
-        // 카드 UI(아이콘 위 숫자)와 Count HUD는 종족 구분 없이 총합 하나만 보여준다.
-        // 카드 종족은 전투에 넘겨 주는 창구가 이미 읽는다. 화면이 따로 읽던 것을 지웠다.
-        const cardRaceOf = (cardId: number): CardRace | null => cardCatalog.getRace(cardId);
-
-        const RACE_LABEL: Record<number, string> = {
-            [CardRace.HUMAN]: '휴먼',
-            [CardRace.UNDEAD]: '언데드',
-            [CardRace.TRENT]: '트런트',
-        };
-
-        // Shared renderer for per-card energy visuals (icon + count text + the global Count HUD).
-        // Used by attachEnergyToCard (field-energy → card) AND by the overflow-morale flow
-        // (deck-energy → card). Source-of-energy tracking is the CALLER's responsibility.
-        // 카드에 그려 둔 에너지 숫자. 겹친 연출이 뒤로 되돌리는 것을 막는 데 쓴다.
-        const shownCardEnergy = new Map<HandEntry, number>();
-
-        async function updateCardEnergyVisual(entry: HandEntry, newCount: number): Promise<void> {
-            // 연출 둘이 겹칠 수 있다. 넘쳐흐르는 사기가 알갱이를 날리는 중에 죽음의 에너지를
-            // 바로 붙이면, 뒤늦게 도착한 알갱이가 자기가 들고 있던 옛 숫자로 되돌려 쓴다.
-            //
-            // 아군 유닛의 에너지는 줄어드는 자리가 없다. 그래서 올라가는 쪽만 그린다.
-            // 줄어드는 카드가 생기면 이 규칙을 다시 봐야 한다.
-            const shown = shownCardEnergy.get(entry) ?? 0;
-            if (newCount < shown) return;
-            shownCardEnergy.set(entry, newCount);
-
-            // 저장은 전투가 한다 — 여기서는 숫자 표기와 HUD만 갱신.
-            countRenderer.setCount(newCount);
-            countRenderer.update(countFrame, countElement, window.innerWidth, window.innerHeight);
-
-            await cardEnergyBadge.draw(entry.group, newCount, handCardFrame);
-        }
+        const fieldEnergy = await FieldEnergyPanels.build({
+            scene,
+            appendToBody: (element) => this.appendToBody(element),
+            pointerRouter,
+            onResize,
+            handCardFrame,
+            yourFieldEnergy: () => view.yourFieldEnergy(),
+            opponentFieldEnergy: () => view.opponentFieldEnergy(),
+            // 쓸 수 있는지 보고 깎고 붙이는 것은 전투가 한다.
+            chargeUnit: (entry, race) => {
+                const events = send({
+                    type: 'attachFieldEnergyToUnit',
+                    targetBattleCardId: entry.cardIndex,
+                    race,
+                });
+                const attached = events.find((ev) => ev.type === 'energyAttached');
+                return attached && attached.type === 'energyAttached' ? attached.totalAfter : null;
+            },
+            hitDeployedUnitAt: (event) => {
+                sharedRaycaster.setFromCamera(ndcFromEvent(event), camera);
+                const hits = sharedRaycaster.intersectObjects(handGroup.children, true);
+                for (const hit of hits) {
+                    let walkGroup: THREE.Object3D | null = hit.object;
+                    while (walkGroup && walkGroup.parent !== handGroup) {
+                        walkGroup = walkGroup.parent;
+                    }
+                    if (!(walkGroup instanceof THREE.Group) || !walkGroup.visible) continue;
+                    const entry = findEntryByGroup(walkGroup);
+                    if (entry && placedOrder.includes(entry)) return entry;
+                }
+                return null;
+            },
+            whileRunning: (effect, run) => whileRunning(effect, run),
+        });
 
         // ── 차갑게 불타는 암흑 에너지 마크 ───────────────────────────────────────────
         // 에너지 아이콘은 카드 좌상단(offsetY +0.5)에 있으므로, 두 마크는 그 **아래로**
@@ -1393,54 +1376,6 @@ export class SimulationBattleFieldView implements Component {
                 );
             }
         }
-
-        // 내 턴 시작 훅 — 빙결 해제 + 재빙결 면역 갱신.
-        async function attachEnergyToCard(entry: HandEntry): Promise<void> {
-            if (!placedOrder.includes(entry)) return;
-
-            // 붙는 에너지의 종족 = Race HUD에서 선택 중인 종족.
-            // 쓸 수 있는지 보고 깎고 붙이는 것은 전투가 한다.
-            const race = currentRaceId as CardRace;
-            const events = send({
-                type: 'attachFieldEnergyToUnit',
-                targetBattleCardId: entry.cardIndex,
-                race,
-            });
-            const attached = events.find((ev) => ev.type === 'energyAttached');
-            if (!attached || attached.type !== 'energyAttached') return;
-
-            // 카드에 그려지는 숫자는 전 종족 합계다. 종족별 개수가 아니다.
-            const cardEnergy = attached.totalAfter;
-
-            energyRenderer.setEnergy(view.yourFieldEnergy());
-            energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
-            await updateCardEnergyVisual(entry, cardEnergy);
-
-            setFieldEnergyNeon(false);
-            console.log(`Energy attached to card ${entry.card.cardId}: ${RACE_LABEL[race]} +1 → ${cardEnergy} total. Available: ${view.yourFieldEnergy()}`);
-        }
-
-
-        // Intercept card clicks when field energy is active — before bridge
-        pointerRouter.add('intercept', (e: MouseEvent) => {
-            if (e.button !== 0 || !fieldEnergyActive) return;
-            sharedRaycaster.setFromCamera(ndcFromEvent(e), camera);
-            const hits = sharedRaycaster.intersectObjects(handGroup.children, true);
-            for (const hit of hits) {
-                let walkGroup: THREE.Object3D | null = hit.object;
-                while (walkGroup && walkGroup.parent !== handGroup) {
-                    walkGroup = walkGroup.parent;
-                }
-                if (walkGroup && walkGroup instanceof THREE.Group && walkGroup.visible) {
-                    const entry = findEntryByGroup(walkGroup);
-                    if (entry && placedOrder.includes(entry)) {
-                        e.stopImmediatePropagation();
-                        attachEnergyToCard(entry);
-                        return;
-                    }
-                }
-            }
-        });
 
         // 카드 능력의 숫자와 고르는 방식은 battle/ability/CardAbility 에 값으로 적혀 있다.
         // 전에는 이 화면 파일 안에 흩어져 있어서, 카드를 더할 때마다 이 파일이 커졌다.
@@ -1686,26 +1621,12 @@ export class SimulationBattleFieldView implements Component {
                 },
             },
             fieldEnergy: {
-                // 표기가 오른쪽 아래에 있다. 모래시계가 있는 오른쪽 위가 아니다.
-                worldPosition: () => ({
-                    x: (0.940 - 0.5) * window.innerWidth,
-                    y: (0.5 - 0.89) * window.innerHeight,
-                }),
-                setEnergy: (count) => {
-                    energyRenderer.setEnergy(count);
-                    energyRenderer.update(
-                        energyFrame, energyElement, window.innerWidth, window.innerHeight,
-                    );
-                },
-                syncToTruth: () => {
-                    energyRenderer.setEnergy(view.yourFieldEnergy());
-                    energyRenderer.update(
-                        energyFrame, energyElement, window.innerWidth, window.innerHeight,
-                    );
-                },
+                worldPosition: () => fieldEnergy.worldPosition(),
+                setEnergy: (count) => fieldEnergy.setEnergy(count),
+                syncToTruth: () => fieldEnergy.syncToTruth(),
             },
             cardEnergy: {
-                setCount: (entry, count) => void updateCardEnergyVisual(entry, count),
+                setCount: (entry, count) => void fieldEnergy.showCardEnergy(entry, count),
                 attachColdDarkMarks: (entry) => attachColdDarkTraitMarks(entry),
             },
             // 덱이 오른쪽 아래, 필드 에너지 표기 왼쪽에 있다.
@@ -1722,20 +1643,10 @@ export class SimulationBattleFieldView implements Component {
                 isVisible: () => masterGroup.visible,
             },
             opponentFieldEnergy: {
-                bounds: () => computeOpponentFieldEnergyBounds(
-                    opponentFieldEnergyAreaFrame, window.innerWidth, window.innerHeight,
-                ),
-                setEnergy: (count) => {
-                    opponentEnergyRenderer.setEnergy(count);
-                    opponentEnergyRenderer.refresh(
-                        opponentFieldEnergyAreaFrame, opponentEnergyGroup,
-                        window.innerWidth, window.innerHeight,
-                    );
-                },
-                setOffset: (dx, dy) =>
-                    opponentEnergyRenderer.setOffset(opponentEnergyGroup, dx, dy),
-                setDamageLevel: (level) =>
-                    opponentEnergyRenderer.setDamageLevel(opponentEnergyGroup, level),
+                bounds: () => fieldEnergy.opponentBounds(),
+                setEnergy: (count) => fieldEnergy.setOpponentEnergy(count),
+                setOffset: (dx, dy) => fieldEnergy.setOpponentOffset(dx, dy),
+                setDamageLevel: (level) => fieldEnergy.setOpponentDamageLevel(level),
             },
             canvasElement: rendererManager.getDomElement(),
             skillTrip: {
@@ -1978,199 +1889,6 @@ export class SimulationBattleFieldView implements Component {
             await drawOneCard('draw');
         });
 
-        // Pilot D-1 — field-energy HUD overlays
-        const energyFrame = createDefaultFieldEnergyHudFrame();
-        const energyRenderer = new FieldEnergyHudRendererV2(19);
-        const energyElement = await energyRenderer.build(energyFrame);
-        this.appendToBody(energyElement);
-
-        // Opponent field energy HUD — 180° mirror of the player's (top 82.4%, left 90.4%)
-        // around screen centre. The horizontal mirror is trivial: left = 100% - 90.4% - 7.2%
-        // = 2.4%. The vertical mirror is SUBTLE: the HUD's height depends on viewport width
-        // (image aspect 638/622 × widthPercent × vw), so a static `topPercent` would drift
-        // at non-16:9 aspects. Instead anchor by the BOTTOM edge — "bottom: 82.4%" puts the
-        // HUD's bottom edge at (100-82.4)=17.6% vh from top, the exact mirror of the player's
-        // static TOP edge at 82.4% vh. This matches the opponent shaded-area mesh whose
-        // stable anchor is also bottomEdgeYRatio = 0.176.
-
-        // Opponent field-energy SHADED AREA — a Three.js mesh at the 180°-mirror of the
-        // player's Field Energy HUD. This is the visual target for the upcoming 죽음의 대지
-        // drain effect (dark motes will converge here). Opacity 0.6 for position verification
-        // now; once the final effect + position are confirmed the opacity drops to 0.
-        const opponentFieldEnergyAreaFrame = createDefaultOpponentFieldEnergyAreaFrame();
-        const opponentFieldEnergyAreaRenderer = new OpponentFieldEnergyAreaRendererV2();
-        const opponentFieldEnergyAreaGroup =
-            await opponentFieldEnergyAreaRenderer.build(opponentFieldEnergyAreaFrame);
-        scene.add(opponentFieldEnergyAreaGroup);
-
-        // 상대 패널과 숫자는 캔버스 안에 그린다. 화면 위에 얹는 조각(DOM)으로 두면 죽음의
-        // 대지 연출이 그 뒤에서 돌아 무엇이 부서지는지 보이지 않는다.
-        // 자리와 크기는 위 영역 프레임이 이미 재고 있어 그대로 쓴다.
-        const opponentEnergyRenderer = new OpponentFieldEnergyHudRendererV2(view.opponentFieldEnergy());
-        const opponentEnergyGroup = await opponentEnergyRenderer.build(opponentFieldEnergyAreaFrame);
-        scene.add(opponentEnergyGroup);
-
-        // 죽음의 대지가 부서지는 대상에게 주는 되먹임을 캔버스 안 패널로 넘긴다.
-        const opponentEnergyTarget = {
-            setOffset: (dx: number, dy: number) =>
-                opponentEnergyRenderer.setOffset(opponentEnergyGroup, dx, dy),
-            setDamageLevel: (level: 0 | 1 | 2) =>
-                opponentEnergyRenderer.setDamageLevel(opponentEnergyGroup, level),
-        };
-
-        const raceFrame = createDefaultFieldEnergyRaceHudFrame(1);
-        const raceRenderer = new FieldEnergyRaceHudRendererV2();
-        const raceElement = await raceRenderer.build(raceFrame);
-        this.appendToBody(raceElement);
-
-        const countFrame = createDefaultFieldEnergyCountHudFrame();
-        const countRenderer = new FieldEnergyCountHudRendererV2(1);
-        const countElement = await countRenderer.build(countFrame);
-        this.appendToBody(countElement);
-
-        let fieldEnergyChargeCount = 1;
-
-        // Invisible click zones for count prev/next + race prev/next.
-        // Coordinates from legacy MouseCursorDetectAreaMap (screen viewport percentages).
-        function createClickZone(
-            x1Pct: number, y1Pct: number, x2Pct: number, y2Pct: number,
-            arrow: '◁' | '▷',
-            onClick: () => void,
-        ): HTMLElement {
-            const zone = document.createElement('div');
-            zone.style.position = 'fixed';
-            zone.style.left = `${x1Pct * 100}%`;
-            zone.style.top = `${y1Pct * 100}%`;
-            zone.style.width = `${(x2Pct - x1Pct) * 100}%`;
-            zone.style.height = `${(y2Pct - y1Pct) * 100}%`;
-            zone.style.zIndex = '1001';
-            zone.style.pointerEvents = 'auto';
-            zone.style.cursor = 'pointer';
-            zone.style.display = 'flex';
-            zone.style.alignItems = 'center';
-            zone.style.justifyContent = 'center';
-            zone.style.color = '#00ff88';
-            zone.style.fontSize = `${(y2Pct - y1Pct) * 122}vh`;
-            zone.style.lineHeight = '1';
-            zone.style.userSelect = 'none';
-            zone.style.paddingTop = '0.3vh';
-            zone.classList.add('field-energy-arrow');
-            zone.innerText = arrow;
-            zone.addEventListener('click', (ev) => {
-                ev.stopPropagation();
-                onClick();
-            });
-            return zone;
-        }
-
-        // Count prev/next (legacy: FIELD_ENERGY_PREV / FIELD_ENERGY_NEXT)
-        const countPrevZone = createClickZone(0.88203, 0.62863, 0.90530, 0.68030, '◁', () => {
-            if (fieldEnergyChargeCount > 0) {
-                fieldEnergyChargeCount--;
-                countRenderer.setCount(fieldEnergyChargeCount);
-                countRenderer.update(countFrame, countElement, window.innerWidth, window.innerHeight);
-            }
-        });
-        const countNextZone = createClickZone(0.97348, 0.62863, 0.995, 0.68030, '▷', () => {
-            if (fieldEnergyChargeCount < view.yourFieldEnergy()) {
-                fieldEnergyChargeCount++;
-                countRenderer.setCount(fieldEnergyChargeCount);
-                countRenderer.update(countFrame, countElement, window.innerWidth, window.innerHeight);
-            }
-        });
-        this.appendToBody(countPrevZone);
-        this.appendToBody(countNextZone);
-
-        // Race prev/next — same width/height as Count zones, centered on Race icon (top=72.1%)
-        // Count zone size: w=0.02327, h=0.05167. Race center Y=0.721, half h=0.02584
-        const raceZoneH = 0.68030 - 0.62863;  // same height as count zones
-        const raceCenterY = 0.721;
-        const raceY1 = raceCenterY - raceZoneH / 2 + raceZoneH / 2 + 0.005;
-        const raceY2 = raceCenterY + raceZoneH / 2 + raceZoneH / 2 + 0.005;
-        const racePrevZone = createClickZone(0.88203, raceY1, 0.90530, raceY2, '◁', () => {
-            currentRaceId = ((currentRaceId - 2 + MAX_RACE_ID) % MAX_RACE_ID) + 1;
-            const newRaceFrame = createDefaultFieldEnergyRaceHudFrame(currentRaceId);
-            raceRenderer.update(newRaceFrame, raceElement, window.innerWidth, window.innerHeight);
-        });
-        const raceNextZone = createClickZone(0.97348, raceY1, 0.995, raceY2, '▷', () => {
-            currentRaceId = (currentRaceId % MAX_RACE_ID) + 1;
-            const newRaceFrame = createDefaultFieldEnergyRaceHudFrame(currentRaceId);
-            raceRenderer.update(newRaceFrame, raceElement, window.innerWidth, window.innerHeight);
-        });
-        this.appendToBody(racePrevZone);
-        this.appendToBody(raceNextZone);
-
-        // Field Energy interaction — hover focus + click green neon on energy/race/count together
-        const fieldEnergyElements = [energyElement, raceElement, countElement];
-        let fieldEnergyActive = false;
-
-        // Inject CSS keyframes for green neon pulse
-        const neonStyle = document.createElement('style');
-        neonStyle.textContent = `
-            @keyframes greenNeonPulse {
-                0%, 100% { box-shadow: 0 0 6px #00ff88, 0 0 12px #00ff88; filter: brightness(1.1); }
-                50% { box-shadow: 0 0 14px #00ff88, 0 0 28px #00ff88, 0 0 42px #00ff88; filter: brightness(1.3); }
-            }
-            @keyframes greenNeonPulseShiftUp {
-                0%, 100% { box-shadow: 0 -6px 6px #00ff88, 0 -6px 12px #00ff88; filter: brightness(1.1); }
-                50% { box-shadow: 0 -6px 14px #00ff88, 0 -6px 28px #00ff88, 0 -6px 42px #00ff88; filter: brightness(1.3); }
-            }
-            @keyframes arrowNeonPulse {
-                0%, 100% { text-shadow: 0 0 4px #00ff88, 0 0 8px #00ff88; opacity: 0.6; }
-                50% { text-shadow: 0 0 8px #00ff88, 0 0 16px #00ff88, 0 0 24px #00ff88; opacity: 1; }
-            }
-            .field-energy-hover { filter: brightness(1.2); transition: filter 0.15s; }
-            .field-energy-neon { animation: greenNeonPulse 1.4s ease-in-out infinite; border-radius: 6px; }
-            .field-energy-neon-shift-up { animation: greenNeonPulseShiftUp 1.4s ease-in-out infinite; border-radius: 6px; }
-            .field-energy-arrow { opacity: 0; pointer-events: none; transition: opacity 0.15s; }
-            .field-energy-arrow-active { opacity: 1; pointer-events: auto; animation: arrowNeonPulse 1.4s ease-in-out infinite; }
-        `;
-        document.head.appendChild(neonStyle);
-
-        // Enable pointer events on all 3 for hover, but only energyElement for neon toggle click.
-        // Race/count don't get click handlers — their clicks are handled by the invisible zones.
-        for (const el of fieldEnergyElements) {
-            el.style.pointerEvents = 'auto';
-            el.style.cursor = 'pointer';
-        }
-
-        function setFieldEnergyHover(on: boolean): void {
-            if (fieldEnergyActive) return;
-            for (const el of fieldEnergyElements) {
-                if (on) el.classList.add('field-energy-hover');
-                else el.classList.remove('field-energy-hover');
-            }
-        }
-
-        const arrowZones = [countPrevZone, countNextZone, racePrevZone, raceNextZone];
-
-        function setFieldEnergyNeon(on: boolean): void {
-            fieldEnergyActive = on;
-            for (const el of fieldEnergyElements) {
-                el.classList.remove('field-energy-hover', 'field-energy-neon', 'field-energy-neon-shift-up');
-                if (on) el.classList.add(el === countElement ? 'field-energy-neon-shift-up' : 'field-energy-neon');
-            }
-            for (const arrow of arrowZones) {
-                if (on) {
-                    arrow.classList.add('field-energy-arrow-active');
-                } else {
-                    arrow.classList.remove('field-energy-arrow-active');
-                }
-            }
-        }
-
-        // Hover on any of the 3 → all 3 light up
-        for (const el of fieldEnergyElements) {
-            el.addEventListener('mouseenter', () => setFieldEnergyHover(true));
-            el.addEventListener('mouseleave', () => setFieldEnergyHover(false));
-        }
-
-        // Neon toggle ONLY on energyElement — race/count are handled by invisible zones
-        energyElement.addEventListener('click', (ev: Event) => {
-            ev.stopPropagation();
-            setFieldEnergyNeon(!fieldEnergyActive);
-        });
-
         // Pilot E new — guide message / sand timer / turn HUDs
         const guideFrame = createDefaultGuideMessageHudFrame();
         const guideRenderer = new GuideMessageHudRendererV2();
@@ -2241,11 +1959,8 @@ export class SimulationBattleFieldView implements Component {
             turnRenderer.setTurn(view.turnNumber());
             turnRenderer.update(turnFrame, turnElement, window.innerWidth, window.innerHeight);
 
-            // Field Energy total (the big number, 19 → 20 → …), tracked by `view.yourFieldEnergy()`.
-            // NOT the small `fieldEnergyChargeCount` above the Race marker — that one is a
-            // per-card charge selector driven by prev/next hover zones.
-            energyRenderer.setEnergy(view.yourFieldEnergy());
-            energyRenderer.update(energyFrame, energyElement, window.innerWidth, window.innerHeight);
+            // 남은 필드 에너지 전체다. 종족 표기 위의 작은 개수 고르개가 아니다.
+            fieldEnergy.syncToTruth();
 
             timerRenderer.reset(timerElement);
 
@@ -2365,11 +2080,6 @@ export class SimulationBattleFieldView implements Component {
                 opponentAliveIds(),
             );
 
-            energyRenderer.update(energyFrame, energyElement, width, height);
-            opponentEnergyRenderer.resize(opponentFieldEnergyAreaFrame, opponentEnergyGroup, width, height);
-            opponentFieldEnergyAreaRenderer.resize(opponentFieldEnergyAreaFrame, opponentFieldEnergyAreaGroup, width, height);
-            raceRenderer.update(raceFrame, raceElement, width, height);
-            countRenderer.update(countFrame, countElement, width, height);
             guideRenderer.update(guideFrame, guideElement, width, height);
             timerRenderer.update(timerFrame, timerElement, width, height);
             turnRenderer.update(turnFrame, turnElement, width, height);

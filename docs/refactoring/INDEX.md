@@ -147,7 +147,7 @@
 | **R2-119** | Structure | Battle Ability | [필드에 내거나 턴 시작 시 패시브 스킬을 사용하는 카드를 카드별로 분리](R2-119-deploy-and-turn-start-passive.md) | R2-118 | **완료** |
 | **R2-120** | Structure | Battle Ability | [덱에서 카드를 골라 가져오는 카드를 카드별로 분리](R2-120-deck-pick-card.md) | R2-118 | **완료. 카드 열둘 전부 제 파일** |
 | **R2-121** | Structure | Battle Zone | [무덤과 로스트 존 제어를 전투 화면에서 분리](R2-121-zone-panels-out-of-view.md) | R2-120 | **완료** |
-| **R2-122** | Structure | Battle Energy | 필드 에너지 제어를 전투 화면에서 분리 | R2-121 | 예정 |
+| **R2-122** | Structure | Battle Energy | [필드 에너지 제어를 전투 화면에서 분리](R2-122-field-energy-out-of-view.md) | R2-121 | **완료. 창 크기와 종족 그림이 어긋나던 것도 고쳤다** |
 | **R2-123** | Structure | Battle Turn | 모래시계와 턴 넘김 제어를 전투 화면에서 분리 | R2-122 | 예정. **턴 넘김이 여러 곳에서 불린다** |
 | **R2-124** | Structure | Battle Unit | 공격과 스킬 고르기 제어를 전투 화면에서 분리 | R2-123 | 예정. **다섯 중 가장 크다. 266줄짜리 누름 처리기 하나에 뭉쳐 있다. 앞의 셋에서 입력을 기능별로 가르는 방법이 자리 잡은 뒤에 한다** |
 | **R2-125** | Structure | Battle Hand | 손패 끌어다 놓기 제어를 전투 화면에서 분리 | R2-124 | 예정. **카드 열둘이 전부 여기를 지난다. 남은 것이 뚜렷해진 뒤에 한다** |
@@ -155,6 +155,7 @@
 | **R2-127** | Rendering | Battle 공용 | 체력과 무기 표기를 그림에서 글자로 바꾼다 | R2-46 | 예정. **숫자 없는 바탕 그림 셋이 있어야 한다** |
 | **R2-128** | Rule | Battle | 멀리건을 더해 1대1 대전이 되게 한다 | R2-113 | 예정 |
 | **R2-129** | Structure | Platform | 사용자에게 내보낼 것을 만드는 명령을 만든다 | R2-82 | 예정 |
+| **R2-130** | Rendering | Battle Energy | [필드 에너지를 유닛에 붙일 때 에너지가 날아오는 연출을 더한다](R2-130-field-energy-fly-effect.md) | R2-122 | **완료. 새 연출 파일 없이 넘쳐흐르는 사기가 쓰는 것을 세 번째로 부른다** |
 
 ### Type — 무엇을 바꾸는 작업인가
 
