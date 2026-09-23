@@ -24,6 +24,8 @@ export interface ShopMenuDeps {
     readonly canvasElement: HTMLElement;
     // 무엇을 눌렀다. 무슨 일이 일어나는지는 화면이 안다.
     onPick(type: ShopMenuType): void;
+    // 뽑기 화면이 떠 있나. 떠 있으면 뒤의 단추를 누를 수 없다.
+    isBlocked(): boolean;
 }
 
 export class ShopMenuControl {
@@ -60,6 +62,9 @@ export class ShopMenuControl {
         this.deps.listen(this.deps.canvasElement, 'mousedown', (event: never) => {
             const e = event as unknown as MouseEvent;
             if (e.button !== 0) return;
+            // 뽑기 화면이 떠 있으면 그쪽이 누름을 먹는다. 여기까지 안 와야 하지만,
+            // 붙은 차례에 기대지 않고 한 번 더 본다.
+            if (this.deps.isBlocked()) return;
             const ndc = new THREE.Vector2(
                 (e.clientX / window.innerWidth) * 2 - 1,
                 -(e.clientY / window.innerHeight) * 2 + 1,
