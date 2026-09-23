@@ -9,7 +9,7 @@ import {CardFace} from "../../hand/entity/CardFace";
 import {HandCardFrame} from "../../hand/frame/HandCardFrame";
 import {HandEntry} from "../../hand/renderer/BattleFieldHandRendererV2";
 import {PointerRouter} from "../../input/PointerRouter";
-import {ViewportResize} from "../../resize/ViewportResize";
+import {ViewportResize} from "../../../../core/resize/ViewportResize";
 import {
     ActivePanelButtonSpec,
     ActivePanelFrame,

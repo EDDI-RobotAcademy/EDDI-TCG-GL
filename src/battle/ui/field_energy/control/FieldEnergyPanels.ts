@@ -6,7 +6,7 @@ import {HandEntry} from "../../hand/renderer/BattleFieldHandRendererV2";
 import {CardEnergyBadgeRenderer} from "../../card_energy/renderer/CardEnergyBadgeRenderer";
 import {OverflowMoraleEffect} from "../../animation/card/support/002_overflow_morale/OverflowMoraleEffect";
 import {PointerRouter} from "../../input/PointerRouter";
-import {ViewportResize} from "../../resize/ViewportResize";
+import {ViewportResize} from "../../../../core/resize/ViewportResize";
 import {
     FieldEnergyHudFrame,
     createDefaultFieldEnergyHudFrame,

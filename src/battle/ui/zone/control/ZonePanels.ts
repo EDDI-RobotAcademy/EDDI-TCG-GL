@@ -3,7 +3,7 @@ import {CardFace} from "../../hand/entity/CardFace";
 import {CardGridPopupFrame} from "../../card_grid_popup/frame/CardGridPopupFrame";
 import {CardGridPopupRenderer} from "../../card_grid_popup/renderer/CardGridPopupRenderer";
 import {PagedCardPopup, ExclusivePopups} from "../../card_grid_popup/PagedCardPopup";
-import {ViewportResize} from "../../resize/ViewportResize";
+import {ViewportResize} from "../../../../core/resize/ViewportResize";
 
 // 무덤과 로스트 존 넷을 다루는 곳이다.
 //
