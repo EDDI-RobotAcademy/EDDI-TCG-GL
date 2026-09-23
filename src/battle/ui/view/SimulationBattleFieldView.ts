@@ -10,7 +10,7 @@ import { createOpponentMasterAreaFrame } from "../master_area/frame/OpponentMast
 import { OpponentMasterAreaRendererV2 } from "../master_area/renderer/OpponentMasterAreaRendererV2";
 import { ZonePanels } from "../zone/control/ZonePanels";
 import { createZoneSpecs } from "../zone/control/zoneSpecs";
-import { ViewportResize } from "../resize/ViewportResize";
+import { ViewportResize } from "../../../core/resize/ViewportResize";
 import { PointerRouter } from "../input/PointerRouter";
 import {
     CardDropTarget, CardPickSession, CardPresentationContext, DropHit, PickTarget,

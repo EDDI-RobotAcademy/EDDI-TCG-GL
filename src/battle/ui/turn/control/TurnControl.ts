@@ -2,7 +2,7 @@ import * as THREE from "three";
 
 import {BattleCommand} from "../../../domain/flow/BattleCommand";
 import {BattleEvent} from "../../../domain/flow/BattleEvent";
-import {ViewportResize} from "../../resize/ViewportResize";
+import {ViewportResize} from "../../../../core/resize/ViewportResize";
 import {
     createDefaultSandTimerHudFrame,
     SandTimerHudFrame,
