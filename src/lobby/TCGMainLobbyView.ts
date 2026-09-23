@@ -1,32 +1,36 @@
 import * as THREE from 'three';
+
 import {GuideMessageHudRendererV2} from "../common/guide_message/renderer/GuideMessageHudRendererV2";
 import {createDefaultGuideMessageHudFrame} from "../common/guide_message/frame/GuideMessageHudFrame";
-import { TextureManager } from "../texture_manager/TextureManager";
-import { NonBackgroundImage } from "../shape/image/NonBackgroundImage";
-import { LobbyButtonConfigList } from "./LobbyButtonConfigList";
-import { LobbyButtonType } from "./LobbyButtonType";
-import { AudioController } from "../audio/AudioController";
+import {ViewportResize} from "../core/resize/ViewportResize";
+import {LobbyMenuControl} from "./control/LobbyMenuControl";
+import {LobbyMenuType} from "./entity/LobbyMenuType";
+import {AudioController} from "../audio/AudioController";
 import lobbyMusic from '@resource/music/lobby/lobby-menu.mp3';
-import { MouseController } from "../mouse/MouseController";
-import { RouteMap } from "../router/RouteMap";
-import { Component } from "../router/Component";
+import {RouteMap} from "../router/RouteMap";
+import {Component} from "../router/Component";
 
+// 로비 화면이다.
+//
+// **차리는 일만 한다.** 그리는 것도, 누름을 받는 것도, 창 크기를 따라가는 것도 메뉴를
+// 다루는 자리가 가져갔다 (R2-131). 여기 남은 것은 장면·카메라·그리는 기계를 세우고,
+// 소리를 걸고, 고른 메뉴를 어디로 보낼지 정하는 것뿐이다.
+//
+// 전투 화면과 같은 방식이다 — 값은 frame, THREE 물건은 renderer, 만들기·누름·크기 조절은
+// control. 다음에 만드는 화면(레이드, 덱)이 이 셋을 보고 따라간다.
 export class TCGMainLobbyView implements Component {
     private static instance: TCGMainLobbyView | null = null;
 
-    private scene: THREE.Scene;
-    private camera: THREE.OrthographicCamera;
-    private renderer: THREE.WebGLRenderer;
-    private textureManager: TextureManager;
-    private lobbyContainer: HTMLElement;
-    private background: NonBackgroundImage | null = null;
-    private buttons: NonBackgroundImage[] = [];
-    private buttonInitialInfo: Map<string, { positionPercent: THREE.Vector2, widthPercent: number, heightPercent: number }> = new Map();
-    private audioController: AudioController;
-    private mouseController: MouseController;
-    private routeMap: RouteMap;
+    private readonly scene: THREE.Scene;
+    private readonly camera: THREE.OrthographicCamera;
+    private readonly renderer: THREE.WebGLRenderer;
+    private readonly audioController: AudioController;
 
-    // 아직 못 가는 곳을 눌렀을 때 알려 준다.
+    // 창 크기가 바뀔 때 다시 재야 하는 것. 만드는 자리에서 바로 등록된다.
+    private readonly onResize = new ViewportResize();
+    // 화면을 떠날 때 떼야 하는 것.
+    private readonly teardown: (() => void)[] = [];
+
     private readonly guideRenderer = new GuideMessageHudRendererV2();
     private readonly guideFrame = createDefaultGuideMessageHudFrame();
     private guideElement: HTMLElement | null = null;
@@ -34,10 +38,13 @@ export class TCGMainLobbyView implements Component {
     private initialized = false;
     private isAnimating = false;
 
-    constructor(lobbyContainer: HTMLElement, routeMap: RouteMap) {
-        this.lobbyContainer = lobbyContainer;
+    private constructor(
+        private readonly lobbyContainer: HTMLElement,
+        private readonly routeMap: RouteMap,
+    ) {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0xffffff);
+
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.lobbyContainer.appendChild(this.renderer.domElement);
@@ -47,22 +54,16 @@ export class TCGMainLobbyView implements Component {
         this.camera = new THREE.OrthographicCamera(
             -aspect * viewSize / 2, aspect * viewSize / 2,
             viewSize / 2, -viewSize / 2,
-            0.1, 1000
+            0.1, 1000,
         );
         this.camera.position.set(0, 0, 5);
         this.camera.lookAt(0, 0, 0);
 
-        this.textureManager = TextureManager.getInstance();
         this.audioController = AudioController.getInstance();
         this.audioController.setMusic(lobbyMusic);
 
-        window.addEventListener('resize', this.onWindowResize.bind(this));
-
-        // this.mouseController = MouseController.getInstance(this.camera, this.scene);
-        this.mouseController = new MouseController(this.camera, this.scene);
-        this.routeMap = routeMap;
-
-        window.addEventListener('click', () => this.initializeAudio(), { once: true });
+        this.listen(window, 'resize', () => this.applyViewportSize());
+        this.listen(window, 'click', () => { void this.playMusic(); }, {once: true});
     }
 
     public static getInstance(lobbyContainer: HTMLElement, routeMap: RouteMap): TCGMainLobbyView {
@@ -72,64 +73,45 @@ export class TCGMainLobbyView implements Component {
         return TCGMainLobbyView.instance;
     }
 
-    private async initializeAudio(): Promise<void> {
-        try {
-            await this.audioController.playMusic();
-        } catch (error) {
-            console.error('Initial audio play failed:', error);
-        }
-    }
-
     public async initialize(): Promise<void> {
         if (this.initialized) {
-            console.log('Already initialized');
             this.show();
             return;
         }
 
-        console.log('TCGMainLobbyView initialize() operate!!!');
-        await this.textureManager.preloadTextures("image-paths.json");
+        await LobbyMenuControl.build({
+            scene: this.scene,
+            camera: this.camera,
+            onResize: this.onResize,
+            listen: (target, type, handler) => this.listen(target, type, handler),
+            canvasElement: this.renderer.domElement,
+            onPick: (type) => this.goTo(type),
+        });
 
-        console.log("Textures preloaded. Adding background and buttons...");
-
-        this.addBackground();
-        this.addButtons();
         this.initialized = true;
         this.isAnimating = true;
         this.animate();
     }
 
+    // 다시 들어왔다. **다시 만들지 않는다.**
+    //
+    // 전에는 여기서 단추를 새로 만들고 떠날 때 지웠다. 오갈 때마다 그림을 다시 읽고
+    // 물건을 다시 만들었고, 누름 처리기도 그때마다 다시 붙였다. 한 번 만들고 보이기만
+    // 바꾼다.
     public show(): void {
-        console.log('Showing TCGMainLobbyView...');
         this.renderer.domElement.style.display = 'block';
         this.lobbyContainer.style.display = 'block';
-        this.isAnimating = true;
-
-        this.mouseController.clearButtons();
-
-        this.scene.children.forEach(child => {
-            child.visible = true;
-        });
+        for (const child of this.scene.children) child.visible = true;
 
         if (!this.initialized) {
-            this.initialize();
-        } else {
-            this.addButtons(); // 버튼을 다시 생성하는 메서드 호출
-
-            this.animate();
-            this.registerEventHandlers()
+            void this.initialize();
+            return;
         }
-    }
-
-    private registerEventHandlers(): void {
-        this.buttons.forEach((button, index) => {
-            const config = LobbyButtonConfigList.buttonConfigs[index];
-            this.mouseController.registerButton(button.getMesh(), this.onButtonClick.bind(this, config.type));
-        });
+        this.isAnimating = true;
+        this.animate();
     }
 
     public hide(): void {
-        console.log('Hiding TCGMainLobbyView...');
         this.isAnimating = false;
 
         // 로비를 떠날 때 안내 문구도 함께 치운다.
@@ -141,88 +123,42 @@ export class TCGMainLobbyView implements Component {
 
         this.renderer.domElement.style.display = 'none';
         this.lobbyContainer.style.display = 'none';
-
-        this.buttons.forEach(button => {
-            this.mouseController.unregisterButton(button.getMesh());
-            button.getMesh().removeFromParent(); // 씬에서 버튼 완전 제거
-        });
-
-        this.mouseController.clearButtons();
-
-        this.buttons = [];
-
-        this.scene.children.forEach(child => {
-            child.visible = false;
-        });
+        for (const child of this.scene.children) child.visible = false;
     }
 
-    private async addBackground(): Promise<void> {
-        const texture = await this.textureManager.getTexture('main_lobby_background', 1);
-        console.log('addBackground():', texture);
-        if (texture) {
-            if (!this.background) {
-                this.background = new NonBackgroundImage(
-                    window.innerWidth,
-                    window.innerHeight,
-                    new THREE.Vector2(0, 0)
-                );
-            }
-            this.background.createNonBackgroundImageWithTexture(texture, 1, 1);
-            this.background.draw(this.scene);
-        } else {
-            console.error("Background texture not found.");
-        }
+    public animate(): void {
+        if (!this.isAnimating) return;
+        requestAnimationFrame(() => this.animate());
+        this.renderer.render(this.scene, this.camera);
     }
 
-    private async addButtons(): Promise<void> {
-        await Promise.all(LobbyButtonConfigList.buttonConfigs.map(async (config) => {
-            const buttonTexture = await this.textureManager.getTexture('main_lobby_buttons', config.id);
-            if (buttonTexture) {
-                const widthPercent = 800 / 1920;  // 기준 화면 크기의 퍼센트로 버튼 크기를 정의
-                const heightPercent = 100 / 1080;
-                const positionPercent = new THREE.Vector2(config.position.x / 1920, config.position.y / 1080);
-
-                const button = new NonBackgroundImage(
-                    window.innerWidth * widthPercent,
-                    window.innerHeight * heightPercent,
-                    new THREE.Vector2(
-                        window.innerWidth * positionPercent.x,
-                        window.innerHeight * positionPercent.y
-                    )
-                );
-                button.createNonBackgroundImageWithTexture(buttonTexture, 1, 1);
-                button.draw(this.scene);
-
-                this.buttons.push(button);
-                this.buttonInitialInfo.set(button.getMesh()?.uuid ?? '', { positionPercent, widthPercent, heightPercent });
-
-                this.mouseController.registerButton(button.getMesh(), this.onButtonClick.bind(this, config.type));
-            } else {
-                console.error("Button texture not found.");
-            }
-        }));
+    public dispose(): void {
+        for (const off of this.teardown) off();
+        this.teardown.length = 0;
     }
 
-    private onButtonClick(type: LobbyButtonType): void {
-        console.log('Button clicked:', type);
+    // 고른 메뉴가 어디로 가는지는 화면이 안다. 메뉴를 다루는 자리는 무엇을 골랐는지만 알린다.
+    private goTo(type: LobbyMenuType): void {
         switch (type) {
-            case LobbyButtonType.OneVsOne:
+            case LobbyMenuType.Battle:
                 // 상대를 찾는 화면이 아직 없다. 없는 길로 보내면 로비로 되돌아와서
                 // 아무 일도 안 일어난 것처럼 보인다. 그래서 알려 준다.
                 void this.showGuide('1대1 대전은 준비 중입니다.');
-                break;
-            case LobbyButtonType.MyCards:
-                this.routeMap.navigate("/tcg-my-card");
-                break;
-            case LobbyButtonType.Shop:
-                console.log('Navigating to /tcg-card-shop')
-                this.routeMap.navigate("/tcg-card-shop");
-                break;
-            case LobbyButtonType.Test:
-                this.routeMap.navigate("/tcg-simulation-battle-field");
-                break;
-            default:
-                console.error("Unknown button type:", type);
+                return;
+            case LobbyMenuType.Deck:
+                // 덱 화면이 앱에 아직 없다. 보유 카드를 볼 유일한 길로 보낸다.
+                // 덱이 붙으면 이 줄이 덱으로 바뀐다 (R2-136).
+                this.routeMap.navigate('/tcg-my-card');
+                return;
+            case LobbyMenuType.Shop:
+                this.routeMap.navigate('/tcg-card-shop');
+                return;
+            case LobbyMenuType.Raid:
+                this.routeMap.navigate('/tcg-raid');
+                return;
+            case LobbyMenuType.TestBattle:
+                this.routeMap.navigate('/tcg-simulation-battle-field');
+                return;
         }
     }
 
@@ -235,50 +171,39 @@ export class TCGMainLobbyView implements Component {
         this.guideRenderer.show(this.guideElement, message, 3000);
     }
 
-    private onWindowResize(): void {
-        const newWidth = window.innerWidth;
-        const newHeight = window.innerHeight;
-        const aspect = newWidth / newHeight;
-        const viewSize = newHeight;
+    // 창 크기가 바뀌었다. 카메라와 그리는 기계를 맞추고, 등록된 것을 차례로 돌린다.
+    private applyViewportSize(): void {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const aspect = width / height;
+        const viewSize = height;
 
         this.camera.left = -aspect * viewSize / 2;
         this.camera.right = aspect * viewSize / 2;
         this.camera.top = viewSize / 2;
         this.camera.bottom = -viewSize / 2;
         this.camera.updateProjectionMatrix();
+        this.renderer.setSize(width, height);
 
-        this.renderer.setSize(newWidth, newHeight);
-
-        if (this.background) {
-            const scaleX = newWidth / this.background.getWidth();
-            const scaleY = newHeight / this.background.getHeight();
-            this.background.setScale(scaleX, scaleY);
-        }
-
-        this.buttons.forEach(button => {
-            const initialInfo = this.buttonInitialInfo.get(button.getMesh()?.uuid ?? '');
-            if (initialInfo) {
-                const newWidth = window.innerWidth * initialInfo.widthPercent;
-                const newHeight = window.innerHeight * initialInfo.heightPercent;
-                const newPosition = new THREE.Vector2(
-                    window.innerWidth * initialInfo.positionPercent.x,
-                    window.innerHeight * initialInfo.positionPercent.y
-                );
-
-                button.setPosition(newPosition.x, newPosition.y);
-                button.setScale(newWidth / button.getWidth(), newHeight / button.getHeight());
-            }
-        });
+        this.onResize.apply(width, height);
     }
 
-    public animate(): void {
-        if (this.isAnimating) {
-            // console.log('Animating frame...'); // 애니메이션 루프가 제대로 동작하는지 확인
-            requestAnimationFrame(() => this.animate());
-            this.renderer.render(this.scene, this.camera);
-        } else {
-            console.log('TCGMainLobby: Animation stopped.'); // 애니메이션 루프가 멈추는지 확인
+    private async playMusic(): Promise<void> {
+        try {
+            await this.audioController.playMusic();
+        } catch (error) {
+            console.error('Initial audio play failed:', error);
         }
+    }
+
+    private listen(
+        target: Window | Document | HTMLElement,
+        type: string,
+        handler: (event: never) => void,
+        options?: AddEventListenerOptions,
+    ): void {
+        const listener = handler as EventListener;
+        target.addEventListener(type, listener, options);
+        this.teardown.push(() => target.removeEventListener(type, listener, options));
     }
 }
-
