@@ -4,7 +4,7 @@ import { NonBackgroundImage } from "../shape/image/NonBackgroundImage";
 import { AudioController } from "../audio/AudioController";
 import myCardMusic from '@resource/music/my_card/my-card.mp3';
 import { MouseController } from "../mouse/MouseController";
-import { RouteMap } from "../router/RouteMap";
+import { Navigator } from "../router/Navigator";
 import { Component } from "../router/Component";
 import {TransparentRectangle} from "../shape/TransparentRectangle";
 
@@ -21,7 +21,7 @@ export class TCGMyCardView implements Component {
     private buttonInitialInfo: Map<string, { positionPercent: THREE.Vector2, widthPercent: number, heightPercent: number }> = new Map();
     private audioController: AudioController;
     private mouseController: MouseController;
-    private routeMap: RouteMap;
+    private routeMap: Navigator;
 
     private initialized = false;
     private isAnimating = false;
@@ -29,7 +29,7 @@ export class TCGMyCardView implements Component {
     private transparentRectangles: TransparentRectangle[] = []
     private rectInitialInfo: Map<string, { positionPercent: THREE.Vector2, widthPercent: number, heightPercent: number }> = new Map();
 
-    constructor(myCardContainer: HTMLElement, routeMap: RouteMap) {
+    constructor(myCardContainer: HTMLElement, routeMap: Navigator) {
         this.myCardContainer = myCardContainer;
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0xffffff);
@@ -49,30 +49,21 @@ export class TCGMyCardView implements Component {
 
         this.textureManager = TextureManager.getInstance();
         this.audioController = AudioController.getInstance();
-        this.audioController.setMusic(myCardMusic);
 
         window.addEventListener('resize', this.onWindowResize.bind(this));
 
         this.mouseController = new MouseController(this.camera, this.scene);
         this.routeMap = routeMap;
 
-        window.addEventListener('click', () => this.initializeAudio(), { once: true });
     }
 
-    public static getInstance(lobbyContainer: HTMLElement, routeMap: RouteMap): TCGMyCardView {
+    public static getInstance(lobbyContainer: HTMLElement, routeMap: Navigator): TCGMyCardView {
         if (!TCGMyCardView.instance) {
             TCGMyCardView.instance = new TCGMyCardView(lobbyContainer, routeMap);
         }
         return TCGMyCardView.instance;
     }
 
-    private async initializeAudio(): Promise<void> {
-        try {
-            await this.audioController.playMusic();
-        } catch (error) {
-            console.error('Initial audio play failed:', error);
-        }
-    }
 
     public async initialize(): Promise<void> {
         if (this.initialized) {
@@ -113,7 +104,9 @@ export class TCGMyCardView implements Component {
     }
 
     public show(): void {
-        console.log('Showing TCGMainLobbyView...');
+        // 이 화면의 음악을 여기서 건다. 만들 때 걸면 돌아올 때 다시 안 걸린다 (R2-134).
+        this.audioController.playForScreen(myCardMusic);
+
         this.renderer.domElement.style.display = 'block';
         this.myCardContainer.style.display = 'block';
         this.isAnimating = true;

@@ -9,6 +9,8 @@
 // These match BattleFieldHandServiceImpl.calculate*Position / create*Mesh exactly.
 // Staff aspect/offset differ from weapon, so a staff-cast MAGICIAN looks identical to the legacy path.
 
+import {CARD_ASPECT} from "../../../../card/shape";
+
 export interface HandCardSlot {
     readonly widthRatio: number;
     readonly aspect: number;
@@ -33,7 +35,7 @@ export interface HandCardFrame {
 export function createDefaultHandCardFrame(): HandCardFrame {
     return {
         cardWidthRatio: 0.06493506493,
-        cardAspect: 1.615,
+        cardAspect: CARD_ASPECT,
         slots: {
             weapon: { widthRatio: 0.63, aspect: 1.651,    offsetXRatio:  0.44, offsetYRatio: -0.45666, renderOrder: 2 },
             staff:  { widthRatio: 0.63, aspect: 1.9353,   offsetXRatio:  0.54, offsetYRatio: -0.30666, renderOrder: 2 },

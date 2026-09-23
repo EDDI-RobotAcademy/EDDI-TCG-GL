@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 import {ViewportResize} from "../core/resize/ViewportResize";
 import {RaidPlaceholderControl} from "./control/RaidPlaceholderControl";
-import {RouteMap} from "../router/RouteMap";
+import {Navigator} from "../router/Navigator";
 import {Component} from "../router/Component";
 
 // 레이드 화면이다.
@@ -27,7 +27,7 @@ export class TCGRaidView implements Component {
 
     private constructor(
         private readonly container: HTMLElement,
-        private readonly routeMap: RouteMap,
+        private readonly routeMap: Navigator,
     ) {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x101014);
@@ -49,7 +49,7 @@ export class TCGRaidView implements Component {
         this.listen(window, 'resize', () => this.applyViewportSize());
     }
 
-    public static getInstance(container: HTMLElement, routeMap: RouteMap): TCGRaidView {
+    public static getInstance(container: HTMLElement, routeMap: Navigator): TCGRaidView {
         if (!TCGRaidView.instance) {
             TCGRaidView.instance = new TCGRaidView(container, routeMap);
         }

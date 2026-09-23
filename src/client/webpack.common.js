@@ -39,6 +39,11 @@ module.exports = {
     },
     output: {
         filename: "bundle.js",
+        // 나중에 받아 오는 화면 덩이의 이름 (R2-134).
+        chunkFilename: "[name].chunk.js",
         path: path.resolve(__dirname, "../../dist/client"),
+        // **뿌리에서 받아 온다.** 화면을 옮기면 주소가 /tcg-card-shop 처럼 깊어지는데,
+        // 이것을 안 적으면 덩이를 /tcg-card-shop/1.chunk.js 에서 찾아 못 받는다.
+        publicPath: "/",
     },
 };

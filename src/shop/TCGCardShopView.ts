@@ -4,10 +4,12 @@ import {GuideMessageHudRendererV2} from "../common/guide_message/renderer/GuideM
 import {createDefaultGuideMessageHudFrame} from "../common/guide_message/frame/GuideMessageHudFrame";
 import {ViewportResize} from "../core/resize/ViewportResize";
 import {ShopMenuControl} from "./control/ShopMenuControl";
+import {ShopDrawControl} from "./control/ShopDrawControl";
+import {LocalCardDraw} from "./draw/LocalCardDraw";
 import {ShopMenuType} from "./entity/ShopMenuType";
 import {AudioController} from "../audio/AudioController";
 import shopMusic from '@resource/music/shop/card-shop.mp3';
-import {RouteMap} from "../router/RouteMap";
+import {Navigator} from "../router/Navigator";
 import {Component} from "../router/Component";
 
 // 상점 화면이다.
@@ -31,12 +33,15 @@ export class TCGCardShopView implements Component {
     private readonly guideFrame = createDefaultGuideMessageHudFrame();
     private guideElement: HTMLElement | null = null;
 
+    // 카드를 뽑는 일. 무엇이 뽑히는지는 이쪽이 묻고 받는다.
+    private drawControl: ShopDrawControl | null = null;
+
     private initialized = false;
     private isAnimating = false;
 
     private constructor(
         private readonly shopContainer: HTMLElement,
-        private readonly routeMap: RouteMap,
+        private readonly routeMap: Navigator,
     ) {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0xffffff);
@@ -56,13 +61,11 @@ export class TCGCardShopView implements Component {
         this.camera.lookAt(0, 0, 0);
 
         this.audioController = AudioController.getInstance();
-        this.audioController.setMusic(shopMusic);
 
         this.listen(window, 'resize', () => this.applyViewportSize());
-        this.listen(window, 'click', () => { void this.playMusic(); }, {once: true});
     }
 
-    public static getInstance(shopContainer: HTMLElement, routeMap: RouteMap): TCGCardShopView {
+    public static getInstance(shopContainer: HTMLElement, routeMap: Navigator): TCGCardShopView {
         if (!TCGCardShopView.instance) {
             TCGCardShopView.instance = new TCGCardShopView(shopContainer, routeMap);
         }
@@ -75,6 +78,19 @@ export class TCGCardShopView implements Component {
             return;
         }
 
+        // 뽑기 화면 둘(확인, 결과)을 다루는 자리. 메뉴보다 먼저 세운다 — 메뉴 누름이
+        // 이쪽이 떠 있는지 물어봐야 한다.
+        this.drawControl = ShopDrawControl.build({
+            scene: this.scene,
+            camera: this.camera,
+            onResize: this.onResize,
+            listen: (target, type, handler) => this.listen(target, type, handler),
+            canvasElement: this.renderer.domElement,
+            // 지금은 이 안에서 굴린다. 서버가 붙으면 서버에 묻는 것으로 바꿔 끼운다.
+            cardDraw: new LocalCardDraw(),
+            announce: (message) => void this.showGuide(message),
+        });
+
         await ShopMenuControl.build({
             scene: this.scene,
             camera: this.camera,
@@ -82,6 +98,7 @@ export class TCGCardShopView implements Component {
             listen: (target, type, handler) => this.listen(target, type, handler),
             canvasElement: this.renderer.domElement,
             onPick: (type) => this.onPick(type),
+            isBlocked: () => this.drawControl?.isOpen() ?? false,
         });
 
         this.initialized = true;
@@ -91,6 +108,9 @@ export class TCGCardShopView implements Component {
 
     // 다시 들어왔다. 다시 만들지 않는다 (로비에서 겪은 것 — R2-131).
     public show(): void {
+        // 이 화면의 음악을 여기서 건다. 만들 때 걸면 돌아올 때 다시 안 걸린다.
+        this.audioController.playForScreen(shopMusic);
+
         this.renderer.domElement.style.display = 'block';
         this.shopContainer.style.display = 'block';
         for (const child of this.scene.children) child.visible = true;
@@ -135,9 +155,7 @@ export class TCGCardShopView implements Component {
             case ShopMenuType.DrawUndead:
             case ShopMenuType.DrawTrent:
             case ShopMenuType.DrawHuman:
-                // 카드 뽑기가 아직 없다. 없는 길로 보내면 상점에서 튕겨 나간 것처럼
-                // 보인다. 그래서 알려 준다 (R2-136 에서 실제로 사게 된다).
-                void this.showGuide('카드 뽑기는 준비 중입니다.');
+                void this.drawControl?.openConfirm(type);
                 return;
             case ShopMenuType.ToLobby:
                 this.routeMap.navigate('/tcg-main-lobby');
@@ -173,13 +191,6 @@ export class TCGCardShopView implements Component {
         this.onResize.apply(width, height);
     }
 
-    private async playMusic(): Promise<void> {
-        try {
-            await this.audioController.playMusic();
-        } catch (error) {
-            console.error('Initial audio play failed:', error);
-        }
-    }
 
     private listen(
         target: Window | Document | HTMLElement,

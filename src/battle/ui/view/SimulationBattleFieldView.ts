@@ -149,6 +149,10 @@ export class SimulationBattleFieldView implements Component {
     }
 
     public show(): void {
+        // 이 화면의 음악을 여기서 건다. 만들 때만 걸면 다른 화면에 갔다 돌아올 때
+        // 다시 안 걸린다 (R2-134).
+        AudioController.getInstance().playForScreen(battleFieldMusic);
+
         // 자기 그림판과 함께 쓰는 자리를 둘 다 보이게 한다. 다른 화면도 같은 모양이다.
         if (this.canvas) this.canvas.style.display = 'block';
         this.container.style.display = 'block';
@@ -331,11 +335,6 @@ export class SimulationBattleFieldView implements Component {
         const aspectRatio = window.innerWidth / window.innerHeight;
         const viewSize = window.innerHeight;
         const camera = cameraManager.createAndSetActiveCamera(aspectRatio, viewSize);
-
-        // Background music — plays on first user interaction (browser autoplay policy)
-        const audioController = AudioController.getInstance();
-        audioController.setMusic(battleFieldMusic);
-        this.listen(window, 'click', () => { void audioController.playMusic(); }, { once: true });
 
         const scene = sceneManager.createScene('simulation-battle-field');
 

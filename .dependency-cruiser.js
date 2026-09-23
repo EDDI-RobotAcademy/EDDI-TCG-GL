@@ -126,13 +126,15 @@ module.exports = {
             to: { path: '(^|/)node_modules/three($|/)|^three$' },
         },
         {
-            name: 'no-circular-legacy',
+            name: 'no-circular',
             comment:
-                '기존 코드 순환 — 관측용(warn). 현재 6건이 있으며 전부 R2-3 이전부터 존재한다. ' +
-                'R2-3은 소스를 수정하지 않으므로 여기서 고치지 않는다. ' +
-                '목록과 담당 티켓은 docs/refactoring/R2-3-dependency-rules.md 참조. ' +
-                '전부 해소되면 severity 를 error 로 올린다.',
-            severity: 'warn',
+                '[R2-134] 돌아가는 고리를 만들지 않는다. **0건이 된 지금 잠근다.** ' +
+                'R2-3 에서 여섯 건으로 시작해 관측용(warn) 으로 두었고, [전부 해소되면 error 로 ' +
+                '올린다] 고 적어 두었다. 마지막 넷이 [화면 → 길 안내 → 길 목록 → 화면] 이었고 ' +
+                'R2-134 에서 끊었다 — 그 고리가 화면별로 쪼개는 것을 막고 있었다. ' +
+                '고리는 보기 싫은 경고가 아니라 나중에 받아 오는 것을 못 하게 만드는 벽이다. ' +
+                '다시 생기면 여기서 막힌다.',
+            severity: 'error',
             from: {},
             to: { circular: true },
         },
