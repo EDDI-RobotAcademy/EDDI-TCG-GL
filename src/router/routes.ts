@@ -1,50 +1,56 @@
-import { TCGMainLobbyView } from '../lobby/TCGMainLobbyView';
-import {TCGRaidView} from "../raid/TCGRaidView";
-import {RouteMap} from "./RouteMap";
-import {Component} from "./Component";
-import {TCGCardShopView} from "../shop/TCGCardShopView";
-import {SimulationBattleFieldView} from "../battle/ui/view/SimulationBattleFieldView";
-import {TCGMyCardView} from "../my_card/TCGMyCardView";
+import {Route} from "./Route";
 
-export interface Route {
-    path: string;
-    getComponentInstance: (rootElement: HTMLElement, routeMap: RouteMap) => Component;
-}
-
+// 갈 수 있는 길의 목록이다.
+//
+// **화면을 미리 들여오지 않는다.** `import(...)` 를 부를 때 그 화면의 코드가 내려온다.
+// 그래서 로비를 열 때 로비만 내려오고, 나머지 넷은 사용자가 로비를 보는 동안 브라우저가
+// 한가한 틈에 미리 받아 둔다 (`webpackPrefetch`). 누를 때는 이미 와 있으므로 멈칫하지
+// 않는다.
+//
+// 전에는 이 파일이 화면 다섯을 맨 위에서 다 들여왔다. 그래서 어느 화면에서 시작해도
+// 189파일 35,055줄이 전부 딸려오고, 내려가는 파일 하나가 6.87MB 였다 (R2-134).
 export const routes: Route[] = [
     {
         path: '/tcg-main-lobby',
-        getComponentInstance: (rootElement: HTMLElement, routeMap: RouteMap) => {
-            return TCGMainLobbyView.getInstance(rootElement, routeMap);
-        }
+        load: async () => {
+            const {TCGMainLobbyView} = await import('../lobby/TCGMainLobbyView');
+            return (root, navigator) => TCGMainLobbyView.getInstance(root, navigator);
+        },
     },
     {
         path: '/tcg-card-shop',
-        getComponentInstance: (rootElement: HTMLElement, routeMap: RouteMap) => {
-            return TCGCardShopView.getInstance(rootElement, routeMap);
-        }
+        load: async () => {
+            const {TCGCardShopView} = await import(
+                /* webpackPrefetch: true */ '../shop/TCGCardShopView');
+            return (root, navigator) => TCGCardShopView.getInstance(root, navigator);
+        },
     },
     {
         // 대전 화면이다. 이름의 simulation 은 임시다. 나중에 대전으로 바뀐다.
         //
-        // 확인용 화면으로 만들어 오던 것을 그대로 띄운다. 카드 열두 장의 효과,
-        // 필드 에너지, 턴 표시, 무덤과 로스트 존이 다 여기 있다.
+        // 다섯 중 가장 크다. 미리 받아 두는 것이 가장 크게 듣는 자리다.
         path: '/tcg-simulation-battle-field',
-        getComponentInstance: (rootElement: HTMLElement) => {
-            return SimulationBattleFieldView.getInstance(rootElement);
-        }
+        load: async () => {
+            const {SimulationBattleFieldView} = await import(
+                /* webpackPrefetch: true */ '../battle/ui/view/SimulationBattleFieldView');
+            return (root) => SimulationBattleFieldView.getInstance(root);
+        },
     },
     {
         // 레이드 화면이다. 아직 준비 중이라 자리만 있다 (R2-132).
         path: '/tcg-raid',
-        getComponentInstance: (rootElement: HTMLElement, routeMap: RouteMap) => {
-            return TCGRaidView.getInstance(rootElement, routeMap);
-        }
+        load: async () => {
+            const {TCGRaidView} = await import(
+                /* webpackPrefetch: true */ '../raid/TCGRaidView');
+            return (root, navigator) => TCGRaidView.getInstance(root, navigator);
+        },
     },
     {
         path: '/tcg-my-card',
-        getComponentInstance: (rootElement: HTMLElement, routeMap: RouteMap) => {
-            return TCGMyCardView.getInstance(rootElement, routeMap);
-        }
+        load: async () => {
+            const {TCGMyCardView} = await import(
+                /* webpackPrefetch: true */ '../my_card/TCGMyCardView');
+            return (root, navigator) => TCGMyCardView.getInstance(root, navigator);
+        },
     },
 ];

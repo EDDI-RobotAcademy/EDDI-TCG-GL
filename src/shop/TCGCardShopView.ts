@@ -7,7 +7,7 @@ import {ShopMenuControl} from "./control/ShopMenuControl";
 import {ShopMenuType} from "./entity/ShopMenuType";
 import {AudioController} from "../audio/AudioController";
 import shopMusic from '@resource/music/shop/card-shop.mp3';
-import {RouteMap} from "../router/RouteMap";
+import {Navigator} from "../router/Navigator";
 import {Component} from "../router/Component";
 
 // 상점 화면이다.
@@ -36,7 +36,7 @@ export class TCGCardShopView implements Component {
 
     private constructor(
         private readonly shopContainer: HTMLElement,
-        private readonly routeMap: RouteMap,
+        private readonly routeMap: Navigator,
     ) {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0xffffff);
@@ -56,13 +56,11 @@ export class TCGCardShopView implements Component {
         this.camera.lookAt(0, 0, 0);
 
         this.audioController = AudioController.getInstance();
-        this.audioController.setMusic(shopMusic);
 
         this.listen(window, 'resize', () => this.applyViewportSize());
-        this.listen(window, 'click', () => { void this.playMusic(); }, {once: true});
     }
 
-    public static getInstance(shopContainer: HTMLElement, routeMap: RouteMap): TCGCardShopView {
+    public static getInstance(shopContainer: HTMLElement, routeMap: Navigator): TCGCardShopView {
         if (!TCGCardShopView.instance) {
             TCGCardShopView.instance = new TCGCardShopView(shopContainer, routeMap);
         }
@@ -91,6 +89,9 @@ export class TCGCardShopView implements Component {
 
     // 다시 들어왔다. 다시 만들지 않는다 (로비에서 겪은 것 — R2-131).
     public show(): void {
+        // 이 화면의 음악을 여기서 건다. 만들 때 걸면 돌아올 때 다시 안 걸린다.
+        this.audioController.playForScreen(shopMusic);
+
         this.renderer.domElement.style.display = 'block';
         this.shopContainer.style.display = 'block';
         for (const child of this.scene.children) child.visible = true;
@@ -173,13 +174,6 @@ export class TCGCardShopView implements Component {
         this.onResize.apply(width, height);
     }
 
-    private async playMusic(): Promise<void> {
-        try {
-            await this.audioController.playMusic();
-        } catch (error) {
-            console.error('Initial audio play failed:', error);
-        }
-    }
 
     private listen(
         target: Window | Document | HTMLElement,

@@ -7,7 +7,7 @@ import {LobbyMenuControl} from "./control/LobbyMenuControl";
 import {LobbyMenuType} from "./entity/LobbyMenuType";
 import {AudioController} from "../audio/AudioController";
 import lobbyMusic from '@resource/music/lobby/lobby-menu.mp3';
-import {RouteMap} from "../router/RouteMap";
+import {Navigator} from "../router/Navigator";
 import {Component} from "../router/Component";
 
 // 로비 화면이다.
@@ -40,7 +40,7 @@ export class TCGMainLobbyView implements Component {
 
     private constructor(
         private readonly lobbyContainer: HTMLElement,
-        private readonly routeMap: RouteMap,
+        private readonly routeMap: Navigator,
     ) {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0xffffff);
@@ -60,13 +60,11 @@ export class TCGMainLobbyView implements Component {
         this.camera.lookAt(0, 0, 0);
 
         this.audioController = AudioController.getInstance();
-        this.audioController.setMusic(lobbyMusic);
 
         this.listen(window, 'resize', () => this.applyViewportSize());
-        this.listen(window, 'click', () => { void this.playMusic(); }, {once: true});
     }
 
-    public static getInstance(lobbyContainer: HTMLElement, routeMap: RouteMap): TCGMainLobbyView {
+    public static getInstance(lobbyContainer: HTMLElement, routeMap: Navigator): TCGMainLobbyView {
         if (!TCGMainLobbyView.instance) {
             TCGMainLobbyView.instance = new TCGMainLobbyView(lobbyContainer, routeMap);
         }
@@ -99,6 +97,9 @@ export class TCGMainLobbyView implements Component {
     // 물건을 다시 만들었고, 누름 처리기도 그때마다 다시 붙였다. 한 번 만들고 보이기만
     // 바꾼다.
     public show(): void {
+        // 이 화면의 음악을 여기서 건다. 만들 때 걸면 돌아올 때 다시 안 걸린다.
+        this.audioController.playForScreen(lobbyMusic);
+
         this.renderer.domElement.style.display = 'block';
         this.lobbyContainer.style.display = 'block';
         for (const child of this.scene.children) child.visible = true;
@@ -188,13 +189,6 @@ export class TCGMainLobbyView implements Component {
         this.onResize.apply(width, height);
     }
 
-    private async playMusic(): Promise<void> {
-        try {
-            await this.audioController.playMusic();
-        } catch (error) {
-            console.error('Initial audio play failed:', error);
-        }
-    }
 
     private listen(
         target: Window | Document | HTMLElement,
