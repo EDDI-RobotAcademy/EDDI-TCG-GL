@@ -1,4 +1,5 @@
 import { TCGMainLobbyView } from '../lobby/TCGMainLobbyView';
+import {TCGRaidView} from "../raid/TCGRaidView";
 import {RouteMap} from "./RouteMap";
 import {Component} from "./Component";
 import {TCGCardShopView} from "../shop/TCGCardShopView";
@@ -31,6 +32,13 @@ export const routes: Route[] = [
         path: '/tcg-simulation-battle-field',
         getComponentInstance: (rootElement: HTMLElement) => {
             return SimulationBattleFieldView.getInstance(rootElement);
+        }
+    },
+    {
+        // 레이드 화면이다. 아직 준비 중이라 자리만 있다 (R2-132).
+        path: '/tcg-raid',
+        getComponentInstance: (rootElement: HTMLElement, routeMap: RouteMap) => {
+            return TCGRaidView.getInstance(rootElement, routeMap);
         }
     },
     {
