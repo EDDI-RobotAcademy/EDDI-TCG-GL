@@ -5,6 +5,7 @@ import {createDefaultGuideMessageHudFrame} from "../common/guide_message/frame/G
 import {ViewportResize} from "../core/resize/ViewportResize";
 import {ShopMenuControl} from "./control/ShopMenuControl";
 import {ShopDrawControl} from "./control/ShopDrawControl";
+import {GachaOverlayControl} from "./control/GachaOverlayControl";
 import {LocalCardDraw} from "./draw/LocalCardDraw";
 import {ShopMenuType} from "./entity/ShopMenuType";
 import {AudioController} from "../audio/AudioController";
@@ -28,13 +29,17 @@ export class TCGCardShopView implements Component {
 
     private readonly onResize = new ViewportResize();
     private readonly teardown: (() => void)[] = [];
+    // 몸통에 붙인 겹. 화면을 떠날 때 치운다.
+    private readonly overlays: HTMLElement[] = [];
 
     private readonly guideRenderer = new GuideMessageHudRendererV2();
     private readonly guideFrame = createDefaultGuideMessageHudFrame();
     private guideElement: HTMLElement | null = null;
 
-    // 카드를 뽑는 일. 무엇이 뽑히는지는 이쪽이 묻고 받는다.
+    // 뽑기를 확인하는 화면.
     private drawControl: ShopDrawControl | null = null;
+    // 영상과 카드 열 장. 화면 위에 얹는 겹으로 그린다.
+    private gacha: GachaOverlayControl | null = null;
 
     private initialized = false;
     private isAnimating = false;
@@ -78,17 +83,27 @@ export class TCGCardShopView implements Component {
             return;
         }
 
-        // 뽑기 화면 둘(확인, 결과)을 다루는 자리. 메뉴보다 먼저 세운다 — 메뉴 누름이
-        // 이쪽이 떠 있는지 물어봐야 한다.
+        // 영상과 카드 열 장을 그리는 겹.
+        //
+        // 무엇이 뽑히는지는 뽑는 창구가 정한다. 지금은 이 안에서 굴리고, 서버가 붙으면
+        // 서버에 묻는 것으로 바꿔 끼운다.
+        this.gacha = GachaOverlayControl.build({
+            appendToBody: (element) => this.appendToBody(element),
+            listen: (target, type, handler) => this.listen(target, type, handler),
+            cardDraw: new LocalCardDraw(),
+            announce: (message) => void this.showGuide(message),
+            onClosed: () => { /* 뒤를 다시 누를 수 있다. 따로 할 일은 없다 */ },
+        });
+
+        // 뽑기를 확인하는 화면. 메뉴보다 먼저 세운다 — 메뉴 누름이 이쪽이 떠 있는지
+        // 물어봐야 한다.
         this.drawControl = ShopDrawControl.build({
             scene: this.scene,
             camera: this.camera,
             onResize: this.onResize,
             listen: (target, type, handler) => this.listen(target, type, handler),
             canvasElement: this.renderer.domElement,
-            // 지금은 이 안에서 굴린다. 서버가 붙으면 서버에 묻는 것으로 바꿔 끼운다.
-            cardDraw: new LocalCardDraw(),
-            announce: (message) => void this.showGuide(message),
+            onConfirmed: (race) => { void this.gacha?.start(race); },
         });
 
         await ShopMenuControl.build({
@@ -98,7 +113,8 @@ export class TCGCardShopView implements Component {
             listen: (target, type, handler) => this.listen(target, type, handler),
             canvasElement: this.renderer.domElement,
             onPick: (type) => this.onPick(type),
-            isBlocked: () => this.drawControl?.isOpen() ?? false,
+            isBlocked: () =>
+                (this.drawControl?.isOpen() ?? false) || (this.gacha?.isOpen() ?? false),
         });
 
         this.initialized = true;
@@ -125,6 +141,10 @@ export class TCGCardShopView implements Component {
 
     public hide(): void {
         this.isAnimating = false;
+
+        // 뽑기 판이 떠 있으면 닫는다. 안 닫으면 다른 화면을 덮는다.
+        this.gacha?.close();
+        this.drawControl?.close();
 
         // 상점을 떠날 때 안내 문구도 함께 치운다.
         if (this.guideElement) {
@@ -191,6 +211,15 @@ export class TCGCardShopView implements Component {
         this.onResize.apply(width, height);
     }
 
+
+    // 화면 위에 얹는 겹을 몸통에 붙인다.
+    //
+    // 화면을 떠날 때 함께 치우려고 여기서 적어 둔다. 상점을 나갔는데 뽑기 판이 남아 있으면
+    // 다른 화면을 덮는다.
+    private appendToBody(element: HTMLElement): void {
+        document.body.appendChild(element);
+        this.overlays.push(element);
+    }
 
     private listen(
         target: Window | Document | HTMLElement,
