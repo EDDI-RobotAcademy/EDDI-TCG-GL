@@ -15,6 +15,13 @@ node_modules
 # exclude *.mp3
 *.mp3
 
+# exclude 영상
+#
+# 다른 자원과 같이 resource.zip 으로 다닌다. 영상은 크다 — 뽑기 영상 하나가 원본 17.76MB,
+# 줄인 것이 2.6MB 다. 저장소에 넣으면 고칠 때마다 그만큼이 통째로 기록된다.
+*.mp4
+*.webm
+
 # exclude *.otf
 *.otf
 
