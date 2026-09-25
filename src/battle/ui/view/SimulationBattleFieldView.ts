@@ -3,12 +3,13 @@ import { SeaOfSpecterEffect } from "../animation/skill/veln/SeaOfSpecterEffect";
 import { installTween } from "../../../core/tween/Tween";
 import { CardCatalog } from "../../domain/ability/CardCatalog";
 import {
-    SIMULATION_HAND_CARD_IDS, SIMULATION_OPPONENT_CARD_IDS, SIMULATION_OPPONENT_ENERGY,
-    simulationBattleSnapshot,
+    SIMULATION_OPPONENT_CARD_IDS, SIMULATION_OPPONENT_ENERGY,
+    dealOpeningHand, simulationBattleSnapshot,
 } from "../../simulation/SimulationBattleSetup";
 import { createOpponentMasterAreaFrame } from "../master_area/frame/OpponentMasterAreaFrame";
 import { OpponentMasterAreaRendererV2 } from "../master_area/renderer/OpponentMasterAreaRendererV2";
 import { ZonePanels } from "../zone/control/ZonePanels";
+import { OpeningHandControl } from "../opening/control/OpeningHandControl";
 import { createZoneSpecs } from "../zone/control/zoneSpecs";
 import { ViewportResize } from "../../../core/resize/ViewportResize";
 import { PointerRouter } from "../input/PointerRouter";
@@ -114,6 +115,8 @@ export class SimulationBattleFieldView implements Component {
     private static instance: SimulationBattleFieldView | null = null;
 
     private initialized = false;
+    // 받은 카드를 크게 보여 주는 겹. [시작] 을 누르면 스스로 치우고 null 이 된다.
+    private openingHand: OpeningHandControl | null = null;
     // 화면 밖에 붙인 것과 그것이 원래 쓰던 보이기 방식.
     //
     // 되돌릴 때 빈 값을 넣으면 안 된다. 이 조각들은 flex 로 가운데를 맞추는데,
@@ -203,6 +206,8 @@ export class SimulationBattleFieldView implements Component {
     }
 
     public dispose(): void {
+        this.openingHand?.dispose();
+        this.openingHand = null;
         for (const off of this.teardown) off();
         this.teardown.length = 0;
         for (const it of this.appended) it.element.remove();
@@ -421,7 +426,25 @@ export class SimulationBattleFieldView implements Component {
         //  // 레오닉의 부름 (SUPPORT) — pick 2 hero-or-below UNITs from deck
         //  // 시체 폭발 (ITEM) — sacrifice undead ally → 2x10 dmg to enemies
         // 손패의 시작 카드는 확인용 차림표가 정한다.
-        const hand = resolveCards([...SIMULATION_HAND_CARD_IDS], 'hand');
+        // 대전을 시작할 때 덱을 섞어 손패를 받는다. 남은 덱은 아래에서 판에 적어 넣는다.
+        // **여기서 섞지 않는다** — 판을 차리는 쪽이 하고 화면은 받은 것을 그린다.
+        const opening = dealOpeningHand();
+        const hand = resolveCards([...opening.hand], 'hand');
+        console.log(
+            `[battle] 시작 손패 ${opening.hand.length}장: ${opening.hand.join(', ')}`
+            + ` / 남은 덱 ${opening.deck.length}장`,
+        );
+
+        // 받은 카드를 화면 가운데 크게 보여 준다. [시작] 을 누르면 걷힌다.
+        //
+        // **손패는 아래에 이미 깔려 있다.** 이 겹은 그 위를 덮고 있을 뿐이라, 걷히면
+        // 바로 쓸 수 있다. 멀리건이 붙을 자리도 여기다.
+        this.openingHand = OpeningHandControl.build({
+            appendToBody: (element) => this.appendToBody(element),
+            listen: (target, type, handler) => this.listen(target, type, handler),
+            onConfirmed: () => { this.openingHand = null; },
+        });
+        void this.openingHand.present(opening.hand);
 
         // 섞을 때 쓸 씨앗을 만든다. 도메인 안에서는 무작위를 못 쓰므로 밖에서 만들어 넣는다.
         // 씨앗을 적어 두면 같은 순서를 다시 만들 수 있다. 재접속과 다시 보기에 그것이 필요하다.
@@ -550,6 +573,7 @@ export class SimulationBattleFieldView implements Component {
                 opponentCards.map((oc) => ({
                     cardId: oc.cardId, energyCount: oc.energyCount, raceId: oc.raceId,
                 })),
+                opening.deck,
             ),
             cardCatalog,
         );
