@@ -13,8 +13,13 @@ export class OpeningHandRenderer implements DomFrameRenderer<OpeningHandFrame> {
         root.innerHTML = `
             <div class="battle-opening-scrim"></div>
             <div class="battle-opening-title">${frame.title}</div>
+            <div class="battle-opening-hint">${frame.hint}</div>
             <div class="battle-opening-cards"></div>
-            <button class="battle-opening-confirm" type="button">${frame.confirmLabel}</button>
+            <div class="battle-opening-buttons">
+                <button class="battle-opening-mulligan" type="button" disabled
+                        data-label="${frame.mulliganLabel}">${frame.mulliganLabel}</button>
+                <button class="battle-opening-confirm" type="button">${frame.confirmLabel}</button>
+            </div>
         `;
         return root;
     }
@@ -32,6 +37,62 @@ export class OpeningHandRenderer implements DomFrameRenderer<OpeningHandFrame> {
 
     public confirmButton(root: HTMLElement): HTMLElement | null {
         return root.querySelector('.battle-opening-confirm');
+    }
+
+    public mulliganButton(root: HTMLElement): HTMLButtonElement | null {
+        return root.querySelector('.battle-opening-mulligan');
+    }
+
+    public cardSlots(root: HTMLElement): HTMLElement[] {
+        return Array.prototype.slice.call(
+            root.querySelectorAll('.battle-opening-card'),
+        ) as HTMLElement[];
+    }
+
+    // 누른 것이 몇 번째 카드인가. 카드 밖을 눌렀으면 -1.
+    public slotIndexOf(root: HTMLElement, target: HTMLElement | null): number {
+        const slot = target?.closest<HTMLElement>('.battle-opening-card');
+        if (!slot) return -1;
+        return this.cardSlots(root).indexOf(slot);
+    }
+
+    public setPicked(slot: HTMLElement, picked: boolean): void {
+        slot.classList.toggle('is-picked', picked);
+    }
+
+    public isPicked(slot: HTMLElement): boolean {
+        return slot.classList.contains('is-picked');
+    }
+
+    // 바꾸기 단추. 고른 것이 없거나 이미 썼으면 못 누른다.
+    public setMulliganState(
+        frame: OpeningHandFrame, root: HTMLElement, pickedCount: number, used: boolean,
+    ): void {
+        const button = this.mulliganButton(root);
+        if (!button) return;
+        button.disabled = used || pickedCount === 0;
+        button.textContent = used
+            ? `${frame.mulliganLabel} 완료`
+            : (pickedCount === 0 ? frame.mulliganLabel : `${frame.mulliganLabel} ${pickedCount}`);
+    }
+
+    // 바뀐 카드만 그림을 갈아 끼우고 한 번 번쩍인다. 판을 다시 깔지 않는다 —
+    // 다시 깔면 안 바뀐 카드까지 나타나는 움직임을 처음부터 다시 한다.
+    public replaceCards(
+        frame: OpeningHandFrame, root: HTMLElement,
+        cardIds: readonly number[], changed: readonly number[],
+    ): void {
+        const slots = this.cardSlots(root);
+        for (const at of changed) {
+            const slot = slots[at];
+            const image = slot?.querySelector('img');
+            if (!slot || !image) continue;
+            image.src = frame.cardImage(cardIds[at]);
+            slot.classList.remove('is-picked');
+            slot.classList.remove('is-swapped');
+            void slot.offsetWidth;
+            slot.classList.add('is-swapped');
+        }
     }
 
     // 받은 카드를 깐다. 한 장씩 차례로 나타난다.
@@ -93,6 +154,9 @@ function ensureStyle(frame: OpeningHandFrame): void {
     font-size: 22px; font-weight: 800; letter-spacing: 8px; color: #f7e6b5;
     text-shadow: 0 0 22px rgba(247, 230, 181, 0.45), 0 2px 4px rgba(0, 0, 0, 0.8);
 }
+.battle-opening-hint {
+    margin-top: -2vh; font-size: 12px; letter-spacing: 3px; color: #8fa3c7;
+}
 
 /* 다섯 장을 한 줄로.
  *
@@ -109,10 +173,50 @@ function ensureStyle(frame: OpeningHandFrame): void {
     gap: var(--gap);
 }
 .battle-opening-card {
-    flex: 0 0 auto;
+    position: relative; flex: 0 0 auto; cursor: pointer;
     width: var(--card-w); height: calc(var(--card-w) * ${frame.cardAspect});
     opacity: 0;
     filter: drop-shadow(0 14px 34px rgba(0, 0, 0, 0.7));
+    transition: transform 0.18s ease;
+}
+.battle-opening-card:hover { transform: translateY(-1.2%); }
+
+/* 바꿀 카드로 고른 표시 — 네온 테두리.
+ *
+ * 카드 그림에 둘레 여백(1.3%)이 있어서 테두리를 카드 끝에 붙이려면 안으로 조금 들인다. */
+.battle-opening-card.is-picked::after {
+    content: ''; position: absolute; inset: 1.2%;
+    border: 3px solid ${frame.pickBaseColor};
+    border-radius: 3%;
+    box-shadow: 0 0 16px ${frame.pickGlowColor},
+                0 0 34px ${frame.pickGlowColor}80,
+                inset 0 0 14px ${frame.pickGlowColor}66;
+    pointer-events: none;
+    animation: battle-opening-pulse ${frame.pickPulseMs}ms ease-in-out infinite;
+}
+/* 고른 카드는 살짝 가라앉는다. 테두리만으로는 [고름] 인지 [강조] 인지 헷갈린다 */
+.battle-opening-card.is-picked img { filter: brightness(0.62) saturate(0.7); }
+/* 바뀔 것이라는 표 */
+.battle-opening-card.is-picked::before {
+    content: '↻'; position: absolute; z-index: 2;
+    top: 4%; right: 4%; width: 1.9em; height: 1.9em;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; font-size: calc(var(--card-w) * 0.11); line-height: 1;
+    color: #1a1207; background: ${frame.pickBaseColor};
+    box-shadow: 0 0 12px ${frame.pickGlowColor};
+}
+@keyframes battle-opening-pulse {
+    0%, 100% { opacity: 0.55; }
+    50%      { opacity: 1; }
+}
+
+/* 새로 받은 카드가 한 번 번쩍인다 */
+.battle-opening-card.is-swapped {
+    animation: battle-opening-swap 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes battle-opening-swap {
+    0%   { transform: rotateY(90deg) scale(0.9); filter: brightness(2.4); }
+    100% { transform: none; filter: none; }
 }
 .battle-opening-card img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
@@ -124,6 +228,21 @@ function ensureStyle(frame: OpeningHandFrame): void {
 @keyframes battle-opening-deal {
     0%   { opacity: 0; transform: translateY(14%) scale(0.86); }
     100% { opacity: 1; transform: none; }
+}
+
+.battle-opening-buttons { display: flex; align-items: center; gap: 14px; }
+
+.battle-opening-mulligan {
+    padding: 12px 30px; font-size: 13px; font-weight: 700; letter-spacing: 3px;
+    border-radius: 30px; cursor: pointer; outline: none;
+    color: ${frame.pickBaseColor}; background: rgba(20, 14, 4, 0.7);
+    border: 1px solid ${frame.pickBaseColor};
+    transition: background 0.2s ease, opacity 0.2s ease;
+}
+.battle-opening-mulligan:hover:not(:disabled) { background: rgba(255, 154, 46, 0.22); }
+.battle-opening-mulligan:disabled {
+    opacity: 0.38; cursor: default;
+    color: #8fa3c7; border-color: rgba(143, 163, 199, 0.35);
 }
 
 .battle-opening-confirm {
@@ -140,12 +259,17 @@ function ensureStyle(frame: OpeningHandFrame): void {
 @media (max-width: 768px) {
     .battle-opening-title { font-size: 16px; letter-spacing: 4px; }
     .battle-opening-cards { --by-height: calc(46vh / ${frame.cardAspect}); }
-    .battle-opening-confirm { padding: 10px 28px; font-size: 12px; letter-spacing: 2px; }
+    .battle-opening-confirm, .battle-opening-mulligan {
+        padding: 10px 24px; font-size: 12px; letter-spacing: 2px;
+    }
+    .battle-opening-hint { font-size: 11px; letter-spacing: 2px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .battle-opening { transition-duration: 0.01ms !important; }
-    .battle-opening[data-state="shown"] .battle-opening-card {
+    .battle-opening[data-state="shown"] .battle-opening-card,
+    .battle-opening-card.is-picked::after,
+    .battle-opening-card.is-swapped {
         animation: none !important; opacity: 1;
     }
 }

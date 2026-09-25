@@ -126,6 +126,25 @@ export function dealOpeningHand(): OpeningDeal {
     };
 }
 
+// 고른 카드만 덱에서 새로 받아 온다 (멀리건).
+//
+// **돌려 넣고 섞은 뒤에 뽑는다.** 그래서 방금 버린 카드가 다시 올 수도 있다 — 그게 맞다.
+// 안 섞고 덱 맨 위에서 뽑으면 [버리면 반드시 다른 카드] 가 되어, 버릴수록 이득이 된다.
+//
+// 바뀐 카드는 **있던 자리에 그대로** 꽂는다. 자리가 흐트러지면 무엇이 바뀌었는지 못 본다.
+//
+// 여기도 값만 다룬다. 판을 만지지 않는다.
+export function applyMulligan(deal: OpeningDeal, indexes: readonly number[]): OpeningDeal {
+    if (indexes.length === 0) return deal;
+
+    const hand = [...deal.hand];
+    const returned = indexes.map((at) => hand[at]);
+    const shuffled = shuffled52([...deal.deck, ...returned]);
+
+    indexes.forEach((at, k) => { hand[at] = shuffled[k]; });
+    return {hand, deck: shuffled.slice(indexes.length)};
+}
+
 // 피셔-예이츠. 뒤에서부터 앞으로 한 칸씩 자리를 바꾼다.
 //
 // 앞에서부터 바꾸거나 두 자리를 아무렇게나 골라 바꾸면 **자리마다 나올 확률이 달라진다.**

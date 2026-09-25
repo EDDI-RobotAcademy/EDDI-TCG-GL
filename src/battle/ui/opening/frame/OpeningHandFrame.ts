@@ -30,7 +30,19 @@ export interface OpeningHandFrame {
     readonly fadeMs: number;
 
     readonly title: string;
+    readonly hint: string;
     readonly confirmLabel: string;
+    readonly mulliganLabel: string;
+
+    // 바꿀 카드로 고른 표시. 네온 테두리 색이다.
+    //
+    // 레오닉의 부름이 쓰는 **초록은 [아군 지정] 뜻이 이미 붙어 있고**, 카드 그림 테두리도
+    // 초록이라 묻힌다. 빨강은 [적 지정] 이다. 그래서 아직 안 쓰는 호박색을 쓴다 —
+    // [바뀔 것] 으로 읽히고 어두운 카드 그림 위에서 가장 잘 뛴다.
+    readonly pickBaseColor: string;
+    readonly pickGlowColor: string;
+    // 테두리가 밝기를 오르내리는 한 바퀴. **초에 한 번보다 빠르면 안 된다.**
+    readonly pickPulseMs: number;
 
     // 카드 그림 경로를 카드 번호로 만든다.
     cardImage(cardId: number): string;
@@ -49,7 +61,13 @@ export function createDefaultOpeningHandFrame(): OpeningHandFrame {
         fadeMs: 420,
 
         title: '받은 카드',
+        hint: '바꾸고 싶은 카드를 누르세요',
         confirmLabel: '시작',
+        mulliganLabel: '바꾸기',
+
+        pickBaseColor: '#ff9a2e',
+        pickGlowColor: '#ffd48a',
+        pickPulseMs: 1100,
 
         // 내 카드 화면의 큰 그림을 쓴다. 크게 보여 주는 자리라 전투용 작은 그림은 뭉갠다.
         cardImage: (cardId) => `resource/my_card/card/${cardId}.png`,

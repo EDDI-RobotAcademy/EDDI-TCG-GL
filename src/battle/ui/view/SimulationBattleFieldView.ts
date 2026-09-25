@@ -4,7 +4,7 @@ import { installTween } from "../../../core/tween/Tween";
 import { CardCatalog } from "../../domain/ability/CardCatalog";
 import {
     SIMULATION_OPPONENT_CARD_IDS, SIMULATION_OPPONENT_ENERGY,
-    dealOpeningHand, simulationBattleSnapshot,
+    applyMulligan, dealOpeningHand, simulationBattleSnapshot,
 } from "../../simulation/SimulationBattleSetup";
 import { createOpponentMasterAreaFrame } from "../master_area/frame/OpponentMasterAreaFrame";
 import { OpponentMasterAreaRendererV2 } from "../master_area/renderer/OpponentMasterAreaRendererV2";
@@ -426,25 +426,34 @@ export class SimulationBattleFieldView implements Component {
         //  // 레오닉의 부름 (SUPPORT) — pick 2 hero-or-below UNITs from deck
         //  // 시체 폭발 (ITEM) — sacrifice undead ally → 2x10 dmg to enemies
         // 손패의 시작 카드는 확인용 차림표가 정한다.
-        // 대전을 시작할 때 덱을 섞어 손패를 받는다. 남은 덱은 아래에서 판에 적어 넣는다.
+        // 대전을 시작할 때 덱을 섞어 손패를 받는다.
         // **여기서 섞지 않는다** — 판을 차리는 쪽이 하고 화면은 받은 것을 그린다.
-        const opening = dealOpeningHand();
+        let opening = dealOpeningHand();
+
+        // 받은 카드를 화면 가운데 크게 보여 주고 **여기서 기다린다.**
+        //
+        // 바꾸기가 끝난 뒤의 손패로 판을 차려야 한다. 판을 먼저 차리면 바뀐 카드를
+        // 넣으려고 전투 상태를 다시 손봐야 하고, 그건 화면이 할 일이 아니다.
+        // 뒤에 아직 아무것도 안 그려져 있지만 이 겹이 화면을 덮고 있다.
+        await new Promise<void>((resolve) => {
+            this.openingHand = OpeningHandControl.build({
+                appendToBody: (element) => this.appendToBody(element),
+                listen: (target, type, handler) => this.listen(target, type, handler),
+                swap: (indexes) => {
+                    opening = applyMulligan(opening, indexes);
+                    console.log(`[battle] 바꾼 자리 ${indexes.join(', ')} → ${opening.hand.join(', ')}`);
+                    return opening.hand;
+                },
+                onConfirmed: () => { this.openingHand = null; resolve(); },
+            });
+            void this.openingHand.present(opening.hand);
+        });
+
         const hand = resolveCards([...opening.hand], 'hand');
         console.log(
             `[battle] 시작 손패 ${opening.hand.length}장: ${opening.hand.join(', ')}`
             + ` / 남은 덱 ${opening.deck.length}장`,
         );
-
-        // 받은 카드를 화면 가운데 크게 보여 준다. [시작] 을 누르면 걷힌다.
-        //
-        // **손패는 아래에 이미 깔려 있다.** 이 겹은 그 위를 덮고 있을 뿐이라, 걷히면
-        // 바로 쓸 수 있다. 멀리건이 붙을 자리도 여기다.
-        this.openingHand = OpeningHandControl.build({
-            appendToBody: (element) => this.appendToBody(element),
-            listen: (target, type, handler) => this.listen(target, type, handler),
-            onConfirmed: () => { this.openingHand = null; },
-        });
-        void this.openingHand.present(opening.hand);
 
         // 섞을 때 쓸 씨앗을 만든다. 도메인 안에서는 무작위를 못 쓰므로 밖에서 만들어 넣는다.
         // 씨앗을 적어 두면 같은 순서를 다시 만들 수 있다. 재접속과 다시 보기에 그것이 필요하다.
