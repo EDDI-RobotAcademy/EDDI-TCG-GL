@@ -6,6 +6,8 @@ import {
 import {
     GachaOverlayRenderer, DrawnCardView, toDrawnCardView,
 } from "../renderer/GachaOverlayRenderer";
+import {createCardZoomFrame} from "../frame/CardZoomFrame";
+import {CardZoomControl} from "./CardZoomControl";
 
 // 카드 뽑기 연출을 다루는 곳이다.
 //
@@ -15,6 +17,7 @@ import {
 //                                → 카드 열 장이 한 점에서 흩어져 자리에 앉는다
 //                                → 좋은 등급 자리가 두근거린다
 //                                → 한 장씩 뒤집힌다 (섬광, 신화·전설은 광주)
+//                                → 드러난 카드를 누르면 한 장을 크게 본다
 //                                → 다시 소환 / 전체 뒤집기 / 닫기
 //
 // 영상이 도는 동안 [건너뛰기] 를 누르면 곧바로 빛이 터진다. 두 번째부터 영상을 다 보게
@@ -25,7 +28,12 @@ import {
 export interface GachaOverlayDeps {
     // 화면 위에 얹는 겹을 몸통에 붙인다. 화면을 떠날 때 같이 치우려고 화면이 든다.
     appendToBody(element: HTMLElement): void;
-    listen(target: HTMLElement, type: string, handler: (event: never) => void): void;
+    // 창(window)도 받는다. 크게 보기가 Esc 와 화살표를 듣는다.
+    listen(
+        target: Window | Document | HTMLElement,
+        type: string,
+        handler: (event: never) => void,
+    ): void;
     readonly cardDraw: CardDraw;
     announce(message: string): void;
     // 연출이 닫혔다. 화면이 뒤를 다시 누를 수 있게 한다.
@@ -43,12 +51,23 @@ export class GachaOverlayControl {
     private revealed = false;
     // 뒤집기를 예약해 둔 것. 닫을 때 취소한다.
     private readonly timers: ReturnType<typeof setTimeout>[] = [];
+    // 카드 한 장을 크게 보는 겹.
+    private readonly zoom: CardZoomControl;
 
     private constructor(
         private readonly deps: GachaOverlayDeps,
         private readonly frame: GachaOverlayFrame,
         private readonly renderer: GachaOverlayRenderer,
-    ) {}
+    ) {
+        this.zoom = CardZoomControl.build(
+            {
+                // 뽑기 판 안에 붙인다. 뽑기 판을 치우면 같이 치워진다.
+                attach: (element) => this.root?.appendChild(element),
+                listen: (target, type, handler) => this.deps.listen(target, type, handler),
+            },
+            createCardZoomFrame(frame),
+        );
+    }
 
     public static build(deps: GachaOverlayDeps): GachaOverlayControl {
         return new GachaOverlayControl(
@@ -72,11 +91,13 @@ export class GachaOverlayControl {
         this.open = true;
 
         this.installHandlers(root);
+        await this.zoom.attach();
         await this.runOnce();
     }
 
     public close(): void {
         this.clearTimers();
+        this.zoom.close();
         if (this.root) {
             this.renderer.dispose(this.root);
             this.root = null;
@@ -110,6 +131,7 @@ export class GachaOverlayControl {
 
             // 카드를 먼저 깐다. 영상이 도는 동안 뒤에서 준비된다.
             this.renderer.layCards(this.frame, root, cards);
+            this.zoom.setCards(cards);
             this.renderer.setStage(root, 'video');
             this.renderer.setFlash(root, false, 0);
 
@@ -189,12 +211,20 @@ export class GachaOverlayControl {
             this.deps.listen(it, 'click', () => this.toggleAll());
         }
 
-        // 카드 한 장을 눌러 직접 뒤집는다. 기다리기 싫은 사람을 위한 길이다.
+        // 카드 한 장을 누른다. **덮여 있으면 뒤집고, 드러나 있으면 크게 본다.**
+        //
+        // 기다리기 싫은 사람은 눌러서 먼저 뒤집고, 읽고 싶은 사람은 한 번 더 눌러 키운다.
+        // 뒤집힌 것을 다시 덮는 길은 [전체 뒤집기] 가 맡는다 — 한 장씩 덮을 일이 없다.
         this.deps.listen(root, 'click', (event: never) => {
+            if (this.zoom.isOpen()) return;
             const target = (event as unknown as Event).target as HTMLElement | null;
             const slot = target?.closest<HTMLElement>('.gacha-card');
             if (!slot) return;
-            this.renderer.flip(slot, !this.renderer.isFlipped(slot));
+            if (!this.renderer.isFlipped(slot)) {
+                this.renderer.flip(slot, true);
+                return;
+            }
+            this.zoom.open(this.renderer.cardSlots(root).indexOf(slot));
         });
 
         // 영상이 빛나는 순간에 넘어간다. 영상이 끝나도 넘어간다.

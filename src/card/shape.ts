@@ -12,10 +12,12 @@ export const CARD_ASPECT = 1.615;
 // 전투와 상점 뽑기가 함께 쓰고 앞으로 덱과 도감도 쓴다. 그래서 화면 폴더가 아니라
 // `resource/card_back/` 에 둔다 — 상점 아래 두면 전투가 상점 자원을 가리키게 된다.
 //
-// **번호가 아니라 이름을 쓴다.** `card_race/1.png` 가 번호인 것은 그 번호가 종족을
-// 뜻하기 때문이다. 뒷면은 한 장뿐이라 번호가 아무것도 안 뜻한다. 스킨이 생기면
-// `back_of_<스킨>.png` 로 늘어나고, 그때 이름이 무엇인지 말해 준다.
+// **파일 이름이 이 값의 이름과 같다.** `CARD_BACK_IMAGE` → `card_back_image.png`.
+// 둘 중 어느 쪽으로 찾아도 다른 쪽이 같이 나온다.
+//
+// 번호를 안 쓴 것은 `card_race/1.png` 와 사정이 달라서다. 거기 번호는 종족을 뜻하고
+// 번호로 찾는다. 뒷면은 한 장뿐이라 번호가 아무것도 안 뜻한다.
 //
 // **없으면 null 이다.** 그때는 그리는 쪽이 값으로 그린다 (상점 뽑기가 그렇게 한다).
 // 그림이 생기면 이 한 줄만 바꾸면 되고, 그리는 쪽도 뒤집는 움직임도 안 바뀐다.
-export const CARD_BACK_IMAGE: string | null = 'resource/card_back/back_of_axiom.png';
+export const CARD_BACK_IMAGE: string | null = 'resource/card_back/card_back_image.png';
