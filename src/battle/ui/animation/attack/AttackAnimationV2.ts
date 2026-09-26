@@ -19,6 +19,15 @@ installTween();
 
 const CWR = BattleFieldConstants.CARD_WIDTH_RATIO;
 
+// 무기가 표적 앞에서 멈추는 거리. 카드 폭에 대한 비율이다.
+//
+// **표적 한가운데까지 날아가면 칼날이 이펙트를 타고 넘는다.** 이펙트는 표적 한가운데에서
+// 터지므로, 무기가 거기까지 가면 이펙트가 칼 중간에서 나오는 것처럼 보인다.
+// 이만큼 앞에서 멈추면 칼끝이 닿는 자리에서 이펙트가 난다.
+//
+// **이펙트 자리는 안 건드린다.** 무기가 덜 나가는 것으로 맞춘다.
+const WEAPON_STOP_SHORT = 0.35;
+
 type WeaponType = 'sword' | 'staff';
 
 export class AttackAnimationV2 {
@@ -82,6 +91,19 @@ export class AttackAnimationV2 {
         const targetWorld = targetGroup.getWorldPosition(new THREE.Vector3());
         const localTarget = attackerGroup.worldToLocal(targetWorld.clone());
         localTarget.z = 0.5;
+
+        // 표적 앞에서 멈춘다. 가는 방향으로 뒤로 물린다.
+        //
+        // 물리는 거리를 남은 거리의 절반으로 묶는다. 표적이 아주 가까이 있으면 물리다가
+        // 오히려 뒤로 가 버린다.
+        const dx = localTarget.x - weaponOrigPos.x;
+        const dy = localTarget.y - weaponOrigPos.y;
+        const reach = Math.hypot(dx, dy);
+        if (reach > 1e-6) {
+            const back = Math.min(cardW * WEAPON_STOP_SHORT, reach * 0.5);
+            localTarget.x -= dx / reach * back;
+            localTarget.y -= dy / reach * back;
+        }
         const isMaster = !targetGroup.userData.baseCardWidth || targetGroup.children.length <= 1;
 
         await this.phase1(attackerGroup, weaponMesh, weaponOrigPos, localTarget, weaponOrigRot, attackerOrigY, quarterW, 800);
